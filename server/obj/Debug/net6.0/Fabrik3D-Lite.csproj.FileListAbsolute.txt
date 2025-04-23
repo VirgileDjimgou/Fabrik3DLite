@@ -1,0 +1,6 @@
+C:\Users\djimg\source\repos\Fabrik3D-Lite\server\obj\Debug\net6.0\Fabrik3D-Lite.csproj.AssemblyReference.cache
+C:\Users\djimg\source\repos\Fabrik3D-Lite\server\obj\Debug\net6.0\Fabrik3D-Lite.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\djimg\source\repos\Fabrik3D-Lite\server\obj\Debug\net6.0\Fabrik3D-Lite.AssemblyInfoInputs.cache
+C:\Users\djimg\source\repos\Fabrik3D-Lite\server\obj\Debug\net6.0\Fabrik3D-Lite.AssemblyInfo.cs
+C:\Users\djimg\source\repos\Fabrik3D-Lite\server\obj\Debug\net6.0\Fabrik3D-Lite.csproj.CoreCompileInputs.cache
+C:\Users\djimg\source\repos\Fabrik3D-Lite\server\obj\Debug\net6.0\Fabrik3D-Lite.MvcApplicationPartsAssemblyInfo.cache
