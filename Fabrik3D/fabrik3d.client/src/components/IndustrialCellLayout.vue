@@ -23,6 +23,9 @@
     <!-- Conveyor belt near CNC output -->
     <ConveyorBelt :position="conveyorPos" :length="2" :speed="0.3" />
 
+    <!-- Finished-parts table near CNC output -->
+    <FinishedPartsTable ref="finishedTableRef" :position="finishedTablePos" />
+
     <!-- Factory floor with safety markings -->
     <FactoryFloor />
 
@@ -43,20 +46,23 @@ import WorkTable from './WorkTable.vue'
 import MetalPartsSpawner from './MetalPartsSpawner.vue'
 import CNCMachine from './CNCMachine.vue'
 import ConveyorBelt from './ConveyorBelt.vue'
+import FinishedPartsTable from './FinishedPartsTable.vue'
 import FactoryFloor from './FactoryFloor.vue'
 import CellSceneSetup from './CellSceneSetup.vue'
 import type { RobotController } from '../simulation/RobotController'
 import type { PartManager } from '../simulation/PartManager'
 
 // ── Layout positions (easy to adjust) ──────────────────────────────
-const tablePos: [number, number, number] = [-2.5, 0, 0]    // work table on the left
+const tablePos: [number, number, number] = [-2.0, 0, 0]    // work table on the left
 const cncPos: [number, number, number] = [2.5, 0, 0]       // CNC machine on the right
 const conveyorPos: [number, number, number] = [4.5, 0, 0]   // conveyor near CNC output
+const finishedTablePos: [number, number, number] = [0, 0, 1.5] // finished parts table near CNC
 
 // ── Component refs ─────────────────────────────────────────────────
 const robotController = shallowRef<RobotController | null>(null)
 const spawnerRef = ref<InstanceType<typeof MetalPartsSpawner> | null>(null)
 const cncRef = ref<InstanceType<typeof CNCMachine> | null>(null)
+const finishedTableRef = ref<InstanceType<typeof FinishedPartsTable> | null>(null)
 let partManager: PartManager | null = null
 
 function onControllerReady(controller: RobotController) {

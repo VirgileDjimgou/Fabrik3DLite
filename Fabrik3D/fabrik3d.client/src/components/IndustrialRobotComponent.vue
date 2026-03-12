@@ -49,21 +49,10 @@ watch(
       robot?.setJointAngles(angles)
     }
 
-    // Demo motion
-    animLoop.onFrame((time) => {
+    // Only advance the controller (trajectory + command queue).
+    // The robot stays idle until explicit commands are issued.
+    animLoop.onFrame(() => {
       controller.update(performance.now() / 1000)
-
-      // If no trajectory is active, run a demo oscillation
-      if (!controller.isMoving) {
-        controller.setJointAngles([
-          Math.sin(time * 0.4) * 1.2,
-          Math.sin(time * 0.6) * 0.4 - 0.2,
-          Math.sin(time * 0.8 + 1.0) * 0.5 + 0.3,
-          time * 1.5,
-          Math.sin(time * 1.0) * 0.6,
-          Math.sin(time * 1.2 + 0.5) * 0.4,
-        ])
-      }
     })
 
     emit('controller-ready', controller)
