@@ -1,24 +1,40 @@
 import { type RobotController } from './RobotController'
 import { type PartManager, type MetalPartData, type PartShape } from './PartManager'
+import { type CellLayoutConfig, DEFAULT_CELL_CONFIG } from './CellLayoutConfig'
+import {
+  HOME_POSE,
+  getPickApproachPose,
+  getPickTargetPose,
+  getCncApproachPose,
+  getCncInsertPose,
+  getCncRetrievePose,
+  getFinishedPlaceApproachPose,
+  getFinishedPlacePose,
+} from './WorkspaceTargets'
 
-// ── Workflow phases ────────────────────────────────────────────────
+// ── Workflow phases (granular) ─────────────────────────────────────
 
 export type MachiningPhase =
   | 'IDLE'
-  | 'MOVE_TO_PICK'
-  | 'PICKING'
-  | 'MOVE_UP_FROM_PICK'
-  | 'MOVE_TO_CNC'
+  | 'MOVE_ABOVE_PICK'
+  | 'DESCEND_TO_PICK'
+  | 'PICK_PART'
+  | 'LIFT_FROM_PICK'
+  | 'MOVE_TO_CNC_APPROACH'
   | 'OPEN_CNC_DOOR'
+  | 'MOVE_TO_CNC_INSERT'
   | 'LOAD_PART'
+  | 'RETRACT_FROM_CNC'
   | 'CLOSE_CNC_DOOR'
   | 'MACHINING'
   | 'OPEN_CNC_DOOR_RETRIEVE'
+  | 'MOVE_TO_CNC_RETRIEVE'
   | 'RETRIEVE_PART'
-  | 'MOVE_UP_FROM_CNC'
-  | 'MOVE_TO_FINISHED_TABLE'
-  | 'PLACING'
-  | 'MOVE_UP_FROM_PLACE'
+  | 'LIFT_FROM_CNC'
+  | 'MOVE_TO_FINISHED_APPROACH'
+  | 'DESCEND_TO_FINISHED'
+  | 'PLACE_PART'
+  | 'LIFT_FROM_FINISHED'
   | 'COMPLETE'
 
 // ── Callbacks provided by the host component ───────────────────────
@@ -42,60 +58,15 @@ export interface MachiningCallbacks {
   getCNCState: () => string
 }
 
-// ── Robot joint poses ──────────────────────────────────────────────
-
-export interface MachiningPoses {
-  /** Home / neutral pose */
-  home: number[]
-  /** Above the raw-parts table (approach) */
-  abovePick: number[]
-  /** Down at the raw-parts table (grasp) */
-  pick: number[]
-  /** Above the CNC loading zone (approach) */
-  aboveCNC: number[]
-  /** At the CNC loading position (insert / retrieve) */
-  atCNC: number[]
-  /** Above the finished-parts table (approach) */
-  abovePlace: number[]
-  /** Down at the finished-parts table (release) */
-  place: number[]
-}
-
-const DEFAULT_POSES: MachiningPoses = {
-  home:       [0,     0,     0,    0,  0,    0],
-  abovePick:  [0.8,  -0.2,   0.3,  0,  0,    0],
-  pick:       [0.8,   0.1,   0.5,  0, -0.3,  0],
-  aboveCNC:   [-0.8, -0.2,   0.3,  0,  0,    0],
-  atCNC:      [-0.8,  0.1,   0.5,  0, -0.3,  0],
-  abovePlace: [0,    -0.3,   0.3,  1.5, 0,   0],
-  place:      [0,     0.0,   0.5,  1.5,-0.3,  0],
-}
-
-// ── Timing config ──────────────────────────────────────────────────
-
-export interface MachiningTiming {
-  moveDuration: number
-  approachDuration: number
-  gripDuration: number
-  doorWait: number
-  machiningDuration: number
-}
-
-const DEFAULT_TIMING: MachiningTiming = {
-  moveDuration: 3,
-  approachDuration: 1.5,
-  gripDuration: 1,
-  doorWait: 1,
-  machiningDuration: 5,
-}
-
 // ── Workflow state machine ─────────────────────────────────────────
 
 /**
  * Full pick → CNC-machine → place workflow for one part at a time.
  *
  * Call `update()` every frame. The workflow advances automatically
- * when robot motions and CNC operations complete.
+ * when robot motions and CNC operations complete.  Target joint
+ * poses are derived from actual part / slot positions via
+ * WorkspaceTargets so each motion looks spatially coherent.
  */
 export class MachiningWorkflow {
   phase: MachiningPhase = 'IDLE'
@@ -111,10 +82,10 @@ export class MachiningWorkflow {
   private readonly controller: RobotController
   private readonly partManager: PartManager
   private readonly cb: MachiningCallbacks
-  private readonly poses: MachiningPoses
-  private readonly timing: MachiningTiming
+  private readonly cfg: CellLayoutConfig
 
   private activePart: MetalPartData | null = null
+  private activeSlot: [number, number, number] | null = null
   private waitUntil = 0
   private running = false
 
@@ -122,14 +93,16 @@ export class MachiningWorkflow {
     controller: RobotController,
     partManager: PartManager,
     callbacks: MachiningCallbacks,
-    poses?: Partial<MachiningPoses>,
-    timing?: Partial<MachiningTiming>,
+    config?: Partial<CellLayoutConfig>,
   ) {
     this.controller = controller
     this.partManager = partManager
     this.cb = callbacks
-    this.poses = { ...DEFAULT_POSES, ...poses }
-    this.timing = { ...DEFAULT_TIMING, ...timing }
+    this.cfg = {
+      positions: { ...DEFAULT_CELL_CONFIG.positions, ...config?.positions },
+      heights:   { ...DEFAULT_CELL_CONFIG.heights,   ...config?.heights },
+      timing:    { ...DEFAULT_CELL_CONFIG.timing,    ...config?.timing },
+    }
   }
 
   /** Start processing the next available part (or the first one). */
@@ -147,6 +120,12 @@ export class MachiningWorkflow {
     return this.running
   }
 
+  // ── Shorthand timing ─────────────────────────────────────────
+
+  private get t() {
+    return this.cfg.timing
+  }
+
   // ── Core update (call every frame) ───────────────────────────
 
   update(): void {
@@ -156,107 +135,194 @@ export class MachiningWorkflow {
     const now = performance.now() / 1000
 
     switch (this.phase) {
-      // ── Pick from raw table ─────────────────────────────────
-      case 'MOVE_TO_PICK':
-        this.setPhase('PICKING')
-        this.controller.moveJoints(this.poses.pick, this.timing.approachDuration)
+      // ────────── Pick from raw table ──────────────────────────
+
+      case 'MOVE_ABOVE_PICK':
+        // Robot arrived above the part → descend vertically
+        this.setPhase('DESCEND_TO_PICK')
+        this.controller.moveJoints(
+          getPickTargetPose(this.activePart!, this.cfg),
+          this.t.approachDuration,
+        )
         break
 
-      case 'PICKING':
-        // Gripper closes around the part
+      case 'DESCEND_TO_PICK':
+        // At part level → close gripper
+        this.setPhase('PICK_PART')
         if (this.activePart) {
           this.partManager.pick(this.activePart.id)
           this.cb.onPartPicked(this.activePart)
         }
-        this.waitUntil = now + this.timing.gripDuration
-        this.setPhase('MOVE_UP_FROM_PICK')
+        this.waitUntil = now + this.t.gripDuration
         break
 
-      case 'MOVE_UP_FROM_PICK':
+      case 'PICK_PART':
         if (now < this.waitUntil) return
-        this.controller.moveJoints(this.poses.abovePick, this.timing.approachDuration)
-        this.setPhase('MOVE_TO_CNC')
+        // Lift vertically from the table
+        this.setPhase('LIFT_FROM_PICK')
+        this.controller.moveJoints(
+          getPickApproachPose(this.activePart!, this.cfg),
+          this.t.approachDuration,
+        )
         break
 
-      // ── Load into CNC ───────────────────────────────────────
-      case 'MOVE_TO_CNC':
-        this.controller.moveJoints(this.poses.aboveCNC, this.timing.moveDuration)
+      // ────────── Travel to CNC ────────────────────────────────
+
+      case 'LIFT_FROM_PICK':
+        this.setPhase('MOVE_TO_CNC_APPROACH')
+        this.controller.moveJoints(
+          getCncApproachPose(),
+          this.t.travelDuration,
+        )
+        break
+
+      case 'MOVE_TO_CNC_APPROACH':
+        // Arrived in front of CNC → open door
         this.setPhase('OPEN_CNC_DOOR')
+        this.cb.openCNCDoor()
+        this.waitUntil = now + this.t.doorWait
         break
 
       case 'OPEN_CNC_DOOR':
-        this.cb.openCNCDoor()
-        this.waitUntil = now + this.timing.doorWait
+        if (now < this.waitUntil) return
+        // Door open → descend into the CNC chamber
+        this.setPhase('MOVE_TO_CNC_INSERT')
+        this.controller.moveJoints(
+          getCncInsertPose(),
+          this.t.approachDuration,
+        )
+        break
+
+      case 'MOVE_TO_CNC_INSERT':
+        // Release part inside CNC
         this.setPhase('LOAD_PART')
+        this.waitUntil = now + this.t.gripDuration
         break
 
       case 'LOAD_PART':
         if (now < this.waitUntil) return
-        this.controller.moveJoints(this.poses.atCNC, this.timing.approachDuration)
-        this.setPhase('CLOSE_CNC_DOOR')
+        // Retract from CNC chamber
+        this.setPhase('RETRACT_FROM_CNC')
+        this.controller.moveJoints(
+          getCncApproachPose(),
+          this.t.approachDuration,
+        )
         break
 
+      case 'RETRACT_FROM_CNC':
+        // Close door and start machining
+        this.setPhase('CLOSE_CNC_DOOR')
+        this.cb.startCNCMachining()
+        this.waitUntil = now + this.t.machiningDuration
+        break
+
+      // ────────── Machining ────────────────────────────────────
+
       case 'CLOSE_CNC_DOOR':
-        // Part released inside CNC
-        this.controller.moveJoints(this.poses.aboveCNC, this.timing.approachDuration)
+        // Move to a neutral safe pose while machining proceeds
         this.setPhase('MACHINING')
+        this.controller.moveJoints(HOME_POSE, this.t.travelDuration)
         break
 
       case 'MACHINING':
-        // Start machining (door closes automatically)
-        this.cb.startCNCMachining()
-        this.waitUntil = now + this.timing.machiningDuration
+        if (now < this.waitUntil) return
+        if (this.cb.getCNCState() !== 'UNLOADING') return
+        // Machining done → move back to CNC
         this.setPhase('OPEN_CNC_DOOR_RETRIEVE')
+        this.controller.moveJoints(
+          getCncApproachPose(),
+          this.t.travelDuration,
+        )
         break
+
+      // ────────── Retrieve from CNC ────────────────────────────
 
       case 'OPEN_CNC_DOOR_RETRIEVE':
-        if (now < this.waitUntil) return
-        // Wait for CNC to finish and reach UNLOADING state
-        if (this.cb.getCNCState() !== 'UNLOADING') return
-        this.controller.moveJoints(this.poses.atCNC, this.timing.approachDuration)
-        this.setPhase('RETRIEVE_PART')
+        // Arrived at CNC front → descend to retrieve
+        this.setPhase('MOVE_TO_CNC_RETRIEVE')
+        this.controller.moveJoints(
+          getCncRetrievePose(),
+          this.t.approachDuration,
+        )
         break
 
-      case 'RETRIEVE_PART':
-        // Gripper picks the machined part back up
+      case 'MOVE_TO_CNC_RETRIEVE':
+        // Close gripper on the machined part
+        this.setPhase('RETRIEVE_PART')
         if (this.activePart) {
           this.partManager.markAsMachined(this.activePart.id)
           this.cb.onPartMachined(this.activePart)
         }
         this.cb.cncUnloadComplete()
-        this.waitUntil = now + this.timing.gripDuration
-        this.setPhase('MOVE_UP_FROM_CNC')
+        this.waitUntil = now + this.t.gripDuration
         break
 
-      case 'MOVE_UP_FROM_CNC':
+      case 'RETRIEVE_PART':
         if (now < this.waitUntil) return
-        this.controller.moveJoints(this.poses.aboveCNC, this.timing.approachDuration)
-        this.setPhase('MOVE_TO_FINISHED_TABLE')
+        // Lift out of CNC
+        this.setPhase('LIFT_FROM_CNC')
+        this.controller.moveJoints(
+          getCncApproachPose(),
+          this.t.approachDuration,
+        )
         break
 
-      // ── Place on finished table ─────────────────────────────
-      case 'MOVE_TO_FINISHED_TABLE':
-        this.controller.moveJoints(this.poses.abovePlace, this.timing.moveDuration)
-        this.setPhase('PLACING')
-        break
+      // ────────── Place on finished table ──────────────────────
 
-      case 'PLACING':
-        this.controller.moveJoints(this.poses.place, this.timing.approachDuration)
-        this.setPhase('MOVE_UP_FROM_PLACE')
-        break
-
-      case 'MOVE_UP_FROM_PLACE':
-        // Release part onto the finished table
+      case 'LIFT_FROM_CNC':
+        // Reserve a slot now so the poses can target it
         if (this.activePart) {
-          const slot = this.cb.getFinishedSlot(this.activePart.shape)
-          if (slot) {
-            this.cb.onPartPlaced(this.activePart, slot)
-          }
+          this.activeSlot = this.cb.getFinishedSlot(this.activePart.shape)
+        }
+        if (!this.activeSlot) {
+          // Table is full – finish
+          this.setPhase('COMPLETE')
+          this.onAllComplete?.()
+          return
+        }
+        this.setPhase('MOVE_TO_FINISHED_APPROACH')
+        this.controller.moveJoints(
+          getFinishedPlaceApproachPose(this.activeSlot, this.cfg),
+          this.t.travelDuration,
+        )
+        break
+
+      case 'MOVE_TO_FINISHED_APPROACH':
+        // Descend to table surface
+        this.setPhase('DESCEND_TO_FINISHED')
+        this.controller.moveJoints(
+          getFinishedPlacePose(this.activeSlot!, this.cfg),
+          this.t.approachDuration,
+        )
+        break
+
+      case 'DESCEND_TO_FINISHED':
+        // Open gripper – release part
+        this.setPhase('PLACE_PART')
+        if (this.activePart && this.activeSlot) {
+          this.cb.onPartPlaced(this.activePart, this.activeSlot)
+        }
+        this.waitUntil = now + this.t.gripDuration
+        break
+
+      case 'PLACE_PART':
+        if (now < this.waitUntil) return
+        // Lift away from the finished table
+        this.setPhase('LIFT_FROM_FINISHED')
+        this.controller.moveJoints(
+          getFinishedPlaceApproachPose(this.activeSlot!, this.cfg),
+          this.t.approachDuration,
+        )
+        break
+
+      case 'LIFT_FROM_FINISHED':
+        // Cycle complete
+        if (this.activePart) {
           this.onCycleComplete?.(this.activePart)
           this.partsCompleted++
         }
         this.activePart = null
-        this.controller.moveJoints(this.poses.abovePlace, this.timing.approachDuration)
+        this.activeSlot = null
         this.finishCycle()
         break
     }
@@ -278,8 +344,12 @@ export class MachiningWorkflow {
     }
 
     this.activePart = next
-    this.setPhase('MOVE_TO_PICK')
-    this.controller.moveJoints(this.poses.abovePick, this.timing.moveDuration)
+    this.activeSlot = null
+    this.setPhase('MOVE_ABOVE_PICK')
+    this.controller.moveJoints(
+      getPickApproachPose(next, this.cfg),
+      this.t.travelDuration,
+    )
   }
 
   private finishCycle(): void {
@@ -287,10 +357,7 @@ export class MachiningWorkflow {
       this.setPhase('IDLE')
       return
     }
-    // After robot returns up, start the next part
-    // We use a micro-delay via IDLE check on next update
     this.setPhase('IDLE')
-    // Queue up the next part on next frame
     setTimeout(() => {
       if (this.running) this.startNextPart()
     }, 0)
