@@ -11,10 +11,13 @@ const props = withDefaults(defineProps<{
   position?: [number, number, number]
   length?: number
   speed?: number
+  /** Optional Y-rotation (radians) to orient the belt along a different axis. */
+  rotationY?: number
 }>(), {
   position: () => [2, 0, -1.5] as [number, number, number],
   length: 2,
   speed: 0.3,
+  rotationY: 0,
 })
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
@@ -31,6 +34,7 @@ watch(
     if (!ctx || conveyorGroup) return
     conveyorGroup = buildConveyor()
     conveyorGroup.position.set(...props.position)
+    if (props.rotationY !== 0) conveyorGroup.rotation.y = props.rotationY
     ctx.addObject(conveyorGroup)
 
     animLoop.onFrame((_time, delta) => {

@@ -131,6 +131,7 @@ function buildPallet(): THREE.Group {
       if (isOccupied) {
         const partGeo = createPartGeo(props.cavityShape, cavityRadius * 0.85)
         const part = new THREE.Mesh(partGeo, partMat)
+        part.name = `part_${r}_${c}`
         part.position.set(cx, surfaceY + partHeight(props.cavityShape, cavityRadius * 0.85) / 2, cz)
         part.castShadow = true
         group.add(part)
@@ -177,7 +178,15 @@ function setWorldX(x: number): void {
   if (palletGroup) palletGroup.position.x = x
 }
 
-defineExpose({ setWorldX })
+/** Show or hide the part mesh in a specific slot. */
+function setSlotVisible(row: number, col: number, visible: boolean): void {
+  if (!palletGroup) return
+  const name = `part_${row}_${col}`
+  const mesh = palletGroup.getObjectByName(name)
+  if (mesh) mesh.visible = visible
+}
+
+defineExpose({ setWorldX, setSlotVisible })
 
 // ── Cleanup ────────────────────────────────────────────────────────
 function disposeGroup(g: THREE.Group) {

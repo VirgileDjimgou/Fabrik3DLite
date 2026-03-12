@@ -58,6 +58,18 @@ animLoop.onFrame((_time, delta) => {
   flow.update(delta)
 })
 
+/** Get the first stopped pallet (closest to robot). */
+function getFirstStoppedPallet(): PalletData | null {
+  return flow.pallets.find(p => p.state === 'stopped') ?? null
+}
+
+/** Get the RawMaterialPallet component ref for a given pallet id. */
+function getPalletComponent(palletId: string) {
+  return palletRefs.get(palletId) ?? null
+}
+
+defineExpose({ getFirstStoppedPallet, getPalletComponent })
+
 onBeforeUnmount(() => {
   palletRefs.clear()
 })
