@@ -10,6 +10,34 @@ export interface RobotMaterials {
 }
 
 /**
+ * Optional dimensional overrides.
+ * All values default to the original dimensions when omitted.
+ */
+export interface RobotDimensions {
+  /** Uniform scale applied to the entire root group (default 1). */
+  scale?: number
+  /** Base-to-shoulder height (default 0.4). */
+  baseHeight?: number
+  /** Shoulder cylinder height (default 0.4). */
+  shoulderHeight?: number
+  /** Upper-arm length (default 0.9). */
+  upperArmLength?: number
+  /** Forearm length (default 0.76). */
+  forearmLength?: number
+  /** Wrist-to-flange distance (default 0.1). */
+  wristLength?: number
+}
+
+const DEFAULT_DIMS: Required<RobotDimensions> = {
+  scale: 1,
+  baseHeight: 0.4,
+  shoulderHeight: 0.4,
+  upperArmLength: 0.9,
+  forearmLength: 0.76,
+  wristLength: 0.1,
+}
+
+/**
  * Procedurally-built 6-axis industrial robot (FANUC / KUKA style).
  *
  * Hierarchy:
@@ -33,19 +61,23 @@ export class IndustrialRobot {
   readonly joints: RobotJoint[]
   private readonly links: RobotLink[] = []
   private readonly materials: RobotMaterials
+  private readonly dims: Required<RobotDimensions>
 
-  constructor(materials: RobotMaterials) {
+  constructor(materials: RobotMaterials, dimensions?: RobotDimensions) {
     this.materials = materials
+    this.dims = { ...DEFAULT_DIMS, ...dimensions }
+    const d = this.dims
     this.root = new THREE.Group()
     this.root.name = 'IndustrialRobot'
+    if (d.scale !== 1) this.root.scale.setScalar(d.scale)
 
     const axes: { name: string; axis: JointAxis; offset: THREE.Vector3 }[] = [
-      { name: 'axis1', axis: 'y', offset: new THREE.Vector3(0, 0.4, 0) },
-      { name: 'axis2', axis: 'z', offset: new THREE.Vector3(0, 0.4, 0) },
-      { name: 'axis3', axis: 'z', offset: new THREE.Vector3(0, 0.9, 0) },
-      { name: 'axis4', axis: 'x', offset: new THREE.Vector3(0, 0.76, 0) },
+      { name: 'axis1', axis: 'y', offset: new THREE.Vector3(0, d.baseHeight, 0) },
+      { name: 'axis2', axis: 'z', offset: new THREE.Vector3(0, d.shoulderHeight, 0) },
+      { name: 'axis3', axis: 'z', offset: new THREE.Vector3(0, d.upperArmLength, 0) },
+      { name: 'axis4', axis: 'x', offset: new THREE.Vector3(0, d.forearmLength, 0) },
       { name: 'axis5', axis: 'z', offset: new THREE.Vector3(0, 0, 0) },
-      { name: 'axis6', axis: 'x', offset: new THREE.Vector3(0, 0.1, 0) },
+      { name: 'axis6', axis: 'x', offset: new THREE.Vector3(0, d.wristLength, 0) },
     ]
 
     this.joints = axes.map((a, i) => new RobotJoint({
@@ -72,6 +104,7 @@ export class IndustrialRobot {
   // ── Build ────────────────────────────────────────────────────────
   private buildGeometry(): void {
     const { body, dark, gripper } = this.materials
+    const d = this.dims
 
     // ── Base ──
     const baseLink = new RobotLink('base', [
@@ -83,7 +116,7 @@ export class IndustrialRobot {
       {
         geometry: new THREE.CylinderGeometry(0.4, 0.4, 0.1, 24),
         material: body,
-        position: new THREE.Vector3(0, 0.35, 0),
+        position: new THREE.Vector3(0, d.baseHeight - 0.05, 0),
       },
     ])
     this.root.add(baseLink.group)
@@ -92,14 +125,14 @@ export class IndustrialRobot {
     // ── Axis 1 → shoulder ──
     const shoulderLink = new RobotLink('shoulder', [
       {
-        geometry: new THREE.CylinderGeometry(0.28, 0.28, 0.35, 20),
+        geometry: new THREE.CylinderGeometry(0.28, 0.28, d.shoulderHeight * 0.875, 20),
         material: body,
-        position: new THREE.Vector3(0, 0.175, 0),
+        position: new THREE.Vector3(0, d.shoulderHeight * 0.4375, 0),
       },
       {
         geometry: new THREE.SphereGeometry(0.22, 16, 12),
         material: dark,
-        position: new THREE.Vector3(0, 0.4, 0),
+        position: new THREE.Vector3(0, d.shoulderHeight, 0),
       },
     ])
     this.joints[0]!.group.add(shoulderLink.group)
@@ -108,30 +141,31 @@ export class IndustrialRobot {
     // ── Axis 2 → upper arm ──
     const upperArmLink = new RobotLink('upperArm', [
       {
-        geometry: new THREE.BoxGeometry(0.18, 0.9, 0.18),
+        geometry: new THREE.BoxGeometry(0.18, d.upperArmLength, 0.18),
         material: body,
-        position: new THREE.Vector3(0, 0.45, 0),
+        position: new THREE.Vector3(0, d.upperArmLength / 2, 0),
       },
       {
         geometry: new THREE.SphereGeometry(0.16, 14, 10),
         material: dark,
-        position: new THREE.Vector3(0, 0.9, 0),
+        position: new THREE.Vector3(0, d.upperArmLength, 0),
       },
     ])
     this.joints[1]!.group.add(upperArmLink.group)
     this.joints[0]!.group.add(this.joints[1]!.group)
 
     // ── Axis 3 → forearm ──
+    const forearmLen = d.forearmLength
     const forearmLink = new RobotLink('forearm', [
       {
-        geometry: new THREE.BoxGeometry(0.14, 0.7, 0.14),
+        geometry: new THREE.BoxGeometry(0.14, forearmLen * 0.92, 0.14),
         material: body,
-        position: new THREE.Vector3(0, 0.35, 0),
+        position: new THREE.Vector3(0, forearmLen * 0.46, 0),
       },
       {
         geometry: new THREE.CylinderGeometry(0.1, 0.12, 0.12, 16),
         material: dark,
-        position: new THREE.Vector3(0, 0.72, 0),
+        position: new THREE.Vector3(0, forearmLen * 0.95, 0),
       },
     ])
     this.joints[2]!.group.add(forearmLink.group)
