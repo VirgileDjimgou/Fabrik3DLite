@@ -14,11 +14,13 @@
     "lint:eslint": "eslint . --fix --cache"
   },
   "dependencies": {
+    "three": "^0.183.2",
     "vue": "^3.5.29"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.11.0",
+    "@types/three": "^0.183.1",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/tsconfig": "^0.8.1",
