@@ -1,0 +1,6 @@
+@Fabrik3D.Server_HostAddress = http://localhost:5071
+
+GET {{Fabrik3D.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
