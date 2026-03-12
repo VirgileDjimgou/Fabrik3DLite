@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{3C7332B8-7871-97C3-0666-0A27D394DCF7}|Fabrik3DClient\\fabrik3dclient.client\\fabrik3dclient.client.esproj|c:\\users\\djimg\\source\\repos\\fabrik3dlite\\fabrik3dclient\\fabrik3dclient.client\\src\\components\\thewelcome.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{3C7332B8-7871-97C3-0666-0A27D394DCF7}|Fabrik3DClient\\fabrik3dclient.client\\fabrik3dclient.client.esproj|solutionrelative:fabrik3dclient\\fabrik3dclient.client\\src\\components\\thewelcome.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3C7332B8-7871-97C3-0666-0A27D394DCF7}|Fabrik3DClient\\fabrik3dclient.client\\fabrik3dclient.client.esproj|c:\\users\\djimg\\source\\repos\\fabrik3dlite\\fabrik3dclient\\fabrik3dclient.client\\src\\components\\helloworld.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{3C7332B8-7871-97C3-0666-0A27D394DCF7}|Fabrik3DClient\\fabrik3dclient.client\\fabrik3dclient.client.esproj|solutionrelative:fabrik3dclient\\fabrik3dclient.client\\src\\components\\helloworld.vue||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Models\\RobotModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:server\\Models\\RobotModel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -46,24 +54,36 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 8,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "MQTTController.cs",
-              "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Controllers\\MQTTController.cs",
-              "RelativeDocumentMoniker": "server\\Controllers\\MQTTController.cs",
-              "ToolTip": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Controllers\\MQTTController.cs",
-              "RelativeToolTip": "server\\Controllers\\MQTTController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.43Z",
+              "DocumentIndex": 0,
+              "Title": "TheWelcome.vue",
+              "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\Fabrik3DClient\\fabrik3dclient.client\\src\\components\\TheWelcome.vue",
+              "RelativeDocumentMoniker": "Fabrik3DClient\\fabrik3dclient.client\\src\\components\\TheWelcome.vue",
+              "ToolTip": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\Fabrik3DClient\\fabrik3dclient.client\\src\\components\\TheWelcome.vue",
+              "RelativeToolTip": "Fabrik3DClient\\fabrik3dclient.client\\src\\components\\TheWelcome.vue",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
+              "WhenOpened": "2026-03-12T01:33:35.513Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 1,
+              "Title": "HelloWorld.vue",
+              "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\Fabrik3DClient\\fabrik3dclient.client\\src\\components\\HelloWorld.vue",
+              "RelativeDocumentMoniker": "Fabrik3DClient\\fabrik3dclient.client\\src\\components\\HelloWorld.vue",
+              "ToolTip": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\Fabrik3DClient\\fabrik3dclient.client\\src\\components\\HelloWorld.vue",
+              "RelativeToolTip": "Fabrik3DClient\\fabrik3dclient.client\\src\\components\\HelloWorld.vue",
+              "ViewState": "AgIAAF0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003491|",
+              "WhenOpened": "2026-03-12T01:32:21.496Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
               "Title": "MQTTService.cs",
               "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Services\\MQTTService.cs",
               "RelativeDocumentMoniker": "server\\Services\\MQTTService.cs",
@@ -71,12 +91,11 @@
               "RelativeToolTip": "server\\Services\\MQTTService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.399Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-12T01:24:16.399Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 7,
               "Title": "Repository.cs",
               "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Data\\Repository.cs",
               "RelativeDocumentMoniker": "server\\Data\\Repository.cs",
@@ -84,12 +103,11 @@
               "RelativeToolTip": "server\\Data\\Repository.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.369Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-12T01:24:16.369Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 6,
               "Title": "Fabrik3D-Lite.csproj",
               "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Fabrik3D-Lite.csproj",
               "RelativeDocumentMoniker": "server\\Fabrik3D-Lite.csproj",
@@ -97,12 +115,11 @@
               "RelativeToolTip": "server\\Fabrik3D-Lite.csproj",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2026-03-12T01:24:16.342Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-12T01:24:16.342Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 5,
               "Title": "CNCModel.cs",
               "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Models\\CNCModel.cs",
               "RelativeDocumentMoniker": "server\\Models\\CNCModel.cs",
@@ -110,12 +127,11 @@
               "RelativeToolTip": "server\\Models\\CNCModel.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.295Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-12T01:24:16.295Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "CNCService.cs",
               "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Services\\CNCService.cs",
               "RelativeDocumentMoniker": "server\\Services\\CNCService.cs",
@@ -123,12 +139,11 @@
               "RelativeToolTip": "server\\Services\\CNCService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.263Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-12T01:24:16.263Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 10,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Program.cs",
               "RelativeDocumentMoniker": "server\\Program.cs",
@@ -136,25 +151,11 @@
               "RelativeToolTip": "server\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.464Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-12T01:24:16.464Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "MongoDBContext.cs",
-              "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Data\\MongoDBContext.cs",
-              "RelativeDocumentMoniker": "server\\Data\\MongoDBContext.cs",
-              "ToolTip": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Data\\MongoDBContext.cs",
-              "RelativeToolTip": "server\\Data\\MongoDBContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.23Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "RobotModel.cs",
               "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Models\\RobotModel.cs",
               "RelativeDocumentMoniker": "server\\Models\\RobotModel.cs",
@@ -162,8 +163,31 @@
               "RelativeToolTip": "server\\Models\\RobotModel.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-12T01:24:16.197Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-03-12T01:24:16.197Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "MQTTController.cs",
+              "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Controllers\\MQTTController.cs",
+              "RelativeDocumentMoniker": "server\\Controllers\\MQTTController.cs",
+              "ToolTip": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Controllers\\MQTTController.cs",
+              "RelativeToolTip": "server\\Controllers\\MQTTController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-12T01:24:16.43Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "MongoDBContext.cs",
+              "DocumentMoniker": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Data\\MongoDBContext.cs",
+              "RelativeDocumentMoniker": "server\\Data\\MongoDBContext.cs",
+              "ToolTip": "C:\\Users\\djimg\\source\\repos\\Fabrik3DLite\\server\\Data\\MongoDBContext.cs",
+              "RelativeToolTip": "server\\Data\\MongoDBContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-12T01:24:16.23Z"
             }
           ]
         }
