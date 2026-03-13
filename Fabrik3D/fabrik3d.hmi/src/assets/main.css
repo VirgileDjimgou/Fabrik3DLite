@@ -1,0 +1,145 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Fabrik3D HMI — Industrial Design Tokens & Bootstrap Complements
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Accent ── */
+  --hmi-icon-color: #0d8ecf;
+  --hmi-icon-hover: #0b7ab8;
+
+  /* ── Surfaces ── */
+  --hmi-bg: #e8ecf1;
+  --hmi-surface: #ffffff;
+  --hmi-text: #1e2a38;
+  --hmi-text-muted: #6b7b8d;
+  --hmi-border: #c9d3de;
+
+  /* ── Shadows ── */
+  --hmi-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --hmi-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --hmi-radius: 0.625rem;
+
+  /* ── Bottom nav ── */
+  --hmi-nav-bg: #1e2a38;
+  --hmi-nav-text: #c9d3de;
+  --hmi-nav-active: #ffffff;
+
+  /* ── Semantic ── */
+  --hmi-success: #28a745;
+  --hmi-warning: #f0ad4e;
+  --hmi-danger: #dc3545;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  background: var(--hmi-bg);
+  color: var(--hmi-text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app { height: 100%; display: flex; flex-direction: column; }
+
+/* ── Bootstrap card override ── */
+.card {
+  border: 1px solid var(--hmi-border);
+  border-radius: var(--hmi-radius);
+  box-shadow: var(--hmi-shadow);
+}
+
+.table { --bs-table-bg: var(--hmi-surface); }
+
+/* ── HMI accent button ── */
+.btn-hmi { background-color: var(--hmi-icon-color); border-color: var(--hmi-icon-color); color: #fff; }
+.btn-hmi:hover { background-color: var(--hmi-icon-hover); border-color: var(--hmi-icon-hover); color: #fff; }
+
+/* ── Icon helper ── */
+.hmi-icon { color: var(--hmi-icon-color); }
+
+/* ── Tile button ── */
+.hmi-tile {
+  background: var(--hmi-surface);
+  border: 1px solid var(--hmi-border);
+  border-radius: var(--hmi-radius);
+  box-shadow: var(--hmi-shadow);
+  transition: box-shadow 0.2s, transform 0.15s;
+  cursor: pointer;
+  text-align: center;
+  padding: 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 130px;
+  text-decoration: none;
+  color: var(--hmi-text);
+  width: 100%;
+}
+.hmi-tile:hover {
+  box-shadow: var(--hmi-shadow-lg);
+  transform: translateY(-2px);
+  text-decoration: none;
+  color: var(--hmi-text);
+}
+.hmi-tile .bi { font-size: 2.25rem; color: var(--hmi-icon-color); }
+.hmi-tile span { font-size: 0.9rem; font-weight: 600; }
+
+/* ── Status sidebar ── */
+.hmi-status-panel {
+  background: var(--hmi-surface);
+  border-left: 1px solid var(--hmi-border);
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* ── Bottom navigation ── */
+.hmi-bottom-nav {
+  background: var(--hmi-nav-bg);
+  color: var(--hmi-nav-text);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.4rem 0;
+  flex-shrink: 0;
+}
+.hmi-bottom-nav a,
+.hmi-bottom-nav button {
+  background: none; border: none;
+  color: var(--hmi-nav-text);
+  text-decoration: none;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.15rem; font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  transition: color 0.15s;
+  cursor: pointer;
+}
+.hmi-bottom-nav a:hover,
+.hmi-bottom-nav button:hover,
+.hmi-bottom-nav a.router-link-active {
+  color: var(--hmi-nav-active);
+}
+.hmi-bottom-nav .bi { font-size: 1.25rem; }
+
+/* ── Scrollable content area ── */
+.hmi-content { flex: 1; overflow-y: auto; padding: 1rem; }
+
+/* ── Version bar ── */
+.hmi-version { font-size: 0.75rem; color: var(--hmi-text-muted); padding: 0.25rem 0.75rem; }
+
+/* ── Gauge ── */
+.hmi-gauge { text-align: center; }
+.hmi-gauge svg { max-width: 100%; height: auto; }
+
+/* ── Responsive ── */
+@media (max-width: 991.98px) {
+  .hmi-status-panel { border-left: none; border-top: 1px solid var(--hmi-border); }
+}
+@media (max-width: 575.98px) {
+  .hmi-tile { min-height: 100px; padding: 0.75rem 0.5rem; }
+  .hmi-tile .bi { font-size: 1.75rem; }
+  .hmi-tile span { font-size: 0.8rem; }
+  .hmi-bottom-nav { flex-wrap: wrap; }
+}

@@ -10,5 +10,9 @@
       <Build />
       <Deploy />
     </Project>
+    <Project Path="fabrik3d.hmi/fabrik3d.hmi.esproj">
+      <Build />
+      <Deploy />
+    </Project>
   </Folder>
 </Solution>
