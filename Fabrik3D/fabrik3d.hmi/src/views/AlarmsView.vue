@@ -70,6 +70,7 @@ async function doAck(id: string) {
 
 function onEvent() { if (tab.value==='active') void loadActive(); else void loadAll() }
 
-onMounted(() => { void loadActive(); hub.on({ onAlarmRaised: onEvent, onAlarmAcknowledged: onEvent }) })
-onUnmounted(() => { hub.on({ onAlarmRaised: undefined, onAlarmAcknowledged: undefined }) })
+let unsub: (() => void) | null = null
+onMounted(() => { void loadActive(); unsub = hub.subscribe({ onAlarmRaised: onEvent, onAlarmAcknowledged: onEvent }) })
+onUnmounted(() => { unsub?.() })
 </script>

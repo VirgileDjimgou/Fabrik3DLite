@@ -11,7 +11,7 @@ export default {
   },
   status: {
     tempo: 'Tempo', progress: 'Progress', slow: 'Slow', fast: 'Fast',
-    details: 'Details', connected: 'Connected', disconnected: 'Disconnected',
+    details: 'Details', connected: 'Connected', reconnecting: 'Reconnecting', disconnected: 'Disconnected',
     machineMode: 'Machine Mode', robotState: 'Robot State', cncState: 'CNC State',
     currentPhase: 'Phase', currentPallet: 'Pallet', currentSlot: 'Slot',
     machined: 'Machined', remaining: 'Remaining', total: 'Total',

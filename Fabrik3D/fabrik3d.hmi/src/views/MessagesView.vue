@@ -32,6 +32,7 @@ const messages = ref<OperatorMessageDto[]>([])
 function fmtDate(iso: string) { try { return new Date(iso).toLocaleString() } catch { return iso } }
 async function load() { try { messages.value = await api.getMessages() } catch { messages.value = [] } }
 
-onMounted(() => { void load(); hub.on({ onOperatorMessage: () => { void load() } }) })
-onUnmounted(() => { hub.on({ onOperatorMessage: undefined }) })
+let unsub: (() => void) | null = null
+onMounted(() => { void load(); unsub = hub.subscribe({ onOperatorMessage: () => { void load() } }) })
+onUnmounted(() => { unsub?.() })
 </script>

@@ -3,7 +3,7 @@
     <!-- Version bar -->
     <div class="hmi-version d-flex justify-content-between align-items-center bg-white border-bottom">
       <span>Fabrik3D HMI v1.0.0</span>
-      <HmiConnectionBadge :connected="connected" />
+      <HmiConnectionBadge :connectionState="connectionState" />
     </div>
 
     <!-- Main area: content + sidebar -->
@@ -31,5 +31,5 @@ import HmiConnectionBadge from './HmiConnectionBadge.vue'
 import HmiStatusPanel from '@/components/dashboard/HmiStatusPanel.vue'
 import { useMachineState } from '@/composables/useMachineState'
 
-const { machine, currentJob, session, connected } = useMachineState()
+const { machine, currentJob, session, connectionState } = useMachineState()
 </script>

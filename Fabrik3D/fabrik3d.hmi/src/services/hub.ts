@@ -1,5 +1,7 @@
 import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
 
+// ── Event DTOs (matching Fabrik3D.Contracts.Events) ──
+
 export interface JobStateChangedEvent {
   jobId: string; oldStatus: string; newStatus: string; timestampUtc: string
 }
@@ -24,6 +26,12 @@ export interface MachineStateChangedEvent {
   isRunning: boolean; isPaused: boolean; timestampUtc: string
 }
 
+// ── Connection state ──
+
+export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected'
+
+// ── Callback map ──
+
 export type HubCallbacks = {
   onJobStateChanged?: (e: JobStateChangedEvent) => void
   onSimulationStateChanged?: (e: SimulationStateChangedEvent) => void
@@ -31,15 +39,28 @@ export type HubCallbacks = {
   onAlarmAcknowledged?: (e: AlarmAcknowledgedEvent) => void
   onOperatorMessage?: (e: OperatorMessageEvent) => void
   onMachineStateChanged?: (e: MachineStateChangedEvent) => void
+  onConnectionStateChanged?: (s: ConnectionState) => void
 }
 
+// ── Internal state ──
+
 let connection: HubConnection | null = null
-const callbacks: HubCallbacks = {}
+let nextId = 0
+const listeners = new Map<number, Partial<HubCallbacks>>()
+
+function dispatch(key: string, arg: unknown): void {
+  for (const l of listeners.values()) {
+    const fn = (l as Record<string, ((a: unknown) => void) | undefined>)[key]
+    fn?.(arg)
+  }
+}
 
 function resolveHubUrl(): string {
   const base = import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined
   return base ? `${base.replace(/\/+$/, '')}/hubs/orchestration` : '/hubs/orchestration'
 }
+
+// ── Public API ──
 
 export async function connect(): Promise<void> {
   if (connection) return
@@ -48,17 +69,47 @@ export async function connect(): Promise<void> {
     .withUrl(url).withAutomaticReconnect()
     .configureLogging(LogLevel.Information).build()
 
-  connection.on('JobStateChanged', (e: JobStateChangedEvent) => callbacks.onJobStateChanged?.(e))
-  connection.on('SimulationStateChanged', (e: SimulationStateChangedEvent) => callbacks.onSimulationStateChanged?.(e))
-  connection.on('AlarmRaised', (e: AlarmRaisedEvent) => callbacks.onAlarmRaised?.(e))
-  connection.on('AlarmAcknowledged', (e: AlarmAcknowledgedEvent) => callbacks.onAlarmAcknowledged?.(e))
-  connection.on('OperatorMessage', (e: OperatorMessageEvent) => callbacks.onOperatorMessage?.(e))
-  connection.on('MachineStateChanged', (e: MachineStateChangedEvent) => callbacks.onMachineStateChanged?.(e))
+  connection.on('JobStateChanged', (e) => dispatch('onJobStateChanged', e))
+  connection.on('SimulationStateChanged', (e) => dispatch('onSimulationStateChanged', e))
+  connection.on('AlarmRaised', (e) => dispatch('onAlarmRaised', e))
+  connection.on('AlarmAcknowledged', (e) => dispatch('onAlarmAcknowledged', e))
+  connection.on('OperatorMessage', (e) => dispatch('onOperatorMessage', e))
+  connection.on('MachineStateChanged', (e) => dispatch('onMachineStateChanged', e))
 
-  try { await connection.start(); console.log('[HMI Hub] Connected') }
-  catch (err) { console.warn('[HMI Hub] Offline', err); connection = null }
+  connection.onreconnecting(() => dispatch('onConnectionStateChanged', 'reconnecting'))
+  connection.onreconnected(() => dispatch('onConnectionStateChanged', 'connected'))
+  connection.onclose(() => dispatch('onConnectionStateChanged', 'disconnected'))
+
+  try {
+    await connection.start()
+    console.log('[HMI Hub] Connected')
+    dispatch('onConnectionStateChanged', 'connected')
+  } catch (err) {
+    console.warn('[HMI Hub] Offline', err)
+    connection = null
+    dispatch('onConnectionStateChanged', 'disconnected')
+  }
 }
 
-export function on(cbs: Partial<HubCallbacks>): void { Object.assign(callbacks, cbs) }
+/** Subscribe to hub events. Returns an unsubscribe function. */
+export function subscribe(cbs: Partial<HubCallbacks>): () => void {
+  const id = nextId++
+  listeners.set(id, cbs)
+  return () => { listeners.delete(id) }
+}
+
+/** @deprecated Use subscribe() for multi-listener support. */
+export function on(cbs: Partial<HubCallbacks>): void {
+  if (!listeners.has(-1)) listeners.set(-1, {})
+  Object.assign(listeners.get(-1)!, cbs)
+}
+
 export async function disconnect(): Promise<void> { if (connection) { await connection.stop(); connection = null } }
 export function isConnected(): boolean { return connection?.state === 'Connected' }
+
+export function getConnectionState(): ConnectionState {
+  if (!connection) return 'disconnected'
+  if (connection.state === 'Connected') return 'connected'
+  if (connection.state === 'Reconnecting') return 'reconnecting'
+  return 'disconnected'
+}

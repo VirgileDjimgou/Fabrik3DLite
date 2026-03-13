@@ -90,16 +90,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as api from '@/services/api'
-import type { JobDto, TaskDto, SimulationSessionDto, MachineStateDto } from '@/services/api'
+import * as hub from '@/services/hub'
+import type { JobDto, TaskDto } from '@/services/api'
+import { useMachineState } from '@/composables/useMachineState'
 
 const { t } = useI18n()
+const { machine, session } = useMachineState()
 const job = ref<JobDto | null>(null)
 const tasks = ref<TaskDto[]>([])
-const session = ref<SimulationSessionDto | null>(null)
-const machine = ref<MachineStateDto | null>(null)
 
 function statusBadge(s: string) {
   return s === 'Running' ? 'bg-success' : s === 'Paused' ? 'bg-warning text-dark'
@@ -112,25 +113,29 @@ const sessionProgress = computed(() => {
   return Math.round((s.machinedCount / s.totalCount) * 100)
 })
 
-async function load() {
-  const jobs = await api.getJobs()
-  const active = jobs.find(j => j.status === 'Running' || j.status === 'Paused') ?? jobs[0] ?? null
-  job.value = active
-  if (active) {
-    try { tasks.value = await api.getJobTasks(active.id) } catch { tasks.value = [] }
-    if (active.simulationSessionId) {
-      try { session.value = await api.getSessionById(active.simulationSessionId) } catch { session.value = null }
-    } else {
-      try { session.value = await api.getSessionByJob(active.id) } catch { session.value = null }
-    }
-    try { const m = await api.getCurrentMachineState(); if (m) machine.value = m } catch { machine.value = null }
-  }
+async function loadJob() {
+  try {
+    const jobs = await api.getJobs()
+    const active = jobs.find(j => j.status === 'Running' || j.status === 'Paused') ?? jobs[0] ?? null
+    job.value = active
+    if (active) {
+      try { tasks.value = await api.getJobTasks(active.id) } catch { tasks.value = [] }
+    } else { tasks.value = [] }
+  } catch { /* offline */ }
 }
 
-async function doStart() { if (job.value) { await api.startJob(job.value.id); await load() } }
-async function doPause() { if (job.value) { await api.pauseJob(job.value.id); await load() } }
-async function doResume() { if (job.value) { await api.resumeJob(job.value.id); await load() } }
-async function doStop() { if (job.value) { await api.stopJob(job.value.id); await load() } }
+async function doStart() { if (job.value) { await api.startJob(job.value.id); await loadJob() } }
+async function doPause() { if (job.value) { await api.pauseJob(job.value.id); await loadJob() } }
+async function doResume() { if (job.value) { await api.resumeJob(job.value.id); await loadJob() } }
+async function doStop() { if (job.value) { await api.stopJob(job.value.id); await loadJob() } }
 
-onMounted(load)
+let unsub: (() => void) | null = null
+onMounted(() => {
+  void loadJob()
+  unsub = hub.subscribe({
+    onJobStateChanged: () => { void loadJob() },
+    onSimulationStateChanged: () => { void loadJob() },
+  })
+})
+onUnmounted(() => { unsub?.() })
 </script>
