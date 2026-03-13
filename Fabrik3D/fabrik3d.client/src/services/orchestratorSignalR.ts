@@ -79,15 +79,32 @@ export type OrchestrationCallbacks = {
 let connection: HubConnection | null = null
 const callbacks: OrchestrationCallbacks = {}
 
+/** Build the hub URL from the same base the REST client uses. */
+function resolveHubUrl(): string {
+  const base = import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined
+  if (base) {
+    // Explicit backend — use absolute URL so SignalR skips the Vite proxy
+    return `${base.replace(/\/+$/, '')}/hubs/orchestration`
+  }
+  // Relative URL — goes through the Vite proxy in development
+  return '/hubs/orchestration'
+}
+
 /**
  * Connect to the orchestration hub.
  * Safe to call multiple times — only creates one connection.
  */
-export async function connect(hubUrl = '/hubs/orchestration'): Promise<void> {
+export async function connect(hubUrl?: string): Promise<void> {
   if (connection) return
 
+  const url = hubUrl ?? resolveHubUrl()
+
+  if (import.meta.env.DEV) {
+    console.log(`[SignalR] hub URL → ${url}`)
+  }
+
   connection = new HubConnectionBuilder()
-    .withUrl(hubUrl)
+    .withUrl(url)
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Information)
     .build()
@@ -115,7 +132,7 @@ export async function connect(hubUrl = '/hubs/orchestration'): Promise<void> {
     await connection.start()
     console.log('[SignalR] Connected to orchestration hub')
   } catch (err) {
-    console.warn('[SignalR] Failed to connect — running offline', err)
+    console.warn(`[SignalR] Failed to connect to ${url} — running offline`, err)
     connection = null
   }
 }

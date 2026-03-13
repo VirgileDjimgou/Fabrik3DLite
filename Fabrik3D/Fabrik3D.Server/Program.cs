@@ -54,8 +54,10 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// CORS must come before any endpoint-producing middleware
 app.UseCors("DevCors");
+
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();

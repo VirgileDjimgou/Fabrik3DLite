@@ -2,10 +2,19 @@
  * Lightweight REST client for the Fabrik3D orchestration backend.
  *
  * Uses native fetch — no heavy networking framework required.
- * Base URL defaults to the Vite proxy target (same origin in dev).
+ * Base URL defaults to the Vite proxy (/api) so requests go through
+ * the dev-server proxy in development. Set VITE_ORCHESTRATOR_URL to
+ * target a specific backend directly.
  */
 
-const BASE = '/api'
+const ORCHESTRATOR_BASE = import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined
+
+/** Resolved base for all REST calls (empty string = same origin / proxy). */
+const BASE = ORCHESTRATOR_BASE ? `${ORCHESTRATOR_BASE.replace(/\/+$/, '')}/api` : '/api'
+
+if (import.meta.env.DEV) {
+  console.log(`[API] base → ${BASE}`)
+}
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
