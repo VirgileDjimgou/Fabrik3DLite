@@ -1,8 +1,10 @@
-using Fabrik3D.Server.DTOs;
-using Fabrik3D.Server.Mapping;
-using Fabrik3D.Server.Models.Entities;
-using Fabrik3D.Server.Models.Enums;
-using Fabrik3D.Server.Repositories;
+using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Contracts.Enums;
+using Fabrik3D.Contracts.Events;
+using Fabrik3D.Domain.Entities;
+using Fabrik3D.Domain.Mapping;
+using Fabrik3D.Infrastructure.Repositories;
+using TaskStatusEnum = Fabrik3D.Contracts.Enums.TaskStatus;
 
 namespace Fabrik3D.Server.Services;
 
@@ -65,7 +67,7 @@ public class JobService
                 SlotRow = t.SlotRow,
                 SlotColumn = t.SlotColumn,
                 SequenceOrder = i,
-                Status = Models.Enums.TaskStatus.Pending,
+                Status = TaskStatusEnum.Pending,
             }).ToList();
 
             await _tasks.InsertManyAsync(tasks);
@@ -98,7 +100,6 @@ public class JobService
         job.StartedAtUtc = DateTime.UtcNow;
         job.UpdatedAtUtc = DateTime.UtcNow;
 
-        // Create simulation session
         var tasks = await _tasks.GetByJobIdAsync(id);
         var session = new SimulationSession
         {
@@ -146,6 +147,11 @@ public class JobService
                 session.Status = SimulationStatus.Paused;
                 session.IsPaused = true;
                 await _sessions.UpdateAsync(session);
+
+                await _hub.SimulationStateChangedAsync(new SimulationStateChangedEvent(
+                    session.Id, job.Id, session.Status.ToString(),
+                    session.CurrentPhase, session.MachinedCount,
+                    session.RemainingCount, session.TotalCount, DateTime.UtcNow));
             }
         }
 
@@ -178,6 +184,11 @@ public class JobService
                 session.Status = SimulationStatus.Running;
                 session.IsPaused = false;
                 await _sessions.UpdateAsync(session);
+
+                await _hub.SimulationStateChangedAsync(new SimulationStateChangedEvent(
+                    session.Id, job.Id, session.Status.ToString(),
+                    session.CurrentPhase, session.MachinedCount,
+                    session.RemainingCount, session.TotalCount, DateTime.UtcNow));
             }
         }
 
@@ -211,6 +222,11 @@ public class JobService
                 session.IsPaused = false;
                 session.EndedAtUtc = DateTime.UtcNow;
                 await _sessions.UpdateAsync(session);
+
+                await _hub.SimulationStateChangedAsync(new SimulationStateChangedEvent(
+                    session.Id, job.Id, session.Status.ToString(),
+                    session.CurrentPhase, session.MachinedCount,
+                    session.RemainingCount, session.TotalCount, DateTime.UtcNow));
             }
         }
 

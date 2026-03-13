@@ -1,4 +1,4 @@
-using Fabrik3D.Server.DTOs;
+using Fabrik3D.Contracts.Events;
 using Fabrik3D.Server.Hubs;
 using Microsoft.AspNetCore.SignalR;
 
@@ -23,6 +23,12 @@ public class HubNotificationService
     public Task AlarmRaisedAsync(AlarmRaisedEvent evt) =>
         _hub.Clients.All.SendAsync("AlarmRaised", evt);
 
+    public Task AlarmAcknowledgedAsync(AlarmAcknowledgedEvent evt) =>
+        _hub.Clients.All.SendAsync("AlarmAcknowledged", evt);
+
     public Task OperatorMessageAsync(OperatorMessageEvent evt) =>
         _hub.Clients.All.SendAsync("OperatorMessage", evt);
+
+    public Task MachineStateChangedAsync(MachineStateChangedEvent evt) =>
+        _hub.Clients.All.SendAsync("MachineStateChanged", evt);
 }

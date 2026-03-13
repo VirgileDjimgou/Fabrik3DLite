@@ -1,22 +1,11 @@
+using Fabrik3D.Infrastructure;
 using Fabrik3D.Server.Hubs;
-using Fabrik3D.Server.Repositories;
 using Fabrik3D.Server.Services;
-using Fabrik3D.Server.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── MongoDB ────────────────────────────────────────────────────────
-builder.Services.Configure<MongoDbSettings>(
-    builder.Configuration.GetSection(MongoDbSettings.SectionName));
-builder.Services.AddSingleton<MongoDbContext>();
-
-// ── Repositories ───────────────────────────────────────────────────
-builder.Services.AddSingleton<JobRepository>();
-builder.Services.AddSingleton<TaskRepository>();
-builder.Services.AddSingleton<SimulationSessionRepository>();
-builder.Services.AddSingleton<AlarmRepository>();
-builder.Services.AddSingleton<OperatorMessageRepository>();
-builder.Services.AddSingleton<MachineStateRepository>();
+// ── Infrastructure (MongoDB + repositories) ────────────────────────
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // ── Services ───────────────────────────────────────────────────────
 builder.Services.AddSingleton<HubNotificationService>();
@@ -54,9 +43,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -74,6 +60,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<OrchestrationHub>("/hubs/orchestration");
-app.MapFallbackToFile("/index.html");
 
 app.Run();

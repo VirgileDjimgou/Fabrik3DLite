@@ -1,4 +1,4 @@
-using Fabrik3D.Server.DTOs;
+using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 

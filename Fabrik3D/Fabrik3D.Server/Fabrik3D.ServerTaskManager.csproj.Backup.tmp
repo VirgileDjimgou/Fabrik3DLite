@@ -6,10 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>b37d571e-caa0-47c8-976d-69b5faaa61d8</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <SpaRoot>..\fabrik3d.client</SpaRoot>
+    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+    <SpaProxyServerUrl>https://localhost:56055</SpaProxyServerUrl>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
+      <Version>8.*-*</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.30.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
@@ -17,6 +24,18 @@
     <ProjectReference Include="..\Fabrik3D.Contracts\Fabrik3D.Contracts.csproj" />
     <ProjectReference Include="..\Fabrik3D.Domain\Fabrik3D.Domain.csproj" />
     <ProjectReference Include="..\Fabrik3D.Infrastructure\Fabrik3D.Infrastructure.csproj" />
+    <ProjectReference Include="..\fabrik3d.client\fabrik3d.Simulator.esproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="DTOs\" />
+    <Folder Include="Mapping\" />
+    <Folder Include="Models\Entities\" />
+    <Folder Include="Models\Enums\" />
+    <Folder Include="Repositories\" />
+    <Folder Include="Settings\" />
   </ItemGroup>
 
 </Project>

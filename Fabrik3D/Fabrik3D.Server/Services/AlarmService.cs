@@ -1,8 +1,9 @@
-using Fabrik3D.Server.DTOs;
-using Fabrik3D.Server.Mapping;
-using Fabrik3D.Server.Models.Entities;
-using Fabrik3D.Server.Models.Enums;
-using Fabrik3D.Server.Repositories;
+using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Contracts.Enums;
+using Fabrik3D.Contracts.Events;
+using Fabrik3D.Domain.Entities;
+using Fabrik3D.Domain.Mapping;
+using Fabrik3D.Infrastructure.Repositories;
 
 namespace Fabrik3D.Server.Services;
 
@@ -56,14 +57,16 @@ public class AlarmService
 
     public async Task<AlarmDto?> AcknowledgeAsync(string id, string acknowledgedBy)
     {
-        var alarms = await _alarms.GetAllAsync(1000);
-        var alarm = alarms.FirstOrDefault(a => a.Id == id);
+        var alarm = await _alarms.GetByIdAsync(id);
         if (alarm is null) return null;
 
         alarm.Acknowledged = true;
         alarm.AcknowledgedAtUtc = DateTime.UtcNow;
         alarm.AcknowledgedBy = acknowledgedBy;
         await _alarms.UpdateAsync(alarm);
+
+        await _hub.AlarmAcknowledgedAsync(new AlarmAcknowledgedEvent(
+            alarm.Id, acknowledgedBy, DateTime.UtcNow));
 
         return alarm.ToDto();
     }

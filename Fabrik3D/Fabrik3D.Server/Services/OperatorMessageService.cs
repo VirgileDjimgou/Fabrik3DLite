@@ -1,7 +1,8 @@
-using Fabrik3D.Server.DTOs;
-using Fabrik3D.Server.Mapping;
-using Fabrik3D.Server.Models.Entities;
-using Fabrik3D.Server.Repositories;
+using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Contracts.Events;
+using Fabrik3D.Domain.Entities;
+using Fabrik3D.Domain.Mapping;
+using Fabrik3D.Infrastructure.Repositories;
 
 namespace Fabrik3D.Server.Services;
 

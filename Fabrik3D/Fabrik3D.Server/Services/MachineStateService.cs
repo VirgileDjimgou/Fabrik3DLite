@@ -1,15 +1,22 @@
-using Fabrik3D.Server.DTOs;
-using Fabrik3D.Server.Mapping;
-using Fabrik3D.Server.Models.Entities;
-using Fabrik3D.Server.Repositories;
+using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Contracts.Enums;
+using Fabrik3D.Contracts.Events;
+using Fabrik3D.Domain.Entities;
+using Fabrik3D.Domain.Mapping;
+using Fabrik3D.Infrastructure.Repositories;
 
 namespace Fabrik3D.Server.Services;
 
 public class MachineStateService
 {
     private readonly MachineStateRepository _states;
+    private readonly HubNotificationService _hub;
 
-    public MachineStateService(MachineStateRepository states) => _states = states;
+    public MachineStateService(MachineStateRepository states, HubNotificationService hub)
+    {
+        _states = states;
+        _hub = hub;
+    }
 
     public async Task<MachineStateDto?> GetCurrentAsync()
     {
@@ -17,10 +24,42 @@ public class MachineStateService
         return state?.ToDto();
     }
 
-    public async Task<MachineStateDto> UpsertAsync(MachineState state)
+    /// <summary>
+    /// Simulator pushes the current machine state snapshot.
+    /// Persists to MongoDB and broadcasts via SignalR.
+    /// </summary>
+    public async Task<MachineStateDto> UpdateCurrentAsync(UpdateMachineStateRequest request)
     {
-        state.LastUpdatedAtUtc = DateTime.UtcNow;
-        await _states.UpsertAsync(state);
+        if (!Enum.TryParse<MachineMode>(request.MachineMode, true, out var mode))
+            mode = MachineMode.Automatic;
+        if (!Enum.TryParse<SimulationStatus>(request.SimulationStatus, true, out var simStatus))
+            simStatus = SimulationStatus.Idle;
+
+        var state = new MachineState
+        {
+            SimulationSessionId = request.SimulationSessionId,
+            MachineMode = mode,
+            SimulationStatus = simStatus,
+            RobotState = request.RobotState,
+            CncState = request.CncState,
+            CurrentPhase = request.CurrentPhase,
+            CurrentPalletId = request.CurrentPalletId,
+            CurrentTaskId = request.CurrentTaskId,
+            CurrentPartId = request.CurrentPartId,
+            CurrentSlotRow = request.CurrentSlotRow,
+            CurrentSlotColumn = request.CurrentSlotColumn,
+            IsRunning = request.IsRunning,
+            IsPaused = request.IsPaused,
+            LastUpdatedAtUtc = DateTime.UtcNow,
+        };
+
+        await _states.UpsertCurrentAsync(state);
+
+        await _hub.MachineStateChangedAsync(new MachineStateChangedEvent(
+            state.Id, state.MachineMode.ToString(), state.SimulationStatus.ToString(),
+            state.RobotState, state.CncState, state.CurrentPhase,
+            state.IsRunning, state.IsPaused, DateTime.UtcNow));
+
         return state.ToDto();
     }
 }

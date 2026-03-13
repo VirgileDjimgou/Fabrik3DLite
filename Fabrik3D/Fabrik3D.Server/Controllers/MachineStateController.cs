@@ -1,4 +1,4 @@
-using Fabrik3D.Server.DTOs;
+using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Server.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,5 +21,15 @@ public class MachineStateController : ControllerBase
     {
         var dto = await _svc.GetCurrentAsync();
         return dto is null ? NoContent() : Ok(dto);
+    }
+
+    /// <summary>Simulator pushes the current machine state.</summary>
+    [HttpPut("current")]
+    [ProducesResponseType(typeof(MachineStateDto), 200)]
+    public async Task<IActionResult> UpdateCurrent(
+        [FromBody] UpdateMachineStateRequest request)
+    {
+        var dto = await _svc.UpdateCurrentAsync(request);
+        return Ok(dto);
     }
 }

@@ -1,7 +1,14 @@
 <Solution>
-  <Project Path="fabrik3d.client/fabrik3d.Simulator.esproj">
-    <Build />
-    <Deploy />
-  </Project>
-  <Project Path="Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj" />
+  <Folder Name="/src/">
+    <Project Path="Fabrik3D.Contracts/Fabrik3D.Contracts.csproj" />
+    <Project Path="Fabrik3D.Domain/Fabrik3D.Domain.csproj" />
+    <Project Path="Fabrik3D.Infrastructure/Fabrik3D.Infrastructure.csproj" />
+    <Project Path="Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj" />
+  </Folder>
+  <Folder Name="/clients/">
+    <Project Path="fabrik3d.client/fabrik3d.Simulator.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+  </Folder>
 </Solution>
