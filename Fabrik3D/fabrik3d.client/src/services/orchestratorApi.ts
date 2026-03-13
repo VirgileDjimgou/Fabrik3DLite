@@ -17,6 +17,9 @@ if (import.meta.env.DEV) {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  if (import.meta.env.DEV && method !== 'GET') {
+    console.log(`[Simulator][REST] ${method} ${path}`, body ?? '')
+  }
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers: body ? { 'Content-Type': 'application/json' } : undefined,

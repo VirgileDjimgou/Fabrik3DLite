@@ -11,11 +11,13 @@ public class MachineStateService
 {
     private readonly MachineStateRepository _states;
     private readonly HubNotificationService _hub;
+    private readonly ILogger<MachineStateService> _log;
 
-    public MachineStateService(MachineStateRepository states, HubNotificationService hub)
+    public MachineStateService(MachineStateRepository states, HubNotificationService hub, ILogger<MachineStateService> log)
     {
         _states = states;
         _hub = hub;
+        _log = log;
     }
 
     public async Task<MachineStateDto?> GetCurrentAsync()
@@ -54,6 +56,11 @@ public class MachineStateService
         };
 
         await _states.UpsertCurrentAsync(state);
+
+        _log.LogInformation(
+            "[Server][MachineState] UpdateCurrent → mode={Mode} sim={SimStatus} robot={Robot} cnc={Cnc} phase={Phase} slot=R{Row}C{Col}",
+            state.MachineMode, state.SimulationStatus, state.RobotState, state.CncState,
+            state.CurrentPhase, state.CurrentSlotRow, state.CurrentSlotColumn);
 
         await _hub.MachineStateChangedAsync(new MachineStateChangedEvent(
             state.Id, state.MachineMode.ToString(), state.SimulationStatus.ToString(),

@@ -10,13 +10,16 @@ public class SimulationSessionService
 {
     private readonly SimulationSessionRepository _sessions;
     private readonly HubNotificationService _hub;
+    private readonly ILogger<SimulationSessionService> _log;
 
     public SimulationSessionService(
         SimulationSessionRepository sessions,
-        HubNotificationService hub)
+        HubNotificationService hub,
+        ILogger<SimulationSessionService> log)
     {
         _sessions = sessions;
         _hub = hub;
+        _log = log;
     }
 
     public async Task<SimulationSessionDto?> GetByIdAsync(string id)
@@ -56,6 +59,10 @@ public class SimulationSessionService
 
         await _sessions.UpdateAsync(session);
 
+        _log.LogInformation(
+            "[Server][Simulation] UpdateState → session={SessionId} status={Status} phase={Phase} machined={Machined}/{Total}",
+            session.Id, session.Status, session.CurrentPhase, session.MachinedCount, session.TotalCount);
+
         await _hub.SimulationStateChangedAsync(new SimulationStateChangedEvent(
             session.Id, session.JobId, session.Status.ToString(),
             session.CurrentPhase, session.MachinedCount,
@@ -74,6 +81,8 @@ public class SimulationSessionService
 
         session.LastHeartbeatUtc = DateTime.UtcNow;
         await _sessions.UpdateAsync(session);
+
+        _log.LogDebug("[Server][Simulation] Heartbeat → session={SessionId}", session.Id);
 
         return session.ToDto();
     }

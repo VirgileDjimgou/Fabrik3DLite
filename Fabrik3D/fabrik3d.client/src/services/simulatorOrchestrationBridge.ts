@@ -13,6 +13,7 @@ import type { PalletMachiningWorkflow, PalletWorkflowPhase, WorkflowRunState } f
 import type { PalletData } from '../simulation/PalletModels'
 import * as api from './orchestratorApi'
 import * as hub from './orchestratorSignalR'
+import { logBridge } from './devLogger'
 
 // ── Active orchestration context ───────────────────────────────────
 
@@ -177,6 +178,10 @@ export class SimulatorOrchestrationBridge {
         totalCount: wf.totalSlots,
         isPaused: wf.runState === 'paused',
       })
+      logBridge('simulation state →', {
+        status: runStateToStatus[wf.runState], phase: wf.phase,
+        machined: wf.slotsCompleted, remaining: wf.remainingSlots, total: wf.totalSlots,
+      })
     } catch { /* offline — silent */ }
   }
 
@@ -201,6 +206,11 @@ export class SimulatorOrchestrationBridge {
         currentSlotColumn: wf.currentCol,
         isRunning: wf.runState === 'running',
         isPaused: wf.runState === 'paused',
+      })
+      logBridge('machine state →', {
+        phase: wf.phase, robot: wf.runState === 'running' ? 'MOVING' : 'IDLE',
+        cnc: wf.phase === 'MACHINING' ? 'MACHINING' : 'IDLE',
+        slot: `R${wf.currentRow} C${wf.currentCol}`,
       })
     } catch { /* offline — silent */ }
   }

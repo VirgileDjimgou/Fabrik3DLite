@@ -80,6 +80,7 @@ import {
   SINGLE_CELL_FLOW,
 } from '../simulation/SingleConveyorCellLayout'
 import { SimulatorOrchestrationBridge } from '../services/simulatorOrchestrationBridge'
+import { logDashboardSnapshot } from '../services/devLogger'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
@@ -193,6 +194,22 @@ function syncDashboard(): void {
   const p = workflow.pallet
   dashPalletId.value = p?.id ?? ''
   dashMaterial.value = p?.materialType ?? ''
+
+  logDashboardSnapshot({
+    runState: dashRunState.value,
+    phase: dashPhase.value,
+    palletId: dashPalletId.value,
+    materialType: dashMaterial.value,
+    currentRow: dashRow.value,
+    currentCol: dashCol.value,
+    machinedCount: dashCompleted.value,
+    remainingCount: dashRemaining.value,
+    totalCount: dashTotal.value,
+    progressPercent: dashProgress.value,
+    cncState: dashCncState.value,
+    activeJobId: bridge.ctx.jobId,
+    activeSessionId: bridge.ctx.sessionId,
+  })
 }
 
 // ── Dashboard event handlers ───────────────────────────────────────

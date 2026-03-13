@@ -14,17 +14,20 @@ public class JobService
     private readonly TaskRepository _tasks;
     private readonly SimulationSessionRepository _sessions;
     private readonly HubNotificationService _hub;
+    private readonly ILogger<JobService> _log;
 
     public JobService(
         JobRepository jobs,
         TaskRepository tasks,
         SimulationSessionRepository sessions,
-        HubNotificationService hub)
+        HubNotificationService hub,
+        ILogger<JobService> log)
     {
         _jobs = jobs;
         _tasks = tasks;
         _sessions = sessions;
         _hub = hub;
+        _log = log;
     }
 
     public async Task<List<JobDto>> GetAllAsync()
@@ -54,6 +57,7 @@ public class JobService
         };
 
         await _jobs.CreateAsync(job);
+        _log.LogInformation("[Server][Jobs] Created → id={JobId} name={Name} mode={Mode}", job.Id, job.Name, mode);
 
         if (request.Tasks.Count > 0)
         {
@@ -113,6 +117,8 @@ public class JobService
 
         await _jobs.UpdateAsync(job);
 
+        _log.LogInformation("[Server][Jobs] StartAsync → job={JobId} session={SessionId} tasks={TaskCount}", job.Id, session.Id, tasks.Count);
+
         await _hub.JobStateChangedAsync(new JobStateChangedEvent(
             job.Id, oldStatus, job.Status.ToString(), DateTime.UtcNow));
 
@@ -155,6 +161,8 @@ public class JobService
             }
         }
 
+        _log.LogInformation("[Server][Jobs] PauseAsync → job={JobId}", job.Id);
+
         await _hub.JobStateChangedAsync(new JobStateChangedEvent(
             job.Id, oldStatus, job.Status.ToString(), DateTime.UtcNow));
 
@@ -191,6 +199,8 @@ public class JobService
                     session.RemainingCount, session.TotalCount, DateTime.UtcNow));
             }
         }
+
+        _log.LogInformation("[Server][Jobs] ResumeAsync → job={JobId}", job.Id);
 
         await _hub.JobStateChangedAsync(new JobStateChangedEvent(
             job.Id, oldStatus, job.Status.ToString(), DateTime.UtcNow));
@@ -229,6 +239,8 @@ public class JobService
                     session.RemainingCount, session.TotalCount, DateTime.UtcNow));
             }
         }
+
+        _log.LogInformation("[Server][Jobs] StopAsync → job={JobId}", job.Id);
 
         await _hub.JobStateChangedAsync(new JobStateChangedEvent(
             job.Id, oldStatus, job.Status.ToString(), DateTime.UtcNow));

@@ -5,6 +5,7 @@
  */
 
 import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
+import { logSignalR } from './devLogger'
 
 // ── Event payloads (match Fabrik3D.Contracts.Events) ───────────────
 
@@ -110,21 +111,27 @@ export async function connect(hubUrl?: string): Promise<void> {
     .build()
 
   connection.on('JobStateChanged', (evt: JobStateChangedEvent) => {
+    logSignalR('JobStateChanged', evt)
     callbacks.onJobStateChanged?.(evt)
   })
   connection.on('SimulationStateChanged', (evt: SimulationStateChangedEvent) => {
+    logSignalR('SimulationStateChanged', evt)
     callbacks.onSimulationStateChanged?.(evt)
   })
   connection.on('AlarmRaised', (evt: AlarmRaisedEvent) => {
+    logSignalR('AlarmRaised', evt)
     callbacks.onAlarmRaised?.(evt)
   })
   connection.on('AlarmAcknowledged', (evt: AlarmAcknowledgedEvent) => {
+    logSignalR('AlarmAcknowledged', evt)
     callbacks.onAlarmAcknowledged?.(evt)
   })
   connection.on('OperatorMessage', (evt: OperatorMessageEvent) => {
+    logSignalR('OperatorMessage', evt)
     callbacks.onOperatorMessage?.(evt)
   })
   connection.on('MachineStateChanged', (evt: MachineStateChangedEvent) => {
+    logSignalR('MachineStateChanged', evt)
     callbacks.onMachineStateChanged?.(evt)
   })
 
