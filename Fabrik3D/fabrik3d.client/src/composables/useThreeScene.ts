@@ -1,4 +1,5 @@
-import { ref, shallowRef, onBeforeUnmount, type Ref, type ShallowRef } from 'vue'
+import { ref, shallowRef, onBeforeUnmount } from 'vue'
+import type { Ref, ShallowRef } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 

@@ -47,6 +47,8 @@
     :total-slots="dashTotal"
     :progress-percent="dashProgress"
     :cnc-state="dashCncState"
+    :job-id="bridge.ctx.jobId ?? ''"
+    :session-id="bridge.ctx.sessionId ?? ''"
     @start="handleStart"
     @pause="handlePause"
     @resume="handleResume"
@@ -56,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef, ref, watch } from 'vue'
+import { shallowRef, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import ThreeScene from './ThreeScene.vue'
 import ScaledRobotComponent from './ScaledRobotComponent.vue'
 import ConveyorBelt from './ConveyorBelt.vue'
@@ -77,6 +79,7 @@ import {
   SINGLE_CELL_CONVEYOR,
   SINGLE_CELL_FLOW,
 } from '../simulation/SingleConveyorCellLayout'
+import { SimulatorOrchestrationBridge } from '../services/simulatorOrchestrationBridge'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
@@ -104,6 +107,18 @@ const dashCncState = ref('IDLE')
 const robotController = shallowRef<RobotController | null>(null)
 let workflow: PalletMachiningWorkflow | null = null
 let workflowUpdateHooked = false
+
+// ── Orchestration bridge ───────────────────────────────────────────
+const bridge = new SimulatorOrchestrationBridge()
+
+onMounted(() => {
+  bridge.init()
+  // React to external (server-driven) state changes
+  bridge.onExternalPause = () => workflow?.pause()
+  bridge.onExternalResume = () => workflow?.resume()
+  bridge.onExternalStop = () => workflow?.stop()
+})
+onBeforeUnmount(() => bridge.dispose())
 
 function onControllerReady(controller: RobotController) {
   robotController.value = controller
@@ -149,6 +164,9 @@ function ensureWorkflow(): PalletMachiningWorkflow | null {
     syncDashboard()
   }
 
+  // Bind bridge AFTER dashboard hooks are set so it can chain them
+  bridge.bindWorkflow(workflow)
+
   // Hook workflow.update() into the controller's frame loop (once).
   if (!workflowUpdateHooked) {
     workflowUpdateHooked = true
@@ -184,23 +202,26 @@ function handleStart(): void {
   if (!wf) return
   const pallet = palletFeedRef.value?.getFirstStoppedPallet()
   if (!pallet) return
-  wf.start(pallet)
-  syncDashboard()
+  bridge.start(pallet, (p) => {
+    wf.start(p)
+    syncDashboard()
+  })
 }
 
 function handlePause(): void {
-  workflow?.pause()
+  bridge.pause(() => workflow?.pause())
 }
 
 function handleResume(): void {
-  workflow?.resume()
+  bridge.resume(() => workflow?.resume())
 }
 
 function handleStop(): void {
-  workflow?.stop()
+  bridge.stop(() => workflow?.stop())
 }
 
 function handleReset(): void {
+  bridge.reset()
   workflow?.reset()
   dashPhase.value = 'IDLE'
   dashRunState.value = 'idle'

@@ -73,6 +73,16 @@
       <label>CNC</label>
       <span class="value">{{ cncState }}</span>
     </div>
+
+    <!-- ── Orchestration context ─────────────────────── -->
+    <div class="section" v-if="jobId">
+      <label>Job</label>
+      <span class="value orchestration-id">{{ jobId.slice(-6) }}</span>
+    </div>
+    <div class="section" v-if="sessionId">
+      <label>Session</label>
+      <span class="value orchestration-id">{{ sessionId.slice(-6) }}</span>
+    </div>
   </div>
 </template>
 
@@ -92,6 +102,8 @@ const props = withDefaults(defineProps<{
   totalSlots: number
   progressPercent: number
   cncState: string
+  jobId?: string
+  sessionId?: string
 }>(), {
   runState: 'idle',
   phase: 'IDLE',
@@ -104,6 +116,8 @@ const props = withDefaults(defineProps<{
   totalSlots: 0,
   progressPercent: 0,
   cncState: 'IDLE',
+  jobId: '',
+  sessionId: '',
 })
 
 defineEmits<{
@@ -265,6 +279,7 @@ const partStateClass = computed(() => {
 .state-active { color: #ffcc44; }
 .state-cnc    { color: #ff6644; }
 .state-done   { color: #44dd88; }
+.orchestration-id { font-family: monospace; font-size: 0.72rem; color: #8899aa; }
 
 /* ── Metrics ──────────────────────────────── */
 .metrics {

@@ -47,15 +47,25 @@ export default defineConfig({
     },
     server: {
         proxy: {
-            '^/weatherforecast': {
+            '/api': {
                 target,
-                secure: false
-            }
+                secure: false,
+            },
+            '/hubs': {
+                target,
+                secure: false,
+                ws: true,
+            },
         },
         port: parseInt(env.DEV_SERVER_PORT || '56055'),
         https: {
             key: fs.readFileSync(keyFilePath),
             cert: fs.readFileSync(certFilePath),
         }
-    }
+    },
+    optimizeDeps: {
+        esbuildOptions: {
+            loader: { '.js': 'ts' },
+        },
+    },
 })
