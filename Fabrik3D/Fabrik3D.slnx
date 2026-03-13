@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Projektmappenelemente/">
+    <File Path="../.gitignore" />
+    <File Path="../README.md" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="Fabrik3D.Contracts/Fabrik3D.Contracts.csproj" />
     <Project Path="Fabrik3D.Domain/Fabrik3D.Domain.csproj" />

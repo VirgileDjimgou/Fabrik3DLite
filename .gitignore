@@ -3,3 +3,5 @@ bin/
 obj/
 *.user
 *.suo
+fabrik3d.hmi/node_modules/
+fabrik3d.client/node_modules/
