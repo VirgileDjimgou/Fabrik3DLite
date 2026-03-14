@@ -1,6 +1,15 @@
 <Solution>
   <Folder Name="/Projektmappenelemente/">
     <File Path="../.gitignore" />
+    <File Path="../media/API_2.png" />
+    <File Path="../media/Api_3.png" />
+    <File Path="../media/BackendApi_1.png" />
+    <File Path="../media/HMI_CurrentJob.png" />
+    <File Path="../media/HMI_Home.png" />
+    <File Path="../media/HMI_Jobs.png" />
+    <File Path="../media/Simulator.gif" />
+    <File Path="../media/Simulator.mp4" />
+    <File Path="../media/Simulator.png" />
     <File Path="../README.md" />
   </Folder>
   <Folder Name="/src/">
