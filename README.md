@@ -4,6 +4,11 @@ Fabrik3DLite is a modular industrial software prototype built around a robotic m
 
 The project is designed first as an educational and prototyping environment: it helps model a robot + CNC workflow, visualize machine behavior, and progressively evolve toward a more realistic industrial software stack.
 
+
+Animated machining workflow:
+
+![Simulator GIF](media/Simulator.gif)
+
 ## Vision
 
 The original idea behind Fabrik3DLite is to simulate a small automated machining cell in a way that remains understandable for students, demonstrable for presentations, and extensible for more advanced industrial scenarios.
@@ -222,9 +227,6 @@ Main simulator scene:
 
 ![Simulator Scene](media/Simulator.png)
 
-Animated machining workflow:
-
-![Simulator GIF](media/Simulator.gif)
 
 ### HMI
 
@@ -477,18 +479,3 @@ Swagger is the easiest way to inspect and test these endpoints during developmen
 - add deployment and packaging improvements
 - evaluate an optional MQTT bridge for future industrial-style integrations
 
-## Summary
-
-Fabrik3DLite is no longer just a small 3D demo. It is evolving into a complete modular industrial software prototype composed of:
-
-- a simulator
-- an HMI
-- an orchestration backend
-- shared backend contracts and domain layers
-
-Its current value lies in the combination of:
-
-- educational clarity
-- visible robotic process simulation
-- backend-driven orchestration
-- a realistic path toward a more complete industrial HMI ecosystem
