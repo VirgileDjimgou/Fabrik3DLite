@@ -74,6 +74,11 @@
       <span class="value">{{ cncState }}</span>
     </div>
 
+    <!-- ── Orchestration mode ───────────────────────── -->
+    <div class="mode-bar" :class="mode">
+      {{ modeLabel }}
+    </div>
+
     <!-- ── Orchestration context ─────────────────────── -->
     <div class="section" v-if="jobId">
       <label>Job</label>
@@ -83,12 +88,22 @@
       <label>Session</label>
       <span class="value orchestration-id">{{ sessionId.slice(-6) }}</span>
     </div>
+    <div class="section" v-if="sessionStatus">
+      <label>Session state</label>
+      <span class="value" :class="{ 'state-faulted': sessionStatus === 'Faulted' }">{{ sessionStatus }}</span>
+    </div>
+    <div class="section" v-if="taskId">
+      <label>Task</label>
+      <span class="value orchestration-id">{{ taskId.slice(-6) }}</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PalletWorkflowPhase, WorkflowRunState } from '../simulation/PalletMachiningWorkflow'
+import type { BridgeMode } from '../services/simulatorOrchestrationBridge'
+import type { ConnectionState } from '../services/orchestratorSignalR'
 
 const props = withDefaults(defineProps<{
   runState: WorkflowRunState
@@ -104,6 +119,10 @@ const props = withDefaults(defineProps<{
   cncState: string
   jobId?: string
   sessionId?: string
+  taskId?: string
+  mode?: BridgeMode
+  connectionState?: ConnectionState
+  sessionStatus?: string | null
 }>(), {
   runState: 'idle',
   phase: 'IDLE',
@@ -118,6 +137,10 @@ const props = withDefaults(defineProps<{
   cncState: 'IDLE',
   jobId: '',
   sessionId: '',
+  taskId: '',
+  mode: 'offline',
+  connectionState: 'disconnected',
+  sessionStatus: null,
 })
 
 defineEmits<{
@@ -127,6 +150,13 @@ defineEmits<{
   (e: 'stop'): void
   (e: 'reset'): void
 }>()
+
+const modeLabel = computed(() => {
+  if (props.mode === 'offline') return 'LOCAL DEMO — offline (no server)'
+  if (props.connectionState === 'reconnecting') return 'Online — reconnecting…'
+  if (props.connectionState === 'disconnected') return 'Online session — hub disconnected'
+  return 'Online — orchestrated by server'
+})
 
 const STATE_LABELS: Record<WorkflowRunState, string> = {
   idle: '⏹ Idle',
@@ -255,6 +285,24 @@ const partStateClass = computed(() => {
 .state-bar.stopped  { background: rgba(200, 60, 60, 0.2);  color: #ff7766; }
 .state-bar.complete { background: rgba(0, 120, 200, 0.2);  color: #44bbff; }
 
+/* ── Mode bar ─────────────────────────────── */
+.mode-bar {
+  text-align: center;
+  padding: 0.3rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.72rem;
+  margin-bottom: 0.65rem;
+  background: rgba(0, 160, 110, 0.18);
+  color: #33ddaa;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.mode-bar.offline {
+  background: rgba(220, 150, 0, 0.22);
+  color: #ffcc55;
+}
+
 /* ── Sections ─────────────────────────────── */
 .section {
   display: flex;
@@ -279,6 +327,7 @@ const partStateClass = computed(() => {
 .state-active { color: #ffcc44; }
 .state-cnc    { color: #ff6644; }
 .state-done   { color: #44dd88; }
+.state-faulted { color: #ff5566; }
 .orchestration-id { font-family: monospace; font-size: 0.72rem; color: #8899aa; }
 
 /* ── Metrics ──────────────────────────────── */

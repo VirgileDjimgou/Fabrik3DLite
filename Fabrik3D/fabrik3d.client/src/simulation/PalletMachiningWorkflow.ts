@@ -8,7 +8,7 @@
  * Exposes readable state for the operator dashboard.
  */
 
-import type { RobotController } from './RobotController'
+import type { RobotMotionRuntime } from '../equipment/types'
 import type { PalletData } from './PalletModels'
 import { nextRawSlot, pickSlot, returnSlot, isPalletComplete } from './PalletModels'
 import {
@@ -94,7 +94,7 @@ export class PalletMachiningWorkflow {
   /** Fires when the entire pallet is done. */
   onPalletComplete: (() => void) | null = null
 
-  private readonly ctrl: RobotController
+  private readonly ctrl: RobotMotionRuntime
   private readonly cb: PalletWorkflowCallbacks
   readonly timing: PalletWorkflowTiming
 
@@ -104,7 +104,7 @@ export class PalletMachiningWorkflow {
   private waitUntil = 0
 
   constructor(
-    controller: RobotController,
+    controller: RobotMotionRuntime,
     callbacks: PalletWorkflowCallbacks,
     timing?: Partial<PalletWorkflowTiming>,
   ) {
@@ -228,11 +228,7 @@ export class PalletMachiningWorkflow {
       case 'LIFT_FROM_PALLET':
         this.setPhase('MOVE_TO_CNC_APPROACH')
         this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration * 0.5)
-        this.ctrl.enqueueCommand({
-          type: 'MOVE_TO_POSITION',
-          targetAngles: getCncApproachPose(),
-          duration: t.travelDuration * 0.6,
-        })
+        this.ctrl.enqueueMove(getCncApproachPose(), t.travelDuration * 0.6)
         break
 
       case 'MOVE_TO_CNC_APPROACH':
@@ -302,11 +298,10 @@ export class PalletMachiningWorkflow {
       case 'LIFT_FROM_CNC':
         this.setPhase('MOVE_ABOVE_ORIGIN_SLOT')
         this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration * 0.5)
-        this.ctrl.enqueueCommand({
-          type: 'MOVE_TO_POSITION',
-          targetAngles: getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
-          duration: t.travelDuration * 0.6,
-        })
+        this.ctrl.enqueueMove(
+          getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
+          t.travelDuration * 0.6,
+        )
         break
 
       case 'MOVE_ABOVE_ORIGIN_SLOT':

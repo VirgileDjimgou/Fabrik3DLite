@@ -1,20 +1,22 @@
 using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Contracts.Enums;
 using Fabrik3D.Contracts.Events;
+using Fabrik3D.Domain.Entities;
 using Fabrik3D.Domain.Mapping;
 using Fabrik3D.Infrastructure.Repositories;
+using Fabrik3D.Server.Exceptions;
 
 namespace Fabrik3D.Server.Services;
 
 public class SimulationSessionService
 {
     private readonly SimulationSessionRepository _sessions;
-    private readonly HubNotificationService _hub;
+    private readonly IHubNotificationService _hub;
     private readonly ILogger<SimulationSessionService> _log;
 
     public SimulationSessionService(
         SimulationSessionRepository sessions,
-        HubNotificationService hub,
+        IHubNotificationService hub,
         ILogger<SimulationSessionService> log)
     {
         _sessions = sessions;
@@ -36,13 +38,15 @@ public class SimulationSessionService
 
     /// <summary>
     /// Simulator pushes live execution state into an active session.
-    /// Persists to MongoDB and broadcasts via SignalR.
+    /// Only the claiming simulator may write; version-guarded.
     /// </summary>
     public async Task<SimulationSessionDto?> UpdateStateAsync(
-        string id, UpdateSimulationStateRequest request)
+        string id, UpdateSimulationStateRequest request, string? correlationId)
     {
         var session = await _sessions.GetByIdAsync(id);
         if (session is null) return null;
+
+        EnsureOwned(session, request.SimulatorId);
 
         if (Enum.TryParse<SimulationStatus>(request.Status, true, out var status))
             session.Status = status;
@@ -57,33 +61,83 @@ public class SimulationSessionService
         session.IsPaused = request.IsPaused;
         session.LastHeartbeatUtc = DateTime.UtcNow;
 
-        await _sessions.UpdateAsync(session);
+        if (!await _sessions.UpdateAsync(session))
+            throw new OrchestrationConflictException(
+                "concurrent_modification",
+                $"Session '{session.Id}' was modified concurrently. Retry the state update.");
+
+        var eventCorrelation = correlationId ?? request.CorrelationId;
 
         _log.LogInformation(
-            "[Server][Simulation] UpdateState → session={SessionId} status={Status} phase={Phase} machined={Machined}/{Total}",
-            session.Id, session.Status, session.CurrentPhase, session.MachinedCount, session.TotalCount);
+            "[Server][Simulation] UpdateState → session={SessionId} status={Status} phase={Phase} machined={Machined}/{Total} correlation={CorrelationId}",
+            session.Id, session.Status, session.CurrentPhase, session.MachinedCount, session.TotalCount, eventCorrelation);
 
         await _hub.SimulationStateChangedAsync(new SimulationStateChangedEvent(
             session.Id, session.JobId, session.Status.ToString(),
             session.CurrentPhase, session.MachinedCount,
-            session.RemainingCount, session.TotalCount, DateTime.UtcNow));
+            session.RemainingCount, session.TotalCount, DateTime.UtcNow, eventCorrelation));
 
         return session.ToDto();
     }
 
     /// <summary>
     /// Simulator sends periodic heartbeat to prove it is still alive.
+    /// A heartbeat from the owning simulator revives a faulted session.
     /// </summary>
-    public async Task<SimulationSessionDto?> HeartbeatAsync(string id)
+    public async Task<SimulationSessionDto?> HeartbeatAsync(string id, HeartbeatRequest? request)
     {
         var session = await _sessions.GetByIdAsync(id);
         if (session is null) return null;
 
-        session.LastHeartbeatUtc = DateTime.UtcNow;
-        await _sessions.UpdateAsync(session);
+        EnsureOwned(session, request?.SimulatorId);
+
+        var now = DateTime.UtcNow;
+        var oldStatus = session.Status;
+
+        session.LastHeartbeatUtc = now;
+        if (session.Status == SimulationStatus.Faulted)
+        {
+            session.Status = SimulationStatus.Running;
+            session.IsPaused = false;
+        }
+
+        if (!await _sessions.UpdateAsync(session))
+            throw new OrchestrationConflictException(
+                "concurrent_modification",
+                $"Session '{session.Id}' was modified concurrently. Retry the heartbeat.");
 
         _log.LogDebug("[Server][Simulation] Heartbeat → session={SessionId}", session.Id);
 
+        if (oldStatus == SimulationStatus.Faulted)
+        {
+            _log.LogInformation("[Server][Simulation] Heartbeat revived faulted session={SessionId}", session.Id);
+            await _hub.SimulationStateChangedAsync(new SimulationStateChangedEvent(
+                session.Id, session.JobId, session.Status.ToString(),
+                session.CurrentPhase, session.MachinedCount,
+                session.RemainingCount, session.TotalCount, now));
+        }
+
         return session.ToDto();
+    }
+
+    /// <summary>
+    /// Checks session ownership (session claimed, caller is the owner).
+    /// Allows an ownerless legacy push only when no simulator id was sent.
+    /// </summary>
+    private static void EnsureOwned(SimulationSession session, string? simulatorId)
+    {
+        if (string.IsNullOrEmpty(simulatorId))
+        {
+            throw new OrchestrationConflictException(
+                "session_not_owned",
+                $"Session '{session.Id}' requires a claiming simulator id. Claim the job first.");
+        }
+
+        if (session.SimulatorId != simulatorId)
+        {
+            throw new OrchestrationConflictException(
+                "session_not_owned",
+                $"Session '{session.Id}' is owned by simulator '{session.SimulatorId}' and cannot be modified by '{simulatorId}'.");
+        }
     }
 }

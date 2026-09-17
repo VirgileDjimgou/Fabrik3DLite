@@ -9,4 +9,19 @@ describe('orchestrator API client', () => {
 
     await expect(getJobs()).rejects.toThrow('[503] GET /jobs: Service unavailable')
   })
+
+  it('preserves the normalized API error code and validation details', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      code: 'validation_failed',
+      message: 'One or more request fields are invalid.',
+      status: 400,
+      details: { name: ['The Name field is required.'] },
+    }), { status: 400 })))
+
+    await expect(getJobs()).rejects.toMatchObject({
+      code: 'validation_failed',
+      status: 400,
+      details: { name: ['The Name field is required.'] },
+    })
+  })
 })

@@ -74,6 +74,9 @@ function applySimulationEvent(e: SimulationStateChangedEvent): void {
     remainingCount: e.remainingCount,
     totalCount: e.totalCount,
     lastHeartbeatUtc: e.timestampUtc,
+    simulatorId: prev?.simulatorId ?? null,
+    correlationId: e.correlationId ?? prev?.correlationId ?? null,
+    version: prev ? prev.version + 1 : 0,
   }
 }
 

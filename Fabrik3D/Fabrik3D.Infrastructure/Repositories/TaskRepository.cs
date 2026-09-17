@@ -21,8 +21,17 @@ public class TaskRepository
     public async Task InsertManyAsync(IEnumerable<MachiningTask> tasks) =>
         await _ctx.Tasks.InsertManyAsync(tasks);
 
-    public async Task UpdateAsync(MachiningTask task) =>
-        await _ctx.Tasks.ReplaceOneAsync(t => t.Id == task.Id, task);
+    /// <summary>
+    /// Optimistic-concurrency update; returns false when another writer won the race.
+    /// </summary>
+    public async Task<bool> UpdateAsync(MachiningTask task)
+    {
+        var expectedVersion = task.Version;
+        task.Version = expectedVersion + 1;
+        var result = await _ctx.Tasks.ReplaceOneAsync(
+            t => t.Id == task.Id && t.Version == expectedVersion, task);
+        return result.MatchedCount > 0;
+    }
 
     public async Task DeleteByJobIdAsync(string jobId) =>
         await _ctx.Tasks.DeleteManyAsync(t => t.JobId == jobId);

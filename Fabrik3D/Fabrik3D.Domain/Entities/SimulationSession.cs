@@ -37,4 +37,13 @@ public class SimulationSession
     public int TotalCount { get; set; }
 
     public DateTime LastHeartbeatUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Identifier of the simulator that owns (claimed) this session.</summary>
+    public string? SimulatorId { get; set; }
+
+    /// <summary>Correlation id of the command that created/claimed this session.</summary>
+    public string? CorrelationId { get; set; }
+
+    /// <summary>Optimistic concurrency guard; bumped on every update.</summary>
+    public int Version { get; set; }
 }

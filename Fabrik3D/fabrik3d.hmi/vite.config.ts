@@ -33,7 +33,12 @@ const target = resolveBackendTarget()
 
 export default defineConfig({
   plugins: [vue()],
-  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@fabrik3d/contracts': fileURLToPath(new URL('../fabrik3d-ts-contracts/src/index.ts', import.meta.url)),
+    },
+  },
   server: {
     port: parseInt(env.DEV_SERVER_PORT || '5174'),
     proxy: {

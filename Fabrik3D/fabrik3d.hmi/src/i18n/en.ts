@@ -16,7 +16,7 @@ export default {
     currentPhase: 'Phase', currentPallet: 'Pallet', currentSlot: 'Slot',
     machined: 'Machined', remaining: 'Remaining', total: 'Total',
     idle: 'Idle', running: 'Running', paused: 'Paused',
-    stopped: 'Stopped', completed: 'Completed',
+    stopped: 'Stopped', completed: 'Completed', faulted: 'Faulted',
   },
   jobs: {
     title: 'Jobs', name: 'Name', description: 'Description',
@@ -30,6 +30,9 @@ export default {
     session: 'Session', tasks: 'Tasks',
     machineState: 'Machine State', pause: 'Pause', stop: 'Stop',
     noTasks: 'No tasks.', part: 'Part', slot: 'Slot',
+    jobId: 'Job ID', sessionStatus: 'Session Status', heartbeat: 'Last Heartbeat',
+    taskId: 'Task ID', simulator: 'Simulator', pallet: 'Pallet',
+    commandFailed: 'The command was rejected by the server.',
   },
   newJob: {
     title: 'New Job', namePlaceholder: 'Job name',

@@ -14,6 +14,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="Fabrik3D.Contracts/Fabrik3D.Contracts.csproj" />
+    <Project Path="Fabrik3D.Contracts.Tests/Fabrik3D.Contracts.Tests.csproj" />
     <Project Path="Fabrik3D.Domain/Fabrik3D.Domain.csproj" />
     <Project Path="Fabrik3D.Infrastructure/Fabrik3D.Infrastructure.csproj" />
     <Project Path="Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj" />

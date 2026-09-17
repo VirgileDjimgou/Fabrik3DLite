@@ -39,4 +39,7 @@ public class MachiningTask
     public DateTime? CompletedAtUtc { get; set; }
 
     public string? ErrorMessage { get; set; }
+
+    /// <summary>Optimistic concurrency guard; bumped on every update.</summary>
+    public int Version { get; set; }
 }

@@ -18,6 +18,7 @@ export default {
     currentSlot: 'Slot', machined: 'Usine', remaining: 'Restant',
     total: 'Total', idle: 'Inactif', running: 'En cours',
     paused: 'En pause', stopped: 'Arrete', completed: 'Termine',
+    faulted: 'En defaut',
   },
   jobs: {
     title: 'Travaux', name: 'Nom', description: 'Description',
@@ -31,6 +32,9 @@ export default {
     session: 'Session', tasks: 'Taches',
     machineState: 'Etat machine', pause: 'Pause', stop: 'Arret',
     noTasks: 'Aucune tache.', part: 'Piece', slot: 'Slot',
+    jobId: 'ID du travail', sessionStatus: 'Statut de session', heartbeat: 'Dernier heartbeat',
+    taskId: 'ID de tache', simulator: 'Simulateur', pallet: 'Palette',
+    commandFailed: 'La commande a ete rejetee par le serveur.',
   },
   newJob: {
     title: 'Nouveau travail', namePlaceholder: 'Nom du travail',

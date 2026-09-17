@@ -40,7 +40,7 @@ const { t } = useI18n()
 async function handleStart() {
   try {
     const jobs = await api.getJobs()
-    const pending = jobs.find(j => j.status === 'Created' || j.status === 'Running' || j.status === 'Paused')
+    const pending = jobs.find(j => j.status === 'Created' || j.status === 'Ready')
     if (pending) await api.startJob(pending.id)
     else alert('No job available to start. Create a new job first.')
   } catch (e) { console.warn('Start failed', e) }

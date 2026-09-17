@@ -18,6 +18,7 @@ export default {
     currentSlot: 'Slot', machined: 'Bearbeitet', remaining: 'Verbleibend',
     total: 'Gesamt', idle: 'Leerlauf', running: 'Laeuft',
     paused: 'Pausiert', stopped: 'Gestoppt', completed: 'Abgeschlossen',
+    faulted: 'Gestört',
   },
   jobs: {
     title: 'Auftraege', name: 'Name', description: 'Beschreibung',
@@ -31,6 +32,9 @@ export default {
     session: 'Sitzung', tasks: 'Aufgaben',
     machineState: 'Maschinenzustand', pause: 'Pause', stop: 'Stopp',
     noTasks: 'Keine Aufgaben.', part: 'Teiltyp', slot: 'Slot',
+    jobId: 'Auftrags-ID', sessionStatus: 'Sitzungsstatus', heartbeat: 'Letzter Heartbeat',
+    taskId: 'Aufgaben-ID', simulator: 'Simulator', pallet: 'Palette',
+    commandFailed: 'Der Befehl wurde vom Server abgelehnt.',
   },
   newJob: {
     title: 'Neuer Auftrag', namePlaceholder: 'Auftragsname',

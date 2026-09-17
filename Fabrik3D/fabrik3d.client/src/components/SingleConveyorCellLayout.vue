@@ -49,6 +49,10 @@
     :cnc-state="dashCncState"
     :job-id="bridge.ctx.jobId ?? ''"
     :session-id="bridge.ctx.sessionId ?? ''"
+    :task-id="bridge.ctx.taskId ?? ''"
+    :mode="dashMode"
+    :connection-state="dashConnection"
+    :session-status="dashSessionStatus"
     @start="handleStart"
     @pause="handlePause"
     @resume="handleResume"
@@ -79,13 +83,25 @@ import {
   SINGLE_CELL_CONVEYOR,
   SINGLE_CELL_FLOW,
 } from '../simulation/SingleConveyorCellLayout'
-import { SimulatorOrchestrationBridge } from '../services/simulatorOrchestrationBridge'
+import { SimulatorOrchestrationBridge, type BridgeMode } from '../services/simulatorOrchestrationBridge'
+import type { ConnectionState } from '../services/orchestratorSignalR'
 import { logDashboardSnapshot } from '../services/devLogger'
+import {
+  createSingleConveyorEquipmentRegistry,
+  LegacyCncAdapter,
+  LegacyPalletStationAdapter,
+  LegacyRobotAdapter,
+  type CncRuntime,
+  type PalletStationRuntime,
+  type RobotMotionRuntime,
+} from '../equipment'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
 const conveyor = SINGLE_CELL_CONVEYOR
 const flowCfg = { ...SINGLE_CELL_FLOW }
+// The cell declaration is independent from the Vue scene and can be reused by future editors.
+const equipmentRegistry = createSingleConveyorEquipmentRegistry()
 
 // ── Component refs ─────────────────────────────────────────────────
 const palletFeedRef = ref<InstanceType<typeof PalletConveyorFeed> | null>(null)
@@ -103,16 +119,35 @@ const dashRemaining = ref(0)
 const dashTotal = ref(0)
 const dashProgress = ref(0)
 const dashCncState = ref('IDLE')
+const dashMode = ref<BridgeMode>('offline')
+const dashConnection = ref<ConnectionState>('disconnected')
+const dashSessionStatus = ref<string | null>(null)
 
 // ── Controller & workflow ──────────────────────────────────────────
 const robotController = shallowRef<RobotController | null>(null)
 let workflow: PalletMachiningWorkflow | null = null
 let workflowUpdateHooked = false
+let robotRuntime: RobotMotionRuntime | null = null
+let cncRuntime: CncRuntime | null = null
+let palletStationRuntime: PalletStationRuntime | null = null
+
+function getCncRuntime(): CncRuntime | null {
+  cncRuntime ??= cncRef.value ? new LegacyCncAdapter('cnc-1', cncRef.value) : null
+  return cncRuntime
+}
+
+function getPalletStationRuntime(): PalletStationRuntime | null {
+  palletStationRuntime ??= palletFeedRef.value ? new LegacyPalletStationAdapter('pallet-station-1', palletFeedRef.value) : null
+  return palletStationRuntime
+}
 
 // ── Orchestration bridge ───────────────────────────────────────────
 const bridge = new SimulatorOrchestrationBridge()
 
 onMounted(() => {
+  bridge.onModeChanged = (mode) => { dashMode.value = mode }
+  bridge.onConnectionStateChanged = (state) => { dashConnection.value = state }
+  bridge.onSessionStatusChanged = (status) => { dashSessionStatus.value = status }
   bridge.init()
   // React to external (server-driven) state changes
   bridge.onExternalPause = () => workflow?.pause()
@@ -123,6 +158,7 @@ onBeforeUnmount(() => bridge.dispose())
 
 function onControllerReady(controller: RobotController) {
   robotController.value = controller
+  robotRuntime = new LegacyRobotAdapter('robot-1', controller)
   ensureWorkflow()
 }
 
@@ -130,22 +166,17 @@ function onControllerReady(controller: RobotController) {
 
 function ensureWorkflow(): PalletMachiningWorkflow | null {
   if (workflow) return workflow
-  const ctrl = robotController.value
+  const ctrl = robotRuntime
   if (!ctrl) return null
 
+  // The adapters isolate the workflow from Vue component implementation details.
   const callbacks: PalletWorkflowCallbacks = {
-    openCNCDoor: () => cncRef.value?.loadPart(),
-    startCNCMachining: () => cncRef.value?.startMachining(),
-    cncUnloadComplete: () => cncRef.value?.unloadComplete(),
-    getCNCState: () => cncRef.value?.state ?? 'IDLE',
-    hideSlotPart: (palletId, row, col) => {
-      const comp = palletFeedRef.value?.getPalletComponent(palletId)
-      comp?.setSlotVisible(row, col, false)
-    },
-    showSlotPart: (palletId, row, col) => {
-      const comp = palletFeedRef.value?.getPalletComponent(palletId)
-      comp?.setSlotVisible(row, col, true)
-    },
+    openCNCDoor: () => getCncRuntime()?.openForLoad(),
+    startCNCMachining: () => getCncRuntime()?.startMachining(),
+    cncUnloadComplete: () => getCncRuntime()?.completeUnload(),
+    getCNCState: () => getCncRuntime()?.getMachineState() ?? 'IDLE',
+    hideSlotPart: (palletId, row, col) => getPalletStationRuntime()?.setSlotVisible(palletId, row, col, false),
+    showSlotPart: (palletId, row, col) => getPalletStationRuntime()?.setSlotVisible(palletId, row, col, true),
   }
 
   workflow = new PalletMachiningWorkflow(ctrl, callbacks)
@@ -171,8 +202,10 @@ function ensureWorkflow(): PalletMachiningWorkflow | null {
   // Hook workflow.update() into the controller's frame loop (once).
   if (!workflowUpdateHooked) {
     workflowUpdateHooked = true
-    const origUpdate = ctrl.update.bind(ctrl)
-    ctrl.update = (time: number) => {
+    const visualController = robotController.value
+    if (!visualController) return workflow
+    const origUpdate = visualController.update.bind(visualController)
+    visualController.update = (time: number) => {
       origUpdate(time)
       workflow?.update()
       // refresh CNC state each frame
@@ -217,7 +250,7 @@ function syncDashboard(): void {
 function handleStart(): void {
   const wf = ensureWorkflow()
   if (!wf) return
-  const pallet = palletFeedRef.value?.getFirstStoppedPallet()
+  const pallet = getPalletStationRuntime()?.getFirstStoppedPallet()
   if (!pallet) return
   bridge.start(pallet, (p) => {
     wf.start(p)
@@ -250,6 +283,7 @@ function handleReset(): void {
   dashRemaining.value = 0
   dashTotal.value = 0
   dashProgress.value = 0
+  dashSessionStatus.value = null
 }
 
 // Attempt to create workflow when pallet feed ref becomes available

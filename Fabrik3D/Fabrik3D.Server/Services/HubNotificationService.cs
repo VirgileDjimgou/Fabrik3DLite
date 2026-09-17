@@ -8,7 +8,7 @@ namespace Fabrik3D.Server.Services;
 /// Publishes typed events to all connected SignalR clients.
 /// Inject this into any service that needs to broadcast real-time updates.
 /// </summary>
-public class HubNotificationService
+public class HubNotificationService : IHubNotificationService
 {
     private readonly IHubContext<OrchestrationHub> _hub;
     private readonly ILogger<HubNotificationService> _log;
@@ -21,16 +21,23 @@ public class HubNotificationService
 
     public Task JobStateChangedAsync(JobStateChangedEvent evt)
     {
-        _log.LogInformation("[Server][SignalR] JobStateChanged → job={JobId} {Old}→{New}",
-            evt.JobId, evt.OldStatus, evt.NewStatus);
+        _log.LogInformation("[Server][SignalR] JobStateChanged → job={JobId} {Old}→{New} correlation={CorrelationId}",
+            evt.JobId, evt.OldStatus, evt.NewStatus, evt.CorrelationId);
         return _hub.Clients.All.SendAsync("JobStateChanged", evt);
     }
 
     public Task SimulationStateChangedAsync(SimulationStateChangedEvent evt)
     {
-        _log.LogInformation("[Server][SignalR] SimulationStateChanged → session={SessionId} status={Status} phase={Phase} machined={Machined}/{Total}",
-            evt.SessionId, evt.Status, evt.CurrentPhase, evt.MachinedCount, evt.TotalCount);
+        _log.LogInformation("[Server][SignalR] SimulationStateChanged → session={SessionId} status={Status} phase={Phase} machined={Machined}/{Total} correlation={CorrelationId}",
+            evt.SessionId, evt.Status, evt.CurrentPhase, evt.MachinedCount, evt.TotalCount, evt.CorrelationId);
         return _hub.Clients.All.SendAsync("SimulationStateChanged", evt);
+    }
+
+    public Task TaskStateChangedAsync(TaskStateChangedEvent evt)
+    {
+        _log.LogInformation("[Server][SignalR] TaskStateChanged → task={TaskId} job={JobId} {Old}→{New} correlation={CorrelationId}",
+            evt.TaskId, evt.JobId, evt.OldStatus, evt.NewStatus, evt.CorrelationId);
+        return _hub.Clients.All.SendAsync("TaskStateChanged", evt);
     }
 
     public Task AlarmRaisedAsync(AlarmRaisedEvent evt)

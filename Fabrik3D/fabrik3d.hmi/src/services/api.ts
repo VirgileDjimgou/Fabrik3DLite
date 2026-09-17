@@ -1,3 +1,24 @@
+import { OrchestratorApiError } from '@fabrik3d/contracts'
+import type {
+  AlarmDto,
+  CreateJobRequest,
+  JobDto,
+  MachineStateDto,
+  OperatorMessageDto,
+  SimulationSessionDto,
+  TaskDto,
+} from '@fabrik3d/contracts'
+
+export type {
+  AlarmDto,
+  CreateJobRequest,
+  JobDto,
+  MachineStateDto,
+  OperatorMessageDto,
+  SimulationSessionDto,
+  TaskDto,
+} from '@fabrik3d/contracts'
+
 const ORCHESTRATOR_BASE = import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined
 const BASE = ORCHESTRATOR_BASE ? `${ORCHESTRATOR_BASE.replace(/\/+$/, '')}/api` : '/api'
 
@@ -9,68 +30,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(`[${res.status}] ${method} ${path}: ${text}`)
+    let payload: unknown
+    try { payload = text ? JSON.parse(text) : undefined } catch { payload = undefined }
+    throw new OrchestratorApiError(method, path, res.status, payload, text)
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
-}
-
-// ── DTOs ──
-
-export interface JobDto {
-  id: string; name: string; description: string; status: string
-  machineMode: string; createdAtUtc: string; updatedAtUtc: string
-  startedAtUtc: string | null; completedAtUtc: string | null
-  pausedAtUtc: string | null; stoppedAtUtc: string | null
-  currentTaskIndex: number; progressPercent: number
-  simulationSessionId: string | null; metadata: Record<string, string>
-}
-
-export interface TaskDto {
-  id: string; jobId: string; name: string; description: string
-  status: string; sequenceOrder: number; partType: string
-  palletId: string | null; slotRow: number; slotColumn: number
-  createdAtUtc: string; updatedAtUtc: string
-  startedAtUtc: string | null; completedAtUtc: string | null
-  errorMessage: string | null
-}
-
-export interface SimulationSessionDto {
-  id: string; jobId: string; status: string
-  startedAtUtc: string; endedAtUtc: string | null; isPaused: boolean
-  currentPhase: string; currentPalletId: string | null
-  currentTaskId: string | null; currentPartId: string | null
-  machinedCount: number; remainingCount: number; totalCount: number
-  lastHeartbeatUtc: string
-}
-
-export interface MachineStateDto {
-  id: string; simulationSessionId: string | null
-  machineMode: string; simulationStatus: string
-  robotState: string; cncState: string; currentPhase: string
-  currentPalletId: string | null; currentTaskId: string | null
-  currentPartId: string | null
-  currentSlotRow: number; currentSlotColumn: number
-  isRunning: boolean; isPaused: boolean; lastUpdatedAtUtc: string
-}
-
-export interface AlarmDto {
-  id: string; code: string; title: string; message: string
-  severity: string; source: string
-  jobId: string | null; simulationSessionId: string | null
-  createdAtUtc: string; acknowledged: boolean
-  acknowledgedAtUtc: string | null; acknowledgedBy: string | null
-}
-
-export interface OperatorMessageDto {
-  id: string; title: string; message: string
-  type: string; source: string
-  jobId: string | null; simulationSessionId: string | null
-  createdAtUtc: string; read: boolean; readAtUtc: string | null
-}
-
-export interface CreateJobRequest {
-  name: string; description?: string; machineMode?: string
 }
 
 // ── Jobs ──

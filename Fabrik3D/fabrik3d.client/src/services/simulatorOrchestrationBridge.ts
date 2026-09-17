@@ -3,14 +3,17 @@
  * simulator workflow and the backend REST / SignalR contracts.
  *
  * Responsibilities:
- *   • Route start / pause / resume / stop through the backend first
+ *   • Claim an existing runnable job + session instead of creating implicit jobs
+ *   • Map backend tasks to pallet slots and report task status transitions
  *   • Push machine-state and simulation-session updates periodically
  *   • Listen to backend SignalR events and align local workflow
  *   • Send heartbeats while a session is active
+ *   • Fall back to a clearly identified local-only offline demo mode
  */
 
 import type { PalletMachiningWorkflow, PalletWorkflowPhase, WorkflowRunState } from '../simulation/PalletMachiningWorkflow'
 import type { PalletData } from '../simulation/PalletModels'
+import type { TaskDto } from '@fabrik3d/contracts'
 import * as api from './orchestratorApi'
 import * as hub from './orchestratorSignalR'
 import { logBridge } from './devLogger'
@@ -22,23 +25,48 @@ export interface OrchestrationContext {
   sessionId: string | null
   palletId: string | null
   taskId: string | null
+  correlationId: string | null
+}
+
+/** Orchestration mode: online = driven by a claimed server job. */
+export type BridgeMode = 'online' | 'offline'
+
+interface SlotTaskMapping {
+  taskId: string
+  row: number
+  col: number
 }
 
 // ── Bridge class ───────────────────────────────────────────────────
 
 export class SimulatorOrchestrationBridge {
-  ctx: OrchestrationContext = { jobId: null, sessionId: null, palletId: null, taskId: null }
+  ctx: OrchestrationContext = {
+    jobId: null, sessionId: null, palletId: null, taskId: null, correlationId: null,
+  }
+
+  /** Online when a server job/session was claimed; offline = local demo only. */
+  mode: BridgeMode = 'offline'
+
+  /** Live hub connection state for the dashboard. */
+  connectionState: hub.ConnectionState = 'disconnected'
+
+  /** Last known session status from the server (e.g. Faulted). */
+  sessionStatus: string | null = null
+
+  /** Callbacks the scene component can set to react to external state changes. */
+  onExternalPause: (() => void) | null = null
+  onExternalResume: (() => void) | null = null
+  onExternalStop: (() => void) | null = null
+  onModeChanged: ((mode: BridgeMode) => void) | null = null
+  onConnectionStateChanged: ((state: hub.ConnectionState) => void) | null = null
+  onSessionStatusChanged: ((status: string | null) => void) | null = null
 
   private workflow: PalletMachiningWorkflow | null = null
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
   private reportTimer: ReturnType<typeof setInterval> | null = null
-  private connected = false
   private lastReportedPhase: PalletWorkflowPhase | null = null
-
-  /** Callback the scene component can set to react to external state changes. */
-  onExternalPause: (() => void) | null = null
-  onExternalResume: (() => void) | null = null
-  onExternalStop: (() => void) | null = null
+  private lastStartedSlotKey: string | null = null
+  private slotTasks: SlotTaskMapping[] = []
 
   // ── Lifecycle ────────────────────────────────────────────────
 
@@ -49,14 +77,19 @@ export class SimulatorOrchestrationBridge {
       onSimulationStateChanged: (evt) => this.handleSimulationStateChanged(evt),
       onAlarmRaised: (evt) => console.log('[Bridge] Alarm:', evt.title, evt.message),
       onOperatorMessage: (evt) => console.log('[Bridge] Message:', evt.title, evt.message),
+      onConnectionStateChanged: (state) => {
+        this.connectionState = state
+        this.onConnectionStateChanged?.(state)
+      },
     })
     try {
       await hub.connect()
-      this.connected = true
+      this.connectionState = 'connected'
       console.log('[Bridge] Orchestration connected')
     } catch {
-      console.warn('[Bridge] Running in offline mode')
+      this.connectionState = 'disconnected'
     }
+    if (this.connectionState !== 'connected') this.setMode('offline')
   }
 
   /** Bind the local workflow instance. Can be called after init. */
@@ -67,12 +100,14 @@ export class SimulatorOrchestrationBridge {
     const origOnPhase = wf.onPhaseChanged
     wf.onPhaseChanged = (phase) => {
       origOnPhase?.(phase)
+      this.handlePhaseForTasks(phase)
       this.reportSimulationState()
     }
 
     const origOnSlot = wf.onSlotComplete
     wf.onSlotComplete = (row, col) => {
       origOnSlot?.(row, col)
+      this.completeCurrentSlotTask(row, col)
       this.reportSimulationState()
       this.reportMachineState()
     }
@@ -99,24 +134,60 @@ export class SimulatorOrchestrationBridge {
 
   // ── Orchestrated commands (called by button handlers) ────────
 
+  /**
+   * Claims an existing runnable job for this simulator and starts the
+   * local workflow for the given pallet. When no server is reachable or
+   * no runnable job exists, runs a local-only offline demonstration —
+   * the simulator never creates an implicit job.
+   */
   async start(pallet: PalletData, localStartFn: (p: PalletData) => void): Promise<void> {
-    try {
-      // Create a job automatically for this pallet run
-      const job = await api.createJob({
-        name: `Pallet ${pallet.id}`,
-        description: `Machining run for ${pallet.materialType} pallet`,
-        machineMode: 'Automatic',
-      })
-      this.ctx.jobId = job.id
+    const corr = api.newCorrelationId()
+
+    if (this.connectionState !== 'connected') {
+      this.ctx.jobId = null
+      this.ctx.sessionId = null
+      this.ctx.correlationId = null
       this.ctx.palletId = pallet.id
+      this.setMode('offline')
+      console.warn('[Bridge] No server connection — running local-only demo (offline mode)')
+      localStartFn(pallet)
+      return
+    }
 
-      // Start the job on the server — creates a session
-      const started = await api.startJob(job.id)
-      this.ctx.sessionId = started.simulationSessionId ?? null
+    try {
+      // Find an existing job an HMI operator prepared for this run.
+      const jobs = await api.getJobs()
+      const runnable = jobs.find(j => j.status === 'Created' || j.status === 'Ready')
+      if (!runnable) {
+        this.ctx.jobId = null
+        this.ctx.sessionId = null
+        this.ctx.correlationId = null
+        this.ctx.palletId = pallet.id
+        this.setMode('offline')
+        console.warn('[Bridge] No runnable job on the server — running local-only demo (offline mode)')
+        localStartFn(pallet)
+        return
+      }
 
-      console.log(`[Bridge] Job ${job.id} started, session ${this.ctx.sessionId}`)
+      const result = await api.claimJob(runnable.id, {
+        simulatorId: api.SIMULATOR_ID,
+        correlationId: corr,
+      })
+      this.ctx.jobId = result.job.id
+      this.ctx.sessionId = result.session.id
+      this.ctx.palletId = pallet.id
+      this.ctx.correlationId = corr
+      this.slotTasks = this.buildSlotTaskMap(result.tasks, pallet.id)
+      this.setMode('online')
+      this.setSessionStatus(result.session.status)
+      console.log(`[Bridge] Claimed job ${result.job.id} → session ${result.session.id} (corr=${corr})`)
     } catch (err) {
-      console.warn('[Bridge] Server start failed, running locally', err)
+      console.warn('[Bridge] Claim failed, running local-only demo (offline mode)', err)
+      this.ctx.jobId = null
+      this.ctx.sessionId = null
+      this.ctx.correlationId = null
+      this.ctx.palletId = pallet.id
+      this.setMode('offline')
     }
 
     // Always start local workflow
@@ -148,15 +219,74 @@ export class SimulatorOrchestrationBridge {
 
   reset(): void {
     this.stopTimers()
-    this.ctx = { jobId: null, sessionId: null, palletId: null, taskId: null }
+    this.ctx = {
+      jobId: null, sessionId: null, palletId: null, taskId: null, correlationId: null,
+    }
     this.lastReportedPhase = null
+    this.lastStartedSlotKey = null
+    this.slotTasks = []
+    this.setMode('offline')
+    this.setSessionStatus(null)
+  }
+
+  // ── Task ↔ pallet slot mapping ───────────────────────────────
+
+  private buildSlotTaskMap(tasks: TaskDto[], palletId: string): SlotTaskMapping[] {
+    return tasks
+      .filter(t => t.palletId === null || t.palletId === '' || t.palletId === palletId)
+      .map(t => ({ taskId: t.id, row: t.slotRow, col: t.slotColumn }))
+  }
+
+  private slotTaskFor(row: number, col: number): SlotTaskMapping | undefined {
+    return this.slotTasks.find(t => t.row === row && t.col === col)
+  }
+
+  private handlePhaseForTasks(phase: PalletWorkflowPhase): void {
+    const wf = this.workflow
+    if (!wf || this.mode !== 'online' || !this.ctx.sessionId) return
+
+    // A new slot is selected when the workflow moves above it.
+    if (phase !== 'MOVE_ABOVE_PALLET_SLOT') return
+    const slotKey = `${wf.currentRow}:${wf.currentCol}`
+    if (slotKey === this.lastStartedSlotKey) return
+    this.lastStartedSlotKey = slotKey
+
+    const mapped = this.slotTaskFor(wf.currentRow, wf.currentCol)
+    this.ctx.taskId = mapped?.taskId ?? null
+    if (!mapped) return
+
+    api.updateTaskStatus(mapped.taskId, {
+      status: 'Running',
+      simulationSessionId: this.ctx.sessionId,
+      simulatorId: api.SIMULATOR_ID,
+    }).then(() => {
+      logBridge('task → running', { taskId: mapped.taskId, slot: slotKey })
+    }).catch(err => {
+      console.warn('[Bridge] task start report failed', err)
+    })
+  }
+
+  private completeCurrentSlotTask(row: number, col: number): void {
+    if (this.mode !== 'online' || !this.ctx.sessionId) return
+    const mapped = this.slotTaskFor(row, col)
+    if (!mapped) return
+
+    api.updateTaskStatus(mapped.taskId, {
+      status: 'Completed',
+      simulationSessionId: this.ctx.sessionId,
+      simulatorId: api.SIMULATOR_ID,
+    }).then(() => {
+      logBridge('task → completed', { taskId: mapped.taskId, slot: `${row}:${col}` })
+    }).catch(err => {
+      console.warn('[Bridge] task complete report failed', err)
+    })
   }
 
   // ── State reporting ──────────────────────────────────────────
 
   private async reportSimulationState(): Promise<void> {
     const wf = this.workflow
-    if (!wf || !this.ctx.sessionId) return
+    if (!wf || !this.ctx.sessionId || this.mode !== 'online') return
     if (wf.phase === this.lastReportedPhase) return
     this.lastReportedPhase = wf.phase
 
@@ -173,25 +303,31 @@ export class SimulatorOrchestrationBridge {
         status: runStateToStatus[wf.runState] ?? 'Running',
         currentPhase: wf.phase,
         currentPalletId: this.ctx.palletId,
+        currentTaskId: this.ctx.taskId,
         machinedCount: wf.slotsCompleted,
         remainingCount: wf.remainingSlots,
         totalCount: wf.totalSlots,
         isPaused: wf.runState === 'paused',
+        simulatorId: api.SIMULATOR_ID,
+        correlationId: this.ctx.correlationId,
       })
       logBridge('simulation state →', {
         status: runStateToStatus[wf.runState], phase: wf.phase,
         machined: wf.slotsCompleted, remaining: wf.remainingSlots, total: wf.totalSlots,
       })
-    } catch { /* offline — silent */ }
+    } catch (err) {
+      console.warn('[Bridge] simulation state push failed', err)
+    }
   }
 
   private async reportMachineState(): Promise<void> {
     const wf = this.workflow
-    if (!wf) return
+    if (!wf || this.mode !== 'online' || !this.ctx.sessionId) return
 
     try {
       await api.updateCurrentMachineState({
         simulationSessionId: this.ctx.sessionId,
+        simulatorId: api.SIMULATOR_ID,
         machineMode: 'Automatic',
         simulationStatus: wf.runState === 'running' ? 'Running'
           : wf.runState === 'paused' ? 'Paused'
@@ -202,6 +338,7 @@ export class SimulatorOrchestrationBridge {
         cncState: wf.phase === 'MACHINING' ? 'MACHINING' : 'IDLE',
         currentPhase: wf.phase,
         currentPalletId: this.ctx.palletId,
+        currentTaskId: this.ctx.taskId,
         currentSlotRow: wf.currentRow,
         currentSlotColumn: wf.currentCol,
         isRunning: wf.runState === 'running',
@@ -212,7 +349,9 @@ export class SimulatorOrchestrationBridge {
         cnc: wf.phase === 'MACHINING' ? 'MACHINING' : 'IDLE',
         slot: `R${wf.currentRow} C${wf.currentCol}`,
       })
-    } catch { /* offline — silent */ }
+    } catch (err) {
+      console.warn('[Bridge] machine state push failed', err)
+    }
   }
 
   // ── Timers ───────────────────────────────────────────────────
@@ -220,10 +359,12 @@ export class SimulatorOrchestrationBridge {
   private startTimers(): void {
     this.stopTimers()
 
-    // Heartbeat every 5 s
+    // Heartbeat every 5 s — proves ownership, revives a faulted session
     this.heartbeatTimer = setInterval(async () => {
-      if (this.ctx.sessionId) {
-        try { await api.heartbeatSimulationSession(this.ctx.sessionId) } catch { /* ok */ }
+      if (this.ctx.sessionId && this.mode === 'online') {
+        try {
+          await api.heartbeatSimulationSession(this.ctx.sessionId, api.SIMULATOR_ID)
+        } catch { /* owner may have changed — keep local demo running */ }
       }
     }, 5_000)
 
@@ -236,6 +377,18 @@ export class SimulatorOrchestrationBridge {
   private stopTimers(): void {
     if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null }
     if (this.reportTimer) { clearInterval(this.reportTimer); this.reportTimer = null }
+  }
+
+  private setMode(mode: BridgeMode): void {
+    if (this.mode === mode) return
+    this.mode = mode
+    this.onModeChanged?.(mode)
+  }
+
+  private setSessionStatus(status: string | null): void {
+    if (this.sessionStatus === status) return
+    this.sessionStatus = status
+    this.onSessionStatusChanged?.(status)
   }
 
   // ── SignalR event handlers ───────────────────────────────────
@@ -257,9 +410,12 @@ export class SimulatorOrchestrationBridge {
   }
 
   private handleSimulationStateChanged(evt: hub.SimulationStateChangedEvent): void {
-    // Keep context aligned
+    // Keep context aligned and surface server status (incl. Faulted)
     if (evt.jobId === this.ctx.jobId) {
       this.ctx.sessionId = evt.sessionId
+    }
+    if (evt.sessionId === this.ctx.sessionId) {
+      this.setSessionStatus(evt.status)
     }
   }
 }

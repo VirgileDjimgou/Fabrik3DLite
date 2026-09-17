@@ -1,3 +1,4 @@
+using Fabrik3D.Contracts.Enums;
 using Fabrik3D.Domain.Entities;
 using Fabrik3D.Infrastructure.Persistence;
 using MongoDB.Driver;
@@ -18,9 +19,30 @@ public class SimulationSessionRepository
             .SortByDescending(s => s.StartedAtUtc)
             .FirstOrDefaultAsync();
 
+    public async Task<List<SimulationSession>> GetStaleAsync(
+        DateTime olderThanUtc, IEnumerable<SimulationStatus> statuses)
+    {
+        var statusList = statuses.ToList();
+        return await _ctx.SimulationSessions
+            .Find(s => statusList.Contains(s.Status) && s.LastHeartbeatUtc < olderThanUtc)
+            .ToListAsync();
+    }
+
     public async Task CreateAsync(SimulationSession session) =>
         await _ctx.SimulationSessions.InsertOneAsync(session);
 
-    public async Task UpdateAsync(SimulationSession session) =>
-        await _ctx.SimulationSessions.ReplaceOneAsync(s => s.Id == session.Id, session);
+    /// <summary>
+    /// Optimistic-concurrency update; returns false when another writer won the race.
+    /// </summary>
+    public async Task<bool> UpdateAsync(SimulationSession session)
+    {
+        var expectedVersion = session.Version;
+        session.Version = expectedVersion + 1;
+        var result = await _ctx.SimulationSessions.ReplaceOneAsync(
+            s => s.Id == session.Id && s.Version == expectedVersion, session);
+        return result.MatchedCount > 0;
+    }
+
+    public async Task DeleteAsync(string id) =>
+        await _ctx.SimulationSessions.DeleteOneAsync(s => s.Id == id);
 }

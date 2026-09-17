@@ -40,4 +40,7 @@ public class Job
     public string? SimulationSessionId { get; set; }
 
     public Dictionary<string, string> Metadata { get; set; } = new();
+
+    /// <summary>Optimistic concurrency guard; bumped on every update.</summary>
+    public int Version { get; set; }
 }

@@ -15,7 +15,8 @@ public record JobDto(
     int CurrentTaskIndex,
     int ProgressPercent,
     string? SimulationSessionId,
-    Dictionary<string, string> Metadata);
+    Dictionary<string, string> Metadata,
+    int Version);
 
 public record TaskDto(
     string Id,
@@ -32,7 +33,8 @@ public record TaskDto(
     DateTime UpdatedAtUtc,
     DateTime? StartedAtUtc,
     DateTime? CompletedAtUtc,
-    string? ErrorMessage);
+    string? ErrorMessage,
+    int Version);
 
 public record SimulationSessionDto(
     string Id,
@@ -48,7 +50,15 @@ public record SimulationSessionDto(
     int MachinedCount,
     int RemainingCount,
     int TotalCount,
-    DateTime LastHeartbeatUtc);
+    DateTime LastHeartbeatUtc,
+    string? SimulatorId,
+    string? CorrelationId,
+    int Version);
+
+public record ClaimResultDto(
+    JobDto Job,
+    SimulationSessionDto Session,
+    List<TaskDto> Tasks);
 
 public record AlarmDto(
     string Id,

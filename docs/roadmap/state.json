@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-17T21:31:18.226Z",
+  "updatedAt": "2026-09-17T22:58:30.819Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -18,13 +18,25 @@
       "evidence": "dotnet build Fabrik3D/Fabrik3D.slnx --no-restore; dotnet test Fabrik3D/Fabrik3D.slnx --no-build; npm --prefix Fabrik3D/fabrik3d.client run type-check; npm --prefix Fabrik3D/fabrik3d.client run test; npm --prefix Fabrik3D/fabrik3d.client run build; npm --prefix Fabrik3D/fabrik3d.hmi run type-check; npm --prefix Fabrik3D/fabrik3d.hmi run test; npm --prefix Fabrik3D/fabrik3d.hmi run build; npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e"
     },
     "S03": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-17T21:56:44.136Z",
+      "completedAt": "2026-09-17T22:08:40.978Z",
+      "summary": "Contrat OpenAPI centralise, TypeScript genere partage entre HMI et simulateur, erreurs API normalisees et schemas SignalR testes.",
+      "evidence": "dotnet build Fabrik3D/Fabrik3D.slnx --no-restore; dotnet test Fabrik3D/Fabrik3D.slnx --no-build; npm run contracts:generate; npm run contracts:check; npm --prefix Fabrik3D/fabrik3d.client run type-check; npm --prefix Fabrik3D/fabrik3d.client run test; npm --prefix Fabrik3D/fabrik3d.client run build; npm --prefix Fabrik3D/fabrik3d.hmi run type-check; npm --prefix Fabrik3D/fabrik3d.hmi run test; npm --prefix Fabrik3D/fabrik3d.hmi run build; npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e"
     },
     "S04": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-17T22:11:04.941Z",
+      "completedAt": "2026-09-17T22:42:39.666Z",
+      "summary": "S04: coherent orchestration and traceability. Server: explicit job claim flow (POST /api/jobs/{id}/claim, idempotent for same simulator, 409 for foreign live owners, recovery on expired heartbeat, adoption of unowned sessions), TaskService with transition rules and session ownership (PUT /api/tasks/{id}/status), optimistic concurrency via Version fields on Job/MachiningTask/SimulationSession (409 concurrent_modification), heartbeat expiry monitor marking stale sessions Faulted with owner-heartbeat revival, X-Correlation-Id middleware on all commands/logs/events, TaskStateChanged SignalR event, new error codes (session_not_owned, session_already_claimed, job_not_claimable, invalid_task_transition). Simulator: no more implicit job creation - claims existing runnable jobs, maps pallet slots to backend tasks and reports Running/Completed, sends simulatorId/heartbeats, shows connection/session status, clearly labelled local-only offline demo that never writes to the server. HMI: task traceability (job/session/task ids, pallet, slot, heartbeat, faulted badge), TaskStateChanged live task refresh, duplicate-start fix, command error feedback, en/de/fr i18n. Docs: docs/architecture/ORCHESTRATION.md added, CONTRACTS.md and README updated, TS contracts regenerated.",
+      "evidence": "dotnet build Fabrik3D/Fabrik3D.slnx (0 warnings 0 errors); dotnet test Fabrik3D/Fabrik3D.slnx (42 passed: 2 Contracts + 1 Infrastructure + 39 Server incl. ClaimFlow/TaskStatus/SessionOwnershipAndHeartbeat/ConcurrentCommand integration tests); npm run contracts:generate + npm run contracts:check (verified against live server); npm --prefix Fabrik3D/fabrik3d.client run type-check; npm --prefix Fabrik3D/fabrik3d.client run test (9 passed incl. 7 new simulatorOrchestrationBridge tests); npm --prefix Fabrik3D/fabrik3d.client run build; npm --prefix Fabrik3D/fabrik3d.hmi run type-check; npm --prefix Fabrik3D/fabrik3d.hmi run test (3 passed); npm --prefix Fabrik3D/fabrik3d.hmi run build; npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e (2 passed: orchestration-smoke + new orchestration-claim e2e proving one HMI job drives one claimed simulator session and pallet). Pre-existing unrelated failure: fabrik3d.client lint (6 oxlint errors in untouched files: PalletModels.ts x2, RobotController.ts, FinishedPartsTable.vue, RobotAxesDebugger.vue, shims-vue.d.ts)."
     },
     "S05": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-17T22:52:15.501Z",
+      "completedAt": "2026-09-17T22:58:30.819Z",
+      "summary": "Added a versioned equipment SDK with SI frame conventions, registry validation, current cell fixtures, and legacy robot/CNC/pallet adapters that decouple the machining workflow from Vue component APIs.",
+      "evidence": "Simulator: type-check, 15 Vitest tests, and production build passed; HMI: type-check, 3 Vitest tests, and production build passed; backend: dotnet build and 42 tests passed. Existing simulator lint has 6 unrelated pre-existing violations."
     },
     "S06": {
       "status": "planned"

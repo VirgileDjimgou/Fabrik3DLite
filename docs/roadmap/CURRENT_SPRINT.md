@@ -1,5 +1,5 @@
 # No active sprint
 
-Last completed: **S02 - Automated test foundation and CI**
+Last completed: **S05 - Cell model and equipment SDK**
 
 Run `npm run sprint:next` to activate the next sprint.

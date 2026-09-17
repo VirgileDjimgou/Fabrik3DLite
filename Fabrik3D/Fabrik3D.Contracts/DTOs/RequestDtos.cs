@@ -40,6 +40,7 @@ public record CreateTaskRequest
 public record UpdateMachineStateRequest
 {
     public string? SimulationSessionId { get; init; }
+    public string? SimulatorId { get; init; }
     public string MachineMode { get; init; } = "Automatic";
     public string SimulationStatus { get; init; } = "Idle";
     public string RobotState { get; init; } = "IDLE";
@@ -68,4 +69,46 @@ public record UpdateSimulationStateRequest
     public int RemainingCount { get; init; }
     public int TotalCount { get; init; }
     public bool IsPaused { get; init; }
+    public string? SimulatorId { get; init; }
+    public string? CorrelationId { get; init; }
+}
+
+/// <summary>
+/// Payload the simulator sends to claim an existing runnable job.
+/// </summary>
+public record ClaimJobRequest
+{
+    [Required, MinLength(1), MaxLength(100)]
+    public string SimulatorId { get; init; } = string.Empty;
+
+    [MaxLength(100)]
+    public string? CorrelationId { get; init; }
+}
+
+/// <summary>
+/// Payload the simulator sends to update the status of a machining task.
+/// The caller must own the session the task's job is bound to.
+/// </summary>
+public record UpdateTaskStatusRequest
+{
+    [Required, MinLength(1), MaxLength(50)]
+    public string Status { get; init; } = string.Empty;
+
+    [Required, MinLength(1)]
+    public string SimulationSessionId { get; init; } = string.Empty;
+
+    [Required, MinLength(1), MaxLength(100)]
+    public string SimulatorId { get; init; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? ErrorMessage { get; init; }
+}
+
+/// <summary>
+/// Payload the simulator sends to prove the session is still alive.
+/// </summary>
+public record HeartbeatRequest
+{
+    [Required, MinLength(1), MaxLength(100)]
+    public string SimulatorId { get; init; } = string.Empty;
 }

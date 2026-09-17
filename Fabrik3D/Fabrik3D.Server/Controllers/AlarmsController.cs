@@ -28,7 +28,7 @@ public class AlarmsController : ControllerBase
     /// <summary>Acknowledge an alarm.</summary>
     [HttpPost("{id}/acknowledge")]
     [ProducesResponseType(typeof(AlarmDto), 200)]
-    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(ApiErrorDto), 404)]
     public async Task<IActionResult> Acknowledge(string id, [FromQuery] string by = "operator")
     {
         var dto = await _svc.AcknowledgeAsync(id, by);

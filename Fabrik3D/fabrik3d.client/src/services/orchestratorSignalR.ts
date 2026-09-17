@@ -5,74 +5,40 @@
  */
 
 import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
+import type {
+  AlarmAcknowledgedEvent,
+  AlarmRaisedEvent,
+  JobStateChangedEvent,
+  MachineStateChangedEvent,
+  OperatorMessageEvent,
+  SimulationStateChangedEvent,
+  TaskStateChangedEvent,
+} from '@fabrik3d/contracts'
 import { logSignalR } from './devLogger'
 
-// ── Event payloads (match Fabrik3D.Contracts.Events) ───────────────
-
-export interface JobStateChangedEvent {
-  jobId: string
-  oldStatus: string
-  newStatus: string
-  timestampUtc: string
-}
-
-export interface SimulationStateChangedEvent {
-  sessionId: string
-  jobId: string
-  status: string
-  currentPhase: string
-  machinedCount: number
-  remainingCount: number
-  totalCount: number
-  timestampUtc: string
-}
-
-export interface AlarmRaisedEvent {
-  alarmId: string
-  code: string
-  title: string
-  message: string
-  severity: string
-  source: string
-  timestampUtc: string
-}
-
-export interface AlarmAcknowledgedEvent {
-  alarmId: string
-  acknowledgedBy: string
-  timestampUtc: string
-}
-
-export interface OperatorMessageEvent {
-  messageId: string
-  title: string
-  message: string
-  type: string
-  source: string
-  timestampUtc: string
-}
-
-export interface MachineStateChangedEvent {
-  machineStateId: string
-  machineMode: string
-  simulationStatus: string
-  robotState: string
-  cncState: string
-  currentPhase: string
-  isRunning: boolean
-  isPaused: boolean
-  timestampUtc: string
-}
+export type {
+  AlarmAcknowledgedEvent,
+  AlarmRaisedEvent,
+  JobStateChangedEvent,
+  MachineStateChangedEvent,
+  OperatorMessageEvent,
+  SimulationStateChangedEvent,
+  TaskStateChangedEvent,
+} from '@fabrik3d/contracts'
 
 // ── Callback registry ──────────────────────────────────────────────
+
+export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected'
 
 export type OrchestrationCallbacks = {
   onJobStateChanged?: (evt: JobStateChangedEvent) => void
   onSimulationStateChanged?: (evt: SimulationStateChangedEvent) => void
+  onTaskStateChanged?: (evt: TaskStateChangedEvent) => void
   onAlarmRaised?: (evt: AlarmRaisedEvent) => void
   onAlarmAcknowledged?: (evt: AlarmAcknowledgedEvent) => void
   onOperatorMessage?: (evt: OperatorMessageEvent) => void
   onMachineStateChanged?: (evt: MachineStateChangedEvent) => void
+  onConnectionStateChanged?: (state: ConnectionState) => void
 }
 
 // ── Connection class ───────────────────────────────────────────────
@@ -118,6 +84,10 @@ export async function connect(hubUrl?: string): Promise<void> {
     logSignalR('SimulationStateChanged', evt)
     callbacks.onSimulationStateChanged?.(evt)
   })
+  connection.on('TaskStateChanged', (evt: TaskStateChangedEvent) => {
+    logSignalR('TaskStateChanged', evt)
+    callbacks.onTaskStateChanged?.(evt)
+  })
   connection.on('AlarmRaised', (evt: AlarmRaisedEvent) => {
     logSignalR('AlarmRaised', evt)
     callbacks.onAlarmRaised?.(evt)
@@ -135,12 +105,27 @@ export async function connect(hubUrl?: string): Promise<void> {
     callbacks.onMachineStateChanged?.(evt)
   })
 
+  connection.onreconnecting(() => {
+    console.warn('[SignalR] Reconnecting to orchestration hub')
+    callbacks.onConnectionStateChanged?.('reconnecting')
+  })
+  connection.onreconnected(() => {
+    console.log('[SignalR] Reconnected to orchestration hub')
+    callbacks.onConnectionStateChanged?.('connected')
+  })
+  connection.onclose(() => {
+    console.warn('[SignalR] Orchestration hub closed')
+    callbacks.onConnectionStateChanged?.('disconnected')
+  })
+
   try {
     await connection.start()
     console.log('[SignalR] Connected to orchestration hub')
+    callbacks.onConnectionStateChanged?.('connected')
   } catch (err) {
     console.warn(`[SignalR] Failed to connect to ${url} — running offline`, err)
     connection = null
+    callbacks.onConnectionStateChanged?.('disconnected')
   }
 }
 
@@ -159,4 +144,12 @@ export async function disconnect(): Promise<void> {
 /** True if currently connected. */
 export function isConnected(): boolean {
   return connection?.state === 'Connected'
+}
+
+/** Current connection state for the operator dashboard. */
+export function getConnectionState(): ConnectionState {
+  if (!connection) return 'disconnected'
+  if (connection.state === 'Connected') return 'connected'
+  if (connection.state === 'Reconnecting') return 'reconnecting'
+  return 'disconnected'
 }

@@ -31,6 +31,9 @@ jobs:
             Fabrik3D/fabrik3d.client/package-lock.json
             Fabrik3D/fabrik3d.hmi/package-lock.json
 
+      - name: Install contract generation tools
+        run: npm ci
+
       - name: Restore backend
         run: dotnet restore Fabrik3D/Fabrik3D.slnx
       - name: Build backend
@@ -70,6 +73,8 @@ jobs:
           done
           cat server.log
           exit 1
+      - name: Verify generated transport contracts
+        run: npm run contracts:check
       - name: Run orchestration smoke test
         run: npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e
 

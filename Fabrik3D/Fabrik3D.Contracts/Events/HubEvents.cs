@@ -4,7 +4,8 @@ public record JobStateChangedEvent(
     string JobId,
     string OldStatus,
     string NewStatus,
-    DateTime TimestampUtc);
+    DateTime TimestampUtc,
+    string? CorrelationId = null);
 
 public record SimulationStateChangedEvent(
     string SessionId,
@@ -14,7 +15,16 @@ public record SimulationStateChangedEvent(
     int MachinedCount,
     int RemainingCount,
     int TotalCount,
-    DateTime TimestampUtc);
+    DateTime TimestampUtc,
+    string? CorrelationId = null);
+
+public record TaskStateChangedEvent(
+    string TaskId,
+    string JobId,
+    string OldStatus,
+    string NewStatus,
+    DateTime TimestampUtc,
+    string? CorrelationId = null);
 
 public record AlarmRaisedEvent(
     string AlarmId,

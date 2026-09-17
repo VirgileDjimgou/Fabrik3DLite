@@ -112,7 +112,8 @@ export default defineConfig({
     plugins: [plugin()],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            '@fabrik3d/contracts': fileURLToPath(new URL('../fabrik3d-ts-contracts/src/index.ts', import.meta.url))
         }
     },
     server: {

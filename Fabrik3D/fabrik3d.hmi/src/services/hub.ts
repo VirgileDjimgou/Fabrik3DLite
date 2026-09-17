@@ -1,30 +1,23 @@
 import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
+import type {
+  AlarmAcknowledgedEvent,
+  AlarmRaisedEvent,
+  JobStateChangedEvent,
+  MachineStateChangedEvent,
+  OperatorMessageEvent,
+  SimulationStateChangedEvent,
+  TaskStateChangedEvent,
+} from '@fabrik3d/contracts'
 
-// ── Event DTOs (matching Fabrik3D.Contracts.Events) ──
-
-export interface JobStateChangedEvent {
-  jobId: string; oldStatus: string; newStatus: string; timestampUtc: string
-}
-export interface SimulationStateChangedEvent {
-  sessionId: string; jobId: string; status: string; currentPhase: string
-  machinedCount: number; remainingCount: number; totalCount: number; timestampUtc: string
-}
-export interface AlarmRaisedEvent {
-  alarmId: string; code: string; title: string; message: string
-  severity: string; source: string; timestampUtc: string
-}
-export interface AlarmAcknowledgedEvent {
-  alarmId: string; acknowledgedBy: string; timestampUtc: string
-}
-export interface OperatorMessageEvent {
-  messageId: string; title: string; message: string
-  type: string; source: string; timestampUtc: string
-}
-export interface MachineStateChangedEvent {
-  machineStateId: string; machineMode: string; simulationStatus: string
-  robotState: string; cncState: string; currentPhase: string
-  isRunning: boolean; isPaused: boolean; timestampUtc: string
-}
+export type {
+  AlarmAcknowledgedEvent,
+  AlarmRaisedEvent,
+  JobStateChangedEvent,
+  MachineStateChangedEvent,
+  OperatorMessageEvent,
+  SimulationStateChangedEvent,
+  TaskStateChangedEvent,
+} from '@fabrik3d/contracts'
 
 // ── Connection state ──
 
@@ -35,6 +28,7 @@ export type ConnectionState = 'connected' | 'reconnecting' | 'disconnected'
 export type HubCallbacks = {
   onJobStateChanged?: (e: JobStateChangedEvent) => void
   onSimulationStateChanged?: (e: SimulationStateChangedEvent) => void
+  onTaskStateChanged?: (e: TaskStateChangedEvent) => void
   onAlarmRaised?: (e: AlarmRaisedEvent) => void
   onAlarmAcknowledged?: (e: AlarmAcknowledgedEvent) => void
   onOperatorMessage?: (e: OperatorMessageEvent) => void
@@ -71,6 +65,7 @@ export async function connect(): Promise<void> {
 
   connection.on('JobStateChanged', (e) => dispatch('onJobStateChanged', e))
   connection.on('SimulationStateChanged', (e) => dispatch('onSimulationStateChanged', e))
+  connection.on('TaskStateChanged', (e) => dispatch('onTaskStateChanged', e))
   connection.on('AlarmRaised', (e) => dispatch('onAlarmRaised', e))
   connection.on('AlarmAcknowledged', (e) => dispatch('onAlarmAcknowledged', e))
   connection.on('OperatorMessage', (e) => dispatch('onOperatorMessage', e))

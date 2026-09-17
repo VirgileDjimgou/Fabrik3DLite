@@ -11,21 +11,21 @@ public static class EntityMapper
         e.CreatedAtUtc, e.UpdatedAtUtc,
         e.StartedAtUtc, e.CompletedAtUtc, e.PausedAtUtc, e.StoppedAtUtc,
         e.CurrentTaskIndex, e.ProgressPercent,
-        e.SimulationSessionId, e.Metadata);
+        e.SimulationSessionId, e.Metadata, e.Version);
 
     public static TaskDto ToDto(this MachiningTask e) => new(
         e.Id, e.JobId, e.Name, e.Description,
         e.Status.ToString(), e.SequenceOrder,
         e.PartType, e.PalletId, e.SlotRow, e.SlotColumn,
         e.CreatedAtUtc, e.UpdatedAtUtc,
-        e.StartedAtUtc, e.CompletedAtUtc, e.ErrorMessage);
+        e.StartedAtUtc, e.CompletedAtUtc, e.ErrorMessage, e.Version);
 
     public static SimulationSessionDto ToDto(this SimulationSession e) => new(
         e.Id, e.JobId, e.Status.ToString(),
         e.StartedAtUtc, e.EndedAtUtc, e.IsPaused,
         e.CurrentPhase, e.CurrentPalletId, e.CurrentTaskId, e.CurrentPartId,
         e.MachinedCount, e.RemainingCount, e.TotalCount,
-        e.LastHeartbeatUtc);
+        e.LastHeartbeatUtc, e.SimulatorId, e.CorrelationId, e.Version);
 
     public static AlarmDto ToDto(this Alarm e) => new(
         e.Id, e.Code, e.Title, e.Message,

@@ -121,6 +121,7 @@ Current focus:
 - pallet feed and slot tracking
 - robot-to-CNC execution workflow
 - local dashboard and orchestration bridge
+- versioned equipment SDK with legacy robot, CNC and pallet-station adapters
 
 ### Server-Orchestrator
 
@@ -129,8 +130,12 @@ The server is the central coordination layer. It exposes REST APIs and SignalR e
 Current focus:
 
 - create/list/start/pause/resume/stop jobs
-- session state updates from the simulator
-- machine state updates from the simulator
+- explicit claim/assignment of runnable jobs to a simulator (no implicit jobs)
+- task lifecycle updates tied to the claimed session
+- session state updates from the simulator (ownership-protected)
+- machine state updates from the simulator (ownership-protected)
+- heartbeat monitoring with stale-session fault detection
+- correlation ids on commands, logs, and SignalR events
 - real-time state distribution through SignalR
 - local MongoDB persistence
 
@@ -167,6 +172,14 @@ At the current stage, the intended communication model is:
 
 The server is intended to act as the orchestration source of truth.
 
+Coherent identity model (see `docs/architecture/ORCHESTRATION.md`):
+
+- The HMI creates jobs; the simulator **claims** an existing runnable job and its simulation session instead of creating implicit jobs.
+- Only the claiming simulator may push session state, task status, machine state, and heartbeats for that session.
+- Every command carries an `X-Correlation-Id` that is echoed in logs and SignalR events.
+- Stale heartbeats mark the session `Faulted`; an owner heartbeat revives it.
+- Without a server connection the simulator runs a clearly identified **local-only offline demo** that never writes to the server.
+
 ```mermaid
 flowchart LR
     HMI["HMI Client"] -- "REST" --> Server["Server-Orchestrator"]
@@ -197,11 +210,16 @@ flowchart LR
   - resume
   - stop
   - delete
-- simulation session updates from the simulator
-- machine state updates from the simulator
+  - claim (explicit simulator assignment, idempotent, recovery on expired heartbeat)
+- task status updates from the owning simulator (pallet slots mapped to backend tasks)
+- simulation session updates from the simulator (ownership-protected)
+- machine state updates from the simulator (ownership-protected)
+- heartbeat monitoring with stale-session fault detection and revival
+- correlation ids on commands, logs, and SignalR events
+- optimistic concurrency (version fields) rejecting concurrent conflicting commands
 - single-conveyor simulator scene
 - pallet machining workflow
-- local simulator dashboard
+- local simulator dashboard (online orchestrated mode and clearly identified local-only offline demo)
 - multilingual HMI setup
 
 ### In Progress
@@ -472,6 +490,10 @@ Swagger is the easiest way to inspect and test these endpoints during developmen
 Detailed restore, configuration, build, and launch instructions are available in the [local development setup](docs/development/SETUP.md). Common local issues are covered in [troubleshooting](docs/development/TROUBLESHOOTING.md).
 
 Automated test layers, their local commands, and the isolated MongoDB test setup are documented in [testing](docs/TESTING.md).
+
+The REST and SignalR contract workflow, including generated TypeScript models shared by both Vue clients, is documented in [transport contracts](docs/architecture/CONTRACTS.md).
+
+The simulator equipment extension model, coordinate conventions, and current compatibility adapters are documented in [the equipment SDK](docs/architecture/EQUIPMENT_SDK.md).
 
 ## Roadmap / Next Steps
 
