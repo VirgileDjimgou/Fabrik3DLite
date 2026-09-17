@@ -11,6 +11,7 @@
     "type-check": "vue-tsc --build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:visual": "vite build && playwright test",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache"
@@ -27,6 +28,7 @@
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/tsconfig": "^0.8.1",
+    "@playwright/test": "^1.55.0",
     "eslint": "^10.0.2",
     "eslint-plugin-oxlint": "~1.50.0",
     "eslint-plugin-vue": "~10.8.0",

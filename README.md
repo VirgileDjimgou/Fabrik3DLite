@@ -122,6 +122,8 @@ Current focus:
 - robot-to-CNC execution workflow
 - local dashboard and orchestration bridge
 - versioned equipment SDK with legacy robot, CNC and pallet-station adapters
+- profile-aware, renderer-independent FK/IK model with explicit cell/work-object frames
+- robot catalog with selectable compact/medium/heavy six-axis profiles and end-effector compatibility metadata
 
 ### Server-Orchestrator
 
@@ -220,6 +222,7 @@ flowchart LR
 - single-conveyor simulator scene
 - pallet machining workflow
 - local simulator dashboard (online orchestrated mode and clearly identified local-only offline demo)
+- robot catalog with three selectable generic six-axis profiles, end-effector compatibility metadata, and visual regression coverage
 - multilingual HMI setup
 
 ### In Progress
@@ -494,6 +497,8 @@ Automated test layers, their local commands, and the isolated MongoDB test setup
 The REST and SignalR contract workflow, including generated TypeScript models shared by both Vue clients, is documented in [transport contracts](docs/architecture/CONTRACTS.md).
 
 The simulator equipment extension model, coordinate conventions, and current compatibility adapters are documented in [the equipment SDK](docs/architecture/EQUIPMENT_SDK.md).
+
+Frame conventions, pure TypeScript kinematics, solver diagnostics and calibrated-pose migration notes are documented in [kinematics and frames](docs/architecture/KINEMATICS_AND_FRAMES.md).
 
 ## Roadmap / Next Steps
 

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-17T22:58:30.819Z",
+  "updatedAt": "2026-09-17T23:34:32.764Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -39,10 +39,18 @@
       "evidence": "Simulator: type-check, 15 Vitest tests, and production build passed; HMI: type-check, 3 Vitest tests, and production build passed; backend: dotnet build and 42 tests passed. Existing simulator lint has 6 unrelated pre-existing violations."
     },
     "S06": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-17T23:04:00.912Z",
+      "completedAt": "2026-09-17T23:22:28.789Z",
+      "summary": "S06: robot catalog and selectable profiles. Added src/robot/catalog with RobotDefinition/JointDefinition/ToolDefinition contracts, validation (schema, exactly 6 joints, min<max finite joint limits, positive payload/reach, duplicate-id rejection, asset resolution against a procedural asset registry) and a RobotCatalogService with three license-safe generic six-axis profiles (compact 3kg/0.7m, medium 12kg/1.4m, heavy 50kg/2.0m), optional vendor metadata for educational comparison, and end-effector definitions with payload-based compatibility. The current robot is migrated as the default medium-6axis compatibility profile (identical dimensions and joint limits). IndustrialRobot now accepts per-profile joint limits and ScaledRobotComponent is driven by a RobotDefinition, so switching profiles re-mounts the same component with a fresh RobotController (configuration, not scene rewrite; one common controller interface). Added RobotCatalogPanel selection UI + a WebGL-free harness (?view=robot-catalog) for deterministic visual regression. Docs: docs/architecture/ROBOT_CATALOG.md added, EQUIPMENT_SDK.md and README updated.",
+      "evidence": "npm --prefix Fabrik3D/fabrik3d.client run type-check; npm --prefix Fabrik3D/fabrik3d.client run test (35 passed, incl. 14 RobotCatalogService validation + 2 headless instantiation + 4 RobotCatalogPanel component tests); npm --prefix Fabrik3D/fabrik3d.client run build; npm --prefix Fabrik3D/fabrik3d.client run test:visual (3 Playwright visual regression screenshots passed at 1280x800/768x1024/390x844); npm --prefix Fabrik3D/fabrik3d.hmi run type-check; npm --prefix Fabrik3D/fabrik3d.hmi run test (3 passed); npm --prefix Fabrik3D/fabrik3d.hmi run build; dotnet build Fabrik3D/Fabrik3D.slnx (0 warnings 0 errors); dotnet test Fabrik3D/Fabrik3D.slnx (42 passed). Pre-existing unrelated failure: fabrik3d.client lint (6 oxlint errors in untouched files: FinishedPartsTable.vue, RobotAxesDebugger.vue, RobotController.ts, PalletModels.ts x2, shims-vue.d.ts); new S06 code is lint-clean."
     },
     "S07": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-17T23:25:00.770Z",
+      "completedAt": "2026-09-17T23:34:32.764Z",
+      "summary": "Added renderer-independent modular FK/IK for catalog profiles, explicit cell/equipment/work-object frames, world-space pallet and CNC targets, and a compact kinematics developer overlay while retaining calibrated joint poses as migration fallbacks.",
+      "evidence": "Simulator: type-check, 47 Vitest tests including FK references for 3 profiles, IK round trips, invalid/unreachable/singular diagnostics, target geometry, overlay and performance benchmark; production build passed. HMI: type-check, 3 Vitest tests, production build passed. Backend: dotnet build passed with 42 tests. Existing simulator lint remains limited to 6 pre-existing violations in untouched files."
     },
     "S08": {
       "status": "planned"

@@ -1,6 +1,7 @@
 import { AXIS_COUNT, clampJoints, type JointLimit, DEFAULT_JOINT_LIMITS } from './AxisLimits'
 import { computeForwardKinematics, type FKResult, type DHParameter, DEFAULT_DH_PARAMS } from './ForwardKinematics'
 import { planJointTrajectory, sampleTrajectory, type Trajectory } from './TrajectoryPlanner'
+import type { KinematicPose, RobotKinematicsModel } from '../kinematics'
 
 export type RobotState = 'IDLE' | 'EXECUTING_COMMAND' | 'MOVING'
 
@@ -21,6 +22,8 @@ export interface RobotCommand {
 export interface RobotControllerOptions {
   limits?: readonly JointLimit[]
   dhParams?: readonly DHParameter[]
+  /** Optional profile-specific, rendering-independent kinematics model. */
+  kinematics?: RobotKinematicsModel
 }
 
 /**
@@ -34,6 +37,7 @@ export class RobotController {
   readonly jointAngles: number[]
   private readonly limits: readonly JointLimit[]
   private readonly dhParams: readonly DHParameter[]
+  private readonly kinematics: RobotKinematicsModel | null
 
   private activeTrajectory: Trajectory | null = null
   private trajectoryStart = 0
@@ -49,6 +53,7 @@ export class RobotController {
   constructor(options: RobotControllerOptions = {}) {
     this.limits = options.limits ?? DEFAULT_JOINT_LIMITS
     this.dhParams = options.dhParams ?? DEFAULT_DH_PARAMS
+    this.kinematics = options.kinematics ?? null
     this.jointAngles = new Array<number>(AXIS_COUNT).fill(0)
   }
 
@@ -150,6 +155,11 @@ export class RobotController {
   /** Compute forward kinematics for the current joint state. */
   getFK(): FKResult {
     return computeForwardKinematics(this.jointAngles, this.dhParams)
+  }
+
+  /** Preferred FK API for profile-aware code; returns null during legacy compatibility mode. */
+  getKinematicPose(): KinematicPose | null {
+    return this.kinematics?.forward(this.jointAngles) ?? null
   }
 
   // ── Frame update ──────────────────────────────────────────────

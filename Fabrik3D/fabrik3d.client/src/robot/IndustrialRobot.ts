@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { RobotJoint, type JointAxis } from './RobotJoint'
 import { RobotLink } from './RobotLink'
-import { DEFAULT_JOINT_LIMITS, AXIS_COUNT } from '../simulation/AxisLimits'
+import { DEFAULT_JOINT_LIMITS, AXIS_COUNT, type JointLimit } from '../simulation/AxisLimits'
 
 export interface RobotMaterials {
   body: THREE.MeshStandardMaterial
@@ -62,10 +62,12 @@ export class IndustrialRobot {
   private readonly links: RobotLink[] = []
   private readonly materials: RobotMaterials
   private readonly dims: Required<RobotDimensions>
+  private readonly limits: readonly JointLimit[]
 
-  constructor(materials: RobotMaterials, dimensions?: RobotDimensions) {
+  constructor(materials: RobotMaterials, dimensions?: RobotDimensions, jointLimits?: readonly JointLimit[]) {
     this.materials = materials
     this.dims = { ...DEFAULT_DIMS, ...dimensions }
+    this.limits = jointLimits ?? DEFAULT_JOINT_LIMITS
     const d = this.dims
     this.root = new THREE.Group()
     this.root.name = 'IndustrialRobot'
@@ -83,7 +85,7 @@ export class IndustrialRobot {
     this.joints = axes.map((a, i) => new RobotJoint({
       name: a.name,
       axis: a.axis,
-      limit: DEFAULT_JOINT_LIMITS[i]!,
+      limit: this.limits[i] ?? DEFAULT_JOINT_LIMITS[i]!,
       offset: a.offset,
     }))
 

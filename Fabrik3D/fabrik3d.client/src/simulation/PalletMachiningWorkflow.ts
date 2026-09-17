@@ -16,8 +16,13 @@ import {
   getPalletAbovePose,
   getPalletDownPose,
   getCncApproachPose,
+  getCncApproachTarget,
   getCncInsertPose,
+  getCncInsertTarget,
+  getPalletAboveTarget,
+  getPalletDownTarget,
 } from './PalletWorkspaceTargets'
+import type { WorkObjectTarget } from '../kinematics'
 
 // ── Phase enum ─────────────────────────────────────────────────────
 
@@ -93,6 +98,8 @@ export class PalletMachiningWorkflow {
   onSlotComplete: ((row: number, col: number) => void) | null = null
   /** Fires when the entire pallet is done. */
   onPalletComplete: (() => void) | null = null
+  /** Announces the frame-aware target before legacy calibrated motion executes. */
+  onTargetChanged: ((target: WorkObjectTarget) => void) | null = null
 
   private readonly ctrl: RobotMotionRuntime
   private readonly cb: PalletWorkflowCallbacks
@@ -190,6 +197,7 @@ export class PalletMachiningWorkflow {
         this._currentRow = slot[0]
         this._currentCol = slot[1]
         this.setPhase('MOVE_ABOVE_PALLET_SLOT')
+        this.announceTarget(getPalletAboveTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
         this.ctrl.moveJoints(
           getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.travelDuration,
@@ -201,6 +209,7 @@ export class PalletMachiningWorkflow {
 
       case 'MOVE_ABOVE_PALLET_SLOT':
         this.setPhase('DESCEND_TO_PICK')
+        this.announceTarget(getPalletDownTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
         this.ctrl.moveJoints(
           getPalletDownPose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.approachDuration,
@@ -227,6 +236,7 @@ export class PalletMachiningWorkflow {
 
       case 'LIFT_FROM_PALLET':
         this.setPhase('MOVE_TO_CNC_APPROACH')
+        this.announceTarget(getCncApproachTarget())
         this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration * 0.5)
         this.ctrl.enqueueMove(getCncApproachPose(), t.travelDuration * 0.6)
         break
@@ -240,6 +250,7 @@ export class PalletMachiningWorkflow {
       case 'OPEN_CNC_DOOR':
         if (now < this.waitUntil) return
         this.setPhase('MOVE_TO_CNC_INSERT')
+        this.announceTarget(getCncInsertTarget())
         this.ctrl.moveJoints(getCncInsertPose(), t.approachDuration)
         break
 
@@ -271,6 +282,7 @@ export class PalletMachiningWorkflow {
         if (now < this.waitUntil) return
         if (this.cb.getCNCState() !== 'UNLOADING') return
         this.setPhase('OPEN_CNC_DOOR_RETRIEVE')
+        this.announceTarget(getCncApproachTarget())
         this.ctrl.moveJoints(getCncApproachPose(), t.travelDuration)
         break
 
@@ -278,6 +290,7 @@ export class PalletMachiningWorkflow {
 
       case 'OPEN_CNC_DOOR_RETRIEVE':
         this.setPhase('MOVE_TO_CNC_RETRIEVE')
+        this.announceTarget(getCncInsertTarget())
         this.ctrl.moveJoints(getCncInsertPose(), t.approachDuration)
         break
 
@@ -297,6 +310,7 @@ export class PalletMachiningWorkflow {
 
       case 'LIFT_FROM_CNC':
         this.setPhase('MOVE_ABOVE_ORIGIN_SLOT')
+        this.announceTarget(getPalletAboveTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
         this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration * 0.5)
         this.ctrl.enqueueMove(
           getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
@@ -306,6 +320,7 @@ export class PalletMachiningWorkflow {
 
       case 'MOVE_ABOVE_ORIGIN_SLOT':
         this.setPhase('DESCEND_TO_ORIGIN_SLOT')
+        this.announceTarget(getPalletDownTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
         this.ctrl.moveJoints(
           getPalletDownPose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.approachDuration,
@@ -359,5 +374,9 @@ export class PalletMachiningWorkflow {
   private setRunState(s: WorkflowRunState): void {
     this.runState = s
     this.onRunStateChanged?.(s)
+  }
+
+  private announceTarget(target: WorkObjectTarget): void {
+    this.onTargetChanged?.(target)
   }
 }

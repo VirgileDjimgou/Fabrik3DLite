@@ -15,3 +15,5 @@ The simulator equipment SDK provides an incremental extension boundary for Fabri
 `LegacyRobotAdapter`, `LegacyCncAdapter`, and `LegacyPalletStationAdapter` wrap the existing single-conveyor robot controller, CNC component API and pallet feed API. The fixture `SINGLE_CONVEYOR_CELL` declares the current robot, CNC, conveyor and pallet station with their real scene transforms.
 
 New equipment is registered through `EquipmentRegistry`: add a definition, then an instance, without modifying `SingleConveyorCellLayout.vue`. Visual editor and external plugin loading remain out of scope for this SDK version.
+
+Robot kinematics (payload, reach, joint limits, dimensions) live in the separate `RobotCatalogService`; see `ROBOT_CATALOG.md`. The robot instance in `SINGLE_CONVEYOR_CELL` is driven by the catalog's default compatibility profile (`medium-6axis`).

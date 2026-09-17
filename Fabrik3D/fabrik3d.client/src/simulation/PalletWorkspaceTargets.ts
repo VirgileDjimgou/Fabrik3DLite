@@ -25,6 +25,7 @@ import {
   SINGLE_CELL_POSITIONS,
   SINGLE_CELL_CONVEYOR,
 } from './SingleConveyorCellLayout'
+import { createCncTarget, createPalletSlotTarget, type WorkObjectTarget } from '../kinematics'
 
 // ── Pallet geometry constants (must match RawMaterialPallet.vue) ──
 const PALLET_W = 0.60
@@ -141,6 +142,20 @@ export function getPalletAbovePose(
   return palletSlotBias(PALLET_ABOVE_BASE, palletWorldX, row, col, rows, cols)
 }
 
+/**
+ * Primary, frame-aware pallet target. The legacy joint pose API remains below
+ * as a calibrated migration fallback for the current visual robot.
+ */
+export function getPalletAboveTarget(
+  palletWorldX: number,
+  row: number,
+  col: number,
+  rows = 5,
+  cols = 5,
+): WorkObjectTarget {
+  return createPalletSlotTarget(palletWorldX, row, col, rows, cols, 0.18)
+}
+
 /** Down pose at slot level to pick or place a part. */
 export function getPalletDownPose(
   palletWorldX: number,
@@ -152,12 +167,29 @@ export function getPalletDownPose(
   return palletSlotBias(PALLET_DOWN_BASE, palletWorldX, row, col, rows, cols)
 }
 
+/** Frame-aware pick/place target at the pallet cavity surface. */
+export function getPalletDownTarget(
+  palletWorldX: number,
+  row: number,
+  col: number,
+  rows = 5,
+  cols = 5,
+): WorkObjectTarget {
+  return createPalletSlotTarget(palletWorldX, row, col, rows, cols)
+}
+
 /** Approach pose in front of the CNC door. */
 export function getCncApproachPose(): number[] {
   return [...CNC_APPROACH_BASE]
 }
 
+/** Frame-aware CNC door-clearance target. */
+export function getCncApproachTarget(): WorkObjectTarget { return createCncTarget('approach') }
+
 /** Insert pose inside the CNC chamber. */
 export function getCncInsertPose(): number[] {
   return [...CNC_INSERT_BASE]
 }
+
+/** Frame-aware shallow CNC insertion target. */
+export function getCncInsertTarget(): WorkObjectTarget { return createCncTarget('insert') }

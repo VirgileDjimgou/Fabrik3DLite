@@ -1,9 +1,10 @@
 <template>
   <ThreeScene>
-    <!-- Robot at cell centre -->
+    <!-- Robot at cell centre, driven by the selected catalog profile -->
     <ScaledRobotComponent
+      :key="selectedRobotId"
       :position="layout.robot"
-      :dimensions="{ scale: 1.25, upperArmLength: 1.05, forearmLength: 0.88 }"
+      :profile="selectedRobot"
       @controller-ready="onControllerReady"
     />
 
@@ -35,6 +36,20 @@
   </ThreeScene>
 
   <!-- Operator dashboard (outside ThreeScene so it overlays as HTML) -->
+  <RobotCatalogPanel
+    :robots="catalogRobots"
+    :selected-id="selectedRobotId"
+    :tools="catalogTools"
+    @select="selectRobot"
+  />
+
+  <KinematicsDeveloperOverlay
+    :controller="robotController"
+    :model="selectedKinematics"
+    :frames="cellFrames"
+    :target="developerTarget"
+  />
+
   <PalletMachiningDashboard
     :run-state="dashRunState"
     :phase="dashPhase"
@@ -62,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { shallowRef, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { shallowRef, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import ThreeScene from './ThreeScene.vue'
 import ScaledRobotComponent from './ScaledRobotComponent.vue'
 import ConveyorBelt from './ConveyorBelt.vue'
@@ -71,6 +86,8 @@ import LargeCNCMachine from './LargeCNCMachine.vue'
 import SingleConveyorFloor from './SingleConveyorFloor.vue'
 import SingleConveyorSceneSetup from './SingleConveyorSceneSetup.vue'
 import PalletMachiningDashboard from './PalletMachiningDashboard.vue'
+import RobotCatalogPanel from './RobotCatalogPanel.vue'
+import KinematicsDeveloperOverlay from './KinematicsDeveloperOverlay.vue'
 import type { RobotController } from '../simulation/RobotController'
 import {
   PalletMachiningWorkflow,
@@ -95,6 +112,16 @@ import {
   type PalletStationRuntime,
   type RobotMotionRuntime,
 } from '../equipment'
+import {
+  createDefaultRobotCatalog,
+  DEFAULT_ROBOT_ID,
+} from '../robot/catalog'
+import {
+  createCncTarget,
+  createRobotKinematics,
+  createSingleCellFrames,
+  type WorkObjectTarget,
+} from '../kinematics'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
@@ -102,6 +129,16 @@ const conveyor = SINGLE_CELL_CONVEYOR
 const flowCfg = { ...SINGLE_CELL_FLOW }
 // The cell declaration is independent from the Vue scene and can be reused by future editors.
 const equipmentRegistry = createSingleConveyorEquipmentRegistry()
+
+// ── Robot catalog (selection drives the scene, never a rewrite) ────
+const robotCatalog = createDefaultRobotCatalog()
+const selectedRobotId = ref(DEFAULT_ROBOT_ID)
+const catalogRobots = computed(() => robotCatalog.listRobots())
+const catalogTools = computed(() => robotCatalog.listTools())
+const selectedRobot = computed(() => robotCatalog.getRobot(selectedRobotId.value))
+const selectedKinematics = computed(() => createRobotKinematics(selectedRobot.value))
+const cellFrames = createSingleCellFrames()
+const developerTarget = ref<WorkObjectTarget>(createCncTarget('approach'))
 
 // ── Component refs ─────────────────────────────────────────────────
 const palletFeedRef = ref<InstanceType<typeof PalletConveyorFeed> | null>(null)
@@ -195,6 +232,7 @@ function ensureWorkflow(): PalletMachiningWorkflow | null {
   workflow.onPalletComplete = () => {
     syncDashboard()
   }
+  workflow.onTargetChanged = (target) => { developerTarget.value = target }
 
   // Bind bridge AFTER dashboard hooks are set so it can chain them
   bridge.bindWorkflow(workflow)
@@ -284,6 +322,37 @@ function handleReset(): void {
   dashTotal.value = 0
   dashProgress.value = 0
   dashSessionStatus.value = null
+}
+
+// ── Robot profile selection ────────────────────────────────────────
+
+function selectRobot(id: string): void {
+  if (id === selectedRobotId.value) return
+
+  // Rebuild the runtime for the new profile (no scene rewrite — the same
+  // ScaledRobotComponent re-mounts with the new definition and emits a
+  // fresh controller).
+  bridge.reset()
+  workflow?.reset()
+  workflow = null
+  workflowUpdateHooked = false
+  robotController.value = null
+  robotRuntime = null
+  cncRuntime = null
+  palletStationRuntime = null
+
+  selectedRobotId.value = id
+
+  dashPhase.value = 'IDLE'
+  dashRunState.value = 'idle'
+  dashPalletId.value = ''
+  dashMaterial.value = ''
+  dashRow.value = 0
+  dashCol.value = 0
+  dashCompleted.value = 0
+  dashRemaining.value = 0
+  dashTotal.value = 0
+  dashProgress.value = 0
 }
 
 // Attempt to create workflow when pallet feed ref becomes available
