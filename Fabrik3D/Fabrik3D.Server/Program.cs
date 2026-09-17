@@ -57,7 +57,10 @@ if (app.Environment.IsDevelopment())
 // CORS must come before any endpoint-producing middleware
 app.UseCors("DevCors");
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthorization();
 
 app.MapControllers();

@@ -469,13 +469,20 @@ Swagger is the easiest way to inspect and test these endpoints during developmen
 - MongoDB is used for local persistence of jobs, sessions, machine states, alarms, and messages.
 - Some synchronization behaviors are still evolving as the simulator/backend integration is refined.
 
+Detailed restore, configuration, build, and launch instructions are available in the [local development setup](docs/development/SETUP.md). Common local issues are covered in [troubleshooting](docs/development/TROUBLESHOOTING.md).
+
+Automated test layers, their local commands, and the isolated MongoDB test setup are documented in [testing](docs/TESTING.md).
+
 ## Roadmap / Next Steps
 
-- complete robust simulator/server synchronization for all runtime cases
-- continue refining the HMI screens and operator workflows
-- improve alarm, message, and acknowledgment handling
-- strengthen multilingual support across all HMI views
-- improve traceability between local pallet objects and backend job/task/session identifiers
-- add deployment and packaging improvements
-- evaluate an optional MQTT bridge for future industrial-style integrations
+The implementation roadmap is formalized as 20 incremental sprints covering stabilization, modular equipment, educational scenarios, an industrial-style HMI, and connected digital-twin adapters.
 
+See [the delivery roadmap](docs/roadmap/README.md) for phase details, acceptance criteria, and quality gates.
+
+Activate or resume the next sprint from the repository root:
+
+```powershell
+npm run sprint:next
+```
+
+The same roadmap can be executed manually or through Codex, GitHub Copilot, or OpenCode. The phrase `Start Next Sprint` instructs supported agents to load and implement the active sprint from the shared source of truth.

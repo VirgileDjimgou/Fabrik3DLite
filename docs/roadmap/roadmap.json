@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "name": "Fabrik3D educational digital twin roadmap",
+  "vision": "A modular educational platform for building, simulating, supervising, and understanding a robotic cell, from a virtual scenario to a connected digital twin.",
+  "sprints": [
+    { "id": "S01", "phase": 1, "title": "Repository and build stabilization", "file": "docs/roadmap/sprints/S01-build-stabilization.md", "dependsOn": [] },
+    { "id": "S02", "phase": 1, "title": "Automated test foundation and CI", "file": "docs/roadmap/sprints/S02-test-foundation-ci.md", "dependsOn": ["S01"] },
+    { "id": "S03", "phase": 1, "title": "Contracts and generated clients", "file": "docs/roadmap/sprints/S03-contracts-generated-clients.md", "dependsOn": ["S02"] },
+    { "id": "S04", "phase": 1, "title": "Coherent orchestration and traceability", "file": "docs/roadmap/sprints/S04-orchestration-traceability.md", "dependsOn": ["S03"] },
+    { "id": "S05", "phase": 2, "title": "Cell model and equipment SDK", "file": "docs/roadmap/sprints/S05-equipment-sdk.md", "dependsOn": ["S04"] },
+    { "id": "S06", "phase": 2, "title": "Robot catalog and selectable profiles", "file": "docs/roadmap/sprints/S06-robot-catalog.md", "dependsOn": ["S05"] },
+    { "id": "S07", "phase": 2, "title": "Frames and modular kinematics", "file": "docs/roadmap/sprints/S07-kinematics-frames.md", "dependsOn": ["S06"] },
+    { "id": "S08", "phase": 2, "title": "Collision, reachability, and trajectory diagnostics", "file": "docs/roadmap/sprints/S08-safety-trajectory.md", "dependsOn": ["S07"] },
+    { "id": "S09", "phase": 2, "title": "Visual cell editor MVP", "file": "docs/roadmap/sprints/S09-cell-editor.md", "dependsOn": ["S08"] },
+    { "id": "S10", "phase": 2, "title": "Cell persistence and extension boundaries", "file": "docs/roadmap/sprints/S10-cell-persistence-plugins.md", "dependsOn": ["S09"] },
+    { "id": "S11", "phase": 3, "title": "Educational scenario engine", "file": "docs/roadmap/sprints/S11-scenario-engine.md", "dependsOn": ["S10"] },
+    { "id": "S12", "phase": 3, "title": "Step mode and explainable simulation", "file": "docs/roadmap/sprints/S12-step-mode.md", "dependsOn": ["S11"] },
+    { "id": "S13", "phase": 3, "title": "Fault injection, timeline, and replay", "file": "docs/roadmap/sprints/S13-faults-timeline-replay.md", "dependsOn": ["S12"] },
+    { "id": "S14", "phase": 3, "title": "Learning assessment and reports", "file": "docs/roadmap/sprints/S14-learning-reports.md", "dependsOn": ["S13"] },
+    { "id": "S15", "phase": 4, "title": "Industrial HMI design system", "file": "docs/roadmap/sprints/S15-hmi-design-system.md", "dependsOn": ["S14"] },
+    { "id": "S16", "phase": 4, "title": "Industrial alarms and operator workflows", "file": "docs/roadmap/sprints/S16-alarm-workflows.md", "dependsOn": ["S15"] },
+    { "id": "S17", "phase": 4, "title": "Operations, diagnostics, and accessibility", "file": "docs/roadmap/sprints/S17-operations-diagnostics.md", "dependsOn": ["S16"] },
+    { "id": "S18", "phase": 5, "title": "Digital twin state model and telemetry replay", "file": "docs/roadmap/sprints/S18-twin-state-replay.md", "dependsOn": ["S17"] },
+    { "id": "S19", "phase": 5, "title": "OPC UA adapter", "file": "docs/roadmap/sprints/S19-opcua-adapter.md", "dependsOn": ["S18"] },
+    { "id": "S20", "phase": 5, "title": "MQTT adapter and final connected showcase", "file": "docs/roadmap/sprints/S20-mqtt-showcase.md", "dependsOn": ["S19"] }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "activeSprint": null,
+  "updatedAt": "2026-09-17T21:31:18.226Z",
+  "sprints": {
+    "S01": {
+      "status": "completed",
+      "startedAt": "2026-09-17T21:04:24.561Z",
+      "completedAt": "2026-09-17T21:13:34.806Z",
+      "summary": "Workspace stabilise: dependances reproductibles, artefacts generes retires du suivi Git, configuration locale documentee et MongoDB.Driver securise.",
+      "evidence": "npm run restore; npm run check; npm run audit; API /api/health Healthy; Swagger HTTP 200; previews Simulator et HMI HTTP 200; git ls-files generated count 0"
+    },
+    "S02": {
+      "status": "completed",
+      "startedAt": "2026-09-17T21:21:14.331Z",
+      "completedAt": "2026-09-17T21:31:18.226Z",
+      "summary": "Fondation de tests et CI ajoutee : xUnit, MongoDB Testcontainers, Vitest/Vue Test Utils, Playwright et workflow GitHub Actions.",
+      "evidence": "dotnet build Fabrik3D/Fabrik3D.slnx --no-restore; dotnet test Fabrik3D/Fabrik3D.slnx --no-build; npm --prefix Fabrik3D/fabrik3d.client run type-check; npm --prefix Fabrik3D/fabrik3d.client run test; npm --prefix Fabrik3D/fabrik3d.client run build; npm --prefix Fabrik3D/fabrik3d.hmi run type-check; npm --prefix Fabrik3D/fabrik3d.hmi run test; npm --prefix Fabrik3D/fabrik3d.hmi run build; npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e"
+    },
+    "S03": {
+      "status": "planned"
+    },
+    "S04": {
+      "status": "planned"
+    },
+    "S05": {
+      "status": "planned"
+    },
+    "S06": {
+      "status": "planned"
+    },
+    "S07": {
+      "status": "planned"
+    },
+    "S08": {
+      "status": "planned"
+    },
+    "S09": {
+      "status": "planned"
+    },
+    "S10": {
+      "status": "planned"
+    },
+    "S11": {
+      "status": "planned"
+    },
+    "S12": {
+      "status": "planned"
+    },
+    "S13": {
+      "status": "planned"
+    },
+    "S14": {
+      "status": "planned"
+    },
+    "S15": {
+      "status": "planned"
+    },
+    "S16": {
+      "status": "planned"
+    },
+    "S17": {
+      "status": "planned"
+    },
+    "S18": {
+      "status": "planned"
+    },
+    "S19": {
+      "status": "planned"
+    },
+    "S20": {
+      "status": "planned"
+    }
+  }
+}

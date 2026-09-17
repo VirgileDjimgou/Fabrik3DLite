@@ -1,0 +1,85 @@
+name: Fabrik3D CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          cache: npm
+          cache-dependency-path: |
+            Fabrik3D/fabrik3d.client/package-lock.json
+            Fabrik3D/fabrik3d.hmi/package-lock.json
+
+      - name: Restore backend
+        run: dotnet restore Fabrik3D/Fabrik3D.slnx
+      - name: Build backend
+        run: dotnet build Fabrik3D/Fabrik3D.slnx --no-restore --configuration Release
+      - name: Run backend tests
+        run: dotnet test Fabrik3D/Fabrik3D.slnx --no-build --configuration Release --logger "trx;LogFileName=backend.trx"
+
+      - name: Install simulator dependencies
+        run: npm ci --prefix Fabrik3D/fabrik3d.client
+      - name: Validate simulator
+        run: |
+          npm --prefix Fabrik3D/fabrik3d.client run type-check
+          npm --prefix Fabrik3D/fabrik3d.client run test
+          npm --prefix Fabrik3D/fabrik3d.client run build
+
+      - name: Install HMI dependencies
+        run: npm ci --prefix Fabrik3D/fabrik3d.hmi
+      - name: Validate HMI
+        run: |
+          npm --prefix Fabrik3D/fabrik3d.hmi run type-check
+          npm --prefix Fabrik3D/fabrik3d.hmi run test
+          npm --prefix Fabrik3D/fabrik3d.hmi run build
+
+      - name: Start orchestration server for smoke test
+        env:
+          ASPNETCORE_ENVIRONMENT: Testing
+          ASPNETCORE_URLS: http://127.0.0.1:7249
+          MongoDb__ConnectionString: mongodb://127.0.0.1:27017
+          MongoDb__DatabaseName: Fabrik3D_e2e
+        run: |
+          dotnet run --project Fabrik3D/Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj --no-build --configuration Release --no-launch-profile > server.log 2>&1 &
+      - name: Wait for server health
+        run: |
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:7249/api/health && exit 0
+            sleep 1
+          done
+          cat server.log
+          exit 1
+      - name: Run orchestration smoke test
+        run: npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e
+
+      - name: Upload failed test evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-evidence
+          path: |
+            **/TestResults/**
+            **/test-results/**
+            server.log
+          if-no-files-found: ignore

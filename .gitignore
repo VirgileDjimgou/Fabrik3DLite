@@ -1,7 +1,30 @@
+# IDE and local tooling
 .vs/
-bin/
-obj/
+.vscode/
 *.user
 *.suo
-fabrik3d.hmi/node_modules/
-fabrik3d.client/node_modules/
+
+# .NET build output
+**/bin/
+**/obj/
+
+# JavaScript dependencies and build output
+**/node_modules/
+**/dist/
+**/.vite/
+coverage/
+playwright-report/
+test-results/
+
+# Local configuration and secrets
+.env
+.env.local
+.env.*.local
+appsettings.Local.json
+
+# Temporary files and local archives
+*.tmp
+*.bak
+*.rar
+*.zip
+*.log

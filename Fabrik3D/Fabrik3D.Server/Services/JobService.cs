@@ -95,9 +95,7 @@ public class JobService
         var job = await _jobs.GetByIdAsync(id);
         if (job is null) return null;
 
-        if (job.Status is not (JobStatus.Created or JobStatus.Ready))
-            throw new InvalidOperationException(
-                $"Cannot start job in '{job.Status}' state. Only Created or Ready jobs can be started.");
+        JobStateTransitionRules.EnsureCanStart(job.Status);
 
         var oldStatus = job.Status.ToString();
         job.Status = JobStatus.Running;
@@ -135,9 +133,7 @@ public class JobService
         var job = await _jobs.GetByIdAsync(id);
         if (job is null) return null;
 
-        if (job.Status is not JobStatus.Running)
-            throw new InvalidOperationException(
-                $"Cannot pause job in '{job.Status}' state. Only Running jobs can be paused.");
+        JobStateTransitionRules.EnsureCanPause(job.Status);
 
         var oldStatus = job.Status.ToString();
         job.Status = JobStatus.Paused;
@@ -174,9 +170,7 @@ public class JobService
         var job = await _jobs.GetByIdAsync(id);
         if (job is null) return null;
 
-        if (job.Status is not JobStatus.Paused)
-            throw new InvalidOperationException(
-                $"Cannot resume job in '{job.Status}' state. Only Paused jobs can be resumed.");
+        JobStateTransitionRules.EnsureCanResume(job.Status);
 
         var oldStatus = job.Status.ToString();
         job.Status = JobStatus.Running;
@@ -213,9 +207,7 @@ public class JobService
         var job = await _jobs.GetByIdAsync(id);
         if (job is null) return null;
 
-        if (job.Status is not (JobStatus.Running or JobStatus.Paused))
-            throw new InvalidOperationException(
-                $"Cannot stop job in '{job.Status}' state. Only Running or Paused jobs can be stopped.");
+        JobStateTransitionRules.EnsureCanStop(job.Status);
 
         var oldStatus = job.Status.ToString();
         job.Status = JobStatus.Stopped;

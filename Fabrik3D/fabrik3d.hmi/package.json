@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@microsoft/signalr": "^9.0.0",
@@ -21,6 +24,10 @@
     "@vitejs/plugin-vue": "^5.2.4",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
+    "@playwright/test": "^1.55.0",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^26.1.0",
+    "vitest": "^4.0.18",
     "vue-tsc": "^2.2.8"
   }
 }
