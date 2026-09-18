@@ -124,6 +124,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Alarms/{id}/transition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    state?: string;
+                    by?: string;
+                    note?: string;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AlarmDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cell-templates": {
         parameters: {
             query?: never;
@@ -1234,6 +1275,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AlarmAuditDto: {
+            action?: string;
+            by?: string;
+            /** Format: date-time */
+            atUtc?: string;
+            note?: string | null;
+        };
         AlarmDto: {
             id?: string;
             code?: string;
@@ -1249,6 +1297,17 @@ export interface components {
             /** Format: date-time */
             acknowledgedAtUtc?: string | null;
             acknowledgedBy?: string | null;
+            lifecycleState?: string;
+            /** Format: date-time */
+            firstOccurredAtUtc?: string;
+            /** Format: date-time */
+            lastOccurredAtUtc?: string;
+            /** Format: int32 */
+            occurrenceCount?: number;
+            cause?: string;
+            consequence?: string;
+            operatorGuidance?: string;
+            auditTrail?: components["schemas"]["AlarmAuditDto"][];
         };
         ApiErrorDto: {
             code?: string;

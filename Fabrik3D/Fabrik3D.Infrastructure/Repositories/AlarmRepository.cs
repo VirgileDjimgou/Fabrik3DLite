@@ -20,7 +20,7 @@ public class AlarmRepository
         await _ctx.Alarms.Find(a => a.Id == id).FirstOrDefaultAsync();
 
     public async Task<List<Alarm>> GetActiveAsync() =>
-        await _ctx.Alarms.Find(a => !a.Acknowledged)
+        await _ctx.Alarms.Find(a => a.LifecycleState != Fabrik3D.Contracts.Enums.AlarmLifecycleState.Closed && a.LifecycleState != Fabrik3D.Contracts.Enums.AlarmLifecycleState.Shelved)
             .SortByDescending(a => a.CreatedAtUtc)
             .ToListAsync();
 

@@ -11,7 +11,8 @@
           {{ t('alarms.all') }}</button>
       </li>
     </ul>
-    <div v-if="alarms.length === 0" class="alert alert-secondary">{{ t('alarms.noAlarms') }}</div>
+    <div class="d-flex gap-2 mb-3"><label class="small">{{ t('alarms.source') }} <input v-model="sourceFilter" /></label><label class="small">{{ t('alarms.severity') }} <select v-model="severityFilter"><option value="">All</option><option>Warning</option><option>Error</option><option>Critical</option></select></label></div>
+    <div v-if="filtered.length === 0" class="alert alert-secondary">{{ t('alarms.noAlarms') }}</div>
     <div class="table-responsive" v-else>
       <table class="table table-sm table-striped align-middle">
         <thead class="table-light">
@@ -22,7 +23,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="a in alarms" :key="a.id">
+          <tr v-for="a in filtered" :key="a.id" @click="selected = a" style="cursor:pointer">
             <td><span class="badge" :class="sevBadge(a.severity)">{{ a.severity }}</span></td>
             <td><strong>{{ a.title }}</strong><div class="text-muted small">{{ a.message }}</div></td>
             <td class="small">{{ a.source }}</td>
@@ -40,11 +41,12 @@
         </tbody>
       </table>
     </div>
+    <aside v-if="selected" class="card mt-3"><div class="card-body"><h6>{{ selected.title }}</h6><p>{{ selected.message }}</p><dl class="row small"><dt class="col-4">Cause</dt><dd class="col-8">{{ selected.cause || '-' }}</dd><dt class="col-4">Consequence</dt><dd class="col-8">{{ selected.consequence || '-' }}</dd><dt class="col-4">Guidance</dt><dd class="col-8">{{ selected.operatorGuidance || '-' }}</dd><dt class="col-4">Lifecycle</dt><dd class="col-8">{{ selected.lifecycleState }}</dd></dl><button v-if="selected.lifecycleState === 'Active'" class="btn btn-outline-secondary btn-sm" @click="transition(selected.id, 'ReturnedToNormal')">Return to normal</button><button v-if="selected.lifecycleState !== 'Shelved' && selected.lifecycleState !== 'Closed'" class="btn btn-outline-secondary btn-sm ms-2" @click="transition(selected.id, 'Shelved')">Shelve for training</button><ul class="small mt-2"><li v-for="entry in selected.auditTrail" :key="(entry.atUtc ?? '') + (entry.action ?? '')">{{ entry.action ?? '-' }} — {{ entry.by ?? '-' }} — {{ fmtDate(entry.atUtc ?? '') }}</li></ul></div></aside>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as api from '@/services/api'
 import * as hub from '@/services/hub'
@@ -53,6 +55,10 @@ import type { AlarmDto } from '@/services/api'
 const { t } = useI18n()
 const tab = ref<'active'|'all'>('active')
 const alarms = ref<AlarmDto[]>([])
+const selected = ref<AlarmDto | null>(null)
+const sourceFilter = ref('')
+const severityFilter = ref('')
+const filtered = computed(() => alarms.value.filter(a => (!sourceFilter.value || a.source.toLowerCase().includes(sourceFilter.value.toLowerCase())) && (!severityFilter.value || a.severity === severityFilter.value)).sort((a, b) => b.lastOccurredAtUtc.localeCompare(a.lastOccurredAtUtc)))
 
 function sevBadge(s: string) {
   return s === 'Critical' ? 'bg-danger' : s === 'Warning' ? 'bg-warning text-dark'
@@ -67,6 +73,7 @@ async function doAck(id: string) {
   try { await api.acknowledgeAlarm(id); if (tab.value==='active') await loadActive(); else await loadAll() }
   catch (e) { console.warn('Ack failed', e) }
 }
+async function transition(id: string, state: string) { try { await api.transitionAlarm(id, state); await loadAll() } catch (e) { console.warn('Alarm transition failed', e) } }
 
 function onEvent() { if (tab.value==='active') void loadActive(); else void loadAll() }
 

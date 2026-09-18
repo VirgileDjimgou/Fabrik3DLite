@@ -28,6 +28,7 @@ builder.Services.AddSingleton<MachineStateService>();
 builder.Services.AddSingleton<CellTemplateService>();
 builder.Services.AddSingleton<CellTemplateAuthorizationPlaceholder>();
 builder.Services.AddHostedService<HeartbeatMonitorService>();
+builder.Services.AddHostedService<OpcUaConnectorHostedService>();
 
 // ── ASP.NET Core ───────────────────────────────────────────────────
 builder.Services.AddControllers(options =>

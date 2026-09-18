@@ -61,6 +61,8 @@ html, body {
 .hmi-icon { color: var(--hmi-icon-color); }
 button, a, select, input { min-height: var(--hmi-touch-target); }
 :focus-visible { outline: 3px solid var(--hmi-focus); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+.hmi-mode { font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--hmi-warning); }
 .hmi-status { display:inline-flex; gap:.35rem; align-items:center; font-size:.875rem; font-weight:600; }
 .hmi-status--normal,.hmi-status--disabled { color:var(--hmi-text-muted); }.hmi-status--loading,.hmi-status--pending { color:var(--hmi-icon-color); }.hmi-status--success { color:var(--hmi-success); }.hmi-status--warning { color:var(--hmi-warning); }.hmi-status--fault { color:var(--hmi-danger); }.hmi-status--offline { color:var(--hmi-text-muted); }
 .hmi-confirm-backdrop { position:fixed; inset:0; z-index:1050; display:grid; place-items:center; background:rgba(18,31,42,.55); padding:1rem; }.hmi-confirm { max-width:32rem; width:100%; background:var(--hmi-surface); border:2px solid var(--hmi-border); border-radius:var(--hmi-radius); padding:1.25rem; box-shadow:var(--hmi-shadow-lg); }.hmi-confirm h2 { font-size:1.2rem; }.hmi-confirm div { display:flex; justify-content:flex-end; gap:.5rem; }

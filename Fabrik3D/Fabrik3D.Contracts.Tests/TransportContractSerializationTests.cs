@@ -17,7 +17,7 @@ public class TransportContractSerializationTests
             new JobDto("job-1", "Job", "Description", "Running", "Automatic", Timestamp, Timestamp, null, null, null, null, 0, 0, null, new(), 1),
             new TaskDto("task-1", "job-1", "Task", "Description", "Pending", 0, "hex-billet", null, 0, 0, Timestamp, Timestamp, null, null, null, 1),
             new SimulationSessionDto("session-1", "job-1", "Running", Timestamp, null, false, "PICK", null, null, null, 0, 1, 1, Timestamp, "sim-1", "corr-1", 1, "scenario-1", "activity-1", 40),
-            new AlarmDto("alarm-1", "A001", "Alarm", "Message", "Warning", "Simulator", null, null, Timestamp, false, null, null),
+            new AlarmDto("alarm-1", "A001", "Alarm", "Message", "Warning", "Simulator", null, null, Timestamp, false, null, null, "Active", Timestamp, Timestamp, 1, "Cause", "Consequence", "Guidance", []),
             new OperatorMessageDto("message-1", "Title", "Message", "Info", "Server", null, null, Timestamp, false, null),
             new MachineStateDto("machine-1", null, "Automatic", "Running", "Moving", "Idle", "PICK", null, null, null, 0, 0, true, false, Timestamp),
             new HealthDto("Healthy", Timestamp, "1.0.0"),

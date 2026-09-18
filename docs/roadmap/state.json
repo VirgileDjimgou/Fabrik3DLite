@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-18T02:03:37.085Z",
+  "updatedAt": "2026-09-18T02:45:25.319Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -109,19 +109,39 @@
       "evidence": "dotnet build/test passed; simulator type-check/test/build passed; HMI type-check, 13 Vitest tests, build, and 2 Playwright visual tests passed."
     },
     "S16": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T02:06:15.165Z",
+      "completedAt": "2026-09-18T02:10:53.249Z",
+      "summary": "Implemented structured alarm lifecycle states, immutable acknowledgement audit, generated alarm contracts, and HMI filtering/detail workflows.",
+      "evidence": "dotnet build/test passed (58 server tests); HMI type-check/test/build passed; simulator type-check/test passed; generated contracts refreshed from Swagger."
     },
     "S17": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T02:12:59.301Z",
+      "completedAt": "2026-09-18T02:14:41.563Z",
+      "summary": "Added visible permissioned operating modes, simulation-only dead-man manual jog with safety limits, and accessibility/diagnostics guidance.",
+      "evidence": "dotnet build/test passed (58 server tests); simulator type-check, 180 tests and build passed; HMI type-check, 14 tests and build passed."
     },
     "S18": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T02:25:16.278Z",
+      "completedAt": "2026-09-18T02:26:49.701Z",
+      "summary": "Added versioned normalized twin telemetry state, source priority/freshness handling, JSON import, and deterministic command-isolated replay.",
+      "evidence": "dotnet build/test passed (58 server tests); simulator type-check, 182 tests and build passed; HMI type-check, 14 tests and build passed."
     },
     "S19": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T02:32:48.493Z",
+      "completedAt": "2026-09-18T02:34:31.873Z",
+      "summary": "Added an optional isolated OPC UA infrastructure boundary with sample mapping, disabled-by-default configuration, and allow-listed write policy.",
+      "evidence": "dotnet build/test passed (60 server tests); simulator type-check, 182 tests and build passed; HMI type-check, 14 tests and build passed."
     },
     "S20": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T02:43:19.808Z",
+      "completedAt": "2026-09-18T02:45:25.319Z",
+      "summary": "Added optional MQTT topic/payload mapping, disabled-by-default allow-listed commands, deterministic broker fixture, and final connected-showcase runbook.",
+      "evidence": "dotnet build/test passed (62 server tests); simulator type-check, 182 tests and build passed; HMI type-check, 14 tests and build passed."
     }
   }
 }

@@ -3,6 +3,7 @@
     <!-- Version bar -->
     <div class="hmi-version d-flex justify-content-between align-items-center bg-white border-bottom">
       <span>Fabrik3D HMI v1.0.0</span>
+      <span class="hmi-mode" aria-label="Active operating mode">{{ mode }}</span>
       <HmiConnectionBadge :connectionState="connectionState" />
     </div>
 
@@ -30,6 +31,8 @@ import HmiBottomNav from './HmiBottomNav.vue'
 import HmiConnectionBadge from './HmiConnectionBadge.vue'
 import HmiStatusPanel from '@/components/dashboard/HmiStatusPanel.vue'
 import { useMachineState } from '@/composables/useMachineState'
+import { useOperatingMode } from '@/composables/useOperatingMode'
 
 const { machine, currentJob, session, connectionState } = useMachineState()
+const { mode } = useOperatingMode()
 </script>

@@ -64,6 +64,8 @@ export const getAlarms = (limit = 100) => request<AlarmDto[]>('GET', `/alarms?li
 export const getActiveAlarms = () => request<AlarmDto[]>('GET', '/alarms/active')
 export const acknowledgeAlarm = (id: string, by = 'operator') =>
   request<AlarmDto>('POST', `/alarms/${id}/acknowledge?by=${by}`)
+export const transitionAlarm = (id: string, state: string, by = 'operator') =>
+  request<AlarmDto>('POST', `/alarms/${id}/transition?state=${encodeURIComponent(state)}&by=${encodeURIComponent(by)}`)
 
 // ── Messages ──
 export const getMessages = (limit = 100) =>

@@ -108,6 +108,57 @@
         }
       }
     },
+    "/api/Alarms/{id}/transition": {
+      "post": {
+        "tags": [
+          "Alarms"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "by",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "operator"
+            }
+          },
+          {
+            "name": "note",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlarmDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cell-templates": {
       "get": {
         "tags": [
@@ -1182,6 +1233,26 @@
   },
   "components": {
     "schemas": {
+      "AlarmAuditDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "atUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AlarmDto": {
         "type": "object",
         "properties": {
@@ -1226,6 +1297,36 @@
           "acknowledgedBy": {
             "type": "string",
             "nullable": true
+          },
+          "lifecycleState": {
+            "type": "string"
+          },
+          "firstOccurredAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastOccurredAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "occurrenceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cause": {
+            "type": "string"
+          },
+          "consequence": {
+            "type": "string"
+          },
+          "operatorGuidance": {
+            "type": "string"
+          },
+          "auditTrail": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlarmAuditDto"
+            }
           }
         },
         "additionalProperties": false

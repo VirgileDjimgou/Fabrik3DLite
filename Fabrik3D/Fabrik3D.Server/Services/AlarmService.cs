@@ -44,6 +44,8 @@ public class AlarmService
             Source = source,
             JobId = jobId,
             SimulationSessionId = sessionId,
+            FirstOccurredAtUtc = DateTime.UtcNow,
+            LastOccurredAtUtc = DateTime.UtcNow,
         };
 
         await _alarms.CreateAsync(alarm);
@@ -60,14 +62,30 @@ public class AlarmService
         var alarm = await _alarms.GetByIdAsync(id);
         if (alarm is null) return null;
 
-        alarm.Acknowledged = true;
-        alarm.AcknowledgedAtUtc = DateTime.UtcNow;
-        alarm.AcknowledgedBy = acknowledgedBy;
+        Transition(alarm, AlarmLifecycleState.Acknowledged, acknowledgedBy, "Operator acknowledgement");
         await _alarms.UpdateAsync(alarm);
 
         await _hub.AlarmAcknowledgedAsync(new AlarmAcknowledgedEvent(
             alarm.Id, acknowledgedBy, DateTime.UtcNow));
 
         return alarm.ToDto();
+    }
+
+    public async Task<AlarmDto?> TransitionAsync(string id, AlarmLifecycleState state, string by, string? note = null)
+    {
+        var alarm = await _alarms.GetByIdAsync(id);
+        if (alarm is null) return null;
+        Transition(alarm, state, by, note);
+        await _alarms.UpdateAsync(alarm);
+        return alarm.ToDto();
+    }
+
+    private static void Transition(Alarm alarm, AlarmLifecycleState state, string by, string? note)
+    {
+        AlarmLifecycleRules.EnsureCanTransition(alarm.LifecycleState, state);
+        var now = DateTime.UtcNow;
+        alarm.LifecycleState = state;
+        if (state == AlarmLifecycleState.Acknowledged) { alarm.Acknowledged = true; alarm.AcknowledgedAtUtc = now; alarm.AcknowledgedBy = by; }
+        alarm.AuditTrail.Add(new AlarmAuditEntry { Action = state.ToString(), By = by, AtUtc = now, Note = note });
     }
 }

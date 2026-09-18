@@ -32,7 +32,10 @@ public static class EntityMapper
         e.Id, e.Code, e.Title, e.Message,
         e.Severity.ToString(), e.Source,
         e.JobId, e.SimulationSessionId, e.CreatedAtUtc,
-        e.Acknowledged, e.AcknowledgedAtUtc, e.AcknowledgedBy);
+        e.Acknowledged, e.AcknowledgedAtUtc, e.AcknowledgedBy,
+        e.LifecycleState.ToString(), e.FirstOccurredAtUtc, e.LastOccurredAtUtc, e.OccurrenceCount,
+        e.Cause, e.Consequence, e.OperatorGuidance,
+        e.AuditTrail.Select(a => new AlarmAuditDto(a.Action, a.By, a.AtUtc, a.Note)).ToList());
 
     public static OperatorMessageDto ToDto(this OperatorMessage e) => new(
         e.Id, e.Title, e.Message, e.Type, e.Source,

@@ -75,7 +75,17 @@ public record AlarmDto(
     DateTime CreatedAtUtc,
     bool Acknowledged,
     DateTime? AcknowledgedAtUtc,
-    string? AcknowledgedBy);
+    string? AcknowledgedBy,
+    string LifecycleState,
+    DateTime FirstOccurredAtUtc,
+    DateTime LastOccurredAtUtc,
+    int OccurrenceCount,
+    string Cause,
+    string Consequence,
+    string OperatorGuidance,
+    List<AlarmAuditDto> AuditTrail);
+
+public record AlarmAuditDto(string Action, string By, DateTime AtUtc, string? Note);
 
 public record OperatorMessageDto(
     string Id,

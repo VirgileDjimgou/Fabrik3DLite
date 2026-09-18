@@ -34,4 +34,14 @@ public class Alarm
     public DateTime? AcknowledgedAtUtc { get; set; }
 
     public string? AcknowledgedBy { get; set; }
+
+    [BsonRepresentation(BsonType.String)]
+    public AlarmLifecycleState LifecycleState { get; set; } = AlarmLifecycleState.Active;
+    public DateTime FirstOccurredAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime LastOccurredAtUtc { get; set; } = DateTime.UtcNow;
+    public int OccurrenceCount { get; set; } = 1;
+    public string Cause { get; set; } = string.Empty;
+    public string Consequence { get; set; } = string.Empty;
+    public string OperatorGuidance { get; set; } = string.Empty;
+    public List<AlarmAuditEntry> AuditTrail { get; set; } = [];
 }

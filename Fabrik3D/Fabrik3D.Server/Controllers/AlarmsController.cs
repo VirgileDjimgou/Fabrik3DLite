@@ -34,4 +34,14 @@ public class AlarmsController : ControllerBase
         var dto = await _svc.AcknowledgeAsync(id, by);
         return dto is null ? NotFound() : Ok(dto);
     }
+
+    /// <summary>Transition an alarm lifecycle state, retaining immutable action history.</summary>
+    [HttpPost("{id}/transition")]
+    [ProducesResponseType(typeof(AlarmDto), 200)]
+    public async Task<IActionResult> Transition(string id, [FromQuery] string state, [FromQuery] string by = "operator", [FromQuery] string? note = null)
+    {
+        if (!Enum.TryParse<Fabrik3D.Contracts.Enums.AlarmLifecycleState>(state, true, out var target)) return BadRequest();
+        try { var dto = await _svc.TransitionAsync(id, target, by, note); return dto is null ? NotFound() : Ok(dto); }
+        catch (InvalidOperationException ex) { return Conflict(new ApiErrorDto("invalid_alarm_transition", ex.Message, 409)); }
+    }
 }
