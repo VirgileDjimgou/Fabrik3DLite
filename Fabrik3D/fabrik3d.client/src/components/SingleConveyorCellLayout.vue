@@ -43,14 +43,27 @@
     @select="selectRobot"
   />
 
-<KinematicsDeveloperOverlay
+  <KinematicsDeveloperOverlay v-if="expertMode"
     :controller="robotController"
     :model="selectedKinematics"
     :frames="cellFrames"
     :target="developerTarget"
   />
 
-  <MotionSafetyPanel :engine="safetyEngine" />
+  <MotionSafetyPanel v-if="expertMode" :engine="safetyEngine" />
+  <StepModePanel
+    :active="stepMode.isEnabled"
+    :checkpoint="stepCheckpoint"
+    :speed="stepSpeed"
+    @toggle="toggleStepMode"
+    @speed="setStepSpeed"
+    @expert="expertMode = $event"
+    @next="advanceStep"
+    @previous="showPreviousExplanation"
+    @restart="restartGuidedRun"
+  />
+  <FaultTimelinePanel :key="timelineRevision" :faults="faults.activeFaults" :entries="timeline.all" @inject="injectFault" @action="actOnFault" />
+  <LearningReportPanel :key="timelineRevision" :entries="timeline.all" :expected-actions="expectedLearningActions" @reset-scenario="instructorResetScenario" />
 
   <PalletMachiningDashboard
     :run-state="dashRunState"
@@ -91,6 +104,9 @@ import PalletMachiningDashboard from './PalletMachiningDashboard.vue'
 import RobotCatalogPanel from './RobotCatalogPanel.vue'
 import KinematicsDeveloperOverlay from './KinematicsDeveloperOverlay.vue'
 import MotionSafetyPanel from './MotionSafetyPanel.vue'
+import StepModePanel from './StepModePanel.vue'
+import FaultTimelinePanel from './FaultTimelinePanel.vue'
+import LearningReportPanel from './LearningReportPanel.vue'
 import type { RobotController } from '../simulation/RobotController'
 import {
   PalletMachiningWorkflow,
@@ -126,6 +142,9 @@ import {
   type WorkObjectTarget,
 } from '../kinematics'
 import { createSafetyRobotModel, MotionSafetyEngine, createSingleCellWorld } from '../safety'
+import { StepModeController, type LearningCheckpoint } from '../learning/StepModeController'
+import { FaultController, getFaultDefinition, type FaultAction, type FaultType } from '../faults'
+import { TimelineRecorder, type TimelineContext } from '../timeline'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
@@ -143,6 +162,18 @@ const selectedRobot = computed(() => robotCatalog.getRobot(selectedRobotId.value
 const selectedKinematics = computed(() => createRobotKinematics(selectedRobot.value))
 const cellFrames = createSingleCellFrames()
 const developerTarget = ref<WorkObjectTarget>(createCncTarget('approach'))
+const stepMode = new StepModeController()
+const stepCheckpoint = ref<LearningCheckpoint | null>(null)
+const stepSpeed = ref(1)
+const expertMode = ref(false)
+const timeline = new TimelineRecorder()
+const faults = new FaultController(timeline)
+const timelineRevision = ref(0)
+const expectedLearningActions = ['start', 'step-next', 'acknowledge', 'reset', 'retry']
+function timelineContext(equipmentId = 'simulator-1'): TimelineContext {
+  return { source: 'simulator', sessionId: bridge.ctx.sessionId ?? 'local-session', equipmentId, correlationId: bridge.ctx.correlationId ?? 'local-correlation' }
+}
+function refreshFaultPanel(): void { timelineRevision.value += 1 }
 
 // ── Motion safety engine (rebuilt when the robot profile changes) ───
 const safetyEngine = shallowRef<MotionSafetyEngine>(new MotionSafetyEngine(
@@ -196,6 +227,8 @@ function getPalletStationRuntime(): PalletStationRuntime | null {
 
 // ── Orchestration bridge ───────────────────────────────────────────
 const bridge = new SimulatorOrchestrationBridge()
+faults.onPauseRequested = () => bridge.pause(() => workflow?.pause())
+faults.onRetryRequested = () => bridge.resume(() => workflow?.resume())
 
 onMounted(() => {
   bridge.onModeChanged = (mode) => { dashMode.value = mode }
@@ -233,14 +266,25 @@ function ensureWorkflow(): PalletMachiningWorkflow | null {
   }
 
   workflow = new PalletMachiningWorkflow(ctrl, callbacks, undefined, safetyEngine.value)
+  workflow.setSpeedMultiplier(stepSpeed.value)
 
   workflow.onPhaseChanged = (phase) => {
     dashPhase.value = phase
     syncDashboard()
+    timeline.record('state-transition', 'info', timelineContext('robot-1'), { to: phase })
+    refreshFaultPanel()
+    if (stepMode.observe(phase)) {
+      timeline.record('telemetry', 'info', timelineContext('robot-1'), { event: 'learning-checkpoint', phase })
+      refreshFaultPanel()
+      stepCheckpoint.value = stepMode.current
+      workflow?.pause()
+    }
   }
   workflow.onRunStateChanged = (s) => {
     dashRunState.value = s
     syncDashboard()
+    timeline.record('state-transition', 'info', timelineContext(), { to: s })
+    refreshFaultPanel()
   }
   workflow.onSlotComplete = () => {
     syncDashboard()
@@ -306,6 +350,8 @@ function handleStart(): void {
   if (!wf) return
   const pallet = getPalletStationRuntime()?.getFirstStoppedPallet()
   if (!pallet) return
+  timeline.record('command', 'info', timelineContext(), { command: 'start' })
+  refreshFaultPanel()
   safetyEngine.value.updatePalletObstacle(pallet.worldX)
   bridge.start(pallet, (p) => {
     wf.start(p)
@@ -314,18 +360,22 @@ function handleStart(): void {
 }
 
 function handlePause(): void {
+  timeline.record('command', 'info', timelineContext(), { command: 'pause' }); refreshFaultPanel()
   bridge.pause(() => workflow?.pause())
 }
 
 function handleResume(): void {
+  timeline.record('command', 'info', timelineContext(), { command: 'resume' }); refreshFaultPanel()
   bridge.resume(() => workflow?.resume())
 }
 
 function handleStop(): void {
+  timeline.record('command', 'warning', timelineContext(), { command: 'stop' }); refreshFaultPanel()
   bridge.stop(() => workflow?.stop())
 }
 
 function handleReset(): void {
+  timeline.record('command', 'info', timelineContext(), { command: 'reset' }); refreshFaultPanel()
   bridge.reset()
   workflow?.reset()
   safetyEngine.value.updatePalletObstacle(null)
@@ -340,6 +390,16 @@ function handleReset(): void {
   dashTotal.value = 0
   dashProgress.value = 0
   dashSessionStatus.value = null
+}
+
+function injectFault(type: FaultType): void {
+  const definition = getFaultDefinition(type)
+  faults.inject(definition, 'instructor', timelineContext(definition.equipmentId))
+  refreshFaultPanel()
+}
+
+function actOnFault(id: string, action: FaultAction): void {
+  try { faults.act(id, action, timelineContext()); refreshFaultPanel() } catch (error) { console.warn('[Fault lab]', error) }
 }
 
 // ── Robot profile selection ────────────────────────────────────────
@@ -372,6 +432,47 @@ function selectRobot(id: string): void {
   dashRemaining.value = 0
   dashTotal.value = 0
   dashProgress.value = 0
+}
+
+function toggleStepMode(enabled: boolean): void {
+  if (enabled) {
+    stepMode.enable()
+    if (workflow?.runState === 'running') bridge.pause(() => workflow?.pause())
+  } else {
+    stepMode.disable()
+    stepCheckpoint.value = null
+    if (workflow?.runState === 'paused') bridge.resume(() => workflow?.resume())
+  }
+}
+
+function advanceStep(): void {
+  if (!stepMode.next()) return
+  timeline.record('command', 'info', timelineContext(), { command: 'step-next' })
+  refreshFaultPanel()
+  bridge.resume(() => workflow?.resume())
+}
+
+function setStepSpeed(speed: number): void {
+  stepSpeed.value = speed
+  workflow?.setSpeedMultiplier(speed)
+}
+
+function showPreviousExplanation(): void {
+  stepCheckpoint.value = stepMode.previous
+  timeline.record('command', 'info', timelineContext(), { command: 'hint' })
+  refreshFaultPanel()
+}
+
+function restartGuidedRun(): void {
+  stepMode.restart()
+  stepCheckpoint.value = null
+  handleReset()
+}
+
+function instructorResetScenario(): void {
+  timeline.record('command', 'warning', timelineContext(), { command: 'instructor-reset-scenario' })
+  refreshFaultPanel()
+  restartGuidedRun()
 }
 
 // Attempt to create workflow when pallet feed ref becomes available

@@ -5,7 +5,7 @@ export default {
     confirm: 'Confirmer', next: 'Suivant',
   },
   tiles: {
-    start: 'Demarrer', resume: 'Reprendre', pauseUnload: 'Pause / Decharger',
+    start: 'Demarrer', resume: 'Reprendre', pauseUnload: 'Pause / Decharger', selectJobToStart: 'Selectionner le travail a demarrer',
     currentJob: 'Travail actuel', jobList: 'Liste des travaux',
     newJob: 'Nouveau travail', robotPositions: 'Positions robot',
     extras: 'Extras', settings: 'Parametres',
@@ -28,13 +28,13 @@ export default {
     noJobs: 'Aucun travail trouve.',
   },
   currentJob: {
-    title: 'Travail actuel', noActiveJob: 'Aucun travail actif.',
+    title: 'Travail actuel', noActiveJob: 'Aucun travail actif.', selectFromList: 'Selectionnez un travail connu dans la liste avant d envoyer des commandes.',
     session: 'Session', tasks: 'Taches',
     machineState: 'Etat machine', pause: 'Pause', stop: 'Arret',
     noTasks: 'Aucune tache.', part: 'Piece', slot: 'Slot',
     jobId: 'ID du travail', sessionStatus: 'Statut de session', heartbeat: 'Dernier heartbeat',
     taskId: 'ID de tache', simulator: 'Simulateur', pallet: 'Palette',
-    commandFailed: 'La commande a ete rejetee par le serveur.',
+    commandFailed: 'La commande a ete rejetee par le serveur.', confirmCommand: 'Confirmer la commande', commandTarget: 'Travail cible', commandMessage: 'Vous allez envoyer cette commande au travail selectionne.', cancel: 'Annuler',
   },
   newJob: {
     title: 'Nouveau travail', namePlaceholder: 'Nom du travail',

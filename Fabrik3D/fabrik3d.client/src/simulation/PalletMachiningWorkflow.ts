@@ -104,7 +104,8 @@ export class PalletMachiningWorkflow {
 
 private readonly ctrl: RobotMotionRuntime
   private readonly cb: PalletWorkflowCallbacks
-  readonly timing: PalletWorkflowTiming
+  timing: PalletWorkflowTiming
+  private readonly baseTiming: PalletWorkflowTiming
   /** Optional safety engine that gates every motion before execution. */
   private readonly safety: MotionSafetyEngine | null
 
@@ -121,8 +122,21 @@ private readonly ctrl: RobotMotionRuntime
   ) {
     this.ctrl = controller
     this.cb = callbacks
-    this.timing = { ...DEFAULT_PALLET_TIMING, ...timing }
+    this.baseTiming = { ...DEFAULT_PALLET_TIMING, ...timing }
+    this.timing = { ...this.baseTiming }
     this.safety = safety
+  }
+
+  /** Changes pedagogical speed without altering workflow transitions. */
+  setSpeedMultiplier(multiplier: number): void {
+    const factor = Math.max(0.25, Math.min(4, multiplier))
+    this.timing = {
+      travelDuration: this.baseTiming.travelDuration / factor,
+      approachDuration: this.baseTiming.approachDuration / factor,
+      gripDuration: this.baseTiming.gripDuration / factor,
+      doorWait: this.baseTiming.doorWait / factor,
+      machiningDuration: this.baseTiming.machiningDuration / factor,
+    }
   }
 
   // ── Readable state for the dashboard ─────────────────────────

@@ -1,6 +1,7 @@
 /** Human-readable diagnostics for scenario definitions. */
 
 import type { ScenarioDefinition } from './types'
+import { FAULT_TYPES } from '../faults/types'
 
 export interface ScenarioDiagnostic {
   severity: 'error' | 'warning'
@@ -54,6 +55,9 @@ export function validateScenario(scenario: ScenarioDefinition): ScenarioDiagnost
   }
   for (const [index, criterion] of (scenario.successCriteria ?? []).entries()) {
     checkLocales(criterion, `successCriteria[${index}]`, scenario.id, diagnostics)
+  }
+  for (const fault of scenario.faultInjections ?? []) {
+    if (!FAULT_TYPES.includes(fault)) diagnostics.push({ severity: 'error', code: 'invalid_fault_type', message: `Scenario '${scenario.id}' contains an unsupported fault '${fault}'.` })
   }
 
   return diagnostics

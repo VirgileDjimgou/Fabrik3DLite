@@ -123,11 +123,15 @@ Current focus:
 - local dashboard and orchestration bridge
 - versioned equipment SDK with legacy robot, CNC and pallet-station adapters
 - profile-aware, renderer-independent FK/IK model with explicit cell/work-object frames
+- guided step mode with logical checkpoints, idempotent advancement and safety-preserving explanations
 - robot catalog with selectable compact/medium/heavy six-axis profiles and end-effector compatibility metadata
 - mesh-independent motion safety: collision primitives, reachability validation, swept-path gating, structured alarms and a diagnostics overlay
 - visual cell editor (separate from execution mode) with grid-snapped transforms, overlap detection, undo/redo, reset-to-reference, and a plan-view canvas
 - versioned, deterministic cell files (schema 1.0, legacy 0.9 migration) with import/export, validation, samples, and orchestrator-persisted named templates
 - educational scenario engine with a versioned scenario format, five reference scenarios (en/fr/de), a deterministic scenario runner, and orchestrator-observable progress
+- simulated-fault training lab with typed recovery rules, ordered event timeline, and deterministic replay
+- trace-derived local learning assessment with transparent scoring and JSON/HTML reports
+- ISA-101-inspired, multilingual operator-HMI design tokens, semantic status states, and target-confirmed commands
 
 ### Server-Orchestrator
 
@@ -508,6 +512,14 @@ The REST and SignalR contract workflow, including generated TypeScript models sh
 The simulator equipment extension model, coordinate conventions, and current compatibility adapters are documented in [the equipment SDK](docs/architecture/EQUIPMENT_SDK.md).
 
 Frame conventions, pure TypeScript kinematics, solver diagnostics and calibrated-pose migration notes are documented in [kinematics and frames](docs/architecture/KINEMATICS_AND_FRAMES.md).
+
+The guided learning checkpoints and their orchestration/safety behavior are documented in [step mode](docs/architecture/STEP_MODE.md).
+
+Simulated fault injection, mandatory acknowledgement/reset/retry rules, timeline provenance, and deterministic replay are documented in [faults, timeline, and replay](docs/architecture/FAULTS_TIMELINE_REPLAY.md).
+
+Local learning assessment, report interpretation, privacy boundaries, and educational limitations are documented in [learning assessment and reports](docs/architecture/LEARNING_ASSESSMENT_REPORTS.md).
+
+The HMI’s semantic colour, command-confirmation, accessibility, responsive-layout, and terminology conventions are documented in [the HMI design system](docs/architecture/HMI_DESIGN_SYSTEM.md).
 
 ## Roadmap / Next Steps
 

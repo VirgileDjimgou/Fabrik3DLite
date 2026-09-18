@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-18T01:18:27.395Z",
+  "updatedAt": "2026-09-18T02:03:37.085Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -81,16 +81,32 @@
       "evidence": "dotnet build Fabrik3D/Fabrik3D.slnx (0 warnings 0 errors); dotnet test Fabrik3D/Fabrik3D.slnx (55 passed incl. new Scenario_progress_is_observable_through_the_session and updated DTO/event serialization); npm run contracts:generate + npm run contracts:check (verified against live server); npm --prefix Fabrik3D/fabrik3d.client run type-check; npm --prefix Fabrik3D/fabrik3d.client run test (159 passed incl. 20 new scenario tests: validation, deterministic runner transitions, translation completeness, and workflow-extraction equivalence where the existing machining workflow produces identical outcomes with the event adapter and completes the reference scenario); npm --prefix Fabrik3D/fabrik3d.client run build; npm --prefix Fabrik3D/fabrik3d.client run test:visual (10 Playwright specs incl. new scenario select-and-complete flows); npm --prefix Fabrik3D/fabrik3d.hmi run type-check; npm --prefix Fabrik3D/fabrik3d.hmi run test (3 passed); npm --prefix Fabrik3D/fabrik3d.hmi run build; npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e (3 passed). Pre-existing unrelated failure: fabrik3d.client lint (6 oxlint errors in untouched files: PalletModels.ts x2, RobotController.ts, FinishedPartsTable.vue, RobotAxesDebugger.vue, shims-vue.d.ts); new S11 code is lint-clean."
     },
     "S12": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T01:24:43.362Z",
+      "completedAt": "2026-09-18T01:39:56.982Z",
+      "summary": "Implemented guided step mode with idempotent logical checkpoints, pause/resume through the orchestration bridge, previous-explanation history, restart, bounded workflow speed control, and opt-in expert diagnostics while retaining motion safety validation.",
+      "evidence": "Simulator: type-check, 162 Vitest tests, production build passed. HMI: type-check, 3 Vitest tests, production build passed. Backend: dotnet build passed and 55 tests passed. Existing simulator lint has 6 unrelated pre-existing violations."
     },
     "S13": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T01:43:10.090Z",
+      "completedAt": "2026-09-18T01:52:18.817Z",
+      "summary": "Implemented typed simulated fault injection, recovery controls, ordered timeline, and deterministic replay.",
+      "evidence": "dotnet build/test passed; simulator type-check, 176 Vitest tests, build passed; HMI type-check, 3 Vitest tests, build passed."
     },
     "S14": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T01:53:02.762Z",
+      "completedAt": "2026-09-18T01:57:56.403Z",
+      "summary": "Implemented trace-derived learning assessment, local aliases, instructor comparison/reset, and JSON/HTML reports.",
+      "evidence": "Simulator type-check, 178 Vitest tests and build passed; HMI type-check/test/build passed; dotnet build/test passed."
     },
     "S15": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T01:58:28.738Z",
+      "completedAt": "2026-09-18T02:03:37.085Z",
+      "summary": "Refactored the HMI with semantic industrial states, explicit target-confirmed commands, reusable feedback components, responsive tokens, and visual regression coverage.",
+      "evidence": "dotnet build/test passed; simulator type-check/test/build passed; HMI type-check, 13 Vitest tests, build, and 2 Playwright visual tests passed."
     },
     "S16": {
       "status": "planned"

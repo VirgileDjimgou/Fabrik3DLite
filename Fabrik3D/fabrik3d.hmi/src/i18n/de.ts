@@ -5,7 +5,7 @@ export default {
     confirm: 'Bestaetigen', next: 'Weiter',
   },
   tiles: {
-    start: 'Start', resume: 'Fortsetzen', pauseUnload: 'Abladen und Pause',
+    start: 'Start', resume: 'Fortsetzen', pauseUnload: 'Abladen und Pause', selectJobToStart: 'Auftrag zum Starten waehlen',
     currentJob: 'Aktueller Auftrag', jobList: 'Auftrag aus Liste',
     newJob: 'Neuer Auftrag', robotPositions: 'Roboterpositionen',
     extras: 'Extras', settings: 'Einstellungen',
@@ -28,13 +28,13 @@ export default {
     noJobs: 'Keine Auftraege gefunden.',
   },
   currentJob: {
-    title: 'Aktueller Auftrag', noActiveJob: 'Kein aktiver Auftrag.',
+    title: 'Aktueller Auftrag', noActiveJob: 'Kein aktiver Auftrag.', selectFromList: 'Waehlen Sie vor Befehlen einen bekannten Auftrag aus der Liste.',
     session: 'Sitzung', tasks: 'Aufgaben',
     machineState: 'Maschinenzustand', pause: 'Pause', stop: 'Stopp',
     noTasks: 'Keine Aufgaben.', part: 'Teiltyp', slot: 'Slot',
     jobId: 'Auftrags-ID', sessionStatus: 'Sitzungsstatus', heartbeat: 'Letzter Heartbeat',
     taskId: 'Aufgaben-ID', simulator: 'Simulator', pallet: 'Palette',
-    commandFailed: 'Der Befehl wurde vom Server abgelehnt.',
+    commandFailed: 'Der Befehl wurde vom Server abgelehnt.', confirmCommand: 'Befehl bestaetigen', commandTarget: 'Zielauftrag', commandMessage: 'Sie werden diesen Befehl an den ausgewaehlten Auftrag senden.', cancel: 'Abbrechen',
   },
   newJob: {
     title: 'Neuer Auftrag', namePlaceholder: 'Auftragsname',

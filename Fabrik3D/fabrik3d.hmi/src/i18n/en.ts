@@ -5,7 +5,7 @@ export default {
     confirm: 'Confirm', next: 'Next',
   },
   tiles: {
-    start: 'Start', resume: 'Resume', pauseUnload: 'Pause / Unload',
+    start: 'Start', resume: 'Resume', pauseUnload: 'Pause / Unload', selectJobToStart: 'Select job to start',
     currentJob: 'Current Job', jobList: 'Job List', newJob: 'New Job',
     robotPositions: 'Robot Positions', extras: 'Extras', settings: 'Settings',
   },
@@ -26,13 +26,13 @@ export default {
     noJobs: 'No jobs found.',
   },
   currentJob: {
-    title: 'Current Job', noActiveJob: 'No active job.',
+    title: 'Current Job', noActiveJob: 'No active job.', selectFromList: 'Select a known job from the job list before issuing commands.',
     session: 'Session', tasks: 'Tasks',
     machineState: 'Machine State', pause: 'Pause', stop: 'Stop',
     noTasks: 'No tasks.', part: 'Part', slot: 'Slot',
     jobId: 'Job ID', sessionStatus: 'Session Status', heartbeat: 'Last Heartbeat',
     taskId: 'Task ID', simulator: 'Simulator', pallet: 'Pallet',
-    commandFailed: 'The command was rejected by the server.',
+    commandFailed: 'The command was rejected by the server.', confirmCommand: 'Confirm command', commandTarget: 'Target job', commandMessage: 'You are about to issue this command to the selected job.', cancel: 'Cancel',
   },
   newJob: {
     title: 'New Job', namePlaceholder: 'Job name',

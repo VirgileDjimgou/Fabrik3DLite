@@ -1,0 +1,58 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`learning report > derives report values from a fixed trace and renders concise HTML 1`] = `
+{
+  "assessment": {
+    "criteria": [
+      {
+        "description": "The trace records a completed workflow state.",
+        "earned": 40,
+        "id": "scenario-completed",
+        "label": "Scenario completed",
+        "observed": "Completed state recorded.",
+        "passed": true,
+        "points": 40,
+      },
+      {
+        "description": "Every encountered simulated fault was acknowledged and retried.",
+        "earned": 40,
+        "id": "recovered-faults",
+        "label": "Fault recovery",
+        "observed": "1/1 faults recovered.",
+        "passed": true,
+        "points": 40,
+      },
+      {
+        "description": "Each paused learning checkpoint was advanced deliberately.",
+        "earned": 20,
+        "id": "guided-steps",
+        "label": "Guided steps",
+        "observed": "1/0 checkpoint advances.",
+        "passed": true,
+        "points": 20,
+      },
+    ],
+    "possibleScore": 100,
+    "score": 100,
+  },
+  "expectedActions": [
+    "step-next",
+  ],
+  "generatedAt": "2026-01-02T00:00:00.000Z",
+  "metrics": {
+    "faultsEncountered": 1,
+    "hintsUsed": 0,
+    "recoveryActions": 2,
+    "scenarioCompleted": true,
+    "stepsAttempted": 1,
+  },
+  "observedActions": [
+    "step-next",
+    "acknowledge",
+    "retry",
+  ],
+  "schemaVersion": "1.0",
+  "sessionAlias": "Ada",
+  "simulated": true,
+}
+`;

@@ -1,7 +1,8 @@
 <template>
   <div>
+    <HmiConfirmationDialog :open="pendingAction !== null" :title="t('currentJob.confirmCommand')" :message="t('currentJob.commandMessage')" :target-label="t('currentJob.commandTarget')" :target="job?.name ?? '-'" :confirm-label="pendingAction ?? ''" :cancel-label="t('currentJob.cancel')" @confirm="confirmCommand" @cancel="pendingAction = null" />
     <h5 class="mb-3"><i class="bi bi-clipboard-data hmi-icon me-2"></i>{{ t('currentJob.title') }}</h5>
-    <div v-if="!job" class="alert alert-secondary">{{ t('currentJob.noActiveJob') }}</div>
+    <HmiEmptyState v-if="!job" :title="t('currentJob.noActiveJob')" :detail="t('currentJob.selectFromList')"><router-link to="/jobs" class="btn btn-hmi">{{ t('tiles.jobList') }}</router-link></HmiEmptyState>
     <template v-else>
       <!-- Job info -->
       <div class="card mb-3">
@@ -74,17 +75,17 @@
       </div>
 
       <!-- Command feedback -->
-      <div v-if="commandError" class="alert alert-danger small py-1">{{ commandError }}</div>
+      <HmiErrorState v-if="commandError" :title="t('currentJob.commandFailed')" :detail="commandError" />
 
       <!-- Control buttons -->
       <div class="d-flex gap-2 mb-3">
-        <button class="btn btn-hmi btn-sm" @click="doStart" :disabled="busy || job.status === 'Running'">
+        <button class="btn btn-hmi btn-sm" @click="requestCommand('start')" :disabled="busy || job.status === 'Running'">
           <i class="bi bi-play-fill me-1"></i>{{ t('tiles.start') }}</button>
-        <button class="btn btn-warning btn-sm" @click="doPause" :disabled="busy || job.status !== 'Running'">
+        <button class="btn btn-warning btn-sm" @click="requestCommand('pause')" :disabled="busy || job.status !== 'Running'">
           <i class="bi bi-pause-fill me-1"></i>{{ t('currentJob.pause') }}</button>
-        <button class="btn btn-success btn-sm" @click="doResume" :disabled="busy || job.status !== 'Paused'">
+        <button class="btn btn-success btn-sm" @click="requestCommand('resume')" :disabled="busy || job.status !== 'Paused'">
           <i class="bi bi-arrow-repeat me-1"></i>{{ t('tiles.resume') }}</button>
-        <button class="btn btn-danger btn-sm" @click="doStop"
+        <button class="btn btn-danger btn-sm" @click="requestCommand('stop')"
           :disabled="busy || job.status === 'Stopped' || job.status === 'Completed'">
           <i class="bi bi-stop-fill me-1"></i>{{ t('currentJob.stop') }}</button>
       </div>
@@ -122,6 +123,9 @@ import * as api from '@/services/api'
 import * as hub from '@/services/hub'
 import type { JobDto, TaskDto } from '@/services/api'
 import { useMachineState } from '@/composables/useMachineState'
+import HmiConfirmationDialog from '@/components/controls/HmiConfirmationDialog.vue'
+import HmiEmptyState from '@/components/controls/HmiEmptyState.vue'
+import HmiErrorState from '@/components/controls/HmiErrorState.vue'
 
 const { t } = useI18n()
 const { machine, session } = useMachineState()
@@ -129,6 +133,7 @@ const job = ref<JobDto | null>(null)
 const tasks = ref<TaskDto[]>([])
 const busy = ref(false)
 const commandError = ref('')
+const pendingAction = ref<'start' | 'pause' | 'resume' | 'stop' | null>(null)
 
 function statusBadge(s: string) {
   return s === 'Running' ? 'bg-success' : s === 'Paused' ? 'bg-warning text-dark'
@@ -182,10 +187,14 @@ async function runCommand(action: () => Promise<unknown>) {
   }
 }
 
-function doStart() { void runCommand(() => api.startJob(job.value!.id)) }
-function doPause() { void runCommand(() => api.pauseJob(job.value!.id)) }
-function doResume() { void runCommand(() => api.resumeJob(job.value!.id)) }
-function doStop() { void runCommand(() => api.stopJob(job.value!.id)) }
+function requestCommand(action: 'start' | 'pause' | 'resume' | 'stop') { pendingAction.value = action }
+function confirmCommand() {
+  const action = pendingAction.value
+  pendingAction.value = null
+  if (!action) return
+  const commands = { start: () => api.startJob(job.value!.id), pause: () => api.pauseJob(job.value!.id), resume: () => api.resumeJob(job.value!.id), stop: () => api.stopJob(job.value!.id) }
+  void runCommand(commands[action])
+}
 
 let unsub: (() => void) | null = null
 onMounted(() => {

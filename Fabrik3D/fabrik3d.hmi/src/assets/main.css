@@ -3,9 +3,9 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Accent ── */
-  --hmi-icon-color: #0d8ecf;
-  --hmi-icon-hover: #0b7ab8;
+  /* ── Neutral operator baseline; colour is reserved for meaning ── */
+  --hmi-icon-color: #38536a;
+  --hmi-icon-hover: #253e52;
 
   /* ── Surfaces ── */
   --hmi-bg: #e8ecf1;
@@ -25,9 +25,11 @@
   --hmi-nav-active: #ffffff;
 
   /* ── Semantic ── */
-  --hmi-success: #28a745;
-  --hmi-warning: #f0ad4e;
-  --hmi-danger: #dc3545;
+  --hmi-success: #237a45;
+  --hmi-warning: #a35b00;
+  --hmi-danger: #b42318;
+  --hmi-focus: #005fcc;
+  --hmi-touch-target: 2.75rem;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -57,6 +59,12 @@ html, body {
 
 /* ── Icon helper ── */
 .hmi-icon { color: var(--hmi-icon-color); }
+button, a, select, input { min-height: var(--hmi-touch-target); }
+:focus-visible { outline: 3px solid var(--hmi-focus); outline-offset: 2px; }
+.hmi-status { display:inline-flex; gap:.35rem; align-items:center; font-size:.875rem; font-weight:600; }
+.hmi-status--normal,.hmi-status--disabled { color:var(--hmi-text-muted); }.hmi-status--loading,.hmi-status--pending { color:var(--hmi-icon-color); }.hmi-status--success { color:var(--hmi-success); }.hmi-status--warning { color:var(--hmi-warning); }.hmi-status--fault { color:var(--hmi-danger); }.hmi-status--offline { color:var(--hmi-text-muted); }
+.hmi-confirm-backdrop { position:fixed; inset:0; z-index:1050; display:grid; place-items:center; background:rgba(18,31,42,.55); padding:1rem; }.hmi-confirm { max-width:32rem; width:100%; background:var(--hmi-surface); border:2px solid var(--hmi-border); border-radius:var(--hmi-radius); padding:1.25rem; box-shadow:var(--hmi-shadow-lg); }.hmi-confirm h2 { font-size:1.2rem; }.hmi-confirm div { display:flex; justify-content:flex-end; gap:.5rem; }
+.hmi-empty,.hmi-error { padding:1.25rem; border:1px solid var(--hmi-border); background:var(--hmi-surface); text-align:center; }.hmi-empty .bi { font-size:2rem; color:var(--hmi-text-muted); }.hmi-empty h2 { font-size:1.1rem; }.hmi-error { display:flex; align-items:center; gap:.5rem; text-align:left; color:var(--hmi-danger); }.hmi-error span { color:var(--hmi-text); }
 
 /* ── Tile button ── */
 .hmi-tile {

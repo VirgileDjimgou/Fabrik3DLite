@@ -43,6 +43,8 @@ export interface ScenarioDefinition {
   cellTemplateId?: string
   /** Robot joint configuration the scenario starts from. */
   initialJoints?: number[]
+  /** Faults injected at scenario start; makes abnormal situations reproducible. */
+  faultInjections?: import('../faults/types').FaultType[]
   /** Ordered activities; the scenario completes when all finish. */
   activities: ScenarioActivity[]
   successCriteria: LocalizedText[]
