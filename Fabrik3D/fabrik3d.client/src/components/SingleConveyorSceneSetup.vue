@@ -36,7 +36,8 @@ watch(
         child.shadow.camera.bottom = -9
         child.shadow.camera.far = 35
         child.shadow.camera.updateProjectionMatrix()
-        child.shadow.mapSize.set(2048, 2048)
+        const mapSize = ctx.quality === 'high' ? 4096 : ctx.quality === 'low' ? 512 : 2048
+        child.shadow.mapSize.set(mapSize, mapSize)
       }
     })
 

@@ -22,6 +22,11 @@
     { "id": "S17", "phase": 4, "title": "Operations, diagnostics, and accessibility", "file": "docs/roadmap/sprints/S17-operations-diagnostics.md", "dependsOn": ["S16"] },
     { "id": "S18", "phase": 5, "title": "Digital twin state model and telemetry replay", "file": "docs/roadmap/sprints/S18-twin-state-replay.md", "dependsOn": ["S17"] },
     { "id": "S19", "phase": 5, "title": "OPC UA adapter", "file": "docs/roadmap/sprints/S19-opcua-adapter.md", "dependsOn": ["S18"] },
-    { "id": "S20", "phase": 5, "title": "MQTT adapter and final connected showcase", "file": "docs/roadmap/sprints/S20-mqtt-showcase.md", "dependsOn": ["S19"] }
+    { "id": "S20", "phase": 5, "title": "MQTT adapter and final connected showcase", "file": "docs/roadmap/sprints/S20-mqtt-showcase.md", "dependsOn": ["S19"] },
+    { "id": "S21", "phase": 6, "title": "Versioned 3D asset SDK and GLB pipeline", "file": "docs/roadmap/sprints/S21-3d-asset-sdk.md", "dependsOn": ["S20"] },
+    { "id": "S22", "phase": 6, "title": "Industrial rendering, conveyor, and pallet station", "file": "docs/roadmap/sprints/S22-industrial-scene-conveyor-pallet.md", "dependsOn": ["S21"] },
+    { "id": "S23", "phase": 6, "title": "Professional modular six-axis robot", "file": "docs/roadmap/sprints/S23-professional-robot.md", "dependsOn": ["S22"] },
+    { "id": "S24", "phase": 6, "title": "Professional CNC and safety systems", "file": "docs/roadmap/sprints/S24-cnc-safety-systems.md", "dependsOn": ["S23"] },
+    { "id": "S25", "phase": 6, "title": "Asset import, cell integration, and visual hardening", "file": "docs/roadmap/sprints/S25-asset-import-hardening.md", "dependsOn": ["S24"] }
   ]
 }

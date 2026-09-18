@@ -1,5 +1,5 @@
 # No active sprint
 
-Last completed: **S20 - MQTT adapter and final connected showcase**
+Last completed: **S23 - Professional modular six-axis robot**
 
 Run `npm run sprint:next` to activate the next sprint.

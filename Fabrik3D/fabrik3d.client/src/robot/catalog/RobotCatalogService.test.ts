@@ -8,7 +8,9 @@ import {
   validateRobotDefinition,
   validateToolDefinition,
 } from './index'
-import { CAPSULE_COLLISION_MODEL_ID, PROCEDURAL_VISUAL_ASSET_ID } from './assets'
+import { CAPSULE_COLLISION_MODEL_ID } from './assets'
+import { REFERENCE_6AXIS_GLB_ASSET_ID } from '../../equipment/assets/referenceAsset'
+import { PROFESSIONAL_ROBOT_ASSET_IDS } from '../../equipment/assets/robotAssets'
 import type { RobotDefinition, ToolDefinition } from './types'
 
 function validRobot(overrides: Partial<RobotDefinition> = {}): RobotDefinition {
@@ -69,6 +71,14 @@ describe('robot catalog validation', () => {
       .toThrow("references unknown visual asset 'missing-mesh'")
   })
 
+  it('accepts a manifest-backed GLB visual asset without changing the robot runtime contract', () => {
+    const catalog = new RobotCatalogService()
+    const glbProfile = validRobot({ visualAsset: REFERENCE_6AXIS_GLB_ASSET_ID })
+    expect(() => catalog.registerRobot(glbProfile)).not.toThrow()
+    expect(catalog.getRobot(glbProfile.id).controllerProfile).toBe('generic-position')
+    expect(catalog.getRobot(glbProfile.id).collisionModel).toBe(CAPSULE_COLLISION_MODEL_ID)
+  })
+
   it('rejects invalid tools', () => {
     expect(() => validateToolDefinition(validTool({ massKg: -1 }))).toThrow('non-negative massKg')
     expect(() => validateToolDefinition(validTool({ mount: '' }))).toThrow('flange mount')
@@ -82,7 +92,7 @@ describe('default robot catalog', () => {
     expect(robots.map((r) => r.id)).toEqual(['compact-6axis', 'medium-6axis', 'heavy-6axis'])
     for (const robot of robots) {
       expect(robot.joints).toHaveLength(6)
-      expect(robot.visualAsset).toBe(PROCEDURAL_VISUAL_ASSET_ID)
+      expect(Object.values(PROFESSIONAL_ROBOT_ASSET_IDS)).toContain(robot.visualAsset)
       expect(robot.collisionModel).toBe(CAPSULE_COLLISION_MODEL_ID)
       expect(robot.controllerProfile).toBe('generic-position')
     }

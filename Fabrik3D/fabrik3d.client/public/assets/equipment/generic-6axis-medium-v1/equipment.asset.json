@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0",
+  "id": "generic-6axis-medium-v1",
+  "equipmentDefinitionId": "medium-6axis",
+  "category": "robot",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 1.55,
+    "y": 3.1,
+    "z": 1.55
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "f32f8a523a0a8b344255afad48a8bc45e98d5ae033b600844dd82430b6afe39a"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "e63e7cdd15296d00474fff5b4b558d5eb37f9dfbd86248a4e813fe8ffa5ce7b4"
+        },
+        "triangleBudget": 1800
+      }
+    ]
+  },
+  "collision": {
+    "id": "capsule-6axis",
+    "kind": "capsule"
+  },
+  "semanticNodes": [
+    {
+      "id": "joint:j1",
+      "kind": "joint"
+    },
+    {
+      "id": "joint:j2",
+      "kind": "joint"
+    },
+    {
+      "id": "joint:j3",
+      "kind": "joint"
+    },
+    {
+      "id": "joint:j4",
+      "kind": "joint"
+    },
+    {
+      "id": "joint:j5",
+      "kind": "joint"
+    },
+    {
+      "id": "joint:j6",
+      "kind": "joint"
+    },
+    {
+      "id": "tool:flange",
+      "kind": "tool"
+    },
+    {
+      "id": "tool:tcp",
+      "kind": "tool"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:base",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "robotRig": {
+    "joints": [
+      {
+        "id": "joint:j1",
+        "axis": "y",
+        "direction": 1
+      },
+      {
+        "id": "joint:j2",
+        "axis": "z",
+        "direction": 1,
+        "parentId": "joint:j1"
+      },
+      {
+        "id": "joint:j3",
+        "axis": "z",
+        "direction": 1,
+        "parentId": "joint:j2"
+      },
+      {
+        "id": "joint:j4",
+        "axis": "x",
+        "direction": 1,
+        "parentId": "joint:j3"
+      },
+      {
+        "id": "joint:j5",
+        "axis": "z",
+        "direction": 1,
+        "parentId": "joint:j4"
+      },
+      {
+        "id": "joint:j6",
+        "axis": "x",
+        "direction": 1,
+        "parentId": "joint:j5"
+      }
+    ],
+    "baseFrameNode": "frame:base",
+    "flangeNode": "tool:flange",
+    "toolFrameNode": "tool:tcp"
+  },
+  "materials": [
+    "robot-orange",
+    "robot-orange-light",
+    "dark-steel",
+    "safety-label"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "1e8a53f1b4c4534b2679053c4c42db35bd0adca8576bf61fbf96248cb885890b"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "f32f8a523a0a8b344255afad48a8bc45e98d5ae033b600844dd82430b6afe39a"
+  }
+}

@@ -1,5 +1,6 @@
 import { DEFAULT_JOINT_LIMITS } from '../../simulation/AxisLimits'
-import { CAPSULE_COLLISION_MODEL_ID, PROCEDURAL_VISUAL_ASSET_ID } from './assets'
+import { CAPSULE_COLLISION_MODEL_ID } from './assets'
+import { PROFESSIONAL_ROBOT_ASSET_IDS } from '../../equipment/assets/robotAssets'
 import type { JointDefinition, RobotDefinition, ToolDefinition } from './types'
 
 const SIX_AXIS_JOINT_NAMES = [
@@ -39,7 +40,7 @@ export const MEDIUM_6AXIS: RobotDefinition = {
   baseFrame: { id: 'base', description: 'Mounted at the cell floor origin.' },
   toolFrame: { id: 'flange', description: 'Tool flange at the wrist.' },
   dimensions: { scale: 1.25, upperArmLength: 1.05, forearmLength: 0.88 },
-  visualAsset: PROCEDURAL_VISUAL_ASSET_ID,
+  visualAsset: PROFESSIONAL_ROBOT_ASSET_IDS.medium,
   collisionModel: CAPSULE_COLLISION_MODEL_ID,
   controllerProfile: 'generic-position',
   vendor: { vendor: 'Fabrik3D', family: 'Educational 6-axis', note: 'Generic medium-payload arm for education.' },
@@ -59,7 +60,7 @@ export const COMPACT_6AXIS: RobotDefinition = {
   baseFrame: { id: 'base', description: 'Bench or floor mounted.' },
   toolFrame: { id: 'flange', description: 'Compact tool flange.' },
   dimensions: { scale: 0.8, upperArmLength: 0.7, forearmLength: 0.55 },
-  visualAsset: PROCEDURAL_VISUAL_ASSET_ID,
+  visualAsset: PROFESSIONAL_ROBOT_ASSET_IDS.compact,
   collisionModel: CAPSULE_COLLISION_MODEL_ID,
   controllerProfile: 'generic-position',
   vendor: { vendor: 'Fabrik3D', family: 'Educational compact', note: 'Generic small-payload arm for education.' },
@@ -79,7 +80,7 @@ export const HEAVY_6AXIS: RobotDefinition = {
   baseFrame: { id: 'base', description: 'Floor mounted with heavy base.' },
   toolFrame: { id: 'flange', description: 'Heavy-duty tool flange.' },
   dimensions: { scale: 1.6, upperArmLength: 1.4, forearmLength: 1.2 },
-  visualAsset: PROCEDURAL_VISUAL_ASSET_ID,
+  visualAsset: PROFESSIONAL_ROBOT_ASSET_IDS.heavy,
   collisionModel: CAPSULE_COLLISION_MODEL_ID,
   controllerProfile: 'generic-position',
   vendor: { vendor: 'Fabrik3D', family: 'Educational heavy', note: 'Generic high-payload arm for education.' },

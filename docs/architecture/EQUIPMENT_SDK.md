@@ -17,3 +17,7 @@ The simulator equipment SDK provides an incremental extension boundary for Fabri
 New equipment is registered through `EquipmentRegistry`: add a definition, then an instance, without modifying `SingleConveyorCellLayout.vue`. Visual editor and external plugin loading remain out of scope for this SDK version.
 
 Robot kinematics (payload, reach, joint limits, dimensions) live in the separate `RobotCatalogService`; see `ROBOT_CATALOG.md`. The robot instance in `SINGLE_CONVEYOR_CELL` is driven by the catalog's default compatibility profile (`medium-6axis`).
+
+Versioned GLB visual packages are an optional layer above this SDK. They use the
+separate renderer-facing asset registry and preserve the procedural model as a
+fallback; see [3D_ASSETS.md](3D_ASSETS.md).

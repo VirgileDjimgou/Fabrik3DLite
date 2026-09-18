@@ -21,6 +21,7 @@
     "audit:dotnet": "dotnet list Fabrik3D/Fabrik3D.Contracts/Fabrik3D.Contracts.csproj package --vulnerable --include-transitive && dotnet list Fabrik3D/Fabrik3D.Domain/Fabrik3D.Domain.csproj package --vulnerable --include-transitive && dotnet list Fabrik3D/Fabrik3D.Infrastructure/Fabrik3D.Infrastructure.csproj package --vulnerable --include-transitive && dotnet list Fabrik3D/Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj package --vulnerable --include-transitive",
     "contracts:generate": "node scripts/generate-contracts.mjs",
     "contracts:check": "node scripts/generate-contracts.mjs --check",
+    "assets:generate": "node scripts/generate-industrial-glb-assets.mjs",
     "sprint:status": "node scripts/sprint-runner.mjs status",
     "sprint:next": "node scripts/sprint-runner.mjs start-next",
     "sprint:show": "node scripts/sprint-runner.mjs show",

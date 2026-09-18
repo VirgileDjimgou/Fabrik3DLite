@@ -12,6 +12,7 @@
  */
 
 import { SINGLE_CELL_CONVEYOR, SINGLE_CELL_POSITIONS } from '../simulation/SingleConveyorCellLayout'
+import { INDUSTRIAL_CONVEYOR_MANIFEST } from '../equipment/assets'
 import { vec, type CollisionPrimitive, type Vec3 } from './collision'
 
 // Documented simplified geometry of the CNC body (matches LargeCNCMachine dims).
@@ -25,8 +26,9 @@ const CNC_DOOR_Y_MIN = 0.5
 const CNC_DOOR_Y_MAX = 1.5
 
 // Conveyor belt geometry (belt runs along X).
-const CONVEYOR_HEIGHT = 0.6
-const CONVEYOR_HALF_DEPTH = 0.3
+const CONVEYOR_PROXY = INDUSTRIAL_CONVEYOR_MANIFEST.collision.dimensionsMeters!
+const CONVEYOR_HEIGHT = CONVEYOR_PROXY.y
+const CONVEYOR_HALF_DEPTH = CONVEYOR_PROXY.z / 2
 
 // Pallet geometry (matches RawMaterialPallet dims).
 export const PALLET_SIZE_METERS = 0.6

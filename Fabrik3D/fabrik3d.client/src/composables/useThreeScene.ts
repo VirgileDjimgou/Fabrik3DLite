@@ -2,12 +2,34 @@ import { ref, shallowRef, onBeforeUnmount } from 'vue'
 import type { Ref, ShallowRef } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+
+export type SceneQuality = 'low' | 'medium' | 'high'
+
+export interface SceneQualityPreset {
+  shadows: boolean
+  shadowMapSize: number
+  pixelRatioCap: number
+  toneMappingExposure: number
+}
+
+export const SCENE_QUALITY_PRESETS: Record<SceneQuality, SceneQualityPreset> = {
+  low: { shadows: false, shadowMapSize: 512, pixelRatioCap: 1, toneMappingExposure: 0.9 },
+  medium: { shadows: true, shadowMapSize: 2048, pixelRatioCap: 2, toneMappingExposure: 1.0 },
+  high: { shadows: true, shadowMapSize: 4096, pixelRatioCap: 2, toneMappingExposure: 1.08 },
+}
+
+export function resolveSceneQuality(search = ''): SceneQuality {
+  const requested = new URLSearchParams(search).get('quality')
+  return requested === 'low' || requested === 'high' ? requested : 'medium'
+}
 
 export interface ThreeSceneContext {
   scene: THREE.Scene
   camera: THREE.PerspectiveCamera
   renderer: THREE.WebGLRenderer
   controls: OrbitControls
+  quality: SceneQuality
 
   /** Add any Object3D to the scene. */
   addObject(obj: THREE.Object3D): void
@@ -52,18 +74,29 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
     try {
       const width = container.clientWidth
       const height = container.clientHeight
+      const quality = resolveSceneQuality(window.location.search)
+      const preset = SCENE_QUALITY_PRESETS[quality]
 
       // Renderer
       const renderer = new THREE.WebGLRenderer({ antialias: true })
       renderer.setSize(width, height)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-      renderer.shadowMap.enabled = true
-      renderer.shadowMap.type = THREE.PCFShadowMap
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.pixelRatioCap))
+      renderer.outputColorSpace = THREE.SRGBColorSpace
+      renderer.toneMapping = THREE.ACESFilmicToneMapping
+      renderer.toneMappingExposure = preset.toneMappingExposure
+      renderer.shadowMap.enabled = preset.shadows
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap
       container.appendChild(renderer.domElement)
 
       // Scene
       const scene = new THREE.Scene()
-      scene.background = new THREE.Color(0x1a1a2e)
+      scene.background = new THREE.Color(0x202a31)
+      const pmrem = new THREE.PMREMGenerator(renderer)
+      const room = new RoomEnvironment()
+      const environmentTarget = pmrem.fromScene(room, 0.04)
+      scene.environment = environmentTarget.texture
+      room.dispose()
+      pmrem.dispose()
 
       // Camera
       const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
@@ -78,26 +111,26 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
       controls.update()
 
       // Lights
-      scene.add(new THREE.AmbientLight(0xffffff, 0.5))
+      scene.add(new THREE.HemisphereLight(0xdfeaf2, 0x2a3130, 1.4))
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1.2)
+      const dirLight = new THREE.DirectionalLight(0xfff4df, 2.4)
       dirLight.position.set(5, 8, 4)
       dirLight.castShadow = true
-      dirLight.shadow.mapSize.set(1024, 1024)
+      dirLight.shadow.mapSize.set(preset.shadowMapSize, preset.shadowMapSize)
       scene.add(dirLight)
 
-      const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3)
+      const fillLight = new THREE.DirectionalLight(0x9bc8e8, 0.55)
       fillLight.position.set(-3, 4, -2)
       scene.add(fillLight)
 
       // Floor grid
-      scene.add(new THREE.GridHelper(10, 20, 0x444466, 0x333355))
+      scene.add(new THREE.GridHelper(10, 20, 0x52616a, 0x354148))
 
       // Floor plane (shadow receiver)
       const floorMat = new THREE.MeshStandardMaterial({
-        color: 0x2a2a3e,
-        roughness: 0.9,
-        metalness: 0.1,
+        color: 0x596064,
+        roughness: 0.94,
+        metalness: 0.03,
       })
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat)
       floor.rotation.x = -Math.PI / 2
@@ -109,10 +142,12 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
         camera,
         renderer,
         controls,
+        quality,
         addObject: (obj) => scene.add(obj),
         removeObject: (obj) => scene.remove(obj),
         dispose: () => {
           controls.dispose()
+          environmentTarget.dispose()
           renderer.dispose()
           scene.traverse((child) => {
             if (child instanceof THREE.Mesh) {

@@ -41,6 +41,7 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 | 3. Educational experience | S11-S14 | Scenarios, step mode, faults, replay, learning reports |
 | 4. Industrial HMI | S15-S17 | Coherent operator UX, alarm lifecycle, diagnostics |
 | 5. Connected digital twin | S18-S20 | Normalized twin state, OPC UA, MQTT, end-to-end showcase |
+| 6. Professional 3D ecosystem | S21-S25 | Versioned assets, industrial equipment, import workflow, and production-grade rendering |
 
 ## Recommended feature priorities
 
@@ -50,6 +51,7 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 4. HMI redesign using industrial conventions: S15-S17.
 5. Timeline, fault injection, and replay: S13 and S18.
 6. OPC UA and MQTT connectors: S19-S20.
+7. Professional, replaceable 3D assets and scene realism: S21-S25.
 
 ## Quality policy
 

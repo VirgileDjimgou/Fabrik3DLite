@@ -14,12 +14,14 @@
       :length="conveyor.length"
       :speed="conveyor.speed"
       :rotation-y="layout.conveyorRotationY"
+      :sensor-active="conveyorSensorActive"
     />
     <PalletConveyorFeed
       ref="palletFeedRef"
       :flow-config="flowCfg"
       :conveyor-surface-y="conveyor.surfaceY"
       :conveyor-z="layout.conveyor[2]"
+      @sensor-state="conveyorSensorActive = $event"
     />
 
     <!-- CNC machine centred in front of robot, door faces −Z -->
@@ -150,6 +152,7 @@ import { TimelineRecorder, type TimelineContext } from '../timeline'
 const layout = SINGLE_CELL_POSITIONS
 const conveyor = SINGLE_CELL_CONVEYOR
 const flowCfg = { ...SINGLE_CELL_FLOW }
+const conveyorSensorActive = ref(false)
 // The cell declaration is independent from the Vue scene and can be reused by future editors.
 const equipmentRegistry = createSingleConveyorEquipmentRegistry()
 

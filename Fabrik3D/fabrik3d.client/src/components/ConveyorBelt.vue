@@ -6,6 +6,13 @@
 import { inject, watch, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
 import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY } from '../composables/injectionKeys'
+import {
+  createIndustrialAssetRegistry,
+  EquipmentVisualProvider,
+  INDUSTRIAL_CONVEYOR_ASSET_ID,
+  ThreeGlbAssetLoader,
+  type LoadedEquipmentVisual,
+} from '../equipment'
 
 const props = withDefaults(defineProps<{
   position?: [number, number, number]
@@ -13,11 +20,14 @@ const props = withDefaults(defineProps<{
   speed?: number
   /** Optional Y-rotation (radians) to orient the belt along a different axis. */
   rotationY?: number
+  /** Driven by pallet flow; lights the station sensor only when material is present. */
+  sensorActive?: boolean
 }>(), {
   position: () => [2, 0, -1.5] as [number, number, number],
   length: 2,
   speed: 0.3,
   rotationY: 0,
+  sensorActive: false,
 })
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
@@ -27,22 +37,39 @@ let conveyorGroup: THREE.Group | null = null
 let rollers: THREE.Mesh[] = []
 let beltSegments: THREE.Mesh[] = []
 let beltOffset = 0
+let sensorLenses: THREE.Mesh[] = []
+let loadedVisual: LoadedEquipmentVisual | null = null
+let usesProceduralFallback = false
 
 watch(
   () => sceneCtx.value,
   (ctx) => {
     if (!ctx || conveyorGroup) return
-    conveyorGroup = buildConveyor()
-    conveyorGroup.position.set(...props.position)
-    if (props.rotationY !== 0) conveyorGroup.rotation.y = props.rotationY
-    ctx.addObject(conveyorGroup)
-
-    animLoop.onFrame((_time, delta) => {
-      animateConveyor(delta)
-    })
+    void mountConveyor(ctx)
   },
   { immediate: true },
 )
+
+async function mountConveyor(ctx: { addObject: (object: THREE.Object3D) => void }): Promise<void> {
+  const provider = new EquipmentVisualProvider(createIndustrialAssetRegistry(), new ThreeGlbAssetLoader())
+  const visual = await provider.load(INDUSTRIAL_CONVEYOR_ASSET_ID, buildConveyor)
+  if (conveyorGroup) {
+    visual.dispose()
+    return
+  }
+  loadedVisual = visual
+  usesProceduralFallback = visual.source === 'procedural-fallback'
+  conveyorGroup = visual.root as THREE.Group
+  conveyorGroup.name = 'ConveyorBelt'
+  conveyorGroup.position.set(...props.position)
+  conveyorGroup.rotation.y = props.rotationY
+  configureAnimatedNodes(conveyorGroup)
+  updateSensorState()
+  ctx.addObject(conveyorGroup)
+  animLoop.onFrame((_time, delta) => animateConveyor(delta))
+}
+
+watch(() => props.sensorActive, () => updateSensorState())
 
 function buildConveyor(): THREE.Group {
   const group = new THREE.Group()
@@ -111,7 +138,35 @@ function buildConveyor(): THREE.Group {
   return group
 }
 
+function configureAnimatedNodes(root: THREE.Object3D): void {
+  rollers = []
+  beltSegments = []
+  sensorLenses = []
+  root.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return
+    const id = semanticId(child)
+    if (id.startsWith('roller:')) rollers.push(child)
+    if (id.startsWith('belt:segment:')) beltSegments.push(child)
+    if (id.endsWith(':lens')) sensorLenses.push(child)
+  })
+}
+
+function semanticId(object: THREE.Object3D): string {
+  return typeof object.userData.semanticId === 'string' ? object.userData.semanticId : object.name
+}
+
+function updateSensorState(): void {
+  for (const lens of sensorLenses) {
+    const material = lens.material
+    if (!(material instanceof THREE.MeshStandardMaterial)) continue
+    material.color.setHex(props.sensorActive ? 0x33ff77 : 0x145c2c)
+    material.emissive.setHex(props.sensorActive ? 0x0d7a2d : 0x031407)
+    material.emissiveIntensity = props.sensorActive ? 1.1 : 0.18
+  }
+}
+
 function animateConveyor(delta: number) {
+  if (beltSegments.length === 0) return
   const halfLen = props.length / 2
   const spacing = props.length / beltSegments.length
 
@@ -144,9 +199,12 @@ function disposeGroup(g: THREE.Group) {
 onBeforeUnmount(() => {
   const ctx = sceneCtx.value
   if (ctx && conveyorGroup) ctx.removeObject(conveyorGroup)
-  if (conveyorGroup) disposeGroup(conveyorGroup)
+  if (usesProceduralFallback && conveyorGroup) disposeGroup(conveyorGroup)
+  loadedVisual?.dispose()
   conveyorGroup = null
   rollers = []
   beltSegments = []
+  sensorLenses = []
+  loadedVisual = null
 })
 </script>

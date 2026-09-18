@@ -32,9 +32,9 @@ function buildFloor(): THREE.Group {
 
   // ── Concrete floor ──────────────────────────────────────────────
   const floorMat = new THREE.MeshStandardMaterial({
-    color: 0x3a3a4a,
-    roughness: 0.95,
-    metalness: 0.05,
+    color: 0x596064,
+    roughness: 0.96,
+    metalness: 0.02,
     polygonOffset: true,
     polygonOffsetFactor: 1,
     polygonOffsetUnits: 1,
@@ -44,6 +44,19 @@ function buildFloor(): THREE.Group {
   floor.position.set(0, 0.001, 0)
   floor.receiveShadow = true
   group.add(floor)
+
+  // Expansion joints keep the concrete readable without competing with safety overlays.
+  const jointMat = new THREE.MeshStandardMaterial({ color: 0x343b3e, roughness: 0.98, metalness: 0 })
+  for (let x = -4; x <= 4; x += 2) {
+    const joint = new THREE.Mesh(new THREE.BoxGeometry(0.012, h, 12), jointMat)
+    joint.position.set(x, 0.002, 0.5)
+    group.add(joint)
+  }
+  for (let z = -4; z <= 4; z += 2) {
+    const joint = new THREE.Mesh(new THREE.BoxGeometry(12, h, 0.012), jointMat)
+    joint.position.set(0, 0.002, z)
+    group.add(joint)
+  }
 
   // ── Safety perimeter ────────────────────────────────────────────
   const lineMat = new THREE.MeshBasicMaterial({ color: 0xccaa00 })

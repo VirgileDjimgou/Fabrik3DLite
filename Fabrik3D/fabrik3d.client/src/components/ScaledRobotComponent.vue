@@ -6,11 +6,13 @@
 import { inject, watch, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
 import { IndustrialRobot, type RobotMaterials } from '../robot/IndustrialRobot'
+import { RobotVisualBinding } from '../robot/RobotVisualBinding'
 import { RobotController } from '../simulation/RobotController'
 import { MEDIUM_6AXIS, type RobotDefinition } from '../robot/catalog'
 import { toJointLimits } from '../robot/catalog'
 import { createRobotKinematics } from '../kinematics'
 import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY } from '../composables/injectionKeys'
+import { createIndustrialAssetRegistry, EquipmentVisualProvider, ThreeGlbAssetLoader, type EquipmentVisualLoadResult } from '../equipment/assets'
 
 const props = withDefaults(defineProps<{
   position?: [number, number, number]
@@ -29,8 +31,11 @@ const animLoop = inject(ANIMATION_LOOP_KEY)!
 
 let robot: IndustrialRobot | null = null
 let controller: RobotController | null = null
+let loadedVisual: EquipmentVisualLoadResult | null = null
+let visualBinding: RobotVisualBinding | null = null
+let disposed = false
 
-function buildRobot(ctx: { addObject: (o: THREE.Object3D) => void }): void {
+async function buildRobot(ctx: { addObject: (o: THREE.Object3D) => void }): Promise<void> {
   const profile = props.profile
   const materials: RobotMaterials = {
     body: new THREE.MeshStandardMaterial({ color: 0xff6600, metalness: 0.4, roughness: 0.35 }),
@@ -38,20 +43,34 @@ function buildRobot(ctx: { addObject: (o: THREE.Object3D) => void }): void {
     gripper: new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.5, roughness: 0.4 }),
   }
 
-  robot = new IndustrialRobot(materials, profile.dimensions, toJointLimits(profile.joints))
-  robot.root.position.set(...props.position)
-
-  robot.root.traverse((child) => {
+  const registry = createIndustrialAssetRegistry()
+  const provider = new EquipmentVisualProvider(registry, new ThreeGlbAssetLoader())
+  const registeredVisual = registry.get(profile.visualAsset)
+  const visualRig = registeredVisual.source === 'glb' ? registeredVisual.manifest.robotRig : undefined
+  loadedVisual = await provider.load(profile.visualAsset, () => {
+    robot = new IndustrialRobot(materials, profile.dimensions, toJointLimits(profile.joints))
+    return robot.root
+  })
+  if (disposed) {
+    loadedVisual.dispose()
+    robot?.dispose()
+    return
+  }
+  const root = loadedVisual.root
+  root.position.set(...props.position)
+  root.traverse((child) => {
     if (child instanceof THREE.Mesh) {
       child.castShadow = true
       child.receiveShadow = true
     }
   })
 
-  ctx.addObject(robot.root)
+  ctx.addObject(root)
+  if (loadedVisual.source === 'glb') visualBinding = new RobotVisualBinding(root, visualRig)
 
   controller = new RobotController({ limits: toJointLimits(profile.joints), kinematics: createRobotKinematics(profile) })
   controller.onJointsChanged = (angles) => {
+    visualBinding?.setJointAngles(angles)
     robot?.setJointAngles(angles)
   }
 
@@ -65,16 +84,20 @@ function buildRobot(ctx: { addObject: (o: THREE.Object3D) => void }): void {
 watch(
   () => sceneCtx.value,
   (ctx) => {
-    if (!ctx || robot) return
-    buildRobot(ctx)
+    if (!ctx || loadedVisual) return
+    void buildRobot(ctx)
   },
   { immediate: true },
 )
 
 onBeforeUnmount(() => {
   const ctx = sceneCtx.value
-  if (ctx && robot) ctx.removeObject(robot.root)
+  disposed = true
+  if (ctx && loadedVisual) ctx.removeObject(loadedVisual.root)
+  loadedVisual?.dispose()
   robot?.dispose()
+  loadedVisual = null
+  visualBinding = null
   robot = null
   controller = null
 })

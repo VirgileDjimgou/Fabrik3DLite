@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "1.0",
+  "id": "generic-conveyor-v1",
+  "equipmentDefinitionId": "belt-conveyor",
+  "category": "conveyor",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 6,
+    "y": 0.82,
+    "z": 0.76
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "b5e6a80e6bf44158c5deb6bb7cd0a026dff20a12684fbdf5fbffd10a5ed2aab6"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "4b4a369926133beda36933dd15697ffd0ee9f005084d409cc2d05c4b526706b9"
+        },
+        "triangleBudget": 2500
+      }
+    ]
+  },
+  "collision": {
+    "id": "conveyor-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 6,
+      "y": 0.64,
+      "z": 0.72
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "motor:main",
+      "kind": "motor"
+    },
+    {
+      "id": "sensor:infeed",
+      "kind": "sensor"
+    },
+    {
+      "id": "sensor:station",
+      "kind": "sensor"
+    },
+    {
+      "id": "sensor:outfeed",
+      "kind": "sensor"
+    },
+    {
+      "id": "anchor:material.in",
+      "kind": "anchor"
+    },
+    {
+      "id": "anchor:material.out",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:material.in",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": -3,
+          "y": 0.64,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    },
+    {
+      "id": "anchor:material.out",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 3,
+          "y": 0.64,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "painted-steel",
+    "dark-steel",
+    "belt-rubber",
+    "safety-yellow"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "96699f9db8360c2f1cd25c35bd9ac87dc936785c7f49e7b01a6c3c31c32fdb89"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "b5e6a80e6bf44158c5deb6bb7cd0a026dff20a12684fbdf5fbffd10a5ed2aab6"
+  }
+}

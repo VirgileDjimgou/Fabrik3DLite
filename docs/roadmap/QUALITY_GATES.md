@@ -59,3 +59,13 @@ If a command does not exist yet, the sprint responsible for that test layer must
 - Text remains readable in English, French, and German.
 - Operator actions provide success, pending, and failure feedback.
 - Core views are keyboard accessible and usable on target touch-panel sizes.
+
+## 3D asset-specific invariants
+
+- Visual meshes remain replaceable and do not become the runtime or orchestration source of truth.
+- Every asset declares meters, Y-up orientation, origin convention, version, license, bounds, and required semantic nodes.
+- Detailed visual meshes and deterministic collision proxies remain separate.
+- Missing or invalid assets fall back to the existing procedural representation with a useful diagnostic.
+- Asset loaders cache shared resources and dispose instance-owned resources without leaking GPU memory.
+- LOD, texture, draw-call, and frame-time budgets are measured on the documented reference scene.
+- Visual regression screenshots cover the reference cell and state-dependent safety colors.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { SINGLE_CELL_POSITIONS } from '../simulation/SingleConveyorCellLayout'
+import { INDUSTRIAL_CONVEYOR_MANIFEST } from '../equipment/assets'
 import { addPalletObstacle, createSingleCellWorld, palletObstacles } from './cellObstacles'
 import { primitivesIntersect } from './collision'
 
@@ -16,6 +17,14 @@ describe('single-cell collision world', () => {
       // CNC body centred at the configured position.
       expect(cnc.primitive.max.z).toBeGreaterThan(SINGLE_CELL_POSITIONS.cnc[2])
       expect(cnc.primitive.min.z).toBeLessThan(SINGLE_CELL_POSITIONS.cnc[2])
+    }
+
+    const conveyor = world.obstacles.find((o) => o.id === 'conveyor-1')!
+    expect(conveyor.primitive.kind).toBe('box')
+    if (conveyor.primitive.kind === 'box') {
+      expect(conveyor.primitive.max.y).toBe(INDUSTRIAL_CONVEYOR_MANIFEST.collision.dimensionsMeters!.y)
+      expect(conveyor.primitive.max.z - conveyor.primitive.min.z)
+        .toBeCloseTo(INDUSTRIAL_CONVEYOR_MANIFEST.collision.dimensionsMeters!.z, 12)
     }
   })
 

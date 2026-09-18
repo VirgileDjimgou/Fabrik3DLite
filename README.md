@@ -122,6 +122,8 @@ Current focus:
 - robot-to-CNC execution workflow
 - local dashboard and orchestration bridge
 - versioned equipment SDK with legacy robot, CNC and pallet-station adapters
+- versioned GLB asset manifests, renderer-only asset registry, safe procedural fallbacks, and Blender authoring template
+- generated modular conveyor and pallet-station GLBs with LODs, PBR scene lighting, semantic sensor binding, and deterministic collision alignment
 - profile-aware, renderer-independent FK/IK model with explicit cell/work-object frames
 - guided step mode with logical checkpoints, idempotent advancement and safety-preserving explanations
 - robot catalog with selectable compact/medium/heavy six-axis profiles and end-effector compatibility metadata

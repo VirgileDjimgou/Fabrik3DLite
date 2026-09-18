@@ -7,6 +7,13 @@ import { inject, watch, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
 import { SCENE_CONTEXT_KEY } from '../composables/injectionKeys'
 import type { PalletCavityShape, RawMaterialType } from '../simulation/PalletModels'
+import {
+  createIndustrialAssetRegistry,
+  EquipmentVisualProvider,
+  INDUSTRIAL_PALLET_STATION_ASSET_ID,
+  ThreeGlbAssetLoader,
+  type LoadedEquipmentVisual,
+} from '../equipment'
 
 const props = withDefaults(defineProps<{
   palletId: string
@@ -28,6 +35,8 @@ const props = withDefaults(defineProps<{
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
 let palletGroup: THREE.Group | null = null
+let loadedVisual: LoadedEquipmentVisual | null = null
+let usesProceduralFallback = false
 
 // ── Dimensions ─────────────────────────────────────────────────────
 const PALLET_W = 0.60   // X extent
@@ -41,12 +50,27 @@ watch(
   () => sceneCtx.value,
   (ctx) => {
     if (!ctx || palletGroup) return
-    palletGroup = buildPallet()
-    palletGroup.position.set(...props.initialPosition)
-    ctx.addObject(palletGroup)
+    void mountPallet(ctx)
   },
   { immediate: true },
 )
+
+async function mountPallet(ctx: { addObject: (object: THREE.Object3D) => void }): Promise<void> {
+  const provider = new EquipmentVisualProvider(createIndustrialAssetRegistry(), new ThreeGlbAssetLoader())
+  const visual = await provider.load(INDUSTRIAL_PALLET_STATION_ASSET_ID, () => buildPallet(true))
+  if (palletGroup) {
+    visual.dispose()
+    return
+  }
+  loadedVisual = visual
+  usesProceduralFallback = visual.source === 'procedural-fallback'
+  palletGroup = visual.root as THREE.Group
+  palletGroup.name = `Pallet_${props.palletId}`
+  if (!usesProceduralFallback) addDynamicPalletGrid(palletGroup)
+  palletGroup.position.set(...props.initialPosition)
+  setPresenceSensor(palletGroup, true)
+  ctx.addObject(palletGroup)
+}
 
 // ── Materials ──────────────────────────────────────────────────────
 function makeMaterials() {
@@ -57,53 +81,51 @@ function makeMaterials() {
 }
 
 // ── Build ──────────────────────────────────────────────────────────
-function buildPallet(): THREE.Group {
+function buildPallet(includeStatic = true): THREE.Group {
   const group = new THREE.Group()
   group.name = `Pallet_${props.palletId}`
   const { baseMat, trayMat, partMat } = makeMaterials()
 
-  // Base
-  const base = new THREE.Mesh(new THREE.BoxGeometry(PALLET_W, BASE_H, PALLET_D), baseMat)
-  base.position.y = BASE_H / 2
-  base.castShadow = true
-  base.receiveShadow = true
-  group.add(base)
-
-  // Runner rails (bottom)
-  const railGeo = new THREE.BoxGeometry(PALLET_W - 0.04, 0.015, 0.04)
-  for (const zOff of [-0.18, 0, 0.18]) {
-    const rail = new THREE.Mesh(railGeo, baseMat)
-    rail.position.set(0, 0.008, zOff)
-    rail.castShadow = true
-    group.add(rail)
+  const trayY = BASE_H
+  if (includeStatic) {
+    const base = new THREE.Mesh(new THREE.BoxGeometry(PALLET_W, BASE_H, PALLET_D), baseMat)
+    base.position.y = BASE_H / 2
+    base.castShadow = true
+    base.receiveShadow = true
+    group.add(base)
+    const railGeo = new THREE.BoxGeometry(PALLET_W - 0.04, 0.015, 0.04)
+    for (const zOff of [-0.18, 0, 0.18]) {
+      const rail = new THREE.Mesh(railGeo, baseMat)
+      rail.position.set(0, 0.008, zOff)
+      rail.castShadow = true
+      group.add(rail)
+    }
+    const tray = new THREE.Mesh(new THREE.BoxGeometry(PALLET_W - 0.02, TRAY_H, PALLET_D - 0.02), trayMat)
+    tray.position.y = trayY + TRAY_H / 2
+    tray.castShadow = true
+    tray.receiveShadow = true
+    group.add(tray)
+    const innerW = PALLET_W - 0.04
+    const innerD = PALLET_D - 0.04
+    const rimY = trayY + TRAY_H + 0.012 / 2
+    for (const [w, d, x, z] of [[innerW, 0.01, 0, (innerD + 0.01) / 2], [innerW, 0.01, 0, -(innerD + 0.01) / 2], [0.01, innerD, (innerW + 0.01) / 2, 0], [0.01, innerD, -(innerW + 0.01) / 2, 0]] as const) {
+      const rim = new THREE.Mesh(new THREE.BoxGeometry(w, 0.012, d), trayMat)
+      rim.position.set(x, rimY, z)
+      group.add(rim)
+    }
   }
 
-  // Tray
-  const trayY = BASE_H
-  const tray = new THREE.Mesh(new THREE.BoxGeometry(PALLET_W - 0.02, TRAY_H, PALLET_D - 0.02), trayMat)
-  tray.position.y = trayY + TRAY_H / 2
-  tray.castShadow = true
-  tray.receiveShadow = true
-  group.add(tray)
+  addDynamicPalletGrid(group, trayMat, partMat)
+  return group
+}
 
-  // Tray rim
-  const rimH = 0.012
-  const rimT = 0.01
-  const rimMat = trayMat
+function addDynamicPalletGrid(group: THREE.Group, trayMaterial?: THREE.Material, partMaterial?: THREE.Material): void {
+  const { trayMat, partMat } = makeMaterials()
+  const cavityMaterial = trayMaterial ?? trayMat
+  const material = partMaterial ?? partMat
+  const trayY = BASE_H
   const innerW = PALLET_W - 0.04
   const innerD = PALLET_D - 0.04
-  const rimY = trayY + TRAY_H + rimH / 2
-  const rims: [number, number, number, number, number][] = [
-    [innerW, rimH, rimT, 0, (innerD + rimT) / 2],
-    [innerW, rimH, rimT, 0, -(innerD + rimT) / 2],
-    [rimT, rimH, innerD, (innerW + rimT) / 2, 0],
-    [rimT, rimH, innerD, -(innerW + rimT) / 2, 0],
-  ]
-  for (const [w, h, d, x, z] of rims) {
-    const rim = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), rimMat)
-    rim.position.set(x, rimY, z)
-    group.add(rim)
-  }
 
   // Cavity grid & parts
   const usableW = innerW - CELL_PAD * 2
@@ -121,8 +143,9 @@ function buildPallet(): THREE.Group {
 
       // Cavity indent
       const cavGeo = createCavityGeo(props.cavityShape, cavityRadius, CAVITY_DEPTH)
-      const cav = new THREE.Mesh(cavGeo, trayMat)
+      const cav = new THREE.Mesh(cavGeo, cavityMaterial)
       cav.position.set(cx, surfaceY - CAVITY_DEPTH / 2, cz)
+      cav.userData.dynamicPallet = true
       group.add(cav)
 
       // Part if occupied
@@ -130,16 +153,26 @@ function buildPallet(): THREE.Group {
       const isOccupied = occ.length > idx ? occ[idx] : true
       if (isOccupied) {
         const partGeo = createPartGeo(props.cavityShape, cavityRadius * 0.85)
-        const part = new THREE.Mesh(partGeo, partMat)
+        const part = new THREE.Mesh(partGeo, material)
         part.name = `part_${r}_${c}`
         part.position.set(cx, surfaceY + partHeight(props.cavityShape, cavityRadius * 0.85) / 2, cz)
         part.castShadow = true
+        part.userData.dynamicPallet = true
         group.add(part)
       }
     }
   }
+}
 
-  return group
+function setPresenceSensor(group: THREE.Object3D, active: boolean): void {
+  let sensor: THREE.Object3D | undefined
+  group.traverse((child) => {
+    if (child.userData.semanticId === 'sensor:presence:lens') sensor = child
+  })
+  if (sensor instanceof THREE.Mesh && sensor.material instanceof THREE.MeshStandardMaterial) {
+    sensor.material.color.setHex(active ? 0x33ff77 : 0x145c2c)
+    sensor.material.emissive.setHex(active ? 0x0d7a2d : 0x031407)
+  }
 }
 
 function createCavityGeo(shape: PalletCavityShape, r: number, depth: number): THREE.BufferGeometry {
@@ -200,10 +233,23 @@ function disposeGroup(g: THREE.Group) {
   })
 }
 
+function disposeDynamicPalletMeshes(g: THREE.Group): void {
+  g.traverse((child) => {
+    if (!(child instanceof THREE.Mesh) || child.userData.dynamicPallet !== true) return
+    child.geometry.dispose()
+    const mat = child.material
+    if (Array.isArray(mat)) mat.forEach((value) => value.dispose())
+    else mat.dispose()
+  })
+}
+
 onBeforeUnmount(() => {
   const ctx = sceneCtx.value
   if (ctx && palletGroup) ctx.removeObject(palletGroup)
-  if (palletGroup) disposeGroup(palletGroup)
+  if (usesProceduralFallback && palletGroup) disposeGroup(palletGroup)
+  if (!usesProceduralFallback && palletGroup) disposeDynamicPalletMeshes(palletGroup)
+  loadedVisual?.dispose()
   palletGroup = null
+  loadedVisual = null
 })
 </script>

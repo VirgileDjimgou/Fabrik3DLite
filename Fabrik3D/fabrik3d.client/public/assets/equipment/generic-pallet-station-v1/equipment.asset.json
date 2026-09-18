@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "1.0",
+  "id": "generic-pallet-station-v1",
+  "equipmentDefinitionId": "pallet-station",
+  "category": "pallet-station",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.6,
+    "y": 0.17,
+    "z": 0.6
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "6fbe5e83fe794ef3bdc5d4eea5c5693626cfa7218ec9678137193f664b1763eb"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "2dc3b751e5e0740118fff0a99a3fb8da15ab70a03b463e96859fbca5e721314d"
+        },
+        "triangleBudget": 700
+      }
+    ]
+  },
+  "collision": {
+    "id": "pallet-work-object",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.6,
+      "y": 0.087,
+      "z": 0.6
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "fixture:locator:1",
+      "kind": "fixture"
+    },
+    {
+      "id": "fixture:clamp:1",
+      "kind": "fixture"
+    },
+    {
+      "id": "sensor:presence",
+      "kind": "sensor"
+    },
+    {
+      "id": "anchor:robot.grasp",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:robot.grasp",
+      "transform": {
+        "frameId": "pallet",
+        "position": {
+          "x": 0,
+          "y": 0.12,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "pallet-blue",
+    "steel",
+    "locator-yellow"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "21ef983168488808b93d43a2e2db928c1712a132ab0d627618e709b09a5ad4a0"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "6fbe5e83fe794ef3bdc5d4eea5c5693626cfa7218ec9678137193f664b1763eb"
+  }
+}

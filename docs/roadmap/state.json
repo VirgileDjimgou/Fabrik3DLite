@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-18T02:45:25.319Z",
+  "updatedAt": "2026-09-18T04:13:57.833Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -142,6 +142,33 @@
       "completedAt": "2026-09-18T02:45:25.319Z",
       "summary": "Added optional MQTT topic/payload mapping, disabled-by-default allow-listed commands, deterministic broker fixture, and final connected-showcase runbook.",
       "evidence": "dotnet build/test passed (62 server tests); simulator type-check, 182 tests and build passed; HMI type-check, 14 tests and build passed."
+    },
+    "S21": {
+      "status": "completed",
+      "startedAt": "2026-09-18T03:24:50.407Z",
+      "completedAt": "2026-09-18T03:35:39.270Z",
+      "summary": "S21: added a versioned renderer-only GLB asset SDK, manifest/package validation, cached clone-safe loader, procedural fallback provider, reference GLB smoke package, catalog configuration support, Blender authoring template, and 3D asset documentation without changing runtime orchestration, kinematics, or safety behavior.",
+      "evidence": "Simulator: type-check, 191 Vitest tests, production build, and 10 Playwright visual tests passed. HMI: type-check, 14 Vitest tests, and production build passed. Backend: dotnet test Fabrik3D/Fabrik3D.slnx --no-build passed (66 tests). Full dotnet build was not rerun to completion because the already-running Fabrik3D.ServerTaskManager locked its output DLLs; S21 contains no backend changes. git diff --check passed."
+    },
+    "S22": {
+      "status": "completed",
+      "startedAt": "2026-09-18T03:36:37.790Z",
+      "completedAt": "2026-09-18T03:55:09.808Z",
+      "summary": "S22: added reproducible generic industrial conveyor and pallet-station GLB packages with LODs, manifests, hashes, semantic extras, procedural fallbacks, sensor binding to pallet flow, declared collision proxy alignment, PBR shared rendering, quality profiles, concrete floor joints, and performance metrics/documentation.",
+      "evidence": "npm run assets:generate; simulator type-check; simulator Vitest 198 passed; simulator production build; simulator Playwright visual suite 10 passed; HMI type-check/test (14 passed)/build; dotnet test Fabrik3D/Fabrik3D.slnx --no-build (66 passed); browser validation at https://127.0.0.1:5174 confirmed GLB conveyor and pallet scene with no asset-load errors. Existing local SignalR negotiation returned 500, so the simulator correctly remained in offline demo. Full dotnet build remains blocked by the already-running server DLL locks; S22 contains no backend changes. git diff --check passed."
+    },
+    "S23": {
+      "status": "completed",
+      "startedAt": "2026-09-18T03:56:30.475Z",
+      "completedAt": "2026-09-18T04:13:57.833Z",
+      "summary": "S23 delivered generated compact/medium/heavy professional generic 6-axis GLB assets with validated semantic J1-J6 rig manifests, controller-only visual binding, and procedural fallback.",
+      "evidence": "Simulator: type-check, 202 Vitest tests, production build and 10 Playwright visual tests passed. HMI: type-check, 14 Vitest tests and build passed. Backend: dotnet build passed; dotnet test passed (66 tests). Assets regenerated with npm run assets:generate."
+    },
+    "S24": {
+      "status": "planned"
+    },
+    "S25": {
+      "status": "planned"
     }
   }
 }

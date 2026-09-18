@@ -32,6 +32,7 @@ const props = withDefaults(defineProps<{
 })
 
 const animLoop = inject(ANIMATION_LOOP_KEY)!
+const emit = defineEmits<{ (e: 'sensor-state', active: boolean): void }>()
 
 const activePallets = ref<PalletData[]>([])
 const palletRefs = new Map<string, InstanceType<typeof RawMaterialPallet>>()
@@ -40,6 +41,7 @@ const flow = new ConveyorPalletFlow(props.flowConfig)
 
 flow.onSpawn = (pallet) => {
   activePallets.value = [...flow.pallets]
+  emitSensorState()
 }
 
 flow.onMove = (pallets) => {
@@ -47,6 +49,11 @@ flow.onMove = (pallets) => {
     const comp = palletRefs.get(p.id)
     comp?.setWorldX(p.worldX)
   }
+  emitSensorState()
+}
+
+function emitSensorState(): void {
+  emit('sensor-state', flow.pallets.some((p) => p.state === 'stopped'))
 }
 
 function setPalletRef(id: string, el: unknown) {
