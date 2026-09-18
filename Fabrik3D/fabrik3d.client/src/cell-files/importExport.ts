@@ -26,7 +26,9 @@ export function serializeCellFile(cell: CellFileV1, pretty = true): string {
         position: { x: entry.transform.position.x, y: entry.transform.position.y, z: entry.transform.position.z },
         rotation: { x: entry.transform.rotation.x, y: entry.transform.rotation.y, z: entry.transform.rotation.z },
       },
+      ...(entry.parameterValues ? { parameterValues: { ...entry.parameterValues } } : {}),
     })),
+    ...(cell.connections ? { connections: cell.connections.map(connection => ({ ...connection })) } : {}),
   }
   return pretty ? JSON.stringify(normalized, null, 2) : JSON.stringify(normalized)
 }
@@ -56,7 +58,9 @@ export function toCellFile(cell: CellDefinition): CellFileV1 {
         position: { x: instance.transform.position.x, y: instance.transform.position.y, z: instance.transform.position.z },
         rotation: { x: instance.transform.rotation.x, y: instance.transform.rotation.y, z: instance.transform.rotation.z },
       },
+      ...(instance.runtimeState?.values ? { parameterValues: Object.fromEntries(Object.entries(instance.runtimeState.values).filter((entry): entry is [string, string | number | boolean] => typeof entry[1] !== 'object' && entry[1] !== null)) } : {}),
     })),
+    ...(cell.connections ? { connections: cell.connections.map(connection => ({ ...connection })) } : {}),
   }
 }
 
@@ -77,6 +81,7 @@ export function fromCellFile(file: CellFileV1): CellDefinition {
     name: file.name,
     worldFrameId: file.worldFrameId,
     equipment,
+    ...(file.connections ? { connections: file.connections.map(connection => ({ ...connection })) } : {}),
   }
 }
 

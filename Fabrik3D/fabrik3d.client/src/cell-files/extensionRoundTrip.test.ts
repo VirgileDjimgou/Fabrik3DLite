@@ -1,0 +1,4 @@
+import { describe, expect, it } from 'vitest'
+import { fromCellFile, serializeCellFile, toCellFile } from './importExport'
+import { createTransform, EQUIPMENT_SDK_VERSION, type CellDefinition } from '../equipment'
+describe('extended cell files', () => { it('preserves transforms and connections deterministically', () => { const cell: CellDefinition = { sdkVersion: EQUIPMENT_SDK_VERSION, id: 'x', name: 'X', worldFrameId: 'world', equipment: [{ id: 'a', definitionId: 'straight-conveyor', transform: createTransform({ x: 1, y: 0, z: 2 }) }, { id: 'b', definitionId: 'infeed-buffer', transform: createTransform({ x: 3, y: 0, z: 2 }) }], connections: [{ id: 'flow', fromEquipmentId: 'a', fromPortId: 'material-out', toEquipmentId: 'b', toPortId: 'material-in', kind: 'material' }] }; const file = toCellFile(cell); expect(JSON.parse(serializeCellFile(file)).connections).toHaveLength(1); expect(fromCellFile(file)).toEqual(cell) }) })

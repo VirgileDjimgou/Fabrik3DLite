@@ -19,6 +19,7 @@ export interface CellFileEquipmentV1 {
   id: string
   definitionId: string
   transform: CellFileTransform
+  parameterValues?: Record<string, string | number | boolean>
 }
 
 /** Current cell file format. */
@@ -28,6 +29,7 @@ export interface CellFileV1 {
   name: string
   worldFrameId: string
   equipment: CellFileEquipmentV1[]
+  connections?: import('../equipment').EquipmentConnection[]
 }
 
 /** Initial (legacy) cell file format, supported for migration. */
