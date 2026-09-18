@@ -29,9 +29,11 @@ const tools = computed(() => catalog.listTools())
   background: #101020;
 }
 .catalog-page :deep(.robot-catalog-panel) {
-  position: relative;
-  top: auto;
-  left: auto;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
   margin: 2rem;
 }
 </style>

@@ -5,7 +5,10 @@
  * the equipment SDK world frame; `rotation` is a rotation about Y.
  */
 
-export type EditorEquipmentKind = 'robot' | 'cnc' | 'conveyor' | 'pallet-station' | 'safety-zone'
+export type EditorEquipmentKind =
+  | 'robot' | 'cnc' | 'conveyor' | 'pallet-station' | 'safety-zone'
+  | import('../safety').IndustrialInfrastructureKind
+  | import('../equipment').MaterialFlowEquipmentKind
 
 export type EditorMode = 'editing' | 'execution'
 
@@ -48,4 +51,8 @@ export interface EditorCatalogEntry {
   width: number
   depth: number
   reachMeters?: number
+  group?: 'Core equipment' | 'Material flow' | 'Tooling' | 'Safety' | 'Infrastructure'
+  capability?: 'static' | 'simulation-ready'
+  anchorIds?: string[]
+  ports?: import('../equipment').EquipmentPort[]
 }

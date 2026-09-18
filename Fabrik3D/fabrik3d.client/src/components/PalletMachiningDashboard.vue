@@ -1,6 +1,6 @@
 <template>
-  <div class="dashboard">
-    <h3>🏭 Pallet Machining</h3>
+  <div class="dashboard" :style="panelStyle">
+    <h3 class="drag-handle" @pointerdown="beginDrag">⠿ 🏭 Pallet Machining</h3>
 
     <!-- ── Controls ──────────────────────────────────── -->
     <div class="btn-row">
@@ -101,6 +101,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import type { PalletWorkflowPhase, WorkflowRunState } from '../simulation/PalletMachiningWorkflow'
 import type { BridgeMode } from '../services/simulatorOrchestrationBridge'
 import type { ConnectionState } from '../services/orchestratorSignalR'
@@ -157,6 +158,7 @@ const modeLabel = computed(() => {
   if (props.connectionState === 'disconnected') return 'Online session — hub disconnected'
   return 'Online — orchestrated by server'
 })
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:pallet-machining', { x: Math.max(16, window.innerWidth - 290), y: 16 })
 
 const STATE_LABELS: Record<WorkflowRunState, string> = {
   idle: '⏹ Idle',
@@ -217,9 +219,6 @@ const partStateClass = computed(() => {
 
 <style scoped>
 .dashboard {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   background: rgba(16, 16, 32, 0.94);
   color: #e0e0e0;
   padding: 1rem 1.1rem;
@@ -238,6 +237,8 @@ const partStateClass = computed(() => {
   font-size: 0.95rem;
   letter-spacing: 0.03em;
 }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 
 /* ── Buttons ──────────────────────────────── */
 .btn-row {

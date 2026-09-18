@@ -16,9 +16,30 @@ function phaseActivity(id: string, title: LocalizedText, instruction: LocalizedT
   return { id, title, instruction, expectedEvent: { type: WORKFLOW_PHASE_EVENT, match: { phase } } }
 }
 
+function industrialScenario(id: string, title: LocalizedText, level: 'intermediate' | 'advanced', event: string, faultInjections: import('../faults/types').FaultType[] = []): ScenarioDefinition {
+  return {
+    schemaVersion: SCENARIO_SCHEMA_VERSION, id, title, level, prerequisites: [], faultInjections,
+    learningObjectives: [t('Run the declared simulated cell cycle.', 'Exécuter le cycle simulé déclaré.', 'Den deklarierten Simulationszyklus ausführen.')],
+    activities: [
+      { id: 'prerequisites', title: t('Verify prerequisites', 'Vérifier les prérequis', 'Voraussetzungen prüfen'), instruction: t('Confirm that the virtual equipment is ready.', 'Confirmez que les équipements virtuels sont prêts.', 'Bestätigen Sie, dass die virtuelle Ausrüstung bereit ist.'), expectedEvent: { type: 'scenario.ready' } },
+      { id: 'cycle', title, instruction: t('Run the simulated process.', 'Lancez le processus simulé.', 'Starten Sie den simulierten Prozess.'), expectedEvent: { type: event } },
+      { id: 'recovery', title: t('Confirm outcome', 'Confirmer le résultat', 'Ergebnis bestätigen'), instruction: t('Confirm the simulated result and recovery when required.', 'Confirmez le résultat simulé et la récupération si nécessaire.', 'Bestätigen Sie das Simulationsergebnis und ggf. die Wiederherstellung.'), expectedEvent: { type: 'scenario.recovered' } },
+    ],
+    successCriteria: [t('The declared virtual cycle and recovery were completed.', 'Le cycle virtuel et sa récupération ont été terminés.', 'Der deklarierte virtuelle Zyklus und die Wiederherstellung wurden abgeschlossen.')],
+    instructorNotes: t('All observed data is simulated training data.', 'Toutes les données observées sont des données de formation simulées.', 'Alle beobachteten Daten sind simulierte Trainingsdaten.'),
+    explanation: t('This is a deterministic educational scenario, not an OEM program.', 'Ceci est un scénario pédagogique déterministe, pas un programme OEM.', 'Dies ist ein deterministisches Lernszenario, kein OEM-Programm.'),
+  }
+}
+
 export const REFERENCE_SCENARIO_ID = 'pallet-processing'
 
 export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
+  industrialScenario('sorting-normal-cycle', t('Vision sorting normal cycle', 'Cycle normal de tri vision', 'Normalzyklus Bildverarbeitung'), 'intermediate', 'sorting.complete'),
+  industrialScenario('sorting-jam-recovery', t('Vision sorting jam recovery', 'Récupération bourrage de tri', 'Sortier-Stau Wiederherstellung'), 'advanced', 'sorting.recovered', ['conveyor-blockage']),
+  industrialScenario('palletizing-normal-cycle', t('Palletizing normal cycle', 'Cycle normal de palettisation', 'Normalzyklus Palettierung'), 'intermediate', 'palletizing.complete'),
+  industrialScenario('palletizing-vacuum-recovery', t('Palletizing vacuum recovery', 'Récupération perte de vide', 'Vakuumverlust Wiederherstellung'), 'advanced', 'palletizing.recovered', ['communication-loss']),
+  industrialScenario('assembly-inspection-cycle', t('Assembly and inspection', 'Assemblage et contrôle', 'Montage und Prüfung'), 'intermediate', 'assembly.complete'),
+  industrialScenario('safety-door-recovery', t('Safety door recovery', 'Récupération porte de sécurité', 'Sicherheitstür Wiederherstellung'), 'advanced', 'safety.restarted', ['collision-risk']),
   {
     schemaVersion: SCENARIO_SCHEMA_VERSION,
     id: 'robot-axes',

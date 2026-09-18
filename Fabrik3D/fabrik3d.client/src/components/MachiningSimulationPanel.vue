@@ -1,6 +1,6 @@
 <template>
-  <div v-if="controller" class="machining-panel">
-    <h3>Machining Cell</h3>
+  <div v-if="controller" class="machining-panel" :style="panelStyle">
+    <h3 class="drag-handle" @pointerdown="beginDrag"><span aria-hidden="true">⠿</span> Machining Cell</h3>
 
     <div class="btn-row">
       <button @click="startSimulation" :disabled="isRunning">▶ Start</button>
@@ -25,6 +25,7 @@ import { ref, onBeforeUnmount } from 'vue'
 import { MachiningWorkflow, type MachiningPhase } from '../simulation/MachiningWorkflow'
 import type { RobotController } from '../simulation/RobotController'
 import type { PartManager, MetalPartData, PartShape } from '../simulation/PartManager'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 
 const props = defineProps<{
   controller: RobotController | null
@@ -46,6 +47,8 @@ const props = defineProps<{
   /** Called when a part appearance should change to machined. */
   onPartMachined: (part: MetalPartData) => void
 }>()
+
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:machining-cell', { x: 224, y: 16 })
 
 const phase = ref<MachiningPhase>('IDLE')
 const isRunning = ref(false)
@@ -136,9 +139,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .machining-panel {
-  position: absolute;
-  top: 1rem;
-  left: 14rem;
   background: rgba(26, 26, 46, 0.92);
   color: #f0f0f0;
   padding: 1rem;
@@ -154,6 +154,8 @@ onBeforeUnmount(() => {
   color: #00cc88;
   font-size: 1rem;
 }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 
 .btn-row {
   display: flex;

@@ -46,6 +46,16 @@ describe('CellEditorModel', () => {
     expect(editor.getPlacements()).toHaveLength(before + 1)
   })
 
+  it('inserts, moves, rotates, and exports a static infrastructure module', () => {
+    const editor = model()
+    expect(editor.add('plc-cabinet', 2.04, 1.96).ok).toBe(true)
+    const cabinet = editor.getSelected()!
+    expect(cabinet.x).toBeCloseTo(2, 9)
+    expect(editor.rotate(cabinet.id, Math.PI / 2).ok).toBe(true)
+    expect(editor.move(cabinet.id, 2.5, 2.5).ok).toBe(true)
+    expect(editor.toCellDefinition().equipment.find(item => item.id === cabinet.id)?.definitionId).toBe('plc-cabinet')
+  })
+
   it('removes equipment and clears the selection', () => {
     const editor = model()
     const robot = editor.getPlacements().find((p) => p.kind === 'robot')!
@@ -139,6 +149,23 @@ describe('CellEditorModel', () => {
     const robot = cell.equipment.find((e) => e.id === 'robot-1')!
     expect(robot.transform.position).toMatchObject({ x: 0, z: 0 })
     expect(robot.definitionId).toBe('medium-6axis')
+  })
+
+  it('validates typed semantic links and retains a valid connection on export', () => {
+    const catalog = createEditorCatalog(createDefaultRobotCatalog())
+    const editor = new CellEditorModel(catalog)
+    editor.add('straight-conveyor', -1, 0)
+    const from = editor.getSelected()!.id
+    editor.add('infeed-buffer', 1, 0)
+    const to = editor.getSelected()!.id
+    expect(editor.compatibleTargets(from, 'material-out')).toContainEqual({ equipmentId: to, portId: 'material-in' })
+    expect(editor.connect({ id: 'flow-1', fromEquipmentId: from, fromPortId: 'material-out', toEquipmentId: to, toPortId: 'material-in', kind: 'material' })).toEqual({ ok: true })
+    expect(editor.connect({ id: 'bad-flow', fromEquipmentId: from, fromPortId: 'material-in', toEquipmentId: to, toPortId: 'material-out', kind: 'material' }).ok).toBe(false)
+    expect(editor.toCellDefinition().connections).toHaveLength(1)
+    expect(editor.undo()).toBe(true)
+    expect(editor.getConnections()).toHaveLength(0)
+    expect(editor.redo()).toBe(true)
+    expect(editor.getConnections()).toHaveLength(1)
   })
 
   it('keeps the catalog robot reach metadata on placements', () => {

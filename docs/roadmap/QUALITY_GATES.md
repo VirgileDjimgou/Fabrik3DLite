@@ -69,3 +69,12 @@ If a command does not exist yet, the sprint responsible for that test layer must
 - Asset loaders cache shared resources and dispose instance-owned resources without leaking GPU memory.
 - LOD, texture, draw-call, and frame-time budgets are measured on the documented reference scene.
 - Visual regression screenshots cover the reference cell and state-dependent safety colors.
+
+## Scene-library invariants
+
+- A scene preset is versioned data and never executes arbitrary code.
+- Scene, scenario, runtime behavior, collision authority, and visual asset remain separate concerns.
+- Loading a new scene disposes the previous scene's listeners, animation callbacks, GPU instances, and transient runtime state.
+- Equipment connects through declared material, signal, safety, energy, or data ports and semantic anchors.
+- Layout-only equipment is visibly distinguished from simulation-ready equipment.
+- The existing CNC reference cell remains a supported preset and compatibility baseline.

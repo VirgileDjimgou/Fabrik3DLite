@@ -31,6 +31,8 @@
       :rotation-y="layout.cncRotationY"
       :machining-duration="5"
     />
+    <SafetyGuardSystem :cnc-state="dashCncState" :online="dashConnection !== 'disconnected'" />
+    <IndustrialInfrastructureSystem :cnc-state="dashCncState" :online="dashConnection !== 'disconnected'" />
 
     <!-- Floor & scene setup -->
     <SingleConveyorFloor />
@@ -100,6 +102,8 @@ import ScaledRobotComponent from './ScaledRobotComponent.vue'
 import ConveyorBelt from './ConveyorBelt.vue'
 import PalletConveyorFeed from './PalletConveyorFeed.vue'
 import LargeCNCMachine from './LargeCNCMachine.vue'
+import SafetyGuardSystem from './SafetyGuardSystem.vue'
+import IndustrialInfrastructureSystem from './IndustrialInfrastructureSystem.vue'
 import SingleConveyorFloor from './SingleConveyorFloor.vue'
 import SingleConveyorSceneSetup from './SingleConveyorSceneSetup.vue'
 import PalletMachiningDashboard from './PalletMachiningDashboard.vue'

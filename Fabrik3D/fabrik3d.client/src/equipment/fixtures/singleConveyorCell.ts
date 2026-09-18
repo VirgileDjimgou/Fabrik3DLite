@@ -8,6 +8,7 @@ export const SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS: EquipmentDefinition[] = [
   { sdkVersion: EQUIPMENT_SDK_VERSION, id: 'educational-cnc', category: 'machine', manufacturer: 'Fabrik3D', model: 'CNC cell', capabilities: [{ id: 'machining', description: 'Processes a loaded workpiece.' }], ports: [{ id: 'load-door', kind: 'material', direction: 'input' }] },
   { sdkVersion: EQUIPMENT_SDK_VERSION, id: 'belt-conveyor', category: 'conveyor', manufacturer: 'Fabrik3D', model: 'Single line', capabilities: [{ id: 'pallet-feed', description: 'Brings pallets to the robot work area.' }], ports: [{ id: 'pallet-infeed', kind: 'material', direction: 'input' }, { id: 'pallet-stop', kind: 'material', direction: 'output' }], dimensionsMeters: { x: SINGLE_CELL_CONVEYOR.length, y: 0.6, z: 0.5 } },
   { sdkVersion: EQUIPMENT_SDK_VERSION, id: 'pallet-station', category: 'pallet-station', capabilities: [{ id: 'part-storage', description: 'Stores raw and machined parts in a cavity grid.' }], ports: [{ id: 'robot-access', kind: 'material', direction: 'bidirectional' }] },
+  { sdkVersion: EQUIPMENT_SDK_VERSION, id: 'safety-zone', category: 'safety-device', capabilities: [{ id: 'protective-zone', description: 'Declares a simulated protected area for training.' }], ports: [{ id: 'protective-state', kind: 'safety', direction: 'output' }], dimensionsMeters: { x: 4, y: 0.02, z: 4 } },
 ]
 
 const SINGLE_CELL_FLOW_STOP_X = 0

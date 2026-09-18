@@ -1,6 +1,7 @@
 <template>
-  <aside class="kinematics-overlay" aria-label="Kinematics developer overlay">
-    <header>
+  <aside class="kinematics-overlay" :style="panelStyle" aria-label="Kinematics developer overlay">
+    <header class="drag-handle" @pointerdown="beginDrag">
+      <span aria-hidden="true">⠿</span>
       <span class="axis-marker">XYZ</span>
       <strong>Frames &amp; Kinematics</strong>
     </header>
@@ -27,6 +28,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { RobotController } from '../simulation/RobotController'
 import type { CoordinateFrame } from '../kinematics/frames'
 import type { RobotKinematicsModel, WorkObjectTarget } from '../kinematics'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 
 const props = defineProps<{
   controller: RobotController | null
@@ -34,6 +36,8 @@ const props = defineProps<{
   frames: CoordinateFrame[]
   target: WorkObjectTarget
 }>()
+
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:kinematics', { x: 16, y: Math.max(16, window.innerHeight - 300) })
 
 const tick = ref(0)
 let timer: number | undefined
@@ -52,11 +56,13 @@ function degrees(value: number): string { return ((value * 180) / Math.PI).toFix
 </script>
 
 <style scoped>
-.kinematics-overlay { position: absolute; left: 1rem; bottom: 1rem; z-index: 24; width: min(23rem, calc(100vw - 2rem)); color: #e5edf2; background: rgb(10 22 31 / 92%); border: 1px solid #2c718b; border-radius: .35rem; padding: .7rem .8rem; font: .73rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; box-shadow: 0 .4rem 1.2rem rgb(0 0 0 / 28%); }
+.kinematics-overlay { z-index: 24; width: min(23rem, calc(100vw - 2rem)); color: #e5edf2; background: rgb(10 22 31 / 92%); border: 1px solid #2c718b; border-radius: .35rem; padding: .7rem .8rem; font: .73rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; box-shadow: 0 .4rem 1.2rem rgb(0 0 0 / 28%); }
 header { display: flex; gap: .5rem; align-items: center; color: #b9eaff; }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 .axis-marker { color: #f7c948; font-weight: 800; letter-spacing: .08em; }
 .model { margin: .35rem 0 .55rem; color: #a9c3ce; }
 dl { margin: 0; } dl div { display: flex; justify-content: space-between; gap: .75rem; border-top: 1px solid rgb(120 170 188 / 18%); padding: .25rem 0; } dt { color: #82c9df; } dd { margin: 0; text-align: right; }
 details { margin-top: .45rem; color: #bfd3dc; } summary { cursor: pointer; color: #f7c948; } ul, ol { margin: .35rem 0 0; padding-left: 1.1rem; }
-@media (max-width: 760px) { .kinematics-overlay { bottom: .5rem; left: .5rem; font-size: .67rem; } }
+@media (max-width: 760px) { .kinematics-overlay { font-size: .67rem; } }
 </style>

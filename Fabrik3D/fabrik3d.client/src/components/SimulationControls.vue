@@ -1,6 +1,6 @@
 <template>
-  <div v-if="controller" class="sim-controls">
-    <h3>Simulation</h3>
+  <div v-if="controller" class="sim-controls" :style="panelStyle">
+    <h3 class="drag-handle" @pointerdown="beginDrag"><span aria-hidden="true">⠿</span> Simulation</h3>
 
     <div class="btn-row">
       <button @click="goHome">Home</button>
@@ -22,10 +22,13 @@
 import { ref } from 'vue'
 import { RobotController } from '../simulation/RobotController'
 import { PickPlacePlanner, type PickPlacePhase } from '../simulation/PickPlacePlanner'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 
 const props = defineProps<{
   controller: RobotController | null
 }>()
+
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:simulation-controls', { x: 16, y: 16 })
 
 const moveDuration = ref(1.0)
 const pickPlacePhase = ref<PickPlacePhase>('idle')
@@ -73,9 +76,6 @@ function updatePhase() {
 
 <style scoped>
 .sim-controls {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
   background: rgba(26, 26, 46, 0.9);
   color: #f0f0f0;
   padding: 1rem;
@@ -91,6 +91,8 @@ function updatePhase() {
   color: #ff6600;
   font-size: 1rem;
 }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 
 .btn-row {
   display: flex;

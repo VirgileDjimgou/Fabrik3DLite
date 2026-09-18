@@ -29,6 +29,7 @@ const animLoop = inject(ANIMATION_LOOP_KEY)!
 let machineGroup: THREE.Group | null = null
 let doorMesh: THREE.Mesh | null = null
 let statusLight: THREE.Mesh | null = null
+let spindle: THREE.Group | null = null
 
 type CNCState = 'IDLE' | 'LOADING' | 'MACHINING' | 'UNLOADING'
 const state = ref<CNCState>('IDLE')
@@ -49,6 +50,7 @@ watch(
     animLoop.onFrame((_time, delta) => {
       animateDoor(delta)
       updateMachining(delta)
+      if (state.value === 'MACHINING') spindle?.rotateZ(delta * 18)
     })
   },
   { immediate: true },
@@ -57,6 +59,7 @@ watch(
 function buildMachine(): THREE.Group {
   const group = new THREE.Group()
   group.name = 'LargeCNC'
+  group.userData.semanticId = 'equipment:cnc'
 
   // Materials
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0xeaeaea, metalness: 0.15, roughness: 0.45 })
@@ -101,6 +104,8 @@ function buildMachine(): THREE.Group {
 
   // Window glass (this is now the door – slides up to open)
   doorMesh = new THREE.Mesh(new THREE.BoxGeometry(doorW, doorH, 0.02), glassMat)
+  doorMesh.name = 'door:loading'
+  doorMesh.userData.semanticId = 'door:loading'
   doorMesh.position.set(0, DOOR_REST_Y, bodyD / 2 + 0.02)
   group.add(doorMesh)
 
@@ -108,6 +113,16 @@ function buildMachine(): THREE.Group {
   const chamber = new THREE.Mesh(new THREE.BoxGeometry(doorW - 0.1, doorH - 0.1, 0.4), chamberMat)
   chamber.position.set(0, 1.0, bodyD / 2 - 0.22)
   group.add(chamber)
+
+  // Visual-only machining internals; the CNC state machine remains authoritative.
+  spindle = new THREE.Group(); spindle.name = 'spindle:main'; spindle.userData.semanticId = 'spindle:main'
+  spindle.position.set(0, 1.45, bodyD / 2 - 0.42)
+  const spindleHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.32, 18), trimMat)
+  spindleHousing.rotation.x = Math.PI / 2; spindle.add(spindleHousing)
+  const tool = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.02, 0.22, 12), new THREE.MeshStandardMaterial({ color: 0xaeb6bc, metalness: 0.85, roughness: 0.22 }))
+  tool.rotation.x = Math.PI / 2; tool.position.z = 0.19; spindle.add(tool); group.add(spindle)
+  const chuck = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.10, 16), trimMat)
+  chuck.name = 'fixture:chuck'; chuck.userData.semanticId = 'fixture:chuck'; chuck.rotation.x = Math.PI / 2; chuck.position.set(0, 0.72, bodyD / 2 - 0.39); group.add(chuck)
 
   // ── Control panel (right side, angled) ──────────────────────
   const panelGroup = new THREE.Group()
@@ -132,6 +147,7 @@ function buildMachine(): THREE.Group {
     color: 0x00ff00, emissive: 0x00ff00, emissiveIntensity: 0.5,
   })
   statusLight = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), idleLightMat)
+  statusLight.name = 'signal:stack-light'; statusLight.userData.semanticId = 'signal:stack-light'
   statusLight.position.set(0, bodyH + 0.15, 0)
   group.add(statusLight)
   for (let i = 1; i < 3; i++) {
@@ -230,5 +246,6 @@ onBeforeUnmount(() => {
   machineGroup = null
   doorMesh = null
   statusLight = null
+  spindle = null
 })
 </script>

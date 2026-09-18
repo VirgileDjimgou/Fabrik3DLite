@@ -15,6 +15,7 @@ export type EquipmentCategory =
   | 'tool'
   | 'sensor'
   | 'safety-device'
+  | 'infrastructure'
 
 export type EquipmentRuntimeStatus = 'idle' | 'running' | 'paused' | 'faulted' | 'offline'
 
@@ -43,9 +44,38 @@ export interface EquipmentPort {
   direction: 'input' | 'output' | 'bidirectional'
 }
 
+/** A declared link between semantic equipment ports. It never references a mesh. */
+export interface EquipmentConnection {
+  id: string
+  fromEquipmentId: string
+  fromPortId: string
+  toEquipmentId: string
+  toPortId: string
+  kind: EquipmentPort['kind']
+}
+
 export interface EquipmentCapability {
   id: string
   description: string
+}
+
+export interface EquipmentAnchor {
+  id: string
+  kind: 'placement' | 'material' | 'signal' | 'safety' | 'service'
+  position: Vector3Meters
+}
+
+export interface EquipmentParameter {
+  id: string
+  label: string
+  defaultValue: number | boolean | string
+  unit?: string
+}
+
+/** Deliberately simple geometry; never inferred from a detailed visual mesh. */
+export interface EquipmentCollisionProxy {
+  kind: 'box' | 'cylinder'
+  dimensionsMeters: Vector3Meters
 }
 
 export interface EquipmentDefinition {
@@ -57,6 +87,11 @@ export interface EquipmentDefinition {
   capabilities: EquipmentCapability[]
   ports: EquipmentPort[]
   dimensionsMeters?: Vector3Meters
+  anchors?: EquipmentAnchor[]
+  parameters?: EquipmentParameter[]
+  collisionProxy?: EquipmentCollisionProxy
+  /** Static means visual/layout-only; simulation-ready requires a trusted adapter. */
+  runtimeCapability?: 'static' | 'simulation-ready'
 }
 
 export interface EquipmentInstance {
@@ -78,6 +113,7 @@ export interface CellDefinition {
   name: string
   worldFrameId: string
   equipment: EquipmentInstance[]
+  connections?: EquipmentConnection[]
 }
 
 /** Runtime behaviour stays independent from a scene framework or visual component. */

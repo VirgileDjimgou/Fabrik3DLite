@@ -1,6 +1,6 @@
 <template>
-  <div v-if="controller" class="axes-debugger">
-    <h3>Joint Control</h3>
+  <div v-if="controller" class="axes-debugger" :style="panelStyle">
+    <h3 class="drag-handle" @pointerdown="beginDrag"><span aria-hidden="true">⠿</span> Joint Control</h3>
     <div v-for="(label, i) in axisLabels" :key="i" class="axis-row">
       <label>{{ label }}</label>
       <input
@@ -20,8 +20,10 @@
 import { ref, computed, watchEffect } from 'vue'
 import { RobotController } from '../simulation/RobotController'
 import { DEFAULT_JOINT_LIMITS, AXIS_COUNT } from '../simulation/AxisLimits'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 
 const props = defineProps<{ controller: RobotController | null }>()
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:joint-control', { x: Math.max(16, window.innerWidth - 280), y: 16 })
 
 const axisLabels = ['Axis 1 (Base)', 'Axis 2 (Shoulder)', 'Axis 3 (Elbow)', 'Axis 4 (Wrist Roll)', 'Axis 5 (Wrist Pitch)', 'Axis 6 (Wrist Yaw)']
 
@@ -47,9 +49,6 @@ function onSlider(axis: number, event: Event) {
 
 <style scoped>
 .axes-debugger {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   background: rgba(26, 26, 46, 0.9);
   color: #f0f0f0;
   padding: 1rem;
@@ -65,6 +64,8 @@ function onSlider(axis: number, event: Event) {
   color: #ff6600;
   font-size: 1rem;
 }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 
 .axis-row {
   display: flex;

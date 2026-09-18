@@ -7,9 +7,9 @@ import { expect, test } from '@playwright/test'
 test('select and complete a basic scenario', async ({ page }) => {
   await page.goto('/?view=scenario')
 
-  // The scenario catalog lists the five reference scenarios.
+  // The catalog retains the five reference scenarios and adds industrial presets.
   const scenarios = page.locator('[data-scenario]')
-  await expect(scenarios).toHaveCount(5)
+  await expect(scenarios).toHaveCount(11)
   for (const id of ['robot-axes', 'coordinate-frames', 'pick-and-place', 'cnc-loading', 'pallet-processing']) {
     await expect(page.locator(`[data-scenario="${id}"]`)).toBeVisible()
   }

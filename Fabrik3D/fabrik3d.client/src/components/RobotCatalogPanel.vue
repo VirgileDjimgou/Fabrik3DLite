@@ -1,6 +1,6 @@
 <template>
-  <div class="robot-catalog-panel">
-    <h3>Robot Profile</h3>
+  <div class="robot-catalog-panel" :style="panelStyle">
+    <h3 class="drag-handle" @pointerdown="beginDrag"><span aria-hidden="true">⠿</span> Robot Profile</h3>
 
     <div class="robot-list">
       <button
@@ -45,12 +45,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { RobotDefinition, ToolDefinition } from '../robot/catalog'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 
 const props = defineProps<{
   robots: RobotDefinition[]
   selectedId: string
   tools: ToolDefinition[]
 }>()
+
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:robot-profile', { x: 16, y: 230 })
 
 defineEmits<{
   (e: 'select', id: string): void
@@ -68,9 +71,6 @@ function toolFits(robot: RobotDefinition, tool: ToolDefinition): boolean {
 
 <style scoped>
 .robot-catalog-panel {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
   background: rgba(16, 16, 32, 0.94);
   color: #e0e0e0;
   padding: 1rem 1.1rem;
@@ -89,6 +89,8 @@ function toolFits(robot: RobotDefinition, tool: ToolDefinition): boolean {
   font-size: 0.95rem;
   letter-spacing: 0.03em;
 }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 .robot-list { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.7rem; }
 .robot-option {
   display: flex;

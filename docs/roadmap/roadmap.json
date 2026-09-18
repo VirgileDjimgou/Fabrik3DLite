@@ -27,6 +27,11 @@
     { "id": "S22", "phase": 6, "title": "Industrial rendering, conveyor, and pallet station", "file": "docs/roadmap/sprints/S22-industrial-scene-conveyor-pallet.md", "dependsOn": ["S21"] },
     { "id": "S23", "phase": 6, "title": "Professional modular six-axis robot", "file": "docs/roadmap/sprints/S23-professional-robot.md", "dependsOn": ["S22"] },
     { "id": "S24", "phase": 6, "title": "Professional CNC and safety systems", "file": "docs/roadmap/sprints/S24-cnc-safety-systems.md", "dependsOn": ["S23"] },
-    { "id": "S25", "phase": 6, "title": "Asset import, cell integration, and visual hardening", "file": "docs/roadmap/sprints/S25-asset-import-hardening.md", "dependsOn": ["S24"] }
+    { "id": "S25", "phase": 6, "title": "Asset import, cell integration, and visual hardening", "file": "docs/roadmap/sprints/S25-asset-import-hardening.md", "dependsOn": ["S24"] },
+    { "id": "S26", "phase": 7, "title": "Scene presets and modular loading architecture", "file": "docs/roadmap/sprints/S26-scene-presets-loader.md", "dependsOn": ["S25"] },
+    { "id": "S27", "phase": 7, "title": "Industrial safety and infrastructure library", "file": "docs/roadmap/sprints/S27-safety-infrastructure-library.md", "dependsOn": ["S26"] },
+    { "id": "S28", "phase": 7, "title": "Material flow, tooling, and smart equipment", "file": "docs/roadmap/sprints/S28-material-flow-tooling.md", "dependsOn": ["S27"] },
+    { "id": "S29", "phase": 7, "title": "Predefined industrial scenes and scenarios", "file": "docs/roadmap/sprints/S29-predefined-scenes-scenarios.md", "dependsOn": ["S28"] },
+    { "id": "S30", "phase": 7, "title": "Extensibility, realism, and scene hardening", "file": "docs/roadmap/sprints/S30-extensibility-realism-hardening.md", "dependsOn": ["S29"] }
   ]
 }

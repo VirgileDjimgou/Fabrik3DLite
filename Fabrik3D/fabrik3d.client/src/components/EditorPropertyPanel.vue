@@ -1,6 +1,6 @@
 <template>
-  <aside class="editor-property-panel" aria-label="Selected equipment properties">
-    <header><strong>Properties</strong></header>
+  <aside class="editor-property-panel" :style="panelStyle" aria-label="Selected equipment properties">
+    <header class="drag-handle" @pointerdown="beginDrag"><span aria-hidden="true">⠿</span> <strong>Properties</strong></header>
 
     <template v-if="placement">
       <p class="title">{{ placement.label }}</p>
@@ -23,11 +23,14 @@
 
 <script setup lang="ts">
 import type { EditorPlacement } from '../editor/editorTypes'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 
 const props = defineProps<{
   placement: EditorPlacement | null
   invalid: boolean
 }>()
+
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:editor-properties', { x: Math.max(16, window.innerWidth - 224), y: 58 })
 
 const emit = defineEmits<{
   (e: 'update', field: 'x' | 'z' | 'rotation', value: number): void
@@ -44,9 +47,6 @@ function onField(field: 'x' | 'z' | 'rotation', event: Event): void {
 
 <style scoped>
 .editor-property-panel {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   z-index: 20;
   width: 13rem;
   background: rgb(10 22 31 / 94%);
@@ -57,6 +57,8 @@ function onField(field: 'x' | 'z' | 'rotation', event: Event): void {
   font: 0.72rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 header { color: #b9eaff; }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 .title { margin: 0.3rem 0; color: #9fc4d2; }
 .row { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.2rem 0; align-items: center; }
 .row label { color: #82c9df; }

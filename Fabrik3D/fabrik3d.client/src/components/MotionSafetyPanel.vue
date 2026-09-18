@@ -1,6 +1,7 @@
 <template>
-  <aside class="motion-safety-panel" aria-label="Motion safety diagnostics">
-    <header>
+  <aside class="motion-safety-panel" :style="panelStyle" aria-label="Motion safety diagnostics">
+    <header class="drag-handle" @pointerdown="beginDrag">
+      <span aria-hidden="true">⠿</span>
       <span class="shield">&#9873;</span>
       <strong>Motion Safety</strong>
     </header>
@@ -27,10 +28,13 @@
 import { onBeforeUnmount, ref, watch } from 'vue'
 import type { MotionSafetyEngine } from '../safety/motionSafety'
 import type { SimulationAlarm } from '../safety/alarms'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 
 const props = defineProps<{
   engine: MotionSafetyEngine | null
 }>()
+
+const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:motion-safety', { x: Math.max(16, (window.innerWidth - 480) / 2), y: Math.max(16, window.innerHeight - 220) })
 
 const reach = ref(0)
 const enabled = ref(false)
@@ -69,10 +73,6 @@ onBeforeUnmount(() => stopSync?.())
 
 <style scoped>
 .motion-safety-panel {
-  position: absolute;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
   z-index: 23;
   width: min(30rem, calc(100vw - 2rem));
   color: #e5edf2;
@@ -84,6 +84,8 @@ onBeforeUnmount(() => stopSync?.())
   box-shadow: 0 .4rem 1.2rem rgb(0 0 0 / 28%);
 }
 header { display: flex; gap: .5rem; align-items: center; color: #b9eaff; }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 .shield { color: #f7c948; font-weight: 800; }
 dl { margin: .35rem 0 0; } dl div { display: flex; justify-content: space-between; gap: .75rem; border-top: 1px solid rgb(120 170 188 / 18%); padding: .2rem 0; }
 dt { color: #82c9df; } dd { margin: 0; text-align: right; }
@@ -98,5 +100,5 @@ dd.disabled { color: #ff9a6b; }
 .alarm.error .alarm-code { color: #ff7a6b; }
 .alarm.warning .alarm-code { color: #ffd166; }
 .alarm.info .alarm-code { color: #82c9df; }
-@media (max-width: 760px) { .motion-safety-panel { width: calc(100vw - 1rem); left: .5rem; transform: none; bottom: .5rem; font-size: .66rem; } }
+@media (max-width: 760px) { .motion-safety-panel { width: calc(100vw - 1rem); font-size: .66rem; } }
 </style>

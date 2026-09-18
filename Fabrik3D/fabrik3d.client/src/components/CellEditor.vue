@@ -1,8 +1,8 @@
 <template>
   <div class="cell-editor" data-view="cell-editor">
     <!-- Toolbar -->
-    <div class="editor-toolbar">
-      <span class="mode">EDITOR</span>
+    <div class="editor-toolbar" :style="toolbarStyle">
+      <span class="mode drag-handle" @pointerdown="beginToolbarDrag"><span aria-hidden="true">⠿</span> EDITOR</span>
       <button type="button" data-action="undo" :disabled="!state.canUndo" @click="undo">Undo</button>
       <button type="button" data-action="redo" :disabled="!state.canRedo" @click="redo">Redo</button>
       <button type="button" data-action="reset" @click="reset">Reset to reference</button>
@@ -115,6 +115,7 @@ import { CellEditorModel } from '../editor/cellEditorModel'
 import { cellDefinitionToPlacements, createEditorCatalog } from '../editor/catalog'
 import { buildReferencePlacements } from '../editor/referenceCell'
 import { hasInvalidOverlap } from '../editor/overlap'
+import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import type { EditorPlacement } from '../editor/editorTypes'
 import {
   SAMPLE_CELLS,
@@ -129,6 +130,11 @@ import * as api from '../services/orchestratorApi'
 const props = defineProps<{
   robotCatalog: RobotCatalogService
 }>()
+
+const { panelStyle: toolbarStyle, beginDrag: beginToolbarDrag } = useDraggableOverlay(
+  'fabrik3d:panel:editor-toolbar',
+  { x: Math.max(16, (window.innerWidth - 760) / 2), y: 10 },
+)
 
 const catalog = createEditorCatalog(props.robotCatalog)
 const model = new CellEditorModel(catalog, buildReferencePlacements(catalog))
@@ -342,10 +348,6 @@ function onCanvasPointerUp(): void {
   overflow: hidden;
 }
 .editor-toolbar {
-  position: absolute;
-  top: 0.6rem;
-  left: 50%;
-  transform: translateX(-50%);
   z-index: 21;
   display: flex;
   gap: 0.4rem;
@@ -369,6 +371,8 @@ function onCanvasPointerUp(): void {
 .editor-toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
 .editor-toolbar button:hover:not(:disabled) { border-color: #00cc88; }
 .mode { color: #f7c948; font-weight: 700; letter-spacing: 0.05em; }
+.drag-handle { cursor: grab; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
 .snap-toggle { display: flex; gap: 0.3rem; align-items: center; color: #9fc4d2; }
 .invalid-count { color: #ff7a6b; font-weight: 700; }
 .toolbar-sep { width: 1px; height: 1.1em; background: rgb(120 170 188 / 40%); }

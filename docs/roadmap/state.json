@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-18T04:13:57.833Z",
+  "updatedAt": "2026-09-18T20:55:12.739Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -165,9 +165,48 @@
       "evidence": "Simulator: type-check, 202 Vitest tests, production build and 10 Playwright visual tests passed. HMI: type-check, 14 Vitest tests and build passed. Backend: dotnet build passed; dotnet test passed (66 tests). Assets regenerated with npm run assets:generate."
     },
     "S24": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-18T04:17:04.354Z",
+      "completedAt": "2026-09-18T04:19:38.113Z",
+      "summary": "S24 added a more credible state-driven CNC enclosure and a modular physical safeguarding visual layer while retaining existing workflow and deterministic safety ownership.",
+      "evidence": "Simulator: type-check, 207 Vitest tests, build and 10 Playwright visual tests passed. Backend: dotnet build and 66 tests passed. HMI: type-check, 14 tests and build passed."
     },
     "S25": {
+      "status": "completed",
+      "startedAt": "2026-09-18T04:20:10.141Z",
+      "completedAt": "2026-09-18T04:22:35.188Z",
+      "summary": "S25 added a trusted client-side asset package importer with manifest/path/member/SHA-256 validation and explicit visual-only admission, while preserving the existing runtime adapter boundary and fallback behavior.",
+      "evidence": "Simulator: type-check, 210 Vitest tests, build and 10 Playwright visual tests passed. Backend: dotnet build and 66 tests passed. HMI: type-check, 14 tests and build passed. Importer tests cover corrupt hashes, missing members and traversal."
+    },
+    "S26": {
+      "status": "completed",
+      "startedAt": "2026-09-18T05:30:41.613Z",
+      "completedAt": "2026-09-18T05:42:09.758Z",
+      "summary": "S26 ajoute des presets de scene versionnes, un catalogue valide, une selection avec remount deterministe, la cellule CNC compatible et un apercu securite explicitement layout-only.",
+      "evidence": "Simulator type-check et build passes; Vitest 56 fichiers/221 tests passes; Playwright simulateur 11/11 passes incluant le flux scene-presets; backend dotnet build 0 erreur et 66 tests passes; HMI type-check, 14 tests et build passes; git diff --check passe. HMI e2e API 3/3 passe avec proxy explicite; 2 snapshots visuels HMI optionnels presentent une derive preexistante de 1% liee a l'etat backend partage."
+    },
+    "S27": {
+      "status": "completed",
+      "startedAt": "2026-09-18T20:16:53.174Z",
+      "completedAt": "2026-09-18T20:34:14.235Z",
+      "summary": "S27 ajoute une bibliotheque industrielle modulaire de securite et infrastructure, des definitions avec ports/ancres/proxies/parametres, des visuels proceduraux complementaires et un catalogue editeur groupe.",
+      "evidence": "Simulator: type-check, 229 Vitest tests, build et Playwright 11/11 passes; HMI: type-check, 14 tests et build passes; backend: dotnet build 0 erreur et dotnet test 66/66 passe avec Docker Desktop/Testcontainers (Docker Engine 28.0.1); git diff --check passe."
+    },
+    "S28": {
+      "status": "completed",
+      "startedAt": "2026-09-18T20:36:01.229Z",
+      "completedAt": "2026-09-18T20:41:29.014Z",
+      "summary": "S28 ajoute une bibliotheque de flux matiere, outillage et bridage data-first, avec ports semantiques, ancres, connexions editeur, et adaptateurs deterministes pour convoyeurs, capteurs et actionneurs.",
+      "evidence": "Simulator: type-check, 234 Vitest tests, build et Playwright 11/11 passes; HMI: type-check, 14 tests et build passes; backend: dotnet build sans erreur et dotnet test 66/66 passe avec Docker/Testcontainers; git diff --check passe."
+    },
+    "S29": {
+      "status": "completed",
+      "startedAt": "2026-09-18T20:47:03.695Z",
+      "completedAt": "2026-09-18T20:55:12.739Z",
+      "summary": "S29 livre cinq scenes industrielles predefinies, leurs scenarios normaux et de recuperation, un hote material-flow deterministe avec session simulee, et le flux de lancement avec pre-requis, complexite et etiquetage de donnees simulees.",
+      "evidence": "Simulator: type-check, 241 Vitest tests, build et Playwright 11/11 passes; HMI: type-check, 14 tests et build passes; backend: dotnet build 0 erreur et dotnet test 66/66 passe avec Docker/Testcontainers; git diff --check passe."
+    },
+    "S30": {
       "status": "planned"
     }
   }

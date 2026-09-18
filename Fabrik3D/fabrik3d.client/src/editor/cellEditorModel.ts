@@ -4,7 +4,7 @@
  * editing/execution mode guard.
  */
 
-import { EQUIPMENT_SDK_VERSION, createTransform, WORLD_FRAME_ID, type CellDefinition, type EquipmentInstance } from '../equipment'
+import { EQUIPMENT_SDK_VERSION, createTransform, WORLD_FRAME_ID, compatiblePorts, type CellDefinition, type EquipmentConnection, type EquipmentInstance } from '../equipment'
 import { buildReferencePlacements } from './referenceCell'
 import { catalogEntryFor } from './catalog'
 import type { EditorCatalogEntry, EditorCommandResult, EditorMode, EditorPlacement, EditorEquipmentKind, OverlapReport } from './editorTypes'
@@ -16,8 +16,9 @@ export class CellEditorModel {
 
   private placements: EditorPlacement[] = []
   private selectionId: string | null = null
-  private history: EditorPlacement[][] = []
-  private redoHistory: EditorPlacement[][] = []
+  private history: EditorSnapshot[] = []
+  private redoHistory: EditorSnapshot[] = []
+  private connections: EquipmentConnection[] = []
 
   readonly catalog: EditorCatalogEntry[]
   readonly snapGridMeters: number
@@ -45,6 +46,27 @@ export class CellEditorModel {
   isInvalid(id: string): boolean { return hasInvalidOverlap(id, this.placements) }
   canUndo(): boolean { return this.history.length > 0 }
   canRedo(): boolean { return this.redoHistory.length > 0 }
+  getConnections(): EquipmentConnection[] { return this.connections.map(connection => ({ ...connection })) }
+
+  /** Lists receiver ports compatible with an output port for editor highlighting. */
+  compatibleTargets(fromId: string, fromPortId: string): Array<{ equipmentId: string; portId: string }> {
+    const from = this.port(fromId, fromPortId)
+    if (!from) return []
+    return this.placements.flatMap(placement => this.entry(placement)?.ports?.filter(port => compatiblePorts(from, port)).map(port => ({ equipmentId: placement.id, portId: port.id })) ?? [])
+  }
+
+  /** Adds a semantic port link. Connections remain independent from visuals. */
+  connect(connection: EquipmentConnection): EditorCommandResult {
+    if (!this.ensureEditing()) return this.rejected('Editing is only allowed in editing mode.')
+    if (this.connections.some(item => item.id === connection.id)) return this.rejected(`Connection '${connection.id}' already exists.`)
+    const from = this.port(connection.fromEquipmentId, connection.fromPortId)
+    const to = this.port(connection.toEquipmentId, connection.toPortId)
+    if (!from || !to) return this.rejected(`Connection '${connection.id}' references an unknown port.`)
+    if (connection.kind !== from.kind || !compatiblePorts(from, to)) return this.rejected(`Connection '${connection.id}' has incompatible ports.`)
+    this.pushHistory()
+    this.connections.push({ ...connection })
+    return { ok: true }
+  }
 
   /** Explicit mode transition; only editing mode allows mutations. */
   setMode(mode: EditorMode): void { this.mode = mode }
@@ -128,8 +150,8 @@ export class CellEditorModel {
   undo(): boolean {
     const previous = this.history.pop()
     if (!previous) return false
-    this.redoHistory.push(clone(this.placements))
-    this.placements = previous
+    this.redoHistory.push(this.snapshot())
+    this.restore(previous)
     if (this.selectionId && !this.getPlacement(this.selectionId)) this.selectionId = null
     return true
   }
@@ -137,8 +159,8 @@ export class CellEditorModel {
   redo(): boolean {
     const next = this.redoHistory.pop()
     if (!next) return false
-    this.history.push(clone(this.placements))
-    this.placements = next
+    this.history.push(this.snapshot())
+    this.restore(next)
     if (this.selectionId && !this.getPlacement(this.selectionId)) this.selectionId = null
     return true
   }
@@ -162,6 +184,7 @@ export class CellEditorModel {
       name: 'Edited cell',
       worldFrameId: WORLD_FRAME_ID,
       equipment,
+      connections: this.getConnections(),
     }
   }
 
@@ -183,7 +206,7 @@ export class CellEditorModel {
   }
 
   private pushHistory(): void {
-    this.history.push(clone(this.placements))
+    this.history.push(this.snapshot())
     if (this.history.length > 200) this.history.shift()
     this.redoHistory = []
   }
@@ -191,7 +214,21 @@ export class CellEditorModel {
   private ensureEditing(): boolean { return this.mode === 'editing' }
 
   private rejected(reason: string): EditorCommandResult { return { ok: false, reason } }
+
+  private snapshot(): EditorSnapshot { return { placements: clone(this.placements), connections: this.getConnections() } }
+  private restore(snapshot: EditorSnapshot): void { this.placements = clone(snapshot.placements); this.connections = snapshot.connections.map(connection => ({ ...connection })) }
+
+  private entry(placement: EditorPlacement): EditorCatalogEntry | undefined {
+    return this.catalog.find(entry => entry.definitionId === placement.definitionId)
+  }
+
+  private port(placementId: string, portId: string) {
+    const placement = this.getPlacement(placementId)
+    return placement ? this.entry(placement)?.ports?.find(port => port.id === portId) : undefined
+  }
 }
+
+interface EditorSnapshot { placements: EditorPlacement[]; connections: EquipmentConnection[] }
 
 function clone(placements: EditorPlacement[]): EditorPlacement[] {
   return placements.map((placement) => ({ ...placement }))
