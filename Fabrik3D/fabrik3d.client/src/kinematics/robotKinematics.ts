@@ -5,17 +5,21 @@ import type { DhLinkDefinition, RobotKinematicsModel } from './types'
 
 /**
  * Maps existing procedural robot dimensions to a generic DH chain.
+ * The visual robot applies a uniform `scale` to the whole root group, so
+ * the DH lengths are scaled by the same factor to keep the model aligned
+ * with the rendered robot and the cell world.
  * This is a simulation model, not an OEM robot calibration.
  */
 export function createRobotKinematics(robot: RobotDefinition): RobotKinematicsModel {
   const dimensions = robot.dimensions
+  const scale = dimensions.scale ?? 1
   const links: DhLinkDefinition[] = [
-    { thetaOffsetRad: 0, dMeters: dimensions.baseHeight ?? 0.4, aMeters: 0, alphaRad: -Math.PI / 2 },
-    { thetaOffsetRad: -Math.PI / 2, dMeters: 0, aMeters: dimensions.upperArmLength ?? 0.9, alphaRad: 0 },
+    { thetaOffsetRad: 0, dMeters: (dimensions.baseHeight ?? 0.4) * scale, aMeters: 0, alphaRad: -Math.PI / 2 },
+    { thetaOffsetRad: -Math.PI / 2, dMeters: 0, aMeters: (dimensions.upperArmLength ?? 0.9) * scale, alphaRad: 0 },
     { thetaOffsetRad: 0, dMeters: 0, aMeters: 0, alphaRad: -Math.PI / 2 },
-    { thetaOffsetRad: 0, dMeters: dimensions.forearmLength ?? 0.76, aMeters: 0, alphaRad: Math.PI / 2 },
+    { thetaOffsetRad: 0, dMeters: (dimensions.forearmLength ?? 0.76) * scale, aMeters: 0, alphaRad: Math.PI / 2 },
     { thetaOffsetRad: 0, dMeters: 0, aMeters: 0, alphaRad: -Math.PI / 2 },
-    { thetaOffsetRad: 0, dMeters: dimensions.wristLength ?? 0.1, aMeters: 0, alphaRad: 0 },
+    { thetaOffsetRad: 0, dMeters: (dimensions.wristLength ?? 0.1) * scale, aMeters: 0, alphaRad: 0 },
   ]
   return new SerialDhKinematics(robot.id, links, toJointLimits(robot.joints))
 }

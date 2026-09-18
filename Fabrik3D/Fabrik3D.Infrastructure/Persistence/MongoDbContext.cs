@@ -21,4 +21,5 @@ public class MongoDbContext
     public IMongoCollection<Alarm> Alarms => _database.GetCollection<Alarm>("alarms");
     public IMongoCollection<OperatorMessage> OperatorMessages => _database.GetCollection<OperatorMessage>("operatorMessages");
     public IMongoCollection<MachineState> MachineStates => _database.GetCollection<MachineState>("machineStates");
+    public IMongoCollection<CellTemplate> CellTemplates => _database.GetCollection<CellTemplate>("cellTemplates");
 }

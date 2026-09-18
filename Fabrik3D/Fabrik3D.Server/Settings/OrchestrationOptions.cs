@@ -12,4 +12,11 @@ public class OrchestrationOptions
 
     /// <summary>How often the heartbeat monitor scans for stale sessions.</summary>
     public int HeartbeatCheckIntervalSeconds { get; set; } = 5;
+
+    /// <summary>
+    /// Authorization placeholder for cell template writes. When enabled,
+    /// mutations require an <c>X-Operator-Id</c> header. Defaults to off
+    /// because the orchestrator has no real identity provider yet.
+    /// </summary>
+    public bool RequireCellTemplateAuth { get; set; }
 }

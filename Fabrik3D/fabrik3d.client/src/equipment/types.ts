@@ -105,6 +105,8 @@ export interface RobotMotionRuntime extends EquipmentRuntimeAdapter {
   moveJoints(targetAngles: number[], duration?: number): void
   enqueueMove(targetAngles: number[], duration?: number): void
   clearCommands(): void
+  /** Optional current joint readout used by safety checks. */
+  getJointAngles?(): number[]
 }
 
 export interface CncRuntime extends EquipmentRuntimeAdapter {

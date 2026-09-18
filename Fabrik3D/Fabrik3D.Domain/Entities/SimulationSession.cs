@@ -44,6 +44,15 @@ public class SimulationSession
     /// <summary>Correlation id of the command that created/claimed this session.</summary>
     public string? CorrelationId { get; set; }
 
+    /// <summary>Educational scenario currently driving this session.</summary>
+    public string? ScenarioId { get; set; }
+
+    /// <summary>Active scenario activity id (ordered learning step).</summary>
+    public string? ScenarioActivityId { get; set; }
+
+    /// <summary>Scenario progress percent 0..100.</summary>
+    public int ScenarioProgress { get; set; }
+
     /// <summary>Optimistic concurrency guard; bumped on every update.</summary>
     public int Version { get; set; }
 }

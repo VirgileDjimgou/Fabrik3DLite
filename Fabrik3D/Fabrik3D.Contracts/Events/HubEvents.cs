@@ -16,7 +16,10 @@ public record SimulationStateChangedEvent(
     int RemainingCount,
     int TotalCount,
     DateTime TimestampUtc,
-    string? CorrelationId = null);
+    string? CorrelationId = null,
+    string? ScenarioId = null,
+    string? ScenarioActivityId = null,
+    int ScenarioProgress = 0);
 
 public record TaskStateChangedEvent(
     string TaskId,

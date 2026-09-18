@@ -13,6 +13,7 @@
 
 import type { PalletMachiningWorkflow, PalletWorkflowPhase, WorkflowRunState } from '../simulation/PalletMachiningWorkflow'
 import type { PalletData } from '../simulation/PalletModels'
+import type { ScenarioProgress } from '../scenarios/types'
 import type { TaskDto } from '@fabrik3d/contracts'
 import * as api from './orchestratorApi'
 import * as hub from './orchestratorSignalR'
@@ -60,6 +61,9 @@ export class SimulatorOrchestrationBridge {
   onModeChanged: ((mode: BridgeMode) => void) | null = null
   onConnectionStateChanged: ((state: hub.ConnectionState) => void) | null = null
   onSessionStatusChanged: ((status: string | null) => void) | null = null
+
+  /** Optional scenario progress provider so scenario state is observable through the orchestrator. */
+  scenarioSnapshot: (() => ScenarioProgress | null) | null = null
 
   private workflow: PalletMachiningWorkflow | null = null
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
@@ -299,6 +303,7 @@ export class SimulatorOrchestrationBridge {
     }
 
     try {
+      const scenario = this.scenarioSnapshot?.()
       await api.updateSimulationSessionState(this.ctx.sessionId, {
         status: runStateToStatus[wf.runState] ?? 'Running',
         currentPhase: wf.phase,
@@ -310,6 +315,9 @@ export class SimulatorOrchestrationBridge {
         isPaused: wf.runState === 'paused',
         simulatorId: api.SIMULATOR_ID,
         correlationId: this.ctx.correlationId,
+        scenarioId: scenario?.scenarioId ?? null,
+        scenarioActivityId: scenario?.currentActivityId ?? null,
+        scenarioProgress: scenario?.progressPercent ?? null,
       })
       logBridge('simulation state →', {
         status: runStateToStatus[wf.runState], phase: wf.phase,

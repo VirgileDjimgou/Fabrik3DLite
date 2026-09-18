@@ -3,10 +3,16 @@ import './assets/main.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import RobotCatalogPanelPage from './components/RobotCatalogPanelPage.vue'
+import CellEditorPage from './components/CellEditorPage.vue'
+import ScenarioLab from './components/ScenarioLab.vue'
 
-// A lightweight, WebGL-free entry used by visual regression tests to
-// exercise the robot selection UI deterministically.
+// Lightweight, WebGL-free entries used by visual regression and e2e tests
+// to exercise the robot selection, cell editor, and scenario UIs deterministically.
 const params = new URLSearchParams(window.location.search)
-const root = params.get('view') === 'robot-catalog' ? RobotCatalogPanelPage : App
+const view = params.get('view')
+const root = view === 'robot-catalog' ? RobotCatalogPanelPage
+  : view === 'cell-editor' ? CellEditorPage
+  : view === 'scenario' ? ScenarioLab
+  : App
 
 createApp(root).mount('#app')

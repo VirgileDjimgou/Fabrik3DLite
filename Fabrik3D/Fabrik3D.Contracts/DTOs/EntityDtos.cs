@@ -53,7 +53,10 @@ public record SimulationSessionDto(
     DateTime LastHeartbeatUtc,
     string? SimulatorId,
     string? CorrelationId,
-    int Version);
+    int Version,
+    string? ScenarioId,
+    string? ScenarioActivityId,
+    int ScenarioProgress);
 
 public record ClaimResultDto(
     JobDto Job,
@@ -102,3 +105,16 @@ public record MachineStateDto(
     bool IsRunning,
     bool IsPaused,
     DateTime LastUpdatedAtUtc);
+
+/// <summary>
+/// A named, persisted cell template. <c>Content</c> is the versioned cell
+/// file JSON (schemaVersion 0.9 or 1.0) retained verbatim for Git review.
+/// </summary>
+public record CellTemplateDto(
+    string Id,
+    string Name,
+    string SchemaVersion,
+    string Content,
+    DateTime CreatedAtUtc,
+    DateTime UpdatedAtUtc,
+    int Version);

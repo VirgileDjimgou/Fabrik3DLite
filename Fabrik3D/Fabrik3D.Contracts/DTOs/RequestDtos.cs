@@ -71,6 +71,15 @@ public record UpdateSimulationStateRequest
     public bool IsPaused { get; init; }
     public string? SimulatorId { get; init; }
     public string? CorrelationId { get; init; }
+
+    /// <summary>Educational scenario id driving this session, when active.</summary>
+    public string? ScenarioId { get; init; }
+
+    /// <summary>Active scenario activity id.</summary>
+    public string? ScenarioActivityId { get; init; }
+
+    /// <summary>Scenario progress percent 0..100.</summary>
+    public int? ScenarioProgress { get; init; }
 }
 
 /// <summary>
@@ -111,4 +120,17 @@ public record HeartbeatRequest
 {
     [Required, MinLength(1), MaxLength(100)]
     public string SimulatorId { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Saves a named cell template. <c>Content</c> is the versioned cell file
+/// JSON (schemaVersion 0.9 or 1.0).
+/// </summary>
+public record SaveCellTemplateRequest
+{
+    [Required, MinLength(1), MaxLength(200)]
+    public string Name { get; init; } = string.Empty;
+
+    [Required, MinLength(1)]
+    public string Content { get; init; } = string.Empty;
 }

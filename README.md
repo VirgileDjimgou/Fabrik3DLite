@@ -124,6 +124,10 @@ Current focus:
 - versioned equipment SDK with legacy robot, CNC and pallet-station adapters
 - profile-aware, renderer-independent FK/IK model with explicit cell/work-object frames
 - robot catalog with selectable compact/medium/heavy six-axis profiles and end-effector compatibility metadata
+- mesh-independent motion safety: collision primitives, reachability validation, swept-path gating, structured alarms and a diagnostics overlay
+- visual cell editor (separate from execution mode) with grid-snapped transforms, overlap detection, undo/redo, reset-to-reference, and a plan-view canvas
+- versioned, deterministic cell files (schema 1.0, legacy 0.9 migration) with import/export, validation, samples, and orchestrator-persisted named templates
+- educational scenario engine with a versioned scenario format, five reference scenarios (en/fr/de), a deterministic scenario runner, and orchestrator-observable progress
 
 ### Server-Orchestrator
 
@@ -140,6 +144,7 @@ Current focus:
 - correlation ids on commands, logs, and SignalR events
 - real-time state distribution through SignalR
 - local MongoDB persistence
+- named cell template persistence (versioned cell files) with a write-authorization placeholder
 
 ### Contracts
 
@@ -223,6 +228,10 @@ flowchart LR
 - pallet machining workflow
 - local simulator dashboard (online orchestrated mode and clearly identified local-only offline demo)
 - robot catalog with three selectable generic six-axis profiles, end-effector compatibility metadata, and visual regression coverage
+- motion safety with deterministic collision primitives, reachability validation, swept-path gating, structured simulation alarms, and a diagnostics overlay
+- visual cell editor MVP with catalog insertion, grid-snapped placement, invalid-overlap feedback, undo/redo, reset-to-reference template, and visual regression coverage
+- versioned deterministic cell files (schema 1.0 + 0.9 migration) with local import/export, validation, samples, and orchestrator-persisted named templates
+- educational scenario engine with five reference scenarios, deterministic runner, and orchestrator-observable progress
 - multilingual HMI setup
 
 ### In Progress

@@ -60,6 +60,9 @@ public class SimulationSessionService
         session.TotalCount = request.TotalCount;
         session.IsPaused = request.IsPaused;
         session.LastHeartbeatUtc = DateTime.UtcNow;
+        session.ScenarioId = request.ScenarioId ?? session.ScenarioId;
+        session.ScenarioActivityId = request.ScenarioActivityId ?? session.ScenarioActivityId;
+        if (request.ScenarioProgress is not null) session.ScenarioProgress = request.ScenarioProgress.Value;
 
         if (!await _sessions.UpdateAsync(session))
             throw new OrchestrationConflictException(
@@ -69,13 +72,14 @@ public class SimulationSessionService
         var eventCorrelation = correlationId ?? request.CorrelationId;
 
         _log.LogInformation(
-            "[Server][Simulation] UpdateState → session={SessionId} status={Status} phase={Phase} machined={Machined}/{Total} correlation={CorrelationId}",
-            session.Id, session.Status, session.CurrentPhase, session.MachinedCount, session.TotalCount, eventCorrelation);
+            "[Server][Simulation] UpdateState → session={SessionId} status={Status} phase={Phase} machined={Machined}/{Total} scenario={ScenarioId}@{ScenarioProgress} correlation={CorrelationId}",
+            session.Id, session.Status, session.CurrentPhase, session.MachinedCount, session.TotalCount, session.ScenarioId, session.ScenarioProgress, eventCorrelation);
 
         await _hub.SimulationStateChangedAsync(new SimulationStateChangedEvent(
             session.Id, session.JobId, session.Status.ToString(),
             session.CurrentPhase, session.MachinedCount,
-            session.RemainingCount, session.TotalCount, DateTime.UtcNow, eventCorrelation));
+            session.RemainingCount, session.TotalCount, DateTime.UtcNow, eventCorrelation,
+            session.ScenarioId, session.ScenarioActivityId, session.ScenarioProgress));
 
         return session.ToDto();
     }

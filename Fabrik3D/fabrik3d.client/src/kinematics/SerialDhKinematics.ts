@@ -27,6 +27,22 @@ export class SerialDhKinematics implements RobotKinematicsModel {
     return poseFromMatrix(transform)
   }
 
+  /**
+   * Pose of every joint origin along the chain (including the tool tip).
+   * Used by safety checks to build arm segments without a rendering dependency.
+   */
+  jointTransforms(jointsRad: readonly number[]): KinematicPose[] {
+    if (jointsRad.length !== this.links.length) throw new Error(`Expected ${this.links.length} joint values, got ${jointsRad.length}.`)
+    let transform = IDENTITY_MATRIX
+    const origins: KinematicPose[] = [poseFromMatrix(transform)]
+    for (let index = 0; index < this.links.length; index++) {
+      const link = this.links[index]!
+      transform = multiplyMatrix(transform, dhMatrix(jointsRad[index]! + link.thetaOffsetRad, link.dMeters, link.aMeters, link.alphaRad))
+      origins.push(poseFromMatrix(transform))
+    }
+    return origins
+  }
+
   inverse(target: KinematicPose, options: InverseKinematicsOptions = {}): InverseKinematicsResult {
     if (!isFinitePose(target) || target.frameId !== 'world') return failed('invalid-target', 0, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, 'Target must be finite and expressed in the world frame.')
     const settings = { ...DEFAULT_OPTIONS, ...options }

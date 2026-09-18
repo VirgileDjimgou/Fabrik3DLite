@@ -77,6 +77,9 @@ function applySimulationEvent(e: SimulationStateChangedEvent): void {
     simulatorId: prev?.simulatorId ?? null,
     correlationId: e.correlationId ?? prev?.correlationId ?? null,
     version: prev ? prev.version + 1 : 0,
+    scenarioId: e.scenarioId ?? prev?.scenarioId ?? null,
+    scenarioActivityId: e.scenarioActivityId ?? prev?.scenarioActivityId ?? null,
+    scenarioProgress: e.scenarioProgress ?? prev?.scenarioProgress ?? 0,
   }
 }
 

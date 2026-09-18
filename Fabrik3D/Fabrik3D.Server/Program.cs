@@ -25,6 +25,8 @@ builder.Services.AddSingleton<TaskService>();
 builder.Services.AddSingleton<AlarmService>();
 builder.Services.AddSingleton<OperatorMessageService>();
 builder.Services.AddSingleton<MachineStateService>();
+builder.Services.AddSingleton<CellTemplateService>();
+builder.Services.AddSingleton<CellTemplateAuthorizationPlaceholder>();
 builder.Services.AddHostedService<HeartbeatMonitorService>();
 
 // ── ASP.NET Core ───────────────────────────────────────────────────

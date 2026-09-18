@@ -5,9 +5,9 @@ import { SerialDhKinematics } from './SerialDhKinematics'
 
 describe('profile kinematics', () => {
   it.each([
-    [COMPACT_6AXIS, { x: 0.65, y: 0, z: 1.1 }],
-    [MEDIUM_6AXIS, { x: 0.98, y: 0, z: 1.45 }],
-    [HEAVY_6AXIS, { x: 1.3, y: 0, z: 1.8 }],
+    [COMPACT_6AXIS, { x: 0.52, y: 0, z: 0.88 }],
+    [MEDIUM_6AXIS, { x: 1.225, y: 0, z: 1.8125 }],
+    [HEAVY_6AXIS, { x: 2.08, y: 0, z: 2.88 }],
   ])('matches the zero-pose FK reference for %s', (profile, expected) => {
     const pose = createRobotKinematics(profile).forward([0, 0, 0, 0, 0, 0])
     expect(pose.position.x).toBeCloseTo(expected.x, 8)

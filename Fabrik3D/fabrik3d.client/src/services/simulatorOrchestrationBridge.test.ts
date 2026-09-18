@@ -70,6 +70,9 @@ function sessionDto(overrides: Partial<SimulationSessionDto> = {}): SimulationSe
     simulatorId: 'test-simulator',
     correlationId: 'corr-test',
     version: 0,
+    scenarioId: null,
+    scenarioActivityId: null,
+    scenarioProgress: 0,
     ...overrides,
   }
 }

@@ -23,6 +23,7 @@ import {
   getPalletDownTarget,
 } from './PalletWorkspaceTargets'
 import type { WorkObjectTarget } from '../kinematics'
+import type { MotionSafetyEngine } from '../safety/motionSafety'
 
 // ── Phase enum ─────────────────────────────────────────────────────
 
@@ -101,9 +102,11 @@ export class PalletMachiningWorkflow {
   /** Announces the frame-aware target before legacy calibrated motion executes. */
   onTargetChanged: ((target: WorkObjectTarget) => void) | null = null
 
-  private readonly ctrl: RobotMotionRuntime
+private readonly ctrl: RobotMotionRuntime
   private readonly cb: PalletWorkflowCallbacks
   readonly timing: PalletWorkflowTiming
+  /** Optional safety engine that gates every motion before execution. */
+  private readonly safety: MotionSafetyEngine | null
 
   private _pallet: PalletData | null = null
   private _currentRow = 0
@@ -114,10 +117,12 @@ export class PalletMachiningWorkflow {
     controller: RobotMotionRuntime,
     callbacks: PalletWorkflowCallbacks,
     timing?: Partial<PalletWorkflowTiming>,
+    safety: MotionSafetyEngine | null = null,
   ) {
     this.ctrl = controller
     this.cb = callbacks
     this.timing = { ...DEFAULT_PALLET_TIMING, ...timing }
+    this.safety = safety
   }
 
   // ── Readable state for the dashboard ─────────────────────────
@@ -198,7 +203,7 @@ export class PalletMachiningWorkflow {
         this._currentCol = slot[1]
         this.setPhase('MOVE_ABOVE_PALLET_SLOT')
         this.announceTarget(getPalletAboveTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
-        this.ctrl.moveJoints(
+        this.guardedMove(
           getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.travelDuration,
         )
@@ -210,7 +215,7 @@ export class PalletMachiningWorkflow {
       case 'MOVE_ABOVE_PALLET_SLOT':
         this.setPhase('DESCEND_TO_PICK')
         this.announceTarget(getPalletDownTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
-        this.ctrl.moveJoints(
+        this.guardedMove(
           getPalletDownPose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.approachDuration,
         )
@@ -226,7 +231,7 @@ export class PalletMachiningWorkflow {
       case 'PICK_PART':
         if (now < this.waitUntil) return
         this.setPhase('LIFT_FROM_PALLET')
-        this.ctrl.moveJoints(
+        this.guardedMove(
           getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.approachDuration,
         )
@@ -237,7 +242,7 @@ export class PalletMachiningWorkflow {
       case 'LIFT_FROM_PALLET':
         this.setPhase('MOVE_TO_CNC_APPROACH')
         this.announceTarget(getCncApproachTarget())
-        this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration * 0.5)
+        this.guardedMove(PALLET_HOME_POSE, t.travelDuration * 0.5)
         this.ctrl.enqueueMove(getCncApproachPose(), t.travelDuration * 0.6)
         break
 
@@ -251,7 +256,7 @@ export class PalletMachiningWorkflow {
         if (now < this.waitUntil) return
         this.setPhase('MOVE_TO_CNC_INSERT')
         this.announceTarget(getCncInsertTarget())
-        this.ctrl.moveJoints(getCncInsertPose(), t.approachDuration)
+        this.guardedMove(getCncInsertPose(), t.approachDuration)
         break
 
       case 'MOVE_TO_CNC_INSERT':
@@ -262,7 +267,7 @@ export class PalletMachiningWorkflow {
       case 'LOAD_PART':
         if (now < this.waitUntil) return
         this.setPhase('RETRACT_FROM_CNC')
-        this.ctrl.moveJoints(getCncApproachPose(), t.approachDuration)
+        this.guardedMove(getCncApproachPose(), t.approachDuration)
         break
 
       case 'RETRACT_FROM_CNC':
@@ -275,7 +280,7 @@ export class PalletMachiningWorkflow {
 
       case 'CLOSE_CNC_DOOR':
         this.setPhase('MACHINING')
-        this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration)
+        this.guardedMove(PALLET_HOME_POSE, t.travelDuration)
         break
 
       case 'MACHINING':
@@ -283,7 +288,7 @@ export class PalletMachiningWorkflow {
         if (this.cb.getCNCState() !== 'UNLOADING') return
         this.setPhase('OPEN_CNC_DOOR_RETRIEVE')
         this.announceTarget(getCncApproachTarget())
-        this.ctrl.moveJoints(getCncApproachPose(), t.travelDuration)
+        this.guardedMove(getCncApproachPose(), t.travelDuration)
         break
 
       // ──────── Retrieve from CNC ─────────────────────────────
@@ -291,7 +296,7 @@ export class PalletMachiningWorkflow {
       case 'OPEN_CNC_DOOR_RETRIEVE':
         this.setPhase('MOVE_TO_CNC_RETRIEVE')
         this.announceTarget(getCncInsertTarget())
-        this.ctrl.moveJoints(getCncInsertPose(), t.approachDuration)
+        this.guardedMove(getCncInsertPose(), t.approachDuration)
         break
 
       case 'MOVE_TO_CNC_RETRIEVE':
@@ -303,7 +308,7 @@ export class PalletMachiningWorkflow {
       case 'RETRIEVE_PART':
         if (now < this.waitUntil) return
         this.setPhase('LIFT_FROM_CNC')
-        this.ctrl.moveJoints(getCncApproachPose(), t.approachDuration)
+        this.guardedMove(getCncApproachPose(), t.approachDuration)
         break
 
       // ──────── Return to same pallet slot ────────────────────
@@ -311,7 +316,7 @@ export class PalletMachiningWorkflow {
       case 'LIFT_FROM_CNC':
         this.setPhase('MOVE_ABOVE_ORIGIN_SLOT')
         this.announceTarget(getPalletAboveTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
-        this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration * 0.5)
+        this.guardedMove(PALLET_HOME_POSE, t.travelDuration * 0.5)
         this.ctrl.enqueueMove(
           getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.travelDuration * 0.6,
@@ -321,7 +326,7 @@ export class PalletMachiningWorkflow {
       case 'MOVE_ABOVE_ORIGIN_SLOT':
         this.setPhase('DESCEND_TO_ORIGIN_SLOT')
         this.announceTarget(getPalletDownTarget(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols))
-        this.ctrl.moveJoints(
+        this.guardedMove(
           getPalletDownPose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.approachDuration,
         )
@@ -337,7 +342,7 @@ export class PalletMachiningWorkflow {
       case 'PLACE_PART_BACK':
         if (now < this.waitUntil) return
         this.setPhase('LIFT_AFTER_PLACE')
-        this.ctrl.moveJoints(
+        this.guardedMove(
           getPalletAbovePose(p.worldX, this._currentRow, this._currentCol, p.rows, p.cols),
           t.approachDuration,
         )
@@ -355,7 +360,7 @@ export class PalletMachiningWorkflow {
         if (isPalletComplete(p)) {
           this.setPhase('COMPLETE')
           this.setRunState('complete')
-          this.ctrl.moveJoints(PALLET_HOME_POSE, t.travelDuration)
+          this.guardedMove(PALLET_HOME_POSE, t.travelDuration)
           this.onPalletComplete?.()
         } else {
           this.setPhase('SELECT_NEXT_SLOT')
@@ -376,7 +381,30 @@ export class PalletMachiningWorkflow {
     this.onRunStateChanged?.(s)
   }
 
-  private announceTarget(target: WorkObjectTarget): void {
+private announceTarget(target: WorkObjectTarget): void {
     this.onTargetChanged?.(target)
+    // Non-blocking reachability warning for the announced frame target.
+    if (this.safety) this.safety.checkTarget(target.pose, this.phase)
+  }
+
+  private get currentJoints(): number[] {
+    return this.ctrl.getJointAngles?.() ?? PALLET_HOME_POSE
+  }
+
+  /**
+   * Safety-gated move: validates joint limits and the swept path before
+   * executing. On a blocking failure the workflow pauses and the alarm is
+   * recorded instead of penetrating the obstacle.
+   */
+  private guardedMove(targetAngles: number[], duration: number, equipmentId = 'robot-1'): void {
+    if (this.safety) {
+      const result = this.safety.checkMotion(this.currentJoints, targetAngles, this.phase, equipmentId)
+      if (result.blocked) {
+        this.setRunState('paused')
+        return
+      }
+    }
+    this.ctrl.moveJoints(targetAngles, duration)
   }
 }
+

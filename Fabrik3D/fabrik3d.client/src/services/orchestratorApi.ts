@@ -12,6 +12,7 @@
 
 import { OrchestratorApiError } from '@fabrik3d/contracts'
 import type {
+  CellTemplateDto,
   ClaimJobRequest,
   ClaimResultDto,
   CreateJobRequest,
@@ -19,6 +20,7 @@ import type {
   HeartbeatRequest,
   JobDto,
   MachineStateDto,
+  SaveCellTemplateRequest,
   SimulationSessionDto,
   TaskDto,
   UpdateMachineStateRequest,
@@ -27,6 +29,7 @@ import type {
 } from '@fabrik3d/contracts'
 
 export type {
+  CellTemplateDto,
   ClaimJobRequest,
   ClaimResultDto,
   CreateJobRequest,
@@ -34,6 +37,7 @@ export type {
   HeartbeatRequest,
   JobDto,
   MachineStateDto,
+  SaveCellTemplateRequest,
   SimulationSessionDto,
   TaskDto,
   UpdateMachineStateRequest,
@@ -138,3 +142,10 @@ export const getCurrentMachineState = () =>
 
 export const updateCurrentMachineState = (payload: UpdateMachineStateRequest) =>
   request<MachineStateDto>('PUT', '/machine-state/current', payload)
+
+// ── Cell templates ─────────────────────────────────────────────────
+
+export const getCellTemplates = () => request<CellTemplateDto[]>('GET', '/cell-templates')
+
+export const saveCellTemplate = (payload: SaveCellTemplateRequest) =>
+  request<CellTemplateDto>('POST', '/cell-templates', payload)

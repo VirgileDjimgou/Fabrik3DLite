@@ -1,5 +1,6 @@
 using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Contracts.Enums;
+using Fabrik3D.Contracts.Events;
 using Fabrik3D.Infrastructure.Repositories;
 using Fabrik3D.Server.Exceptions;
 using Fabrik3D.Server.Services;
@@ -137,5 +138,39 @@ public class SessionOwnershipAndHeartbeatIntegrationTests
             SimulatorId = "sim-intruder",
             MachineMode = "Automatic",
         });
+    }
+
+    [Fact]
+    public async Task Scenario_progress_is_observable_through_the_session()
+    {
+        var claim = await ClaimJobAsync();
+
+        var pushed = await _fx.SessionService.UpdateStateAsync(claim.Session.Id, new UpdateSimulationStateRequest
+        {
+            Status = "Running",
+            CurrentPhase = "MOVE_TO_CNC_INSERT",
+            SimulatorId = "sim-owner",
+            ScenarioId = "pallet-processing",
+            ScenarioActivityId = "cnc-load",
+            ScenarioProgress = 40,
+        }, null);
+
+        Assert.NotNull(pushed);
+        Assert.Equal("pallet-processing", pushed.ScenarioId);
+        Assert.Equal("cnc-load", pushed.ScenarioActivityId);
+        Assert.Equal(40, pushed.ScenarioProgress);
+
+        // The state is persisted, not just returned.
+        var stored = await _fx.SessionService.GetByIdAsync(claim.Session.Id);
+        Assert.NotNull(stored);
+        Assert.Equal("pallet-processing", stored.ScenarioId);
+        Assert.Equal(40, stored.ScenarioProgress);
+
+        // The SignalR event carries the scenario progress too.
+        var evt = Assert.Single(
+            _fx.Hub.Events.OfType<SimulationStateChangedEvent>(),
+            e => e.SessionId == claim.Session.Id && e.ScenarioProgress == 40);
+        Assert.Equal("pallet-processing", evt.ScenarioId);
+        Assert.Equal("cnc-load", evt.ScenarioActivityId);
     }
 }

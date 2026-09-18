@@ -13,6 +13,7 @@ export interface LegacyCncApi {
 export interface LegacyRobotControllerApi {
   readonly isMoving: boolean
   readonly state: RobotState
+  readonly jointAngles?: number[]
   moveJoints(targetAngles: number[], duration?: number): void
   enqueueCommand(command: RobotCommand): void
   clearCommands(): void
@@ -35,6 +36,7 @@ export class LegacyRobotAdapter implements RobotMotionRuntime {
     this.controller.enqueueCommand({ type: 'MOVE_TO_POSITION', targetAngles, duration })
   }
   clearCommands(): void { this.controller.clearCommands() }
+  getJointAngles(): number[] { return this.controller.jointAngles ? [...this.controller.jointAngles] : [] }
   getRuntimeState(): EquipmentRuntimeState {
     return { status: this.controller.isMoving ? 'running' : 'idle', updatedAt: new Date().toISOString(), values: { controllerState: this.controller.state } }
   }

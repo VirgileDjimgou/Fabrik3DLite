@@ -45,5 +45,7 @@ export interface RobotKinematicsModel {
   readonly id: string
   readonly jointLimits: readonly JointLimit[]
   forward(jointsRad: readonly number[]): KinematicPose
+  /** Pose of every joint origin along the chain, base … flange … tool tip. */
+  jointTransforms(jointsRad: readonly number[]): KinematicPose[]
   inverse(target: KinematicPose, options?: InverseKinematicsOptions): InverseKinematicsResult
 }

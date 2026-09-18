@@ -13,6 +13,7 @@ export type AlarmDto = CompletedResponse<components['schemas']['AlarmDto']>
 export type OperatorMessageDto = CompletedResponse<components['schemas']['OperatorMessageDto']>
 export type MachineStateDto = CompletedResponse<components['schemas']['MachineStateDto']>
 export type ApiErrorDto = CompletedResponse<components['schemas']['ApiErrorDto']>
+export type CellTemplateDto = CompletedResponse<components['schemas']['CellTemplateDto']>
 
 export type CreateJobRequest = components['schemas']['CreateJobRequest']
 export type CreateTaskRequest = components['schemas']['CreateTaskRequest']
@@ -21,6 +22,7 @@ export type UpdateSimulationStateRequest = components['schemas']['UpdateSimulati
 export type ClaimJobRequest = components['schemas']['ClaimJobRequest']
 export type UpdateTaskStatusRequest = components['schemas']['UpdateTaskStatusRequest']
 export type HeartbeatRequest = components['schemas']['HeartbeatRequest']
+export type SaveCellTemplateRequest = components['schemas']['SaveCellTemplateRequest']
 
 // The server always populates the full claim payload.
 export type ClaimResultDto = {

@@ -16,7 +16,7 @@ public class TransportContractSerializationTests
         {
             new JobDto("job-1", "Job", "Description", "Running", "Automatic", Timestamp, Timestamp, null, null, null, null, 0, 0, null, new(), 1),
             new TaskDto("task-1", "job-1", "Task", "Description", "Pending", 0, "hex-billet", null, 0, 0, Timestamp, Timestamp, null, null, null, 1),
-            new SimulationSessionDto("session-1", "job-1", "Running", Timestamp, null, false, "PICK", null, null, null, 0, 1, 1, Timestamp, "sim-1", "corr-1", 1),
+            new SimulationSessionDto("session-1", "job-1", "Running", Timestamp, null, false, "PICK", null, null, null, 0, 1, 1, Timestamp, "sim-1", "corr-1", 1, "scenario-1", "activity-1", 40),
             new AlarmDto("alarm-1", "A001", "Alarm", "Message", "Warning", "Simulator", null, null, Timestamp, false, null, null),
             new OperatorMessageDto("message-1", "Title", "Message", "Info", "Server", null, null, Timestamp, false, null),
             new MachineStateDto("machine-1", null, "Automatic", "Running", "Moving", "Idle", "PICK", null, null, null, 0, 0, true, false, Timestamp),
@@ -29,6 +29,8 @@ public class TransportContractSerializationTests
             new ClaimJobRequest { SimulatorId = "sim-1", CorrelationId = "corr-1" },
             new UpdateTaskStatusRequest { Status = "Running", SimulationSessionId = "session-1", SimulatorId = "sim-1" },
             new HeartbeatRequest { SimulatorId = "sim-1" },
+            new CellTemplateDto("template-1", "Cell", "1.0", "{}", Timestamp, Timestamp, 0),
+            new SaveCellTemplateRequest { Name = "Cell", Content = "{}" },
         };
 
         foreach (var contract in contracts)
@@ -46,7 +48,7 @@ public class TransportContractSerializationTests
         var events = new object[]
         {
             new JobStateChangedEvent("job-1", "Created", "Running", Timestamp, "corr-1"),
-            new SimulationStateChangedEvent("session-1", "job-1", "Running", "PICK", 0, 1, 1, Timestamp, "corr-1"),
+            new SimulationStateChangedEvent("session-1", "job-1", "Running", "PICK", 0, 1, 1, Timestamp, "corr-1", "scenario-1", "activity-1", 40),
             new TaskStateChangedEvent("task-1", "job-1", "Pending", "Running", Timestamp, "corr-1"),
             new AlarmRaisedEvent("alarm-1", "A001", "Alarm", "Message", "Warning", "Simulator", Timestamp),
             new AlarmAcknowledgedEvent("alarm-1", "operator", Timestamp),

@@ -43,12 +43,14 @@
     @select="selectRobot"
   />
 
-  <KinematicsDeveloperOverlay
+<KinematicsDeveloperOverlay
     :controller="robotController"
     :model="selectedKinematics"
     :frames="cellFrames"
     :target="developerTarget"
   />
+
+  <MotionSafetyPanel :engine="safetyEngine" />
 
   <PalletMachiningDashboard
     :run-state="dashRunState"
@@ -88,6 +90,7 @@ import SingleConveyorSceneSetup from './SingleConveyorSceneSetup.vue'
 import PalletMachiningDashboard from './PalletMachiningDashboard.vue'
 import RobotCatalogPanel from './RobotCatalogPanel.vue'
 import KinematicsDeveloperOverlay from './KinematicsDeveloperOverlay.vue'
+import MotionSafetyPanel from './MotionSafetyPanel.vue'
 import type { RobotController } from '../simulation/RobotController'
 import {
   PalletMachiningWorkflow,
@@ -122,6 +125,7 @@ import {
   createSingleCellFrames,
   type WorkObjectTarget,
 } from '../kinematics'
+import { createSafetyRobotModel, MotionSafetyEngine, createSingleCellWorld } from '../safety'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
@@ -139,6 +143,18 @@ const selectedRobot = computed(() => robotCatalog.getRobot(selectedRobotId.value
 const selectedKinematics = computed(() => createRobotKinematics(selectedRobot.value))
 const cellFrames = createSingleCellFrames()
 const developerTarget = ref<WorkObjectTarget>(createCncTarget('approach'))
+
+// ── Motion safety engine (rebuilt when the robot profile changes) ───
+const safetyEngine = shallowRef<MotionSafetyEngine>(new MotionSafetyEngine(
+  createSafetyRobotModel(selectedRobot.value),
+  createSingleCellWorld(),
+))
+function rebuildSafetyEngine(): void {
+  safetyEngine.value = new MotionSafetyEngine(
+    createSafetyRobotModel(selectedRobot.value),
+    createSingleCellWorld(),
+  )
+}
 
 // ── Component refs ─────────────────────────────────────────────────
 const palletFeedRef = ref<InstanceType<typeof PalletConveyorFeed> | null>(null)
@@ -216,7 +232,7 @@ function ensureWorkflow(): PalletMachiningWorkflow | null {
     showSlotPart: (palletId, row, col) => getPalletStationRuntime()?.setSlotVisible(palletId, row, col, true),
   }
 
-  workflow = new PalletMachiningWorkflow(ctrl, callbacks)
+  workflow = new PalletMachiningWorkflow(ctrl, callbacks, undefined, safetyEngine.value)
 
   workflow.onPhaseChanged = (phase) => {
     dashPhase.value = phase
@@ -290,6 +306,7 @@ function handleStart(): void {
   if (!wf) return
   const pallet = getPalletStationRuntime()?.getFirstStoppedPallet()
   if (!pallet) return
+  safetyEngine.value.updatePalletObstacle(pallet.worldX)
   bridge.start(pallet, (p) => {
     wf.start(p)
     syncDashboard()
@@ -311,6 +328,7 @@ function handleStop(): void {
 function handleReset(): void {
   bridge.reset()
   workflow?.reset()
+  safetyEngine.value.updatePalletObstacle(null)
   dashPhase.value = 'IDLE'
   dashRunState.value = 'idle'
   dashPalletId.value = ''
@@ -342,6 +360,7 @@ function selectRobot(id: string): void {
   palletStationRuntime = null
 
   selectedRobotId.value = id
+  rebuildSafetyEngine()
 
   dashPhase.value = 'IDLE'
   dashRunState.value = 'idle'

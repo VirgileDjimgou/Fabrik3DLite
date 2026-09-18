@@ -17,6 +17,9 @@ export interface SimulationStateChangedEvent {
   totalCount: number
   timestampUtc: string
   correlationId?: string | null
+  scenarioId?: string | null
+  scenarioActivityId?: string | null
+  scenarioProgress?: number
 }
 
 export interface TaskStateChangedEvent {

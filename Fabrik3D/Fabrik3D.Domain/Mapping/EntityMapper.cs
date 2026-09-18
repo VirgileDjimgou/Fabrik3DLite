@@ -25,7 +25,8 @@ public static class EntityMapper
         e.StartedAtUtc, e.EndedAtUtc, e.IsPaused,
         e.CurrentPhase, e.CurrentPalletId, e.CurrentTaskId, e.CurrentPartId,
         e.MachinedCount, e.RemainingCount, e.TotalCount,
-        e.LastHeartbeatUtc, e.SimulatorId, e.CorrelationId, e.Version);
+        e.LastHeartbeatUtc, e.SimulatorId, e.CorrelationId, e.Version,
+        e.ScenarioId, e.ScenarioActivityId, e.ScenarioProgress);
 
     public static AlarmDto ToDto(this Alarm e) => new(
         e.Id, e.Code, e.Title, e.Message,
@@ -45,4 +46,8 @@ public static class EntityMapper
         e.CurrentPalletId, e.CurrentTaskId, e.CurrentPartId,
         e.CurrentSlotRow, e.CurrentSlotColumn,
         e.IsRunning, e.IsPaused, e.LastUpdatedAtUtc);
+
+    public static CellTemplateDto ToDto(this CellTemplate e) => new(
+        e.Id, e.Name, e.SchemaVersion, e.Content,
+        e.CreatedAtUtc, e.UpdatedAtUtc, e.Version);
 }

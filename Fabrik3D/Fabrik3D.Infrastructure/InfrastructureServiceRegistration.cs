@@ -22,6 +22,7 @@ public static class InfrastructureServiceRegistration
         services.AddSingleton<AlarmRepository>();
         services.AddSingleton<OperatorMessageRepository>();
         services.AddSingleton<MachineStateRepository>();
+        services.AddSingleton<CellTemplateRepository>();
 
         return services;
     }
