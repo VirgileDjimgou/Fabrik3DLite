@@ -37,6 +37,22 @@ It is intended for learning, technical demonstrations, and prototyping. It is **
 - Separate, multilingual operator HMI (English, French, German) for jobs, active execution, alarms, messages, operating modes, and settings.
 - Optional OPC UA and MQTT boundaries, kept outside core domain behavior and disabled by default.
 
+## Operator HMI
+
+The HMI is the operator-facing surface of Fabrik3D. It provides a touch-oriented command area, a live machine-status sidebar, job preparation and supervision views, and a persistent action bar. The same orchestration state is shared with the simulator through the ASP.NET Core backend and SignalR.
+
+<p align="center">
+  <img src="./media/HMI_Home.png" alt="Fabrik3D HMI home screen with operator commands and live machine status" width="31%" />
+  <img src="./media/HMI_Jobs.png" alt="Fabrik3D HMI job list with execution state and actions" width="31%" />
+  <img src="./media/HMI_CurrentJob.png" alt="Fabrik3D HMI current job view with session and machine state" width="31%" />
+</p>
+
+| View | Purpose |
+| --- | --- |
+| **Home** | Access to start, pause, resume, jobs, positions, messages, and settings, with continuous production context. |
+| **Jobs** | Work queue, state, mode, progress, creation time, and operator actions. |
+| **Current job** | Job, session, task, pallet, CNC, robot, and progress details for the active execution. |
+
 ## Demonstrations and evidence
 
 | Scenario | Evidence |
@@ -70,15 +86,35 @@ flowchart LR
     Mqtt["MQTT (optional)"] -. telemetry .-> Server
 ```
 
-The server is the orchestration source of truth. In connected mode, a simulator claims a server-side job and reports its state through the shared contracts. If no server or runnable job is available, the simulator explicitly switches to a local-only offline demonstration and never writes to the server.
+The server is the orchestration source of truth. In connected mode, a simulator claims a server-side job and reports its state through the shared contracts. If no job is claimed, the simulator explicitly identifies the run as local and never writes simulated execution state to the server.
 
 ## Core workflow
 
-1. An operator creates and starts a job through the HMI or API; jobs may carry pallet-slot tasks.
-2. The simulator claims the runnable job and receives its declared tasks.
-3. The robot processes each slot: pick, CNC load, machining, retrieval, and return to the pallet.
-4. The simulator updates task, session, machine, and heartbeat state through the backend.
-5. The HMI receives live job and session changes through SignalR.
+```mermaid
+sequenceDiagram
+    participant Operator as Operator
+    participant HMI as Operator HMI
+    participant API as ASP.NET Core orchestrator
+    participant Simulator as 3D simulator
+    participant Mongo as MongoDB
+
+    Operator->>HMI: Create and prepare job
+    HMI->>API: REST: create/start job
+    API->>Mongo: Persist job and tasks
+    Simulator->>API: Claim runnable job
+    API->>Simulator: Job, session, task assignment
+    loop Each pallet slot
+        Simulator->>API: Task, machine, session and heartbeat updates
+        API-->>HMI: SignalR state changes
+    end
+    Operator->>HMI: Pause, resume or stop
+    HMI->>API: Command job transition
+    API-->>Simulator: SignalR command/state update
+```
+
+1. The operator prepares a job through the HMI or API; jobs may carry pallet-slot tasks.
+2. The simulator claims the runnable job, processes the physical-cell model, and reports progress through the backend.
+3. The HMI remains the operator interface and receives the resulting state changes in real time.
 
 The backend enforces ownership: a foreign or offline simulator cannot overwrite an active session.
 
