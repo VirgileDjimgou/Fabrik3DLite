@@ -39,60 +39,86 @@
     <SingleConveyorSceneSetup />
   </ThreeScene>
 
-  <!-- Operator dashboard (outside ThreeScene so it overlays as HTML) -->
-  <RobotCatalogPanel
-    :robots="catalogRobots"
-    :selected-id="selectedRobotId"
-    :tools="catalogTools"
-    @select="selectRobot"
-  />
+  <!-- Docked panels preserve the 3D cell as the primary visual surface. -->
+  <SimulationDock side="left" :label="t('dock.tools')">
+    <details class="dock-panel" open>
+      <summary>{{ t('panel.guided') }}</summary>
+      <StepModePanel class="docked-panel"
+        :active="stepMode.isEnabled"
+        :checkpoint="stepCheckpoint"
+        :speed="stepSpeed"
+        @toggle="toggleStepMode"
+        @speed="setStepSpeed"
+        @expert="expertMode = $event"
+        @next="advanceStep"
+        @previous="showPreviousExplanation"
+        @restart="restartGuidedRun"
+      />
+    </details>
+    <details class="dock-panel">
+      <summary>{{ t('panel.robot') }}</summary>
+      <RobotCatalogPanel class="docked-panel"
+        :robots="catalogRobots"
+        :selected-id="selectedRobotId"
+        :tools="catalogTools"
+        @select="selectRobot"
+      />
+    </details>
+  </SimulationDock>
 
-  <KinematicsDeveloperOverlay v-if="expertMode"
-    :controller="robotController"
-    :model="selectedKinematics"
-    :frames="cellFrames"
-    :target="developerTarget"
-  />
+  <SimulationDock side="right" :label="t('dock.operations')">
+    <details class="dock-panel" open>
+      <summary>{{ t('panel.pallet') }}</summary>
+      <PalletMachiningDashboard class="docked-panel"
+        :run-state="dashRunState"
+        :phase="dashPhase"
+        :pallet-id="dashPalletId"
+        :material-type="dashMaterial"
+        :current-row="dashRow"
+        :current-col="dashCol"
+        :slots-completed="dashCompleted"
+        :remaining-slots="dashRemaining"
+        :total-slots="dashTotal"
+        :progress-percent="dashProgress"
+        :cnc-state="dashCncState"
+        :job-id="bridge.ctx.jobId ?? ''"
+        :session-id="bridge.ctx.sessionId ?? ''"
+        :task-id="bridge.ctx.taskId ?? ''"
+        :mode="dashMode"
+        :connection-state="dashConnection"
+        :session-status="dashSessionStatus"
+        @start="handleStart"
+        @pause="handlePause"
+        @resume="handleResume"
+        @stop="handleStop"
+        @reset="handleReset"
+      />
+    </details>
+    <details class="dock-panel">
+      <summary>{{ t('panel.faults') }}</summary>
+      <FaultTimelinePanel class="docked-panel" :key="timelineRevision" :faults="faults.activeFaults" :entries="timeline.all" @inject="injectFault" @action="actOnFault" />
+    </details>
+  </SimulationDock>
 
-  <MotionSafetyPanel v-if="expertMode" :engine="safetyEngine" />
-  <StepModePanel
-    :active="stepMode.isEnabled"
-    :checkpoint="stepCheckpoint"
-    :speed="stepSpeed"
-    @toggle="toggleStepMode"
-    @speed="setStepSpeed"
-    @expert="expertMode = $event"
-    @next="advanceStep"
-    @previous="showPreviousExplanation"
-    @restart="restartGuidedRun"
-  />
-  <FaultTimelinePanel :key="timelineRevision" :faults="faults.activeFaults" :entries="timeline.all" @inject="injectFault" @action="actOnFault" />
-  <LearningReportPanel :key="timelineRevision" :entries="timeline.all" :expected-actions="expectedLearningActions" @reset-scenario="instructorResetScenario" />
-
-  <PalletMachiningDashboard
-    :run-state="dashRunState"
-    :phase="dashPhase"
-    :pallet-id="dashPalletId"
-    :material-type="dashMaterial"
-    :current-row="dashRow"
-    :current-col="dashCol"
-    :slots-completed="dashCompleted"
-    :remaining-slots="dashRemaining"
-    :total-slots="dashTotal"
-    :progress-percent="dashProgress"
-    :cnc-state="dashCncState"
-    :job-id="bridge.ctx.jobId ?? ''"
-    :session-id="bridge.ctx.sessionId ?? ''"
-    :task-id="bridge.ctx.taskId ?? ''"
-    :mode="dashMode"
-    :connection-state="dashConnection"
-    :session-status="dashSessionStatus"
-    @start="handleStart"
-    @pause="handlePause"
-    @resume="handleResume"
-    @stop="handleStop"
-    @reset="handleReset"
-  />
+  <SimulationDock side="bottom" :label="t('dock.learning')" :initial-open="false">
+    <details class="dock-panel" open>
+      <summary>{{ t('panel.learning') }}</summary>
+      <LearningReportPanel class="docked-panel" :key="timelineRevision" :entries="timeline.all" :expected-actions="expectedLearningActions" @reset-scenario="instructorResetScenario" />
+    </details>
+    <details v-if="expertMode" class="dock-panel" open>
+      <summary>{{ t('panel.safety') }}</summary>
+      <MotionSafetyPanel class="docked-panel" :engine="safetyEngine" />
+    </details>
+    <details v-if="expertMode" class="dock-panel">
+      <summary>{{ t('panel.kinematics') }}</summary>
+      <KinematicsDeveloperOverlay class="docked-panel"
+        :controller="robotController"
+        :model="selectedKinematics"
+        :frames="cellFrames"
+        :target="developerTarget"
+      />
+    </details>
+  </SimulationDock>
 </template>
 
 <script setup lang="ts">
@@ -113,6 +139,8 @@ import MotionSafetyPanel from './MotionSafetyPanel.vue'
 import StepModePanel from './StepModePanel.vue'
 import FaultTimelinePanel from './FaultTimelinePanel.vue'
 import LearningReportPanel from './LearningReportPanel.vue'
+import SimulationDock from './SimulationDock.vue'
+import { useSimulatorI18n } from '../i18n/simulator'
 import type { RobotController } from '../simulation/RobotController'
 import {
   PalletMachiningWorkflow,
@@ -154,6 +182,7 @@ import { TimelineRecorder, type TimelineContext } from '../timeline'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
+const { t } = useSimulatorI18n()
 const conveyor = SINGLE_CELL_CONVEYOR
 const flowCfg = { ...SINGLE_CELL_FLOW }
 const conveyorSensorActive = ref(false)

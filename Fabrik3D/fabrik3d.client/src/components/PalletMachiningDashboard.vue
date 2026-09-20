@@ -4,11 +4,11 @@
 
     <!-- ── Controls ──────────────────────────────────── -->
     <div class="btn-row">
-      <button @click="$emit('start')" :disabled="runState === 'running'">▶ Start</button>
-      <button @click="$emit('pause')" :disabled="runState !== 'running'">⏸ Pause</button>
-      <button @click="$emit('resume')" :disabled="runState !== 'paused'">⏵ Resume</button>
-      <button @click="$emit('stop')" :disabled="runState === 'idle' || runState === 'complete'">⏹ Stop</button>
-      <button @click="$emit('reset')" class="btn-reset">↺ Reset</button>
+      <button @click="$emit('start')" :disabled="runState === 'running'">▶ {{ t('dashboard.start') }}</button>
+      <button @click="$emit('pause')" :disabled="runState !== 'running'">⏸ {{ t('dashboard.pause') }}</button>
+      <button @click="$emit('resume')" :disabled="runState !== 'paused'">⏵ {{ t('dashboard.resume') }}</button>
+      <button @click="$emit('stop')" :disabled="runState === 'idle' || runState === 'complete'">⏹ {{ t('dashboard.stop') }}</button>
+      <button @click="$emit('reset')" class="btn-reset">↺ {{ t('dashboard.reset') }}</button>
     </div>
 
     <!-- ── Run state indicator ───────────────────────── -->
@@ -18,23 +18,23 @@
 
     <!-- ── Phase ─────────────────────────────────────── -->
     <div class="section">
-      <label>Phase</label>
+      <label>{{ t('dashboard.phase') }}</label>
       <span class="value phase-value">{{ phaseLabel }}</span>
     </div>
 
     <!-- ── Pallet info ───────────────────────────────── -->
     <div class="section" v-if="palletId">
-      <label>Pallet</label>
+      <label>{{ t('dashboard.pallet') }}</label>
       <span class="value">{{ palletId }}</span>
     </div>
     <div class="section" v-if="materialType">
-      <label>Material</label>
+      <label>{{ t('dashboard.material') }}</label>
       <span class="value">{{ materialType }}</span>
     </div>
 
     <!-- ── Current slot ──────────────────────────────── -->
     <div class="section">
-      <label>Current slot</label>
+      <label>{{ t('dashboard.currentSlot') }}</label>
       <span class="value">
         {{ runState === 'idle' ? '—' : `R${currentRow} C${currentCol}` }}
       </span>
@@ -42,7 +42,7 @@
 
     <!-- ── Slot state ────────────────────────────────── -->
     <div class="section" v-if="runState !== 'idle'">
-      <label>Part state</label>
+      <label>{{ t('dashboard.partState') }}</label>
       <span class="value" :class="partStateClass">{{ partStateLabel }}</span>
     </div>
 
@@ -50,15 +50,15 @@
     <div class="metrics">
       <div class="metric">
         <span class="metric-val">{{ slotsCompleted }}</span>
-        <span class="metric-lbl">Machined</span>
+        <span class="metric-lbl">{{ t('dashboard.machined') }}</span>
       </div>
       <div class="metric">
         <span class="metric-val">{{ remainingSlots }}</span>
-        <span class="metric-lbl">Remaining</span>
+        <span class="metric-lbl">{{ t('dashboard.remaining') }}</span>
       </div>
       <div class="metric">
         <span class="metric-val">{{ totalSlots }}</span>
-        <span class="metric-lbl">Total</span>
+        <span class="metric-lbl">{{ t('dashboard.total') }}</span>
       </div>
     </div>
 
@@ -70,7 +70,7 @@
 
     <!-- ── CNC state ─────────────────────────────────── -->
     <div class="section">
-      <label>CNC</label>
+      <label>{{ t('dashboard.cnc') }}</label>
       <span class="value">{{ cncState }}</span>
     </div>
 
@@ -81,19 +81,19 @@
 
     <!-- ── Orchestration context ─────────────────────── -->
     <div class="section" v-if="jobId">
-      <label>Job</label>
+      <label>{{ t('dashboard.job') }}</label>
       <span class="value orchestration-id">{{ jobId.slice(-6) }}</span>
     </div>
     <div class="section" v-if="sessionId">
-      <label>Session</label>
+      <label>{{ t('dashboard.session') }}</label>
       <span class="value orchestration-id">{{ sessionId.slice(-6) }}</span>
     </div>
     <div class="section" v-if="sessionStatus">
-      <label>Session state</label>
+      <label>{{ t('dashboard.sessionState') }}</label>
       <span class="value" :class="{ 'state-faulted': sessionStatus === 'Faulted' }">{{ sessionStatus }}</span>
     </div>
     <div class="section" v-if="taskId">
-      <label>Task</label>
+      <label>{{ t('dashboard.task') }}</label>
       <span class="value orchestration-id">{{ taskId.slice(-6) }}</span>
     </div>
   </div>
@@ -105,6 +105,7 @@ import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import type { PalletWorkflowPhase, WorkflowRunState } from '../simulation/PalletMachiningWorkflow'
 import type { BridgeMode } from '../services/simulatorOrchestrationBridge'
 import type { ConnectionState } from '../services/orchestratorSignalR'
+import { useSimulatorI18n } from '../i18n/simulator'
 
 const props = withDefaults(defineProps<{
   runState: WorkflowRunState
@@ -151,23 +152,17 @@ defineEmits<{
   (e: 'stop'): void
   (e: 'reset'): void
 }>()
+const { t } = useSimulatorI18n()
 
 const modeLabel = computed(() => {
-  if (props.mode === 'offline') return 'LOCAL DEMO — offline (no server)'
-  if (props.connectionState === 'reconnecting') return 'Online — reconnecting…'
-  if (props.connectionState === 'disconnected') return 'Online session — hub disconnected'
-  return 'Online — orchestrated by server'
+  if (props.mode === 'offline') return t('mode.local')
+  if (props.connectionState === 'reconnecting') return t('mode.reconnecting')
+  if (props.connectionState === 'disconnected') return t('mode.disconnected')
+  return t('mode.online')
 })
 const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:pallet-machining', { x: Math.max(16, window.innerWidth - 290), y: 16 })
 
-const STATE_LABELS: Record<WorkflowRunState, string> = {
-  idle: '⏹ Idle',
-  running: '▶ Running',
-  paused: '⏸ Paused',
-  stopped: '⏹ Stopped',
-  complete: '✓ Complete',
-}
-const stateLabel = computed(() => STATE_LABELS[props.runState])
+const stateLabel = computed(() => ({ idle: `⏹ ${t('state.idle')}`, running: `▶ ${t('state.running')}`, paused: `⏸ ${t('state.paused')}`, stopped: `⏹ ${t('state.stopped')}`, complete: `✓ ${t('state.complete')}` })[props.runState])
 
 const PHASE_LABELS: Record<PalletWorkflowPhase, string> = {
   IDLE: 'Idle',

@@ -18,22 +18,22 @@
     </div>
 
     <div v-if="selected" class="robot-details" :data-selected-robot="selected.id">
-      <div class="detail-row"><span class="label">Payload</span><span class="value">{{ formatPayload(selected.payloadKg) }}</span></div>
-      <div class="detail-row"><span class="label">Reach</span><span class="value">{{ formatReach(selected.reachMeters) }}</span></div>
-      <div class="detail-row"><span class="label">Controller</span><span class="value">{{ selected.controllerProfile }}</span></div>
-      <div class="detail-row"><span class="label">Joints</span><span class="value">{{ selected.joints.length }}</span></div>
+      <div class="detail-row"><span class="label">{{ t('robot.payload') }}</span><span class="value">{{ formatPayload(selected.payloadKg) }}</span></div>
+      <div class="detail-row"><span class="label">{{ t('robot.reach') }}</span><span class="value">{{ formatReach(selected.reachMeters) }}</span></div>
+      <div class="detail-row"><span class="label">{{ t('robot.controller') }}</span><span class="value">{{ selected.controllerProfile }}</span></div>
+      <div class="detail-row"><span class="label">{{ t('robot.joints') }}</span><span class="value">{{ selected.joints.length }}</span></div>
       <div v-if="selected.vendor?.vendor" class="detail-row">
-        <span class="label">Vendor</span><span class="value">{{ selected.vendor.vendor }} · {{ selected.vendor.family }}</span>
+        <span class="label">{{ t('robot.vendor') }}</span><span class="value">{{ selected.vendor.vendor }} · {{ selected.vendor.family }}</span>
       </div>
       <p v-if="selected.vendor?.note" class="vendor-note">{{ selected.vendor.note }}</p>
 
       <div v-if="tools.length" class="tool-block">
-        <span class="label">Compatible tools</span>
+        <span class="label">{{ t('robot.compatibleTools') }}</span>
         <ul class="tool-list">
           <li v-for="tool in tools" :key="tool.id">
             {{ tool.name }}
             <span class="tool-compat" :class="{ ok: toolFits(selected, tool) }">
-              {{ toolFits(selected, tool) ? 'compatible' : 'payload too low' }}
+              {{ toolFits(selected, tool) ? t('robot.compatible') : t('robot.payloadLow') }}
             </span>
           </li>
         </ul>
@@ -46,6 +46,7 @@
 import { computed } from 'vue'
 import type { RobotDefinition, ToolDefinition } from '../robot/catalog'
 import { useDraggableOverlay } from '../composables/useDraggableOverlay'
+import { useSimulatorI18n } from '../i18n/simulator'
 
 const props = defineProps<{
   robots: RobotDefinition[]
@@ -54,6 +55,7 @@ const props = defineProps<{
 }>()
 
 const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:robot-profile', { x: 16, y: 230 })
+const { t } = useSimulatorI18n()
 
 defineEmits<{
   (e: 'select', id: string): void

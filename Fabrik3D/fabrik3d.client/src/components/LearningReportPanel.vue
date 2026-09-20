@@ -1,12 +1,12 @@
 <template>
   <aside class="report-panel" :style="panelStyle" aria-label="Learning assessment and report">
     <strong class="drag-handle" @pointerdown="beginDrag">⠿ LEARNING ASSESSMENT</strong>
-    <label>Session alias <input v-model="alias" maxlength="40" placeholder="anonymous learner" /></label>
-    <p>Score: <b>{{ report.assessment.score }}/{{ report.assessment.possibleScore }}</b></p>
-    <ul><li v-for="criterion in report.assessment.criteria" :key="criterion.id" :class="criterion.passed ? 'pass' : 'fail'">{{ criterion.label }}: {{ criterion.passed ? 'passed' : 'not passed' }} — {{ criterion.observed }}</li></ul>
-    <button @click="exportJson">Export JSON</button><button @click="exportHtml">Export HTML</button>
-    <label><input v-model="instructor" type="checkbox" /> Instructor mode</label>
-    <section v-if="instructor"><b>Expected vs observed</b><p>Expected: {{ expectedActions.join(', ') || 'No configured actions' }}</p><p>Observed: {{ report.observedActions.join(', ') || 'None yet' }}</p><button @click="$emit('reset-scenario')">Reset scenario (instructor)</button></section>
+    <label>{{ t('learning.alias') }} <input v-model="alias" maxlength="40" :placeholder="t('learning.anonymous')" /></label>
+    <p>{{ t('learning.score') }}: <b>{{ report.assessment.score }}/{{ report.assessment.possibleScore }}</b></p>
+    <ul><li v-for="criterion in report.assessment.criteria" :key="criterion.id" :class="criterion.passed ? 'pass' : 'fail'">{{ criterion.label }}: {{ criterion.passed ? t('learning.passed') : t('learning.notPassed') }} — {{ criterion.observed }}</li></ul>
+    <button @click="exportJson">{{ t('learning.exportJson') }}</button><button @click="exportHtml">{{ t('learning.exportHtml') }}</button>
+    <label><input v-model="instructor" type="checkbox" /> {{ t('learning.instructor') }}</label>
+    <section v-if="instructor"><b>{{ t('learning.expectedObserved') }}</b><p>{{ t('learning.expected') }}: {{ expectedActions.join(', ') || t('learning.none') }}</p><p>{{ t('learning.observed') }}: {{ report.observedActions.join(', ') || t('learning.none') }}</p><button @click="$emit('reset-scenario')">{{ t('learning.reset') }}</button></section>
   </aside>
 </template>
 <script setup lang="ts">
@@ -14,10 +14,12 @@ import { computed, ref } from 'vue'
 import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import { createLearningReport, renderLearningReportHtml } from '../learning/report'
 import type { TimelineEntry } from '../timeline'
+import { useSimulatorI18n } from '../i18n/simulator'
 const props = defineProps<{ entries: readonly TimelineEntry[]; expectedActions: readonly string[] }>()
 defineEmits<{ 'reset-scenario': [] }>()
 const alias = ref('')
 const instructor = ref(false)
+const { t } = useSimulatorI18n()
 const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:learning', { x: 16, y: Math.max(16, window.innerHeight - 230) })
 const report = computed(() => createLearningReport(props.entries, alias.value, props.expectedActions))
 function download(name: string, type: string, content: string): void { const url = URL.createObjectURL(new Blob([content], { type })); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url) }

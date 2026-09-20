@@ -6,6 +6,7 @@ import CellEditor from './components/CellEditor.vue'
 import { createDefaultRobotCatalog } from './robot/catalog'
 import { resetFloatingOverlays } from './composables/useDraggableOverlay'
 import { createDefaultScenePresetCatalog, DEFAULT_SCENE_PRESET_ID, SceneSelectionController } from './scenes'
+import { useSimulatorI18n, type SimulatorLocale } from './i18n/simulator'
 
 type ShellMode = 'execution' | 'editing'
 
@@ -17,6 +18,7 @@ const scenePresets = sceneCatalog.list()
 const selectedSceneId = ref(sceneSelection.selectedId)
 const sceneHostKey = ref(sceneSelection.hostKey)
 const selectedScene = computed(() => sceneCatalog.get(selectedSceneId.value))
+const { locale, t, setLocale } = useSimulatorI18n()
 
 function setMode(next: ShellMode): void {
   // Explicit mode transition: switching away from execution unmounts the
@@ -39,6 +41,10 @@ function resetScene(): void {
   selectedSceneId.value = sceneSelection.selectedId
   sceneHostKey.value = sceneSelection.hostKey
 }
+
+function changeLocale(event: Event): void {
+  setLocale((event.target as HTMLSelectElement).value as SimulatorLocale)
+}
 </script>
 
 <template>
@@ -50,17 +56,25 @@ function resetScene(): void {
         :class="{ active: mode === 'execution' }"
         data-mode="execution"
         @click="setMode('execution')"
-      >Run</button>
+      >{{ t('app.run') }}</button>
       <button
         type="button"
         class="mode-button"
         :class="{ active: mode === 'editing' }"
         data-mode="editing"
         @click="setMode('editing')"
-      >Edit cell</button>
-      <button type="button" class="reset-panels" data-action="reset-panels" @click="resetPanels">Reset panels</button>
+      >{{ t('app.edit') }}</button>
+      <button type="button" class="reset-panels" data-action="reset-panels" @click="resetPanels">{{ t('app.resetPanels') }}</button>
+      <label class="language-select">
+        <span>{{ t('app.language') }}</span>
+        <select :value="locale" @change="changeLocale">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+          <option value="de">Deutsch</option>
+        </select>
+      </label>
     </div>
-    <SceneSelectorPanel :presets="scenePresets" :selected-id="selectedSceneId" locale="fr" @select="selectScene" @reset="resetScene" />
+    <SceneSelectorPanel :presets="scenePresets" :selected-id="selectedSceneId" :locale="locale" @select="selectScene" @reset="resetScene" />
     <SceneHost v-if="mode === 'execution'" :key="sceneHostKey" :preset="selectedScene" />
     <CellEditor v-else :robot-catalog="catalog" />
   </div>
@@ -96,4 +110,6 @@ function resetScene(): void {
 .mode-button.active { background: #00cc88; color: #06201a; font-weight: 700; }
 .reset-panels { padding: .3rem .6rem; border: 1px solid #34758a; border-radius: .3rem; background: transparent; color: #b9eaff; cursor: pointer; font: inherit; }
 .reset-panels:hover { border-color: #00cc88; color: #fff; }
+.language-select { display: flex; align-items: center; gap: .3rem; padding: 0 .25rem; color: #9fc4d2; font: inherit; }
+.language-select select { border: 1px solid #34758a; border-radius: .25rem; background: #10232d; color: #fff; padding: .23rem .3rem; font: inherit; }
 </style>

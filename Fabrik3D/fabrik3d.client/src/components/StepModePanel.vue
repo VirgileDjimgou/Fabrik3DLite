@@ -1,15 +1,15 @@
 <template>
   <aside class="step-panel" :style="panelStyle" aria-label="Simulation learning controls">
     <div class="drag-handle" @pointerdown="beginDrag">⠿ Move panel</div>
-    <header><strong>Guided simulation</strong><label><input v-model="enabled" type="checkbox" @change="$emit('toggle', enabled)"> Step mode</label></header>
-    <label class="speed">Speed <input :value="speed" type="range" min="0.25" max="4" step="0.25" @input="$emit('speed', Number(($event.target as HTMLInputElement).value))"> {{ speed }}×</label>
-    <label><input v-model="expert" type="checkbox" @change="$emit('expert', expert)"> Expert diagnostics</label>
-    <p><b>{{ checkpoint?.command ?? 'Run mode' }}</b><br>{{ checkpoint?.explanation ?? 'The workflow runs continuously with all safety checks enabled.' }}</p>
-    <p class="result">Expected: {{ checkpoint?.expectedResult ?? 'Continuous execution' }}</p>
+    <header><strong>{{ t('panel.guided') }}</strong><label><input v-model="enabled" type="checkbox" @change="$emit('toggle', enabled)"> {{ t('guide.stepMode') }}</label></header>
+    <label class="speed">{{ t('guide.speed') }} <input :value="speed" type="range" min="0.25" max="4" step="0.25" @input="$emit('speed', Number(($event.target as HTMLInputElement).value))"> {{ speed }}×</label>
+    <label><input v-model="expert" type="checkbox" @change="$emit('expert', expert)"> {{ t('guide.expert') }}</label>
+    <p><b>{{ checkpoint?.command ?? t('guide.runMode') }}</b><br>{{ checkpoint?.explanation ?? t('guide.description') }}</p>
+    <p class="result">{{ t('guide.expected') }}: {{ checkpoint?.expectedResult ?? t('guide.continuous') }}</p>
     <div class="controls">
-      <button :disabled="!enabled || !checkpoint" @click="$emit('previous')">Previous explanation</button>
-      <button :disabled="!enabled || !checkpoint" @click="$emit('next')">Next step</button>
-      <button @click="$emit('restart')">Restart</button>
+      <button :disabled="!enabled || !checkpoint" @click="$emit('previous')">{{ t('guide.previous') }}</button>
+      <button :disabled="!enabled || !checkpoint" @click="$emit('next')">{{ t('guide.next') }}</button>
+      <button @click="$emit('restart')">{{ t('guide.restart') }}</button>
     </div>
   </aside>
 </template>
@@ -17,10 +17,12 @@
 import { ref, watch } from 'vue'
 import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import type { LearningCheckpoint } from '../learning/StepModeController'
+import { useSimulatorI18n } from '../i18n/simulator'
 const props = defineProps<{ active: boolean; checkpoint: LearningCheckpoint | null; speed: number }>()
 defineEmits<{ (e: 'toggle', value: boolean): void; (e: 'speed', value: number): void; (e: 'expert', value: boolean): void; (e: 'next'): void; (e: 'previous'): void; (e: 'restart'): void }>()
 const enabled = ref(props.active)
 const expert = ref(false)
+const { t } = useSimulatorI18n()
 const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:guide', { x: 16, y: 16 })
 watch(() => props.active, (value) => { enabled.value = value })
 </script>

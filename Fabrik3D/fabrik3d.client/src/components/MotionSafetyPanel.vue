@@ -3,16 +3,16 @@
     <header class="drag-handle" @pointerdown="beginDrag">
       <span aria-hidden="true">⠿</span>
       <span class="shield">&#9873;</span>
-      <strong>Motion Safety</strong>
+      <strong>{{ t('panel.safety') }}</strong>
     </header>
 
     <dl>
-      <div><dt>Reach envelope</dt><dd>{{ reach.toFixed(2) }} m</dd></div>
-      <div><dt>Checks</dt><dd :class="{ disabled: !enabled }">{{ enabled ? 'enabled' : 'disabled' }}</dd></div>
-      <div><dt>Alarms</dt><dd>{{ alarms.length }}</dd></div>
+      <div><dt>{{ t('safety.reach') }}</dt><dd>{{ reach.toFixed(2) }} m</dd></div>
+      <div><dt>{{ t('safety.checks') }}</dt><dd :class="{ disabled: !enabled }">{{ enabled ? t('safety.enabled') : t('safety.disabled') }}</dd></div>
+      <div><dt>{{ t('safety.alarms') }}</dt><dd>{{ alarms.length }}</dd></div>
     </dl>
 
-    <div v-if="alarms.length === 0" class="clear-note">No motion alarms.</div>
+    <div v-if="alarms.length === 0" class="clear-note">{{ t('safety.clear') }}</div>
     <ul v-else class="alarm-list">
       <li v-for="alarm in alarms" :key="alarm.id" class="alarm" :class="severityClass(alarm.severity)">
         <span class="alarm-code">{{ alarm.code }}</span>
@@ -29,12 +29,14 @@ import { onBeforeUnmount, ref, watch } from 'vue'
 import type { MotionSafetyEngine } from '../safety/motionSafety'
 import type { SimulationAlarm } from '../safety/alarms'
 import { useDraggableOverlay } from '../composables/useDraggableOverlay'
+import { useSimulatorI18n } from '../i18n/simulator'
 
 const props = defineProps<{
   engine: MotionSafetyEngine | null
 }>()
 
 const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:motion-safety', { x: Math.max(16, (window.innerWidth - 480) / 2), y: Math.max(16, window.innerHeight - 220) })
+const { t } = useSimulatorI18n()
 
 const reach = ref(0)
 const enabled = ref(false)

@@ -1,12 +1,12 @@
 <template>
   <aside class="fault-panel" :style="panelStyle" aria-label="Simulated faults and event timeline">
     <strong class="drag-handle" @pointerdown="beginDrag">⠿ SIMULATED FAULT LAB</strong>
-    <p>Training data only — never live equipment data.</p>
-    <label>Inject fault <select v-model="selected"><option v-for="fault in catalog" :key="fault.type" :value="fault.type">{{ fault.title.en }}</option></select></label>
-    <button @click="$emit('inject', selected)">Inject simulated fault</button>
+    <p>{{ t('fault.training') }}</p>
+    <label>{{ t('fault.inject') }} <select v-model="selected"><option v-for="fault in catalog" :key="fault.type" :value="fault.type">{{ fault.title[locale] }}</option></select></label>
+    <button @click="$emit('inject', selected)">{{ t('fault.injectButton') }}</button>
     <section v-for="fault in faults" :key="fault.id" class="fault" :class="fault.severity">
-      <b>{{ fault.title.en }}</b><br><small>{{ fault.recoveryInstructions.en }}</small>
-      <div><button v-if="!fault.acknowledgedAt" @click="$emit('action', fault.id, 'acknowledge')">Acknowledge</button><button v-if="fault.acknowledgedAt && fault.requiresReset && !fault.resetAt" @click="$emit('action', fault.id, 'reset')">Reset</button><button v-if="fault.acknowledgedAt && (!fault.requiresReset || fault.resetAt)" @click="$emit('action', fault.id, 'retry')">Retry</button></div>
+      <b>{{ fault.title[locale] }}</b><br><small>{{ fault.recoveryInstructions[locale] }}</small>
+      <div><button v-if="!fault.acknowledgedAt" @click="$emit('action', fault.id, 'acknowledge')">{{ t('fault.acknowledge') }}</button><button v-if="fault.acknowledgedAt && fault.requiresReset && !fault.resetAt" @click="$emit('action', fault.id, 'reset')">{{ t('dashboard.reset') }}</button><button v-if="fault.acknowledgedAt && (!fault.requiresReset || fault.resetAt)" @click="$emit('action', fault.id, 'retry')">{{ t('fault.retry') }}</button></div>
     </section>
     <ol><li v-for="entry in entries.slice(-8)" :key="entry.sequence">#{{ entry.sequence }} {{ entry.kind }} · {{ entry.equipmentId }} · simulated</li></ol>
   </aside>
@@ -16,10 +16,12 @@ import { ref } from 'vue'
 import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import { FAULT_CATALOG, type ActiveFault, type FaultAction, type FaultType } from '../faults'
 import type { TimelineEntry } from '../timeline'
+import { useSimulatorI18n } from '../i18n/simulator'
 defineProps<{ faults: readonly ActiveFault[]; entries: readonly TimelineEntry[] }>()
 defineEmits<{ inject: [type: FaultType]; action: [id: string, action: FaultAction] }>()
 const catalog = FAULT_CATALOG
 const selected = ref<FaultType>('collision-risk')
+const { t, locale } = useSimulatorI18n()
 const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:faults', { x: Math.max(16, window.innerWidth - 370), y: Math.max(16, window.innerHeight - 230) })
 </script>
 <style scoped>

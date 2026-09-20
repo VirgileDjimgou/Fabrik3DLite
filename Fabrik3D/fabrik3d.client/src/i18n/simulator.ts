@@ -1,0 +1,63 @@
+import { computed, ref } from 'vue'
+
+export type SimulatorLocale = 'en' | 'fr' | 'de'
+
+type Dictionary = Record<string, string>
+
+const messages: Record<SimulatorLocale, Dictionary> = {
+  en: {
+    'app.run': 'Run', 'app.edit': 'Edit cell', 'app.resetPanels': 'Reset panels', 'app.language': 'Language',
+    'dock.tools': 'Simulation tools', 'dock.operations': 'Operations', 'dock.learning': 'Learning & diagnostics',
+    'panel.guided': 'Guided simulation', 'panel.robot': 'Robot profile', 'panel.pallet': 'Pallet machining', 'panel.faults': 'Simulated fault lab', 'panel.learning': 'Learning assessment', 'panel.safety': 'Motion safety', 'panel.kinematics': 'Frames & kinematics',
+    'scene.title': 'Scenes & scenario', 'scene.predefined': 'Predefined cell', 'scene.ready': 'Simulation ready', 'scene.layout': 'Layout only', 'scene.scenarios': 'scenarios', 'scene.prerequisites': 'Prerequisites', 'scene.default': 'Default scene',
+    'guide.stepMode': 'Step mode', 'guide.speed': 'Speed', 'guide.expert': 'Expert diagnostics', 'guide.runMode': 'Run mode', 'guide.description': 'The workflow runs continuously with all safety checks enabled.', 'guide.expected': 'Expected', 'guide.continuous': 'Continuous execution', 'guide.previous': 'Previous explanation', 'guide.next': 'Next step', 'guide.restart': 'Restart',
+    'robot.payload': 'Payload', 'robot.reach': 'Reach', 'robot.controller': 'Controller', 'robot.joints': 'Joints', 'robot.vendor': 'Vendor', 'robot.compatibleTools': 'Compatible tools', 'robot.compatible': 'compatible', 'robot.payloadLow': 'payload too low',
+    'dashboard.start': 'Start', 'dashboard.pause': 'Pause', 'dashboard.resume': 'Resume', 'dashboard.stop': 'Stop', 'dashboard.reset': 'Reset', 'dashboard.phase': 'Phase', 'dashboard.pallet': 'Pallet', 'dashboard.material': 'Material', 'dashboard.currentSlot': 'Current slot', 'dashboard.partState': 'Part state', 'dashboard.machined': 'Machined', 'dashboard.remaining': 'Remaining', 'dashboard.total': 'Total', 'dashboard.cnc': 'CNC', 'dashboard.job': 'Job', 'dashboard.session': 'Session', 'dashboard.sessionState': 'Session state', 'dashboard.task': 'Task',
+    'mode.local': 'LOCAL MODE — NO SERVER JOB CLAIMED', 'mode.reconnecting': 'ONLINE — RECONNECTING…', 'mode.disconnected': 'ONLINE SESSION — HUB DISCONNECTED', 'mode.online': 'ONLINE — ORCHESTRATED BY SERVER',
+    'state.idle': 'Idle', 'state.running': 'Running', 'state.paused': 'Paused', 'state.stopped': 'Stopped', 'state.complete': 'Complete',
+    'fault.training': 'Training data only — never live equipment data.', 'fault.inject': 'Inject fault', 'fault.injectButton': 'Inject simulated fault', 'fault.acknowledge': 'Acknowledge', 'fault.retry': 'Retry',
+    'learning.alias': 'Session alias', 'learning.anonymous': 'anonymous learner', 'learning.score': 'Score', 'learning.passed': 'passed', 'learning.notPassed': 'not passed', 'learning.exportJson': 'Export JSON', 'learning.exportHtml': 'Export HTML', 'learning.instructor': 'Instructor mode', 'learning.expectedObserved': 'Expected vs observed', 'learning.expected': 'Expected', 'learning.observed': 'Observed', 'learning.none': 'None yet', 'learning.reset': 'Reset scenario (instructor)',
+    'safety.reach': 'Reach envelope', 'safety.checks': 'Checks', 'safety.enabled': 'enabled', 'safety.disabled': 'disabled', 'safety.alarms': 'Alarms', 'safety.clear': 'No motion alarms.',
+  },
+  fr: {
+    'app.run': 'Exécuter', 'app.edit': 'Éditer la cellule', 'app.resetPanels': 'Réinitialiser les panneaux', 'app.language': 'Langue',
+    'dock.tools': 'Outils de simulation', 'dock.operations': 'Opérations', 'dock.learning': 'Apprentissage et diagnostics',
+    'panel.guided': 'Simulation guidée', 'panel.robot': 'Profil robot', 'panel.pallet': 'Usinage de palette', 'panel.faults': 'Laboratoire de pannes simulées', 'panel.learning': 'Évaluation pédagogique', 'panel.safety': 'Sécurité des mouvements', 'panel.kinematics': 'Repères et cinématique',
+    'scene.title': 'Scènes et scénario', 'scene.predefined': 'Cellule prédéfinie', 'scene.ready': 'Simulation prête', 'scene.layout': 'Disposition seule', 'scene.scenarios': 'scénarios', 'scene.prerequisites': 'Prérequis', 'scene.default': 'Scène par défaut',
+    'guide.stepMode': 'Mode pas à pas', 'guide.speed': 'Vitesse', 'guide.expert': 'Diagnostics experts', 'guide.runMode': 'Mode exécution', 'guide.description': 'Le flux s’exécute en continu avec tous les contrôles de sécurité activés.', 'guide.expected': 'Résultat attendu', 'guide.continuous': 'Exécution continue', 'guide.previous': 'Explication précédente', 'guide.next': 'Étape suivante', 'guide.restart': 'Redémarrer',
+    'robot.payload': 'Charge utile', 'robot.reach': 'Portée', 'robot.controller': 'Contrôleur', 'robot.joints': 'Axes', 'robot.vendor': 'Fournisseur', 'robot.compatibleTools': 'Outils compatibles', 'robot.compatible': 'compatible', 'robot.payloadLow': 'charge insuffisante',
+    'dashboard.start': 'Démarrer', 'dashboard.pause': 'Pause', 'dashboard.resume': 'Reprendre', 'dashboard.stop': 'Arrêter', 'dashboard.reset': 'Réinitialiser', 'dashboard.phase': 'Phase', 'dashboard.pallet': 'Palette', 'dashboard.material': 'Matière', 'dashboard.currentSlot': 'Emplacement actuel', 'dashboard.partState': 'État de la pièce', 'dashboard.machined': 'Usinées', 'dashboard.remaining': 'Restantes', 'dashboard.total': 'Total', 'dashboard.cnc': 'CNC', 'dashboard.job': 'Mission', 'dashboard.session': 'Session', 'dashboard.sessionState': 'État de session', 'dashboard.task': 'Tâche',
+    'mode.local': 'MODE LOCAL — AUCUNE MISSION SERVEUR REVENDIQUÉE', 'mode.reconnecting': 'EN LIGNE — RECONNEXION…', 'mode.disconnected': 'SESSION EN LIGNE — HUB DÉCONNECTÉ', 'mode.online': 'EN LIGNE — ORCHESTRÉ PAR LE SERVEUR',
+    'state.idle': 'Inactif', 'state.running': 'En cours', 'state.paused': 'En pause', 'state.stopped': 'Arrêté', 'state.complete': 'Terminé',
+    'fault.training': 'Données de formation uniquement — jamais des données d’équipement réel.', 'fault.inject': 'Injecter une panne', 'fault.injectButton': 'Injecter une panne simulée', 'fault.acknowledge': 'Acquitter', 'fault.retry': 'Réessayer',
+    'learning.alias': 'Alias de session', 'learning.anonymous': 'apprenant anonyme', 'learning.score': 'Score', 'learning.passed': 'réussi', 'learning.notPassed': 'non réussi', 'learning.exportJson': 'Exporter JSON', 'learning.exportHtml': 'Exporter HTML', 'learning.instructor': 'Mode instructeur', 'learning.expectedObserved': 'Attendu / observé', 'learning.expected': 'Attendu', 'learning.observed': 'Observé', 'learning.none': 'Aucune action', 'learning.reset': 'Réinitialiser le scénario (instructeur)',
+    'safety.reach': 'Enveloppe de portée', 'safety.checks': 'Contrôles', 'safety.enabled': 'activés', 'safety.disabled': 'désactivés', 'safety.alarms': 'Alarmes', 'safety.clear': 'Aucune alarme de mouvement.',
+  },
+  de: {
+    'app.run': 'Ausführen', 'app.edit': 'Zelle bearbeiten', 'app.resetPanels': 'Bereiche zurücksetzen', 'app.language': 'Sprache',
+    'dock.tools': 'Simulationswerkzeuge', 'dock.operations': 'Betrieb', 'dock.learning': 'Lernen und Diagnose',
+    'panel.guided': 'Geführte Simulation', 'panel.robot': 'Roboterprofil', 'panel.pallet': 'Palettenbearbeitung', 'panel.faults': 'Simuliertes Fehlerlabor', 'panel.learning': 'Lernbewertung', 'panel.safety': 'Bewegungssicherheit', 'panel.kinematics': 'Koordinaten und Kinematik',
+    'scene.title': 'Szenen und Szenario', 'scene.predefined': 'Vordefinierte Zelle', 'scene.ready': 'Simulation bereit', 'scene.layout': 'Nur Layout', 'scene.scenarios': 'Szenarien', 'scene.prerequisites': 'Voraussetzungen', 'scene.default': 'Standardszene',
+    'guide.stepMode': 'Schrittmodus', 'guide.speed': 'Geschwindigkeit', 'guide.expert': 'Experten-Diagnose', 'guide.runMode': 'Ausführungsmodus', 'guide.description': 'Der Ablauf läuft kontinuierlich mit aktivierten Sicherheitsprüfungen.', 'guide.expected': 'Erwartet', 'guide.continuous': 'Kontinuierliche Ausführung', 'guide.previous': 'Vorherige Erklärung', 'guide.next': 'Nächster Schritt', 'guide.restart': 'Neu starten',
+    'robot.payload': 'Nutzlast', 'robot.reach': 'Reichweite', 'robot.controller': 'Steuerung', 'robot.joints': 'Achsen', 'robot.vendor': 'Hersteller', 'robot.compatibleTools': 'Kompatible Werkzeuge', 'robot.compatible': 'kompatibel', 'robot.payloadLow': 'Nutzlast zu gering',
+    'dashboard.start': 'Start', 'dashboard.pause': 'Pause', 'dashboard.resume': 'Fortsetzen', 'dashboard.stop': 'Stopp', 'dashboard.reset': 'Zurücksetzen', 'dashboard.phase': 'Phase', 'dashboard.pallet': 'Palette', 'dashboard.material': 'Material', 'dashboard.currentSlot': 'Aktueller Platz', 'dashboard.partState': 'Teilezustand', 'dashboard.machined': 'Bearbeitet', 'dashboard.remaining': 'Verbleibend', 'dashboard.total': 'Gesamt', 'dashboard.cnc': 'CNC', 'dashboard.job': 'Auftrag', 'dashboard.session': 'Sitzung', 'dashboard.sessionState': 'Sitzungsstatus', 'dashboard.task': 'Aufgabe',
+    'mode.local': 'LOKALER MODUS — KEIN SERVERAUFTRAG ÜBERNOMMEN', 'mode.reconnecting': 'ONLINE — VERBINDUNG WIRD WIEDERHERGESTELLT…', 'mode.disconnected': 'ONLINE-SITZUNG — HUB GETRENNT', 'mode.online': 'ONLINE — VOM SERVER ORCHESTRIERT',
+    'state.idle': 'Leerlauf', 'state.running': 'Läuft', 'state.paused': 'Pausiert', 'state.stopped': 'Gestoppt', 'state.complete': 'Abgeschlossen',
+    'fault.training': 'Nur Trainingsdaten — niemals Daten realer Anlagen.', 'fault.inject': 'Fehler auslösen', 'fault.injectButton': 'Simulierten Fehler auslösen', 'fault.acknowledge': 'Quittieren', 'fault.retry': 'Wiederholen',
+    'learning.alias': 'Sitzungsalias', 'learning.anonymous': 'anonymer Lernender', 'learning.score': 'Punktzahl', 'learning.passed': 'bestanden', 'learning.notPassed': 'nicht bestanden', 'learning.exportJson': 'JSON exportieren', 'learning.exportHtml': 'HTML exportieren', 'learning.instructor': 'Lehrmodus', 'learning.expectedObserved': 'Erwartet / beobachtet', 'learning.expected': 'Erwartet', 'learning.observed': 'Beobachtet', 'learning.none': 'Noch keine', 'learning.reset': 'Szenario zurücksetzen (Lehrmodus)',
+    'safety.reach': 'Reichweitenhülle', 'safety.checks': 'Prüfungen', 'safety.enabled': 'aktiviert', 'safety.disabled': 'deaktiviert', 'safety.alarms': 'Alarme', 'safety.clear': 'Keine Bewegungsalarme.',
+  },
+}
+
+const storedLocale = typeof localStorage === 'undefined' ? null : localStorage.getItem('fabrik3d:locale')
+export const simulatorLocale = ref<SimulatorLocale>(storedLocale === 'fr' || storedLocale === 'de' ? storedLocale : 'en')
+
+export function setSimulatorLocale(locale: SimulatorLocale): void {
+  simulatorLocale.value = locale
+  localStorage.setItem('fabrik3d:locale', locale)
+}
+
+export function useSimulatorI18n() {
+  const t = (key: string): string => messages[simulatorLocale.value][key] ?? messages.en[key] ?? key
+  return { locale: computed(() => simulatorLocale.value), t, setLocale: setSimulatorLocale }
+}

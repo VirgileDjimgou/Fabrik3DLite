@@ -1,37 +1,39 @@
 <template>
-  <aside class="scene-selector" :style="panelStyle" aria-label="Scene catalog" data-scene-selector>
-    <header class="drag-handle" @pointerdown="beginDrag"><span aria-hidden="true">⠿</span> Scenes</header>
-    <label>
-      <span>Predefined cell</span>
-      <select :value="selectedId" data-scene-select @change="selectScene">
-        <option v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name[locale] }}</option>
-      </select>
-    </label>
-    <p class="purpose">{{ selected.purpose[locale] }}</p>
-    <div class="meta">
-      <span class="badge" :class="selected.capability" data-scene-capability>
-        {{ selected.capability === 'simulation-ready' ? 'Simulation ready' : 'Layout only' }}
-      </span>
-      <span>{{ selected.compatibleScenarioIds.length }} scenarios</span>
+  <details class="scene-selector" aria-label="Scene catalog" data-scene-selector>
+    <summary><span aria-hidden="true">⌄</span> {{ t('scene.title') }}</summary>
+    <div class="scene-selector__content">
+      <label>
+        <span>{{ t('scene.predefined') }}</span>
+        <select :value="selectedId" data-scene-select @change="selectScene">
+          <option v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name[locale] }}</option>
+        </select>
+      </label>
+      <p class="purpose">{{ selected.purpose[locale] }}</p>
+      <div class="meta">
+        <span class="badge" :class="selected.capability" data-scene-capability>
+        {{ selected.capability === 'simulation-ready' ? t('scene.ready') : t('scene.layout') }}
+        </span>
+        <span>{{ selected.compatibleScenarioIds.length }} {{ t('scene.scenarios') }}</span>
+      </div>
+      <div v-if="defaultScenario" class="scenario-brief" data-scenario-brief>
+        <strong>{{ defaultScenario.title[locale] }}</strong>
+        <span>{{ complexity[defaultScenario.level] }}</span>
+        <small v-if="defaultScenario.prerequisites.length">{{ t('scene.prerequisites') }}: {{ defaultScenario.prerequisites.join(', ') }}</small>
+        <small class="simulated">SIMULATED DATA — training only</small>
+      </div>
+      <p v-if="selected.capability === 'layout-only'" class="notice" role="status">
+        {{ layoutOnlyNotice[locale] }}
+      </p>
+      <button type="button" data-action="reset-scene" @click="$emit('reset')">{{ t('scene.default') }}</button>
     </div>
-    <div v-if="defaultScenario" class="scenario-brief" data-scenario-brief>
-      <strong>{{ defaultScenario.title[locale] }}</strong>
-      <span>{{ complexity[defaultScenario.level] }}</span>
-      <small v-if="defaultScenario.prerequisites.length">{{ prerequisitesLabel }}: {{ defaultScenario.prerequisites.join(', ') }}</small>
-      <small class="simulated">SIMULATED DATA — training only</small>
-    </div>
-    <p v-if="selected.capability === 'layout-only'" class="notice" role="status">
-      {{ layoutOnlyNotice[locale] }}
-    </p>
-    <button type="button" data-action="reset-scene" @click="$emit('reset')">Default scene</button>
-  </aside>
+  </details>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ScenePreset } from '../scenes'
-import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import { getScenario } from '../scenarios'
+import { useSimulatorI18n } from '../i18n/simulator'
 
 const props = withDefaults(defineProps<{
   presets: ScenePreset[]
@@ -47,24 +49,24 @@ const emit = defineEmits<{
 const selected = computed(() => props.presets.find(preset => preset.id === props.selectedId) ?? props.presets[0]!)
 const defaultScenario = computed(() => selected.value.defaultScenarioId ? getScenario(selected.value.defaultScenarioId) : null)
 const complexity = { beginner: 'Complexity: basic', intermediate: 'Complexity: standard', advanced: 'Complexity: advanced' }
-const prerequisitesLabel = props.locale === 'fr' ? 'Prérequis' : props.locale === 'de' ? 'Voraussetzungen' : 'Prerequisites'
+const { t } = useSimulatorI18n()
 const layoutOnlyNotice = {
   en: 'Inspection only — simulation runtime will be added in a later sprint.',
   fr: 'Inspection uniquement — simulation indisponible avant l’ajout du runtime.',
   de: 'Nur Inspektion — die Simulationslaufzeit wird später ergänzt.',
 }
-const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:scene-selector', { x: Math.max(16, window.innerWidth / 2 - 180), y: 54 })
-
 function selectScene(event: Event): void {
   emit('select', (event.target as HTMLSelectElement).value)
 }
 </script>
 
 <style scoped>
-.scene-selector { z-index: 45; width: 22rem; padding: .65rem .75rem; border: 1px solid #34758a; border-radius: .4rem; background: rgb(10 22 31 / 94%); color: #e5edf2; box-shadow: 0 .4rem 1.2rem rgb(0 0 0 / 28%); font: .72rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-header { color: #9de3f6; font-weight: 800; margin-bottom: .4rem; }
-.drag-handle { cursor: grab; user-select: none; }
-.drag-handle:active { cursor: grabbing; }
+.scene-selector { position: fixed; z-index: 45; top: 3.8rem; left: 50%; width: 22rem; transform: translateX(-50%); border: 1px solid #34758a; border-radius: .4rem; background: rgb(10 22 31 / 94%); color: #e5edf2; box-shadow: 0 .4rem 1.2rem rgb(0 0 0 / 28%); font: .72rem/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+summary { cursor: pointer; padding: .42rem .65rem; color: #9de3f6; font-weight: 800; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary span { display: inline-block; margin-right: .35rem; color: #00cc88; transition: transform .15s ease; }
+.scene-selector[open] summary span { transform: rotate(180deg); }
+.scene-selector__content { padding: .25rem .75rem .65rem; }
 label span { display: block; color: #82c9df; margin-bottom: .2rem; }
 select { width: 100%; padding: .35rem; border: 1px solid #456b79; border-radius: .25rem; background: #152a34; color: #fff; font: inherit; }
 .purpose { margin: .45rem 0; color: #b8cdd5; }
