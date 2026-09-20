@@ -5,9 +5,9 @@ Fabrik3DLite is an educational industrial-software demonstrator for designing, s
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
 
 <p align="center">
-  <img src="./media/Fabrik3D-current-demo.gif" alt="16-second animated demonstration of the current Fabrik3D simulator, fault recovery, editor, and orchestration API" width="800" />
+  <img src="./media/Fabrik3D-current-demo-web.gif" alt="HD animated demonstration of the current Fabrik3D simulator, fault recovery, editor, and orchestration API" width="800" />
   <br />
-  <em>Current 16-second demonstration: completed scenario, CNC fault recovery, cell editor, and orchestration API.</em>
+  <em>Current HD demonstration: completed scenario, CNC fault recovery, cell editor, and orchestration API. The animation is optimized for faster browser loading.</em>
 </p>
 
 ## What is implemented
