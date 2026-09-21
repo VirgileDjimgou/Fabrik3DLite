@@ -20,5 +20,17 @@ jobs:
       - name: Validate production compose file
         run: docker compose -f Fabrik3D/compose.production.yaml config --quiet
 
+      # Base-image pulls occasionally fail on shared runners (registry
+      # throttling or transient network errors), so retry the build.
       - name: Build compose images
-        run: docker compose -f Fabrik3D/compose.production.yaml build
+        run: |
+          for attempt in 1 2 3; do
+            echo "Docker build attempt ${attempt}"
+            if docker compose -f Fabrik3D/compose.production.yaml build; then
+              exit 0
+            fi
+            echo "Attempt ${attempt} failed; retrying in 30s..."
+            sleep 30
+          done
+          echo "Docker build failed after 3 attempts." >&2
+          exit 1
