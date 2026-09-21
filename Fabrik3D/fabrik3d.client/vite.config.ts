@@ -5,7 +5,7 @@ import plugin from '@vitejs/plugin-vue';
 import fs from 'fs';
 import path from 'path';
 import child_process from 'child_process';
-import { env } from 'process';
+import { argv, env } from 'process';
 
 const baseFolder =
     env.APPDATA !== undefined && env.APPDATA !== ''
@@ -15,22 +15,25 @@ const baseFolder =
 const certificateName = "fabrik3d.client";
 const certFilePath = path.join(baseFolder, `${certificateName}.pem`);
 const keyFilePath = path.join(baseFolder, `${certificateName}.key`);
+const isDevelopmentServer = argv.includes('serve');
 
-if (!fs.existsSync(baseFolder)) {
-    fs.mkdirSync(baseFolder, { recursive: true });
-}
+if (isDevelopmentServer) {
+    if (!fs.existsSync(baseFolder)) {
+        fs.mkdirSync(baseFolder, { recursive: true });
+    }
 
-if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
-    if (0 !== child_process.spawnSync('dotnet', [
-        'dev-certs',
-        'https',
-        '--export-path',
-        certFilePath,
-        '--format',
-        'Pem',
-        '--no-password',
-    ], { stdio: 'inherit', }).status) {
-        throw new Error("Could not create certificate.");
+    if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
+        if (0 !== child_process.spawnSync('dotnet', [
+            'dev-certs',
+            'https',
+            '--export-path',
+            certFilePath,
+            '--format',
+            'Pem',
+            '--no-password',
+        ], { stdio: 'inherit', }).status) {
+            throw new Error("Could not create certificate.");
+        }
     }
 }
 
@@ -131,10 +134,12 @@ export default defineConfig({
             },
         },
         port: parseInt(env.DEV_SERVER_PORT || '56055'),
-        https: {
-            key: fs.readFileSync(keyFilePath),
-            cert: fs.readFileSync(certFilePath),
-        }
+        https: isDevelopmentServer
+            ? {
+                key: fs.readFileSync(keyFilePath),
+                cert: fs.readFileSync(certFilePath),
+            }
+            : undefined,
     },
     optimizeDeps: {
         esbuildOptions: {

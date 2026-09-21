@@ -19,8 +19,27 @@ test-results/
 # Local configuration and secrets
 .env
 .env.local
+.env.*
+!.env.example
+!.env.*.example
 .env.*.local
 appsettings.Local.json
+appsettings.*.Local.json
+
+# Credentials, certificates, and private keys
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.cer
+id_rsa
+id_ed25519
+authorized_keys
+.ssh/
+.aws/
+.netrc
+.npmrc
 
 # Temporary files and local archives
 *.tmp

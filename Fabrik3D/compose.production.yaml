@@ -1,0 +1,62 @@
+name: fabrik3d
+
+services:
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    # Temporary compatibility override for the host's Linux 7.0.0 kernel.
+    # Remove once the host kernel is upgraded to Linux 7.0.14 or newer.
+    environment:
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - internal
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Fabrik3D.Server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      MongoDb__ConnectionString: mongodb://mongo:27017
+      MongoDb__DatabaseName: Fabrik3D
+    depends_on:
+      - mongo
+    networks:
+      - internal
+
+  simulator:
+    build:
+      context: .
+      dockerfile: fabrik3d.client/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      - orchestrator
+    networks:
+      - internal
+
+  hmi:
+    build:
+      context: .
+      dockerfile: fabrik3d.hmi/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    depends_on:
+      - orchestrator
+    networks:
+      - internal
+
+networks:
+  internal:
+    name: fabrik3d-internal
+
+volumes:
+  mongo-data:

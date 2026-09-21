@@ -1,1 +1,2 @@
 media/Fabrik3D-current-demo.gif filter=lfs diff=lfs merge=lfs -text
+media/SimulatorFabrik3D.mp4 filter=lfs diff=lfs merge=lfs -text

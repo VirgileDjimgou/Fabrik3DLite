@@ -34,12 +34,16 @@ jobs:
       - name: Install contract generation tools
         run: npm ci
 
-      - name: Restore backend
-        run: dotnet restore Fabrik3D/Fabrik3D.slnx
       - name: Build backend
-        run: dotnet build Fabrik3D/Fabrik3D.slnx --no-restore --configuration Release
+        run: |
+          dotnet build Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj --configuration Release
+          dotnet build Fabrik3D/Fabrik3D.Contracts.Tests/Fabrik3D.Contracts.Tests.csproj --configuration Release
+          dotnet build Fabrik3D/Fabrik3D.Infrastructure.IntegrationTests/Fabrik3D.Infrastructure.IntegrationTests.csproj --configuration Release
       - name: Run backend tests
-        run: dotnet test Fabrik3D/Fabrik3D.slnx --no-build --configuration Release --logger "trx;LogFileName=backend.trx"
+        run: |
+          dotnet test Fabrik3D/Fabrik3D.Contracts.Tests/Fabrik3D.Contracts.Tests.csproj --no-build --configuration Release
+          dotnet test Fabrik3D/Fabrik3D.Infrastructure.IntegrationTests/Fabrik3D.Infrastructure.IntegrationTests.csproj --no-build --configuration Release
+          dotnet test Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj --no-build --configuration Release --logger "trx;LogFileName=backend.trx"
 
       - name: Install simulator dependencies
         run: npm ci --prefix Fabrik3D/fabrik3d.client
@@ -76,6 +80,8 @@ jobs:
       - name: Verify generated transport contracts
         run: npm run contracts:check
       - name: Run orchestration smoke test
+        env:
+          VITE_ORCHESTRATOR_URL: http://127.0.0.1:7249
         run: npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e
 
       - name: Upload failed test evidence

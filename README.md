@@ -1,13 +1,19 @@
 # Fabrik3DLite
 
+[![Fabrik3D CI](https://github.com/VirgileDjimgou/Fabrik3DLite/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/VirgileDjimgou/Fabrik3DLite/actions/workflows/ci.yml)
+[![Docker](https://github.com/VirgileDjimgou/Fabrik3DLite/actions/workflows/docker.yml/badge.svg?branch=main)](https://github.com/VirgileDjimgou/Fabrik3DLite/actions/workflows/docker.yml)
+[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+[![Node.js 20+](https://img.shields.io/badge/Node.js-20.19%2B-5FA04E)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7%2F8-47A248)](https://www.mongodb.com/)
+
 Fabrik3DLite is an educational industrial-software demonstrator for designing, simulating, supervising, and understanding a robotic cell. It brings together a 3D robotic-cell simulator, an orchestration backend, and a dedicated operator HMI around an explicit digital-twin model.
 
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
 
 <p align="center">
-  <img src="./media/Fabrik3D-current-demo-web.gif" alt="HD animated demonstration of the current Fabrik3D simulator, fault recovery, editor, and orchestration API" width="800" />
+  <video controls width="800" src="https://media.githubusercontent.com/media/VirgileDjimgou/Fabrik3DLite/main/media/SimulatorFabrik3D.mp4"></video>
   <br />
-  <em>Current HD demonstration: completed scenario, CNC fault recovery, cell editor, and orchestration API. The animation is optimized for faster browser loading.</em>
+  <em>Demo video: completed scenario, CNC fault recovery, cell editor, and orchestration API. If the player does not load, <a href="./media/SimulatorFabrik3D.mp4">open the MP4</a> or the <a href="./media/Fabrik3D-current-demo-web.gif">GIF version</a>.</em>
 </p>
 
 ## What is implemented
@@ -162,6 +168,26 @@ npm run dev
 ```
 
 Swagger is available from the server launch profile, usually at `/swagger`. For detailed configuration, URL troubleshooting, and environment overrides, see [local setup](./docs/development/SETUP.md) and [troubleshooting](./docs/development/TROUBLESHOOTING.md).
+
+### Run with Docker
+
+The production-style stack — MongoDB, orchestrator, simulator, and HMI behind Nginx — is described by [`Fabrik3D/compose.production.yaml`](./Fabrik3D/compose.production.yaml). Docker Engine with Compose v2 is the only prerequisite; images are built locally from this repository.
+
+```bash
+# Build and start the whole stack
+docker compose -f Fabrik3D/compose.production.yaml up --build
+
+# Stop (add -v to also reset the MongoDB volume)
+docker compose -f Fabrik3D/compose.production.yaml down
+```
+
+| Service | URL |
+| --- | --- |
+| Simulator | http://localhost:8081 |
+| Operator HMI | http://localhost:8082 |
+| Orchestration API | http://localhost:8080 |
+
+The Docker [workflow](./.github/workflows/docker.yml) validates the compose file and builds the same images on every push, so the Docker badge above reflects whether the container setup still builds.
 
 ## Verification
 

@@ -6,6 +6,7 @@ using Fabrik3D.Server.Middleware;
 using Fabrik3D.Server.Services;
 using Fabrik3D.Server.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +80,16 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Production traffic reaches Kestrel through the internal Nginx proxy and a
+// Cloudflare Tunnel. Trust forwarded scheme information before HTTPS handling.
+var forwardedHeaders = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedHeaders.KnownNetworks.Clear();
+forwardedHeaders.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeaders);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))

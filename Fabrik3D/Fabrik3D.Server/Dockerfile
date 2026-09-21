@@ -1,38 +1,22 @@
-# Unter https://aka.ms/customizecontainer erfahren Sie, wie Sie Ihren Debugcontainer anpassen und wie Visual Studio dieses Dockerfile verwendet, um Ihre Images für ein schnelleres Debuggen zu erstellen.
-
-# Diese Stufe wird verwendet, wenn sie von VS im Schnellmodus ausgeführt wird (Standardeinstellung für Debugkonfiguration).
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
-
-# Diese Stufe wird zum Erstellen des Dienstprojekts verwendet.
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS with-node
-RUN apt-get update
-RUN apt-get install curl
-RUN curl -sL https://deb.nodesource.com/setup_20.x | bash
-RUN apt-get -y install nodejs
-
-
-FROM with-node AS build
-ARG BUILD_CONFIGURATION=Release
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["Fabrik3D.Server/Fabrik3D.Server.csproj", "Fabrik3D.Server/"]
-COPY ["fabrik3d.client/fabrik3d.client.esproj", "fabrik3d.client/"]
-RUN dotnet restore "./Fabrik3D.Server/Fabrik3D.Server.csproj"
+
+COPY ["Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj", "Fabrik3D.Server/"]
+COPY ["Fabrik3D.Contracts/Fabrik3D.Contracts.csproj", "Fabrik3D.Contracts/"]
+COPY ["Fabrik3D.Domain/Fabrik3D.Domain.csproj", "Fabrik3D.Domain/"]
+COPY ["Fabrik3D.Infrastructure/Fabrik3D.Infrastructure.csproj", "Fabrik3D.Infrastructure/"]
+RUN dotnet restore "Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj"
+
 COPY . .
-WORKDIR "/src/Fabrik3D.Server"
-RUN dotnet build "./Fabrik3D.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet publish "Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj" \
+    --configuration Release \
+    --output /app/publish \
+    /p:UseAppHost=false
 
-# Diese Stufe wird verwendet, um das Dienstprojekt zu veröffentlichen, das in die letzte Phase kopiert werden soll.
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Fabrik3D.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
-
-# Diese Stufe wird in der Produktion oder bei Ausführung von VS im regulären Modus verwendet (Standard, wenn die Debugkonfiguration nicht verwendet wird).
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "Fabrik3D.Server.dll"]
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+COPY --from=build /app/publish .
+USER $APP_UID
+ENTRYPOINT ["dotnet", "Fabrik3D.ServerTaskManager.dll"]
