@@ -10,6 +10,22 @@ Fabrik3DLite is an educational industrial-software demonstrator for designing, s
 
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
 
+## Live demo
+
+The public demonstration runs the complete Docker stack — simulator, operator HMI, ASP.NET Core orchestrator, and MongoDB — on Hetzner and is published through Cloudflare Tunnel. Both interfaces use the same live orchestration backend.
+
+| Interface | Link | Use it for |
+| --- | --- | --- |
+| **3D simulator** | [Open the simulator](https://fabrik3d.patrickdjimgou.dev) | Run scenes, guided learning scenarios, fault exercises, and cell editing. |
+| **Operator HMI** | [Open the HMI](https://fabrik3d-hmi.patrickdjimgou.dev) | Create and supervise jobs, inspect machine state, and follow execution progress. |
+
+### Demo limitations
+
+- This is a shared public training environment: jobs, simulated machine state, and learning data may be changed or reset by other visitors.
+- Every robot, CNC, alarm, safety condition, and production signal is simulated; the hosted demo is not connected to physical equipment.
+- OPC UA and MQTT integrations are disabled in the public deployment. No command is sent to an industrial controller.
+- Availability is best-effort. The instance can be restarted or updated without notice during maintenance and development.
+
 <p align="center">
   <video controls width="800" src="https://media.githubusercontent.com/media/VirgileDjimgou/Fabrik3DLite/main/media/SimulatorFabrik3D.mp4"></video>
   <br />
