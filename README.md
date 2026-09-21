@@ -12,12 +12,12 @@ It is intended for learning, technical demonstrations, and prototyping. It is **
 
 ## Live demo
 
-The public demonstration runs the complete Docker stack — simulator, operator HMI, ASP.NET Core orchestrator, and MongoDB — on Hetzner and is published through Cloudflare Tunnel. Both interfaces use the same live orchestration backend.
+The public demonstration runs the complete Docker stack simulator, operator HMI, ASP.NET Core orchestrator, and MongoDB on Hetzner and is published through Cloudflare Tunnel. Both interfaces use the same live orchestration backend.
 
-| Interface | Link | Use it for |
-| --- | --- | --- |
-| **3D simulator** | [Open the simulator](https://fabrik3d.patrickdjimgou.dev) | Run scenes, guided learning scenarios, fault exercises, and cell editing. |
-| **Operator HMI** | [Open the HMI](https://fabrik3d-hmi.patrickdjimgou.dev) | Create and supervise jobs, inspect machine state, and follow execution progress. |
+| Interface        | Link                                                      | Use it for                                                                       |
+| ---------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **3D simulator** | [Open the simulator](https://fabrik3d.patrickdjimgou.dev) | Run scenes, guided learning scenarios, fault exercises, and cell editing.        |
+| **Operator HMI** | [Open the HMI](https://fabrik3d-hmi.patrickdjimgou.dev)   | Create and supervise jobs, inspect machine state, and follow execution progress. |
 
 ### Demo limitations
 
@@ -26,11 +26,11 @@ The public demonstration runs the complete Docker stack — simulator, operator 
 - OPC UA and MQTT integrations are disabled in the public deployment. No command is sent to an industrial controller.
 - Availability is best-effort. The instance can be restarted or updated without notice during maintenance and development.
 
-<p align="center">
-  <video controls width="800" src="https://media.githubusercontent.com/media/VirgileDjimgou/Fabrik3DLite/main/media/SimulatorFabrik3D.mp4"></video>
-  <br />
-  <em>Demo video: completed scenario, CNC fault recovery, cell editor, and orchestration API. If the player does not load, <a href="./media/SimulatorFabrik3D.mp4">open the MP4</a> or the <a href="./media/Fabrik3D-current-demo-web.gif">GIF version</a>.</em>
-</p>
+### Product walkthrough
+
+https://github.com/user-attachments/assets/29b87539-a47f-4b07-9dd0-f6e0fa9c2436
+
+_The walkthrough covers a completed scenario, CNC fault recovery, cell editing, and orchestration through the backend API._
 
 ## What is implemented
 
@@ -69,20 +69,20 @@ The HMI is the operator-facing surface of Fabrik3D. It provides a touch-oriented
   <img src="./media/HMI_CurrentJob.png" alt="Fabrik3D HMI current job view with session and machine state" width="31%" />
 </p>
 
-| View | Purpose |
-| --- | --- |
-| **Home** | Access to start, pause, resume, jobs, positions, messages, and settings, with continuous production context. |
-| **Jobs** | Work queue, state, mode, progress, creation time, and operator actions. |
-| **Current job** | Job, session, task, pallet, CNC, robot, and progress details for the active execution. |
+| View            | Purpose                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Home**        | Access to start, pause, resume, jobs, positions, messages, and settings, with continuous production context. |
+| **Jobs**        | Work queue, state, mode, progress, creation time, and operator actions.                                      |
+| **Current job** | Job, session, task, pallet, CNC, robot, and progress details for the active execution.                       |
 
 ## Demonstrations and evidence
 
-| Scenario | Evidence |
-| --- | --- |
-| Basic guided scenario | `Robot axes` completed at 100% with its five expected activities. |
-| Fault recovery | A simulated CNC fault requires acknowledgement and reset before retry. |
-| Cell editor | A medium six-axis cell with robot, CNC, conveyor, and pallet station validates without schema errors. |
-| Backend | The live orchestration API exposes alarms, templates, jobs, sessions, tasks, and state endpoints. |
+| Scenario              | Evidence                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| Basic guided scenario | `Robot axes` completed at 100% with its five expected activities.                                     |
+| Fault recovery        | A simulated CNC fault requires acknowledgement and reset before retry.                                |
+| Cell editor           | A medium six-axis cell with robot, CNC, conveyor, and pallet station validates without schema errors. |
+| Backend               | The live orchestration API exposes alarms, templates, jobs, sessions, tasks, and state endpoints.     |
 
 <p align="center">
   <img src="./docs/evidence/simulation-2026-09-18/01-scenario-basic-completed.png" alt="Completed Robot axes scenario" width="420" />
@@ -197,10 +197,10 @@ docker compose -f Fabrik3D/compose.production.yaml up --build
 docker compose -f Fabrik3D/compose.production.yaml down
 ```
 
-| Service | URL |
-| --- | --- |
-| Simulator | http://localhost:8081 |
-| Operator HMI | http://localhost:8082 |
+| Service           | URL                   |
+| ----------------- | --------------------- |
+| Simulator         | http://localhost:8081 |
+| Operator HMI      | http://localhost:8082 |
 | Orchestration API | http://localhost:8080 |
 
 The Docker [workflow](./.github/workflows/docker.yml) validates the compose file and builds the same images on every push, so the Docker badge above reflects whether the container setup still builds.
