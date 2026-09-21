@@ -2,3 +2,11 @@
 set -eu
 
 node scripts/security-scan.mjs
+
+# Upload Git LFS objects. A custom core.hooksPath replaces .git/hooks, so the
+# Git LFS pre-push hook must be invoked explicitly here.
+command -v git-lfs >/dev/null 2>&1 || {
+  printf >&2 '\nThis repository uses Git LFS but git-lfs was not found on PATH.\n'
+  exit 2
+}
+git lfs pre-push "$@"
