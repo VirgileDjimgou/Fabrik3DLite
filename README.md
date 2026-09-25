@@ -43,6 +43,14 @@ _The walkthrough covers a completed scenario, CNC fault recovery, cell editing, 
 - Deterministic FK/IK-oriented kinematics, SI units, cell/work-object frames, reachability checks, collision primitives, and swept-path checks.
 - A training fault lab with typed simulated faults, acknowledgement/reset/retry rules, ordered timeline, deterministic replay, and local learning reports.
 
+### Industrial signal foundation
+
+- A versioned, protocol-independent signal model (schema `1.0`) with typed values, engineering units, direction semantics, quality, update origin, source arbitration, range/enum validation and read-time staleness.
+- A deterministic `SignalRegistry` with stable ids, discovery by equipment and equipment-SDK integration through optional signal declarations.
+- A signal-driven CNC reference cell: 43 vendor-neutral signals across robot, CNC, conveyor and safety equipment, bound to the actual runtime. Command signals (Start/Stop/Reset, door, cycle start, conveyor run/speed, safety reset) drive the same workflow, CNC, conveyor and interlock paths as the operator controls, and status signals are derived from real state each frame.
+- An engineering I/O signal inspector (`?view=signals` or the expert dock panel) with filters, live quality/source/timestamp and binding-coverage diagnostics.
+- Deterministic snapshot serialization, schema-version validation and a documented migration mechanism. Protocol transports (OPC UA, MQTT, Modbus) are planned for later sprints and are not implemented yet.
+
 ### Cell authoring
 
 - Visual editor with grid snapping, overlap detection, undo/redo, reference reset, and 2D plan view.
@@ -234,6 +242,8 @@ See [the testing guide](./docs/TESTING.md) for test layers, isolated MongoDB int
 ## Further documentation
 
 - [Orchestration and traceability](./docs/architecture/ORCHESTRATION.md)
+- [Industrial signal core](./docs/architecture/INDUSTRIAL_SIGNAL_CORE.md)
+- [Reference cell signal catalog](./docs/architecture/REFERENCE_SIGNAL_CATALOG.md)
 - [Kinematics and frames](./docs/architecture/KINEMATICS_AND_FRAMES.md)
 - [Cell files and editor boundaries](./docs/architecture/CELL_FILES.md)
 - [Faults, timeline, and replay](./docs/architecture/FAULTS_TIMELINE_REPLAY.md)

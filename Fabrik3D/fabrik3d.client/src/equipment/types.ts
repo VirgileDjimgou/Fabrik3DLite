@@ -5,6 +5,10 @@
  * All lengths are meters, rotations radians, time seconds and masses kilograms.
  */
 
+import type { EquipmentSignalDeclaration } from '../signals/types'
+
+export type { EquipmentSignalDeclaration } from '../signals/types'
+
 export const EQUIPMENT_SDK_VERSION = '1.0' as const
 
 export type EquipmentCategory =
@@ -90,6 +94,8 @@ export interface EquipmentDefinition {
   anchors?: EquipmentAnchor[]
   parameters?: EquipmentParameter[]
   collisionProxy?: EquipmentCollisionProxy
+  /** Declared industrial I/O. Metadata only; runtime binding is hosted separately. */
+  signals?: EquipmentSignalDeclaration[]
   /** Static means visual/layout-only; simulation-ready requires a trusted adapter. */
   runtimeCapability?: 'static' | 'simulation-ready'
 }

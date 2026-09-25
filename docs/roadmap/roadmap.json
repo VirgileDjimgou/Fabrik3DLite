@@ -1,7 +1,8 @@
 {
   "version": 1,
+  "sprintCeiling": 50,
   "name": "Fabrik3D educational digital twin roadmap",
-  "vision": "A modular educational platform for building, simulating, supervising, and understanding a robotic cell, from a virtual scenario to a connected digital twin.",
+  "vision": "Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts.",
   "sprints": [
     { "id": "S01", "phase": 1, "title": "Repository and build stabilization", "file": "docs/roadmap/sprints/S01-build-stabilization.md", "dependsOn": [] },
     { "id": "S02", "phase": 1, "title": "Automated test foundation and CI", "file": "docs/roadmap/sprints/S02-test-foundation-ci.md", "dependsOn": ["S01"] },
@@ -32,6 +33,26 @@
     { "id": "S27", "phase": 7, "title": "Industrial safety and infrastructure library", "file": "docs/roadmap/sprints/S27-safety-infrastructure-library.md", "dependsOn": ["S26"] },
     { "id": "S28", "phase": 7, "title": "Material flow, tooling, and smart equipment", "file": "docs/roadmap/sprints/S28-material-flow-tooling.md", "dependsOn": ["S27"] },
     { "id": "S29", "phase": 7, "title": "Predefined industrial scenes and scenarios", "file": "docs/roadmap/sprints/S29-predefined-scenes-scenarios.md", "dependsOn": ["S28"] },
-    { "id": "S30", "phase": 7, "title": "Extensibility, realism, and scene hardening", "file": "docs/roadmap/sprints/S30-extensibility-realism-hardening.md", "dependsOn": ["S29"] }
+    { "id": "S30", "phase": 7, "title": "Extensibility, realism, and scene hardening", "file": "docs/roadmap/sprints/S30-extensibility-realism-hardening.md", "dependsOn": ["S29"] },
+    { "id": "S31", "phase": 8, "title": "Versioned industrial signal model and I/O registry", "file": "docs/roadmap/sprints/S31-industrial-signal-core.md", "dependsOn": ["S30"] },
+    { "id": "S32", "phase": 8, "title": "Equipment I/O binding and reference signal catalog", "file": "docs/roadmap/sprints/S32-equipment-io-binding.md", "dependsOn": ["S31"] },
+    { "id": "S33", "phase": 9, "title": "Production-grade OPC UA transport", "file": "docs/roadmap/sprints/S33-opcua-transport.md", "dependsOn": ["S32"] },
+    { "id": "S34", "phase": 9, "title": "Real MQTT transport", "file": "docs/roadmap/sprints/S34-mqtt-transport.md", "dependsOn": ["S33"] },
+    { "id": "S35", "phase": 9, "title": "Modbus TCP adapter", "file": "docs/roadmap/sprints/S35-modbus-tcp-adapter.md", "dependsOn": ["S34"] },
+    { "id": "S36", "phase": 9, "title": "External controller mode and control arbitration", "file": "docs/roadmap/sprints/S36-external-controller-arbitration.md", "dependsOn": ["S35"] },
+    { "id": "S37", "phase": 9, "title": "Signal mapping studio", "file": "docs/roadmap/sprints/S37-signal-mapping-studio.md", "dependsOn": ["S36"] },
+    { "id": "S38", "phase": 10, "title": "Advanced physical and signal fault injection", "file": "docs/roadmap/sprints/S38-signal-fault-injection.md", "dependsOn": ["S37"] },
+    { "id": "S39", "phase": 10, "title": "High-fidelity CNC machine-tending reference cell", "file": "docs/roadmap/sprints/S39-reference-cell-fidelity.md", "dependsOn": ["S38"] },
+    { "id": "S40", "phase": 10, "title": "Persistent telemetry and event historian", "file": "docs/roadmap/sprints/S40-telemetry-event-historian.md", "dependsOn": ["S39"] },
+    { "id": "S41", "phase": 10, "title": "Deterministic industrial time travel", "file": "docs/roadmap/sprints/S41-industrial-time-travel.md", "dependsOn": ["S40"] },
+    { "id": "S42", "phase": 11, "title": "Authentication, identity and RBAC", "file": "docs/roadmap/sprints/S42-authentication-rbac.md", "dependsOn": ["S41"] },
+    { "id": "S43", "phase": 11, "title": "Organizations, tenancy and classroom boundaries", "file": "docs/roadmap/sprints/S43-organizations-tenancy.md", "dependsOn": ["S42"] },
+    { "id": "S44", "phase": 11, "title": "Server-side training sessions and assessment", "file": "docs/roadmap/sprints/S44-server-training-assessment.md", "dependsOn": ["S43"] },
+    { "id": "S45", "phase": 11, "title": "Instructor and class dashboard", "file": "docs/roadmap/sprints/S45-instructor-dashboard.md", "dependsOn": ["S44"] },
+    { "id": "S46", "phase": 12, "title": "CODESYS / SoftPLC interoperability showcase", "file": "docs/roadmap/sprints/S46-codesys-softplc-showcase.md", "dependsOn": ["S45"] },
+    { "id": "S47", "phase": 12, "title": "Siemens / PLCSIM interoperability profile", "file": "docs/roadmap/sprints/S47-siemens-plcsim-profile.md", "dependsOn": ["S46"] },
+    { "id": "S48", "phase": 12, "title": "On-premise product packaging and lifecycle", "file": "docs/roadmap/sprints/S48-onpremise-packaging-lifecycle.md", "dependsOn": ["S47"] },
+    { "id": "S49", "phase": 12, "title": "Observability, performance, security and release-candidate validation", "file": "docs/roadmap/sprints/S49-observability-hardening.md", "dependsOn": ["S48"] },
+    { "id": "S50", "phase": 12, "title": "Fabrik3D 1.0 commercialization baseline", "file": "docs/roadmap/sprints/S50-commercialization-baseline.md", "dependsOn": ["S49"] }
   ]
 }

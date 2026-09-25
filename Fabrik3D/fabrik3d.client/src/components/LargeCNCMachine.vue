@@ -226,7 +226,29 @@ function unloadComplete(): void {
   setStatusColor(0x00ff00)
 }
 
-defineExpose({ loadPart, startMachining, unloadComplete, state })
+/** Truthful door feedback derived from the animated door position. */
+function getDoorState(): 'open' | 'closed' | 'moving' {
+  if (doorTarget === 1 && doorCurrent >= 1) return 'open'
+  if (doorTarget === 0 && doorCurrent <= 0) return 'closed'
+  return 'moving'
+}
+
+/**
+ * Explicit door command. Returns false when the current machine state does not
+ * allow the requested movement, so the caller never assumes a silent success.
+ */
+function commandDoor(open: boolean): boolean {
+  if (open) {
+    if (state.value === 'IDLE') { loadPart(); return true }
+    if (state.value === 'UNLOADING') { doorTarget = 1; return true }
+    return false
+  }
+  if (state.value === 'MACHINING') return false
+  if (state.value === 'LOADING' || state.value === 'IDLE') { doorTarget = 0; return true }
+  return false
+}
+
+defineExpose({ loadPart, startMachining, unloadComplete, state, getDoorState, commandDoor })
 
 function disposeGroup(g: THREE.Group) {
   g.traverse((child) => {

@@ -24,6 +24,7 @@
     "contracts:check": "node scripts/generate-contracts.mjs --check",
     "assets:generate": "node scripts/generate-industrial-glb-assets.mjs",
     "sprint:status": "node scripts/sprint-runner.mjs status",
+    "sprint:validate": "node scripts/sprint-runner.mjs validate",
     "sprint:next": "node scripts/sprint-runner.mjs start-next",
     "sprint:show": "node scripts/sprint-runner.mjs show",
     "sprint:complete": "node scripts/sprint-runner.mjs complete"

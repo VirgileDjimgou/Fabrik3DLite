@@ -12,7 +12,7 @@
     <ConveyorBelt
       :position="layout.conveyor"
       :length="conveyor.length"
-      :speed="conveyor.speed"
+      :speed="conveyorBeltSpeed"
       :rotation-y="layout.conveyorRotationY"
       :sensor-active="conveyorSensorActive"
     />
@@ -87,6 +87,7 @@
         :mode="dashMode"
         :connection-state="dashConnection"
         :session-status="dashSessionStatus"
+        :command-error="commandError"
         @start="handleStart"
         @pause="handlePause"
         @resume="handleResume"
@@ -118,6 +119,10 @@
         :target="developerTarget"
       />
     </details>
+    <details v-if="expertMode" class="dock-panel">
+      <summary>{{ t('panel.signals') }}</summary>
+      <SignalInspectorPanel class="docked-panel" :registry="signalRegistry" :binding="signalBinding" />
+    </details>
   </SimulationDock>
 </template>
 
@@ -139,6 +144,7 @@ import MotionSafetyPanel from './MotionSafetyPanel.vue'
 import StepModePanel from './StepModePanel.vue'
 import FaultTimelinePanel from './FaultTimelinePanel.vue'
 import LearningReportPanel from './LearningReportPanel.vue'
+import SignalInspectorPanel from './SignalInspectorPanel.vue'
 import SimulationDock from './SimulationDock.vue'
 import { useSimulatorI18n } from '../i18n/simulator'
 import type { RobotController } from '../simulation/RobotController'
@@ -175,10 +181,16 @@ import {
   createSingleCellFrames,
   type WorkObjectTarget,
 } from '../kinematics'
-import { createSafetyRobotModel, MotionSafetyEngine, createSingleCellWorld } from '../safety'
+import { createSafetyRobotModel, MotionSafetyEngine, createSingleCellWorld, SafetyInterlockModel } from '../safety'
 import { StepModeController, type LearningCheckpoint } from '../learning/StepModeController'
 import { FaultController, getFaultDefinition, type FaultAction, type FaultType } from '../faults'
 import { TimelineRecorder, type TimelineContext } from '../timeline'
+import {
+  ReferenceCellSignalBinding,
+  createReferenceCellSignalRegistry,
+  REFERENCE_CELL_EQUIPMENT_IDS,
+  type RobotSignalView,
+} from '../signals'
 
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
@@ -186,8 +198,14 @@ const { t } = useSimulatorI18n()
 const conveyor = SINGLE_CELL_CONVEYOR
 const flowCfg = { ...SINGLE_CELL_FLOW }
 const conveyorSensorActive = ref(false)
+const conveyorBeltSpeed = ref(conveyor.speed)
 // The cell declaration is independent from the Vue scene and can be reused by future editors.
 const equipmentRegistry = createSingleConveyorEquipmentRegistry()
+// Scene-scoped industrial signal registry and simulated safety interlock state.
+const signalRegistry = createReferenceCellSignalRegistry(equipmentRegistry)
+const signalBinding = shallowRef<ReferenceCellSignalBinding | null>(null)
+const safetyInterlocks = new SafetyInterlockModel()
+const commandError = ref('')
 
 // ── Robot catalog (selection drives the scene, never a rewrite) ────
 const robotCatalog = createDefaultRobotCatalog()
@@ -261,6 +279,73 @@ function getPalletStationRuntime(): PalletStationRuntime | null {
   return palletStationRuntime
 }
 
+// ── Industrial signal binding ──────────────────────────────────────
+// Declared signals drive the same workflow/CNC/conveyor/safety paths as the
+// operator controls; read-only signals are derived from real runtime state.
+
+function buildSignalBinding(): ReferenceCellSignalBinding {
+  const robotView: RobotSignalView = {
+    isServoOn: () => robotController.value !== null,
+    getWorkflowRunState: () => workflow?.runState ?? 'idle',
+    getWorkflowPhase: () => workflow?.phase ?? 'IDLE',
+    start: performStart,
+    stop: performStop,
+    reset: performReset,
+  }
+  return new ReferenceCellSignalBinding({
+    registry: signalRegistry,
+    equipment: REFERENCE_CELL_EQUIPMENT_IDS,
+    views: {
+      robot: robotView,
+      cnc: {
+        getState: () => cncRef.value?.state ?? 'IDLE',
+        getDoorState: () => cncRef.value?.getDoorState?.() ?? 'closed',
+        commandDoor: (open) => cncRef.value?.commandDoor?.(open) ?? false,
+        startCycle: () => {
+          const cnc = cncRef.value
+          if (!cnc || cnc.state !== 'LOADING') return false
+          cnc.startMachining()
+          return true
+        },
+      },
+      conveyor: {
+        isRunning: () => palletFeedRef.value?.isRunning() ?? false,
+        getSpeedReference: () => palletFeedRef.value?.getSpeedReference() ?? conveyor.speed,
+        getActualSpeed: () => palletFeedRef.value?.getActualSpeed() ?? 0,
+        getPhotoeyeIn: () => palletFeedRef.value?.getPhotoeyeIn() ?? false,
+        getPhotoeyeStation: () => palletFeedRef.value?.getPhotoeyeStation() ?? false,
+        getEncoderPulses: () => palletFeedRef.value?.getEncoderPulses() ?? 0,
+        setRunCommand: (run) => palletFeedRef.value?.setRunCommand(run) ?? false,
+        setSpeedReference: (speed) => palletFeedRef.value?.setSpeedReference(speed) ?? false,
+      },
+      safety: {
+        isEmergencyStop: () => safetyInterlocks.getState().emergencyStop,
+        isGateClosed: () => safetyInterlocks.getState().gateClosed,
+        isGateLocked: () => safetyInterlocks.getState().gateLocked,
+        isLightCurtainClear: () => safetyInterlocks.getState().lightCurtainClear,
+        isScannerClear: () => safetyInterlocks.getState().scannerClear,
+        isHealthy: () => safetyInterlocks.getState().safetyHealthy,
+        reset: () => safetyInterlocks.reset(),
+      },
+      faults: {
+        isActiveFor: (equipmentId) => faults.activeFaults.some((fault) => fault.equipmentId === equipmentId),
+      },
+    },
+  })
+}
+
+/** Routes a UI command through the signal registry; returns false on rejection. */
+function commandSignal(signalId: string, value: boolean | number, origin: 'operator' | 'simulation' = 'operator'): boolean {
+  const binding = signalBinding.value
+  if (!binding) {
+    commandError.value = 'Signal binding is not ready.'
+    return false
+  }
+  const result = binding.write(signalId, value, origin)
+  commandError.value = result.accepted ? '' : result.message
+  return result.accepted
+}
+
 // ── Orchestration bridge ───────────────────────────────────────────
 const bridge = new SimulatorOrchestrationBridge()
 faults.onPauseRequested = () => bridge.pause(() => workflow?.pause())
@@ -276,11 +361,16 @@ onMounted(() => {
   bridge.onExternalResume = () => workflow?.resume()
   bridge.onExternalStop = () => workflow?.stop()
 })
-onBeforeUnmount(() => bridge.dispose())
+onBeforeUnmount(() => {
+  bridge.dispose()
+  signalBinding.value?.dispose()
+  signalRegistry.clear()
+})
 
 function onControllerReady(controller: RobotController) {
   robotController.value = controller
   robotRuntime = new LegacyRobotAdapter('robot-1', controller)
+  signalBinding.value ??= buildSignalBinding()
   ensureWorkflow()
 }
 
@@ -342,8 +432,10 @@ function ensureWorkflow(): PalletMachiningWorkflow | null {
     visualController.update = (time: number) => {
       origUpdate(time)
       workflow?.update()
-      // refresh CNC state each frame
+      // refresh CNC state and publish the industrial signal snapshot each frame
       dashCncState.value = cncRef.value?.state ?? 'IDLE'
+      signalBinding.value?.tick()
+      conveyorBeltSpeed.value = palletFeedRef.value?.getActualSpeed() ?? 0
     }
   }
 
@@ -380,12 +472,18 @@ function syncDashboard(): void {
 }
 
 // ── Dashboard event handlers ───────────────────────────────────────
+// Start/Stop/Reset are routed through the declared command signals; the
+// performance implementations below stay the single source of behaviour.
 
-function handleStart(): void {
+function handleStart(): void { commandSignal('robot-1.Start', true) }
+function handleStop(): void { commandSignal('robot-1.Stop', true) }
+function handleReset(): void { commandSignal('robot-1.Reset', true) }
+
+function performStart(): boolean {
   const wf = ensureWorkflow()
-  if (!wf) return
+  if (!wf) return false
   const pallet = getPalletStationRuntime()?.getFirstStoppedPallet()
-  if (!pallet) return
+  if (!pallet) return false
   timeline.record('command', 'info', timelineContext(), { command: 'start' })
   refreshFaultPanel()
   safetyEngine.value.updatePalletObstacle(pallet.worldX)
@@ -393,25 +491,21 @@ function handleStart(): void {
     wf.start(p)
     syncDashboard()
   })
+  return true
 }
 
-function handlePause(): void {
-  timeline.record('command', 'info', timelineContext(), { command: 'pause' }); refreshFaultPanel()
-  bridge.pause(() => workflow?.pause())
+function performStop(): boolean {
+  const wf = ensureWorkflow()
+  if (!wf) return false
+  timeline.record('command', 'warning', timelineContext(), { command: 'stop' })
+  refreshFaultPanel()
+  bridge.stop(() => wf.stop())
+  return true
 }
 
-function handleResume(): void {
-  timeline.record('command', 'info', timelineContext(), { command: 'resume' }); refreshFaultPanel()
-  bridge.resume(() => workflow?.resume())
-}
-
-function handleStop(): void {
-  timeline.record('command', 'warning', timelineContext(), { command: 'stop' }); refreshFaultPanel()
-  bridge.stop(() => workflow?.stop())
-}
-
-function handleReset(): void {
-  timeline.record('command', 'info', timelineContext(), { command: 'reset' }); refreshFaultPanel()
+function performReset(): boolean {
+  timeline.record('command', 'info', timelineContext(), { command: 'reset' })
+  refreshFaultPanel()
   bridge.reset()
   workflow?.reset()
   safetyEngine.value.updatePalletObstacle(null)
@@ -426,6 +520,17 @@ function handleReset(): void {
   dashTotal.value = 0
   dashProgress.value = 0
   dashSessionStatus.value = null
+  return true
+}
+
+function handlePause(): void {
+  timeline.record('command', 'info', timelineContext(), { command: 'pause' }); refreshFaultPanel()
+  bridge.pause(() => workflow?.pause())
+}
+
+function handleResume(): void {
+  timeline.record('command', 'info', timelineContext(), { command: 'resume' }); refreshFaultPanel()
+  bridge.resume(() => workflow?.resume())
 }
 
 function injectFault(type: FaultType): void {

@@ -53,7 +53,7 @@ flow.onMove = (pallets) => {
 }
 
 function emitSensorState(): void {
-  emit('sensor-state', flow.pallets.some((p) => p.state === 'stopped'))
+  emit('sensor-state', flow.photoeyeStation)
 }
 
 function setPalletRef(id: string, el: unknown) {
@@ -75,7 +75,30 @@ function getPalletComponent(palletId: string) {
   return palletRefs.get(palletId) ?? null
 }
 
-defineExpose({ getFirstStoppedPallet, getPalletComponent })
+// ── Signal-facing conveyor state (truthful reads, explicit commands) ──
+function getPallets(): PalletData[] { return [...flow.pallets] }
+function isRunning(): boolean { return flow.isRunning }
+function getSpeedReference(): number { return flow.speedReferenceMetersPerSecond }
+function getActualSpeed(): number { return flow.actualSpeedMetersPerSecond }
+function getPhotoeyeIn(): boolean { return flow.photoeyeIn }
+function getPhotoeyeStation(): boolean { return flow.photoeyeStation }
+function getEncoderPulses(): number { return flow.encoderPulseCount }
+function setRunCommand(run: boolean): boolean { return flow.setRunCommand(run) }
+function setSpeedReference(metersPerSecond: number): boolean { return flow.setSpeedReference(metersPerSecond) }
+
+defineExpose({
+  getFirstStoppedPallet,
+  getPalletComponent,
+  getPallets,
+  isRunning,
+  getSpeedReference,
+  getActualSpeed,
+  getPhotoeyeIn,
+  getPhotoeyeStation,
+  getEncoderPulses,
+  setRunCommand,
+  setSpeedReference,
+})
 
 onBeforeUnmount(() => {
   palletRefs.clear()

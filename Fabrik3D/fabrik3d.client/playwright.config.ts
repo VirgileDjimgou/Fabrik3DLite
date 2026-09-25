@@ -5,13 +5,11 @@ export default defineConfig({
   timeout: 30_000,
   expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
   use: {
-    baseURL: 'https://127.0.0.1:4173',
-    ignoreHTTPSErrors: true,
+    baseURL: 'http://127.0.0.1:4173',
   },
   webServer: {
     command: 'npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',
-    url: 'https://127.0.0.1:4173',
-    ignoreHTTPSErrors: true,
+    url: 'http://127.0.0.1:4173',
     reuseExistingServer: true,
     timeout: 60_000,
   },

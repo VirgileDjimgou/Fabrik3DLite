@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 
 test('selects predefined industrial scenes and resets the catalog', async ({ page }) => {
   await page.goto('/?view=scene-presets')
+  await page.locator('[data-scene-selector] summary').click()
   const selector = page.locator('[data-scene-select]')
   await expect(selector).toHaveValue('cnc-machine-tending')
 

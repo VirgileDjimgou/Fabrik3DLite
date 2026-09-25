@@ -16,6 +16,11 @@
       {{ stateLabel }}
     </div>
 
+    <!-- ── Command feedback (signal registry rejection) ─ -->
+    <p v-if="commandError" class="command-error" role="status" data-command-error>
+      {{ t('dashboard.commandRejected') }} — {{ commandError }}
+    </p>
+
     <!-- ── Phase ─────────────────────────────────────── -->
     <div class="section">
       <label>{{ t('dashboard.phase') }}</label>
@@ -125,6 +130,7 @@ const props = withDefaults(defineProps<{
   mode?: BridgeMode
   connectionState?: ConnectionState
   sessionStatus?: string | null
+  commandError?: string
 }>(), {
   runState: 'idle',
   phase: 'IDLE',
@@ -143,6 +149,7 @@ const props = withDefaults(defineProps<{
   mode: 'offline',
   connectionState: 'disconnected',
   sessionStatus: null,
+  commandError: '',
 })
 
 defineEmits<{
@@ -276,6 +283,7 @@ const partStateClass = computed(() => {
   margin-bottom: 0.65rem;
   background: rgba(80, 80, 80, 0.4);
 }
+.command-error { margin: 0 0 .6rem; padding: .3rem .4rem; border-left: 3px solid #ff5566; background: rgba(255, 85, 102, .12); color: #ffb3bc; font-size: .72rem; }
 .state-bar.running  { background: rgba(0, 180, 100, 0.25); color: #00ee88; }
 .state-bar.paused   { background: rgba(200, 180, 0, 0.2);  color: #eedd44; }
 .state-bar.stopped  { background: rgba(200, 60, 60, 0.2);  color: #ff7766; }

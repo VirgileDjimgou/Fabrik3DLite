@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-18T21:02:42.989Z",
+  "updatedAt": "2026-09-25T00:36:39.171Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -212,6 +212,74 @@
       "completedAt": "2026-09-18T21:02:42.989Z",
       "summary": "S30 finalise le registre d extensions de confiance, le navigateur d equipements et scenes, la conservation deterministe des connexions de cellule, et le guide d authoring d assets/scenes.",
       "evidence": "Simulator: type-check, 244 Vitest tests, build et Playwright 11/11 passes; HMI: type-check, 14 tests et build passes; backend: dotnet build 0 erreur et dotnet test 66/66 passe avec Docker/Testcontainers; git diff --check passe."
+    },
+    "S31": {
+      "status": "completed",
+      "startedAt": "2026-09-24T23:55:35.924Z",
+      "completedAt": "2026-09-25T00:12:43.539Z",
+      "summary": "S31 versioned industrial signal core: added simulator src/signals (typed SignalDefinition/SignalSample/SignalSnapshot, deterministic SignalRegistry with duplicate, type, range, enum and write-policy enforcement, timestamp ordering, source arbitration and read-time staleness, deterministic snapshot serialization with schema-version validation and migration registry), optional equipment-SDK signal declarations with validation, and the architecture document. No server changes. Also repaired two pre-existing test-baseline defects unrelated to S31: playwright preview URL now matches the HTTP preview served since ff82229, and the scene-presets e2e opens the collapsible dock introduced in f861f61.",
+      "evidence": "npm run sprint:validate (pass: 50 sprints, 30 completed, active=S31); dotnet build Fabrik3D/Fabrik3D.slnx (0 warnings 0 errors); dotnet test Fabrik3D/Fabrik3D.slnx --no-build (Contracts 2/2, Server 62/62, Infrastructure 2/2); npm run contracts:check (verified from live server); npm --prefix Fabrik3D/fabrik3d.client run type-check (pass); npm --prefix Fabrik3D/fabrik3d.client run test (66 files, 271 passed incl. 27 new signal tests; benchmark 10000 signals registered+snapshot 124 ms); npm --prefix Fabrik3D/fabrik3d.client run build (pass); npm --prefix Fabrik3D/fabrik3d.client run test:visual (11/11 passed); npm --prefix Fabrik3D/fabrik3d.hmi run type-check + test (14 passed) + build (pass); npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e (5/5 passed)."
+    },
+    "S32": {
+      "status": "completed",
+      "startedAt": "2026-09-25T00:17:05.704Z",
+      "completedAt": "2026-09-25T00:36:39.171Z",
+      "summary": "S32 signal-driven reference cell: declared 43 vendor-neutral signals across the robot/CNC/conveyor/safety definitions and bound them to the actual runtime with ReferenceCellSignalBinding (per-frame derived status signals, validated command writes that leave state untouched on runtime refusal, coverage diagnostics, scene-scoped lifecycle). Added SafetyInterlockModel, conveyor run/speed/encoder/photoeye state, CNC door state and door command exposure. Operator Start/Stop/Reset and workflow door/cycle commands now route through declared signals with dashboard rejection feedback. Added the engineering SignalInspectorPanel, the WebGL-free ?view=signals harness and expert dock panel in EN/FR/DE, plus REFERENCE_SIGNAL_CATALOG.md and the binding-pattern documentation. No backend changes.",
+      "evidence": "npm run sprint:validate (pass: 50 sprints, 31 completed, active=S32); npm --prefix Fabrik3D/fabrik3d.client run type-check (pass); npm --prefix Fabrik3D/fabrik3d.client run test (71 files, 300 passed, +29 new signal/flow/safety/panel tests); binding benchmark 1000 ticks over 43 signals in 85 ms (avg 0.085 ms/tick); workflow-equivalence test proves identical phases, run states and outcomes for direct vs signal-driven execution; coverage diagnostics empty; npm --prefix Fabrik3D/fabrik3d.client run build (pass); npm --prefix Fabrik3D/fabrik3d.client run test:visual (13/13 passed incl. new signal-inspector desktop+laptop baselines); npm --prefix Fabrik3D/fabrik3d.hmi run type-check + test (14 passed) + build (pass); npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e (5/5 passed); dotnet build Fabrik3D/Fabrik3D.slnx (0 warnings 0 errors); dotnet test Fabrik3D/Fabrik3D.slnx --no-build (Contracts 2/2, Server 62/62, Infrastructure 2/2); npm run contracts:check (verified from live server)."
+    },
+    "S33": {
+      "status": "planned"
+    },
+    "S34": {
+      "status": "planned"
+    },
+    "S35": {
+      "status": "planned"
+    },
+    "S36": {
+      "status": "planned"
+    },
+    "S37": {
+      "status": "planned"
+    },
+    "S38": {
+      "status": "planned"
+    },
+    "S39": {
+      "status": "planned"
+    },
+    "S40": {
+      "status": "planned"
+    },
+    "S41": {
+      "status": "planned"
+    },
+    "S42": {
+      "status": "planned"
+    },
+    "S43": {
+      "status": "planned"
+    },
+    "S44": {
+      "status": "planned"
+    },
+    "S45": {
+      "status": "planned"
+    },
+    "S46": {
+      "status": "planned"
+    },
+    "S47": {
+      "status": "planned"
+    },
+    "S48": {
+      "status": "planned"
+    },
+    "S49": {
+      "status": "planned"
+    },
+    "S50": {
+      "status": "planned"
     }
   }
 }

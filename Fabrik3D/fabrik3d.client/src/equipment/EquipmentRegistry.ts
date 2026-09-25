@@ -1,5 +1,6 @@
 import { EQUIPMENT_SDK_VERSION, type CellDefinition, type EquipmentDefinition, type EquipmentInstance } from './types'
 import { isFiniteTransform } from './transforms'
+import { validateSignalDefinition } from '../signals/types'
 
 export class EquipmentRegistry {
   private readonly definitions = new Map<string, EquipmentDefinition>()
@@ -46,6 +47,24 @@ export function validateEquipmentDefinition(definition: EquipmentDefinition): vo
     if (!port.id.trim()) throw new Error(`Equipment definition '${definition.id}' contains a port without id.`)
     if (portIds.has(port.id)) throw new Error(`Equipment definition '${definition.id}' contains duplicate port '${port.id}'.`)
     portIds.add(port.id)
+  }
+  const signalNames = new Set<string>()
+  for (const signal of definition.signals ?? []) {
+    if (!signal.name.trim()) throw new Error(`Equipment definition '${definition.id}' contains a signal without name.`)
+    if (signalNames.has(signal.name)) {
+      throw new Error(`Equipment definition '${definition.id}' contains duplicate signal '${signal.name}'.`)
+    }
+    signalNames.add(signal.name)
+    const diagnostics = validateSignalDefinition({
+      ...signal,
+      id: `${definition.id}.${signal.name}`,
+      equipmentId: definition.id,
+      writable: signal.writable ?? false,
+    })
+    const firstError = diagnostics.find((diagnostic) => diagnostic.severity === 'error')
+    if (firstError) {
+      throw new Error(`Equipment definition '${definition.id}' has an invalid signal '${signal.name}': ${firstError.message}`)
+    }
   }
 }
 
