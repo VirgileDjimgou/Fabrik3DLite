@@ -25,6 +25,31 @@
       "createdAt": "2026-09-25T01:23:41.411Z",
       "resolutionNote": "Autopilot infrastructure baseline reviewed and committed by the controlling session on explicit user approval; worktree made clean before the batch starts.",
       "resolvedAt": "2026-09-25T01:26:24.723Z"
+    },
+    {
+      "schemaVersion": "1.0",
+      "batchId": "2026-09-25-012741",
+      "sprintId": null,
+      "reasonCode": "UNRELATED_DIRTY_WORKTREE",
+      "summary": "Uncommitted changes exist in the worktree and no sprint is active; the batch cannot safely tell sprint work from unrelated user work.",
+      "requiredHumanActions": [
+        "Review the listed paths and either commit, stash or discard them yourself. Never let the automation delete them.",
+        " M Fabrik3D/Fabrik3D.Infrastructure/Fabrik3D.Infrastructure.csproj",
+        " M Fabrik3D/Fabrik3D.Infrastructure/InfrastructureServiceRegistration.cs",
+        " M Fabrik3D/Fabrik3D.Infrastructure/OpcUa/OpcUaConnector.cs",
+        " M Fabrik3D/Fabrik3D.Infrastructure/OpcUa/OpcUaMapping.cs",
+        " M Fabrik3D/Fabrik3D.Infrastructure/OpcUa/OpcUaOptions.cs",
+        " M Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj",
+        " M Fabrik3D/Fabrik3D.Server/Services/OpcUaConnectorHostedService.cs",
+        " M Fabrik3D/Fabrik3D.slnx",
+        " M Fabrik3D/fabrik3d-ts-contracts/openapi.json",
+        " M Fabrik3D/fabrik3d-ts-contracts/src/orchestrator.generated.ts",
+        "Then run npm run sprint:batch:resume."
+      ],
+      "safeToResume": true,
+      "createdAt": "2026-09-25T04:08:52.776Z",
+      "resolutionNote": "S33 completed manually through the atomic sprint workflow (sprint:complete) and its work is being committed by the controlling session on explicit user approval, so the batch preflight can reconcile S33 and continue.",
+      "resolvedAt": "2026-09-25T04:14:41.291Z"
     }
   ]
 }

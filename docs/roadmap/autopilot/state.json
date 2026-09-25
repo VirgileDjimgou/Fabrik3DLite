@@ -1,20 +1,25 @@
 {
   "schemaVersion": "1.0",
-  "batchId": null,
-  "status": "idle",
+  "batchId": "2026-09-25-012741",
+  "status": "stopped",
   "requestedMaxSprints": 10,
   "completedThisBatch": 0,
-  "startedAt": null,
-  "updatedAt": null,
-  "startSprint": null,
+  "startedAt": "2026-09-25T01:27:41.199Z",
+  "updatedAt": "2026-09-25T04:14:41.297Z",
+  "startSprint": "S33",
   "currentSprint": null,
   "lastCompletedSprint": null,
-  "stopReason": null,
+  "stopReason": "HUMAN_GATE_RESOLVED: UNRELATED_DIRTY_WORKTREE",
   "repairAttempts": 0,
   "workerSessionId": null,
   "lastEvidence": null,
   "lastGreenCommit": null,
   "expectedSprintId": null,
   "pendingCompletedBefore": null,
-  "completedSprints": []
+  "completedSprints": [],
+  "expectedDirtyPaths": [
+    "docs/roadmap/CURRENT_SPRINT.md",
+    "docs/roadmap/autopilot/state.json",
+    "docs/roadmap/state.json"
+  ]
 }

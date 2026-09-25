@@ -49,7 +49,7 @@ _The walkthrough covers a completed scenario, CNC fault recovery, cell editing, 
 - A deterministic `SignalRegistry` with stable ids, discovery by equipment and equipment-SDK integration through optional signal declarations.
 - A signal-driven CNC reference cell: 43 vendor-neutral signals across robot, CNC, conveyor and safety equipment, bound to the actual runtime. Command signals (Start/Stop/Reset, door, cycle start, conveyor run/speed, safety reset) drive the same workflow, CNC, conveyor and interlock paths as the operator controls, and status signals are derived from real state each frame.
 - An engineering I/O signal inspector (`?view=signals` or the expert dock panel) with filters, live quality/source/timestamp and binding-coverage diagnostics.
-- Deterministic snapshot serialization, schema-version validation and a documented migration mechanism. Protocol transports (OPC UA, MQTT, Modbus) are planned for later sprints and are not implemented yet.
+- Deterministic snapshot serialization, schema-version validation and a documented migration mechanism. The server-side C# mirror (schema `1.0`) backs the real OPC UA transport; MQTT (S34) and Modbus (S35) transports remain planned and are not implemented yet.
 
 ### Cell authoring
 
@@ -66,6 +66,7 @@ _The walkthrough covers a completed scenario, CNC fault recovery, cell editing, 
 - Heartbeat monitoring and faulted-session recovery.
 - Separate, multilingual operator HMI (English, French, German) for jobs, active execution, alarms, messages, operating modes, and settings.
 - Optional OPC UA and MQTT boundaries, kept outside core domain behavior and disabled by default.
+- Real OPC UA client transport (S33, implemented): session/subscription lifecycle, bounded-backoff reconnect, explicit certificate trust (development auto-accept is opt-in and warned), monitored items from an explicit node map, quality/timestamp mapping into the protocol-free signal mirror, fail-closed write policy (`AllowWrites` + exact allow-list + writable signal), health/diagnostics counters and `GET /api/connectors/opcua`. Aligned with selected OPC UA concepts; not IEC 62541 certified. MQTT remains disabled stub work for S34.
 
 ## Operator HMI
 

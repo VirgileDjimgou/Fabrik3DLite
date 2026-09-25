@@ -12,6 +12,8 @@ npm --prefix Fabrik3D/fabrik3d.hmi run test
 
 The infrastructure integration tests start their own disposable MongoDB container through Testcontainers. Docker must be running; they never use the local `Fabrik3D` database.
 
+OPC UA connector tests start the in-process `Fabrik3D.OpcUa.Fixture` server on a loopback port (real OPC UA transport, no Docker and no proprietary software). Run them with `dotnet test Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj --filter "FullyQualifiedName~OpcUa"`. Details are in [OPC_UA_ADAPTER.md](architecture/OPC_UA_ADAPTER.md).
+
 For the end-to-end tests, start the server in the `Testing` environment with an isolated MongoDB database, then run:
 
 ```powershell

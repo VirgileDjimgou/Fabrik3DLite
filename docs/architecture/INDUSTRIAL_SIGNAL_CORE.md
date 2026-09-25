@@ -143,7 +143,8 @@ The complete signal table, drivers, units and routing are documented in [REFEREN
 
 ## Deliberate deferrals
 
-- **S33** introduces the first real transport and may mirror this schema in C# DTOs. The C# mirror must reference this document and the same field semantics; the schema documented here remains the contract of record.
+- **S33 (done)** introduced the first real transport (OPC UA) and mirrored this schema in C#: `Fabrik3D.Domain/Signals/IndustrialSignal.cs`, `Fabrik3D.Infrastructure/Signals/SignalMirrorStore.cs` and the OPC UA adapter described in [OPC_UA_ADAPTER.md](OPC_UA_ADAPTER.md). The C# mirror references this document, uses the same wire names/reason codes and is covered by drift tests; the schema documented here remains the contract of record.
+- **S34/S35** map MQTT and Modbus onto the same mirror.
 - **S38** applies fault overlays on top of canonical definitions without modifying them.
 - **S40/S41** historize and reconstruct samples through this model.
 

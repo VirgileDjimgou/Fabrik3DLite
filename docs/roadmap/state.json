@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-09-25T00:36:39.171Z",
+  "updatedAt": "2026-09-25T04:08:25.191Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -228,7 +228,11 @@
       "evidence": "npm run sprint:validate (pass: 50 sprints, 31 completed, active=S32); npm --prefix Fabrik3D/fabrik3d.client run type-check (pass); npm --prefix Fabrik3D/fabrik3d.client run test (71 files, 300 passed, +29 new signal/flow/safety/panel tests); binding benchmark 1000 ticks over 43 signals in 85 ms (avg 0.085 ms/tick); workflow-equivalence test proves identical phases, run states and outcomes for direct vs signal-driven execution; coverage diagnostics empty; npm --prefix Fabrik3D/fabrik3d.client run build (pass); npm --prefix Fabrik3D/fabrik3d.client run test:visual (13/13 passed incl. new signal-inspector desktop+laptop baselines); npm --prefix Fabrik3D/fabrik3d.hmi run type-check + test (14 passed) + build (pass); npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e (5/5 passed); dotnet build Fabrik3D/Fabrik3D.slnx (0 warnings 0 errors); dotnet test Fabrik3D/Fabrik3D.slnx --no-build (Contracts 2/2, Server 62/62, Infrastructure 2/2); npm run contracts:check (verified from live server)."
     },
     "S33": {
-      "status": "planned"
+      "status": "completed",
+      "startedAt": "2026-09-25T01:27:41.563Z",
+      "completedAt": "2026-09-25T04:08:25.191Z",
+      "summary": "S33 production-grade OPC UA transport: real disabled-by-default OPC UA client in Fabrik3D.Infrastructure (OPCFoundation 1.5.378.176) with session/subscription lifecycle, bounded-backoff reconnect, certificate trust store (explicit dev auto-accept with warning), monitored items from an explicit node map, quality/timestamp mapping into a new protocol-free C# signal mirror (schema 1.0, Domain/Signals + Infrastructure/Signals, same arbitration/reason codes as the simulator core), fail-closed write policy (enabled + AllowWrites + exact allow-list + writable signal; allow-listed write observed by the fixture), health/diagnostics counters and read-only GET /api/connectors/opcua (ConnectorStatusDto, contracts regenerated). Added a test-only in-process .NET OPC UA fixture project (real TCP/binary transport; no OCI image or proprietary software) and 29 new tests. Fixed a real transport behavior: OPC UA status-change notifications carry a null value with Bad status; the connector now preserves the last known value with degraded quality instead of rejecting it. No OPC UA type or node id in Domain; defaults stay disabled and inert; docs/architecture/OPC_UA_ADAPTER.md rewritten with setup, security model, signal-mirror ADR, fixture instructions and limitations; README and industrial-signal-core claims updated.",
+      "evidence": "npm run sprint:validate (pass: 50 sprints, 32 completed, active=S33); dotnet build Fabrik3D/Fabrik3D.slnx (0 warnings 0 errors); dotnet test Fabrik3D/Fabrik3D.slnx --no-build (Contracts 2/2, Infrastructure 2/2, Server 91/91; +29 new tests: 10 mirror unit, 9 transport unit, 10 fixture-backed connector integration); dotnet test Fabrik3D.Server.Tests --filter FullyQualifiedName~OpcUa (21/21 incl. existing mapping tests); fixture integration covers connect, subscribe value change, good/bad/status-only quality, read-time staleness, invalid node id diagnostic, prohibited/allow-listed write observed by fixture, untrusted-cert refusal, explicit dev-trust secure connect, reconnect after fixture restart, graceful shutdown; npm run contracts:generate from live server then npm run contracts:check (verified from http://127.0.0.1:7249); npm --prefix Fabrik3D/fabrik3d.client run type-check (pass), test (71 files, 300 passed), build (pass), test:visual (13/13); npm --prefix Fabrik3D/fabrik3d.hmi run type-check (pass), test (14 passed), build (pass), test:e2e (5/5); npm run audit (no vulnerable packages), npm run security:scan (623 files passed), docker compose -f Fabrik3D/compose.production.yaml config --quiet (OK); measurements on Intel i7-13620H: mirror 20,000 deterministic updates in 15 ms (1,298,853 updates/s, process CPU delta 16 ms), subscription burst 100 fixture updates -> 65 notifications/65 accepted/0 rejected at 50/100 ms sampling/publishing."
     },
     "S34": {
       "status": "planned"

@@ -18,5 +18,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fabrik3D.Server\Fabrik3D.ServerTaskManager.csproj" />
+    <ProjectReference Include="..\Fabrik3D.OpcUa.Fixture\Fabrik3D.OpcUa.Fixture.csproj" />
   </ItemGroup>
 </Project>

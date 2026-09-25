@@ -398,6 +398,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/connectors/opcua": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConnectorStatusDto"];
+                        "application/json": components["schemas"]["ConnectorStatusDto"];
+                        "text/json": components["schemas"]["ConnectorStatusDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Health": {
         parameters: {
             query?: never;
@@ -1338,6 +1375,30 @@ export interface components {
             job?: components["schemas"]["JobDto"];
             session?: components["schemas"]["SimulationSessionDto"];
             tasks?: components["schemas"]["TaskDto"][];
+        };
+        ConnectorStatusDto: {
+            connector?: string;
+            state?: string;
+            endpoint?: string | null;
+            lastError?: string | null;
+            /** Format: int32 */
+            reconnectCount?: number;
+            /** Format: int32 */
+            monitoredItemCount?: number;
+            /** Format: int64 */
+            notificationsReceived?: number;
+            /** Format: int64 */
+            updatesAccepted?: number;
+            /** Format: int64 */
+            updatesRejected?: number;
+            /** Format: int64 */
+            writeAttempts?: number;
+            /** Format: int64 */
+            writesAccepted?: number;
+            /** Format: int64 */
+            writesRejected?: number;
+            /** Format: date-time */
+            timestampUtc?: string;
         };
         CreateJobRequest: {
             name: string;

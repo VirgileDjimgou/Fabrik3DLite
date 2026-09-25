@@ -412,6 +412,35 @@
         }
       }
     },
+    "/api/connectors/opcua": {
+      "get": {
+        "tags": [
+          "Connectors"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Health": {
       "get": {
         "tags": [
@@ -1421,6 +1450,62 @@
             "items": {
               "$ref": "#/components/schemas/TaskDto"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConnectorStatusDto": {
+        "type": "object",
+        "properties": {
+          "connector": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "endpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastError": {
+            "type": "string",
+            "nullable": true
+          },
+          "reconnectCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "monitoredItemCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notificationsReceived": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatesAccepted": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatesRejected": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "writeAttempts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "writesAccepted": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "writesRejected": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "timestampUtc": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false

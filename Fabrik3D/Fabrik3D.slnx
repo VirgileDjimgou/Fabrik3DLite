@@ -20,6 +20,7 @@
     <Project Path="Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj" />
     <Project Path="Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj" />
     <Project Path="Fabrik3D.Infrastructure.IntegrationTests/Fabrik3D.Infrastructure.IntegrationTests.csproj" />
+    <Project Path="Fabrik3D.OpcUa.Fixture/Fabrik3D.OpcUa.Fixture.csproj" />
   </Folder>
   <Folder Name="/clients/">
     <Project Path="fabrik3d.client/fabrik3d.Simulator.esproj">
