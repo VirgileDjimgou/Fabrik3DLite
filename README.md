@@ -231,6 +231,19 @@ dotnet test Fabrik3D/Fabrik3D.slnx --no-build
 
 See [the testing guide](./docs/TESTING.md) for test layers, isolated MongoDB integration tests, and the connected E2E configuration.
 
+### Autonomous sprint batches (maintainers)
+
+`Start Next Sprint` (or `/start-next-sprint` in OpenCode) starts the bounded autopilot: up to **10** sprints implemented one at a time in fresh child sessions, each independently verified before the following sprint may start, with immediate stops for human gates, external blockers or unresolved failures.
+
+```powershell
+npm run sprint:batch:dry-run   # preview the sprints that would run; mutates nothing
+npm run sprint:batch:start     # launch the detached bounded batch
+npm run sprint:batch:status    # read-only progress, lock and human-gate state
+npm run sprint:batch:stop      # graceful stop after the current worker returns
+```
+
+The full contract, stop conditions and human-gate procedure are documented in [the sprint autopilot guide](./docs/roadmap/AUTOPILOT.md).
+
 ## Scope and boundaries
 
 - All educational fault, safety, and learning data are explicitly simulated.

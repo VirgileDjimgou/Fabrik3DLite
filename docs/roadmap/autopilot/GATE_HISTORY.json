@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "resolved": [
+    {
+      "schemaVersion": "1.0",
+      "batchId": "2026-09-25-012341",
+      "sprintId": null,
+      "reasonCode": "UNRELATED_DIRTY_WORKTREE",
+      "summary": "Uncommitted changes exist in the worktree and no sprint is active; the batch cannot safely tell sprint work from unrelated user work.",
+      "requiredHumanActions": [
+        "Review the listed paths and either commit, stash or discard them yourself. Never let the automation delete them.",
+        " M .github/copilot-instructions.md",
+        " M .github/prompts/start-next-sprint.prompt.md",
+        " M .gitignore",
+        " M .opencode/commands/start-next-sprint.md",
+        " M AGENTS.md",
+        " M README.md",
+        " M docs/roadmap/README.md",
+        " M package.json",
+        "?? .opencode/agents/sprint-worker.md",
+        "?? .opencode/commands/resolve-sprint-gate.md",
+        "Then run npm run sprint:batch:resume."
+      ],
+      "safeToResume": true,
+      "createdAt": "2026-09-25T01:23:41.411Z",
+      "resolutionNote": "Autopilot infrastructure baseline reviewed and committed by the controlling session on explicit user approval; worktree made clean before the batch starts.",
+      "resolvedAt": "2026-09-25T01:26:24.723Z"
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 ---
-description: Activate and implement the next Fabrik3D roadmap sprint
+description: Start or resume the bounded Fabrik3D autonomous sprint batch (maximum 10 completed sprints)
 agent: build
 ---
 
-Follow the repository rules in `AGENTS.md`. Run `npm run sprint:next` from the repository root, then read the generated `docs/roadmap/CURRENT_SPRINT.md`, `docs/roadmap/QUALITY_GATES.md`, and the referenced source brief.
+Start the bounded Fabrik3D sprint autopilot for this repository. Do **not** implement a product sprint yourself in this session.
 
-Implement only the active sprint. Inspect and preserve the existing implementation, add required tests, run applicable quality gates, and update affected documentation. Do not skip an active sprint, do not fabricate evidence, do not complete a sprint while a mandatory gate fails, and do not start the following sprint unless autonomous multi-sprint execution was explicitly authorized.
+1. Run `npm run sprint:batch:start` from the repository root. It validates preconditions and launches the detached batch orchestrator, then returns.
+2. Supervise with `npm run sprint:batch:watch`. Each call waits up to five minutes; re-run it until the printed status is terminal: `max_reached`, `roadmap_complete`, `completed`, `human_required`, `blocked_external`, `failed` or `stopped`.
+3. If `start` refuses to launch (unresolved `HUMAN_REQUIRED.json`, unfinished previous batch, live lock, clamps), print the refusal verbatim and the required action. Never bypass, delete or edit autopilot state manually.
+4. When the batch reaches a terminal state, run `npm run sprint:batch:status` and summarize the final batch report: batch id, completed count, completed sprints, stop reason, human gate (if any) and the next roadmap sprint.
 
-After all acceptance criteria pass, record completion with:
-
-`npm run sprint:complete -- --summary "concise implementation summary" --evidence "exact tests and builds executed"`
+Authoritative semantics live in `AGENTS.md` and `docs/roadmap/AUTOPILOT.md`. The repository batch orchestrator — not this session — activates each sprint, launches one fresh `sprint-worker` child session per sprint, verifies each sprint independently, and decides whether the following sprint may start. A maximum of 10 successful sprint completions is enforced by `scripts/sprint-batch-runner.mjs`, never by prompt text.

@@ -27,7 +27,15 @@
     "sprint:validate": "node scripts/sprint-runner.mjs validate",
     "sprint:next": "node scripts/sprint-runner.mjs start-next",
     "sprint:show": "node scripts/sprint-runner.mjs show",
-    "sprint:complete": "node scripts/sprint-runner.mjs complete"
+    "sprint:complete": "node scripts/sprint-runner.mjs complete",
+    "sprint:batch:start": "node scripts/sprint-batch-runner.mjs start",
+    "sprint:batch:resume": "node scripts/sprint-batch-runner.mjs resume",
+    "sprint:batch:status": "node scripts/sprint-batch-runner.mjs status",
+    "sprint:batch:watch": "node scripts/sprint-batch-runner.mjs watch",
+    "sprint:batch:stop": "node scripts/sprint-batch-runner.mjs stop",
+    "sprint:batch:resolve-gate": "node scripts/sprint-batch-runner.mjs resolve-gate",
+    "sprint:batch:dry-run": "node scripts/sprint-batch-runner.mjs dry-run",
+    "sprint:batch:test": "node --test \"scripts/tests/*.test.mjs\""
   },
   "devDependencies": {
     "openapi-typescript": "^7.13.0"

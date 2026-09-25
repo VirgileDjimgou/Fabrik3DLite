@@ -47,3 +47,11 @@ authorized_keys
 *.rar
 *.zip
 *.log
+
+# Fabrik3D sprint autopilot transient artifacts (durable state/gates stay tracked)
+docs/roadmap/autopilot/STOP
+docs/roadmap/autopilot/batch.lock
+docs/roadmap/autopilot/worker-result.json
+docs/roadmap/autopilot/logs/
+docs/roadmap/autopilot/test-scenario.json
+docs/roadmap/autopilot/test-invocations.log

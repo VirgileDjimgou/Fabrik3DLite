@@ -27,12 +27,23 @@ A sprint can only be marked complete when a summary and test evidence are suppli
 
 ## Autonomous multi-sprint mode
 
-By default exactly one sprint is active at a time and `sprint:next` never skips a sprint. Multiple sprints are only authorized when the user explicitly asks for autonomous execution through S50. Even then, each sprint is activated, implemented, tested, validated, documented and recorded independently; progression stops if a mandatory gate fails.
+`Start Next Sprint` now means the bounded autonomous batch: implement, test, validate and complete the current/next sprint, then continue sequentially for a **maximum of 10 successfully completed sprints**, stopping immediately for any genuine human gate, blocker or unresolved mandatory failure. Use:
+
+```powershell
+npm run sprint:batch:start
+npm run sprint:batch:watch
+npm run sprint:batch:status
+```
+
+The bounded orchestrator (`scripts/sprint-batch-runner.mjs`) activates each sprint through the existing `sprint-runner`, runs one fresh `sprint-worker` OpenCode child session per sprint, verifies each sprint independently, and is the only layer allowed to decide whether the following sprint starts. It never skips a sprint and never marks a failing sprint complete. `Start One Sprint` remains the atomic escape hatch for exactly one sprint.
+
+The complete contract, state machine, human gate, repair policy, queue usage and Windows examples are in [`AUTOPILOT.md`](AUTOPILOT.md).
 
 ## Human and AI-assisted modes
 
 - **Manual development:** run `npm run sprint:next`, read `CURRENT_SPRINT.md`, implement it, execute the gates, then mark it complete.
-- **AI-assisted development:** tell Codex, GitHub Copilot, or OpenCode `Start Next Sprint`. Repository instructions require the agent to activate and execute the same brief.
+- **AI-assisted single sprint:** tell Codex, GitHub Copilot, or OpenCode `Start One Sprint`. Repository instructions require the agent to activate and execute the same brief, then stop.
+- **Autonomous batch:** tell OpenCode `Start Next Sprint` (`/start-next-sprint`), or queue `/q /start-next-sprint` while it is busy. The batch orchestrator handles up to 10 sprints internally.
 - **Mixed development:** an agent can prepare implementation and tests while a human validates visual, educational, and industrial behavior before completion.
 
 The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific files only point to this common workflow.

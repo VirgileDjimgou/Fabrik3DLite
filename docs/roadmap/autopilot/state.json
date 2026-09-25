@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "batchId": null,
+  "status": "idle",
+  "requestedMaxSprints": 10,
+  "completedThisBatch": 0,
+  "startedAt": null,
+  "updatedAt": null,
+  "startSprint": null,
+  "currentSprint": null,
+  "lastCompletedSprint": null,
+  "stopReason": null,
+  "repairAttempts": 0,
+  "workerSessionId": null,
+  "lastEvidence": null,
+  "lastGreenCommit": null,
+  "expectedSprintId": null,
+  "pendingCompletedBefore": null,
+  "completedSprints": []
+}
