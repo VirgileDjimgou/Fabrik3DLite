@@ -1,4 +1,5 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Domain.Control;
 using Fabrik3D.Domain.Entities;
 
 namespace Fabrik3D.Domain.Mapping;
@@ -52,5 +53,26 @@ public static class EntityMapper
 
     public static CellTemplateDto ToDto(this CellTemplate e) => new(
         e.Id, e.Name, e.SchemaVersion, e.Content,
-        e.CreatedAtUtc, e.UpdatedAtUtc, e.Version);
+        e.CreatedAtUtc, e.UpdatedAtUtc, e.Version,
+        e.CreatedBy, e.UpdatedBy);
+
+    public static ControlAuthorityDto ToDto(this ControlAuthority e, bool isPersisted = true) => new(
+        e.Id,
+        ControlAuthorityRules.ToWire(e.Mode),
+        ControlAuthorityRules.ToWire(e.State),
+        e.OwnerId,
+        e.OwnerKind is { } kind ? ControlAuthorityRules.ToWire(kind) : null,
+        e.AcquiredAtUtc,
+        e.LeaseExpiresAtUtc,
+        e.LastHeartbeatUtc,
+        e.Version,
+        e.DegradedReason,
+        e.CorrelationId,
+        isPersisted,
+        null);
+
+    public static ControlAuthorityEventDto ToDto(this ControlAuthorityEvent e) => new(
+        e.Id, e.Scope, e.EventType, e.Mode, e.PreviousMode,
+        e.OwnerId, e.PreviousOwnerId, e.CorrelationId, e.Detail, e.TimestampUtc,
+        e.ActorId, e.ActorRole);
 }

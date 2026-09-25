@@ -68,6 +68,21 @@ export interface MachineStateChangedEvent {
   timestampUtc: string
 }
 
+export interface ControlAuthorityChangedEvent {
+  scope: string
+  mode: string
+  state: string
+  ownerId?: string | null
+  ownerKind?: string | null
+  previousMode?: string | null
+  previousOwnerId?: string | null
+  degradedReason?: string | null
+  leaseExpiresAtUtc?: string | null
+  eventType: string
+  timestampUtc: string
+  correlationId?: string | null
+}
+
 export const orchestrationHubEvents = [
   'JobStateChanged',
   'SimulationStateChanged',
@@ -76,6 +91,7 @@ export const orchestrationHubEvents = [
   'AlarmAcknowledged',
   'OperatorMessage',
   'MachineStateChanged',
+  'ControlAuthorityChanged',
 ] as const
 
 export type OrchestrationHubEventName = (typeof orchestrationHubEvents)[number]

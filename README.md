@@ -23,7 +23,7 @@ The public demonstration runs the complete Docker stack simulator, operator HMI,
 
 - This is a shared public training environment: jobs, simulated machine state, and learning data may be changed or reset by other visitors.
 - Every robot, CNC, alarm, safety condition, and production signal is simulated; the hosted demo is not connected to physical equipment.
-- OPC UA and MQTT integrations are disabled in the public deployment. No command is sent to an industrial controller.
+- OPC UA, MQTT and Modbus TCP integrations are implemented but disabled in the public deployment. No command is sent to an industrial controller.
 - Availability is best-effort. The instance can be restarted or updated without notice during maintenance and development.
 
 ### Product walkthrough
@@ -42,14 +42,46 @@ _The walkthrough covers a completed scenario, CNC fault recovery, cell editing, 
 - Selectable compact, medium, and heavy generic six-axis robot profiles with reach, payload, joint-limit, tool-compatibility, kinematic, and safety data.
 - Deterministic FK/IK-oriented kinematics, SI units, cell/work-object frames, reachability checks, collision primitives, and swept-path checks.
 - A training fault lab with typed simulated faults, acknowledgement/reset/retry rules, ordered timeline, deterministic replay, and local learning reports.
+- Advanced signal/equipment fault injection (S38): deterministic, seeded overlays (forced/frozen/inverted/delayed/noisy/drifting/intermittent/disconnected/degraded, plus actuator jam/slow, motor overload, vacuum loss, sensor contamination, communications loss) that propagate through the I/O chain, never mutate canonical signal definitions, and are authority-gated so they can never write to a connector.
+
+#### CNC reference-cell walkthrough
+
+The `cnc-machine-tending` preset is the flagship, deep reference cell. Its complete
+flow is deterministic and signal-driven:
+
+1. **Pallet feed** — the conveyor brings a raw-material pallet to the work
+   position; the infeed and station photoeyes, encoder count and raw/machined slot
+   counts are published as signals.
+2. **Robot load** — the pallet workflow picks a raw part, approaches the CNC and
+   inserts it. Gripper open/closed, payload, dwell and workflow-step signals track
+   the motion.
+3. **CNC cycle** — a deterministic cycle machine runs door close → fixture clamp →
+   spindle spin-up → feed (coolant on) → spindle spin-down → unclamp → door open.
+   `cnc-1.CycleStep`, `SpindleSpeed`, `SpindleAtSpeed`, `FeedActive`, `CoolantOn`,
+   `FixtureClamped`, `PartPresent`, `DoorLocked` report the exact state the visuals
+   render.
+4. **Part return** — the robot retrieves the machined part and returns it to the
+   same pallet slot; the slot transitions raw → in-process → machined.
+5. **Abnormal conditions** — jams, blocked sensors, door/spindle faults, vacuum
+   loss and communications loss are injected through the S38 fault lab, propagate
+   through the signals, refuse unsafe commands, and recover deterministically when
+   the overlay is cleared. The simulated E-stop aborts the cycle and only resets
+   once the light curtain and scanner are clear and the gate is closed.
+
+Every state-bearing CNC visual maps to a runtime state/signal
+(`equipment/visuals/referenceCellVisualMap.ts`), and the geometry, disposal and
+cycle determinism budgets are covered by tests. Measured geometry budgets and
+the reference-cell performance notes are in
+[3D_ASSETS.md](./docs/architecture/3D_ASSETS.md).
 
 ### Industrial signal foundation
 
 - A versioned, protocol-independent signal model (schema `1.0`) with typed values, engineering units, direction semantics, quality, update origin, source arbitration, range/enum validation and read-time staleness.
 - A deterministic `SignalRegistry` with stable ids, discovery by equipment and equipment-SDK integration through optional signal declarations.
-- A signal-driven CNC reference cell: 43 vendor-neutral signals across robot, CNC, conveyor and safety equipment, bound to the actual runtime. Command signals (Start/Stop/Reset, door, cycle start, conveyor run/speed, safety reset) drive the same workflow, CNC, conveyor and interlock paths as the operator controls, and status signals are derived from real state each frame.
+- A signal-driven CNC reference cell: 54 vendor-neutral signals across robot, CNC, conveyor and safety equipment, bound to the actual runtime. Command signals (Start/Stop/Reset, door, cycle start, conveyor run/speed, safety reset) drive the same workflow, CNC, conveyor and interlock paths as the operator controls, and status signals are derived from real state each frame.
 - An engineering I/O signal inspector (`?view=signals` or the expert dock panel) with filters, live quality/source/timestamp and binding-coverage diagnostics.
-- Deterministic snapshot serialization, schema-version validation and a documented migration mechanism. The server-side C# mirror (schema `1.0`) backs the real OPC UA transport; MQTT (S34) and Modbus (S35) transports remain planned and are not implemented yet.
+- A signal mapping studio (`?view=mapping-studio`, engineering mode only) that connects internal signals to OPC UA / MQTT / Modbus targets: versioned `1.0` mapping files, deterministic serialization, import/export, legacy migration, row-level validation, conflict detection, an explicit all-or-nothing apply, and a live signal monitor. Mapping files are data only and never bypass connector write policy. See [Signal mapping studio](./docs/architecture/SIGNAL_MAPPING_STUDIO.md).
+- Deterministic snapshot serialization, schema-version validation and a documented migration mechanism. The server-side C# mirror (schema `1.0`) backs the real OPC UA, MQTT and Modbus TCP transports; samples carry an optional control-authority scope/mode context (S36).
 
 ### Cell authoring
 
@@ -65,8 +97,14 @@ _The walkthrough covers a completed scenario, CNC fault recovery, cell editing, 
 - Job, task, session, machine-state, alarm, message, and cell-template APIs.
 - Heartbeat monitoring and faulted-session recovery.
 - Separate, multilingual operator HMI (English, French, German) for jobs, active execution, alarms, messages, operating modes, and settings.
-- Optional OPC UA and MQTT boundaries, kept outside core domain behavior and disabled by default.
-- Real OPC UA client transport (S33, implemented): session/subscription lifecycle, bounded-backoff reconnect, explicit certificate trust (development auto-accept is opt-in and warned), monitored items from an explicit node map, quality/timestamp mapping into the protocol-free signal mirror, fail-closed write policy (`AllowWrites` + exact allow-list + writable signal), health/diagnostics counters and `GET /api/connectors/opcua`. Aligned with selected OPC UA concepts; not IEC 62541 certified. MQTT remains disabled stub work for S34.
+- Optional OPC UA, MQTT and Modbus TCP boundaries, kept outside core domain behavior and disabled by default.
+- Real OPC UA client transport (S33, implemented): session/subscription lifecycle, bounded-backoff reconnect, explicit certificate trust (development auto-accept is opt-in and warned), monitored items from an explicit node map, quality/timestamp mapping into the protocol-free signal mirror, fail-closed write policy (`AllowWrites` + exact allow-list + writable signal), health/diagnostics counters and `GET /api/connectors/opcua`. Aligned with selected OPC UA concepts; not IEC 62541 certified.
+- Real MQTT client transport (S34, implemented with MQTTnet 4.3.7.1207; MQTT 5 by default with a documented 3.1.1 fallback): disabled by default, bounded-backoff reconnect, declared telemetry/command subscriptions, explicit QoS and retained-message policy, session expiry and Last Will, versioned payload validation with `source`/`quality`/`cellId`/`sessionId`/`correlationId`, mapping into the signal mirror as `observed`, fail-closed command allow-list, health/diagnostics counters and `GET /api/connectors/mqtt`. A retained telemetry value without a fresh valid timestamp is only ever surfaced as historical stale state. Verified with an automated Mosquitto Docker fixture; MQTT is an integration boundary and never the internal orchestration bus.
+- Real Modbus TCP client transport (S35, implemented): a small self-contained Modbus TCP client based on the public specification, disabled by default, polling coils, discrete inputs, input registers and holding registers into the signal mirror with explicit address convention, unit id, data width, byte order, word order, bit index, scaling, signedness and direction. No byte order is ever guessed; mapping validation rejects ambiguous endianness, invalid widths, addresses, scales and unsafe overlaps. Bounded-backoff reconnect, illegal-address and timeout accounting, fail-closed writes (`AllowWrites` + writable point + exact allow-list), health/diagnostics counters and `GET /api/connectors/modbus`. Verified with an automated in-process Modbus TCP fixture (`Fabrik3D.Modbus.Fixture`, no Docker). Based on the public Modbus TCP specification; not conformance-certified. A Fabrik3D-side Modbus server/slave endpoint is deliberately out of scope.
+- Explicit control authority and arbitration (S36, implemented): modes `local-simulation`, `external-controller`, `observed-twin` and `replay`; exactly one authority per equipment/actuator scope; explicit, precondition-checked, quiesced and audited handover; lease heartbeat with a documented degraded mode that never silently reverts to another authority. REST under `/api/control-authority` and the `ControlAuthorityChanged` SignalR event; continuously visible EN/FR/DE authority indicator in the HMI; the simulator cannot command actuators without authority and replay can never command. Verified end-to-end with the in-process Modbus fixture driving a virtual actuator and sensor in a closed loop. This is a training/VC arbitration mechanism, not a certified safety authority.
+- Bounded telemetry and event historian (S40, implemented): durable, versioned `telemetrySamples` and `historizedEvents` documents with source, quality, timestamp and correlation id; conservative per-signal sampling (on-change/periodic/deadband); validated, rate-limited batch ingestion (`POST /api/historian/telemetry|events`); read-only filtered, paginated, deterministic queries (`GET /api/historian/telemetry|events|status`); intentional indexes; age/count retention with a background pruner. Disabled by default and fully additive: a disabled or failing historian never breaks live orchestration, and there is no command path from history. Measured on the sprint workstation: 20,000 samples ingested at ~24,000 samples/s, representative query p95 18 ms, ≈270 bytes/sample. See [`docs/architecture/TELEMETRY_HISTORIAN.md`](./docs/architecture/TELEMETRY_HISTORIAN.md).
+- Deterministic industrial time travel (S41, implemented): a framework-independent reconstruction engine folds the local timeline or an S40 historian window into a versioned, read-only cell snapshot at a selected time — robot joints/pose (exact, interpolated or held, reported explicitly), CNC sub-state, equipment, material/pallet/slot, signals, alarms, fault overlays, job/session and control-authority state. A replay controller provides play/pause/step/jump-to-event/speed/timeline markers with frame-rate-independent stepping, and a hard code-level isolation gate blocks every OPC UA/MQTT/Modbus write and authority acquisition while replaying. An engineering/instructor surface (`?view=time-travel`) shows unmistakable LIVE/SIMULATION/REPLAY mode indication, a scrubber, event markers and reconstructed state panels; the operator HMI is unchanged. See [`docs/architecture/TIME_TRAVEL.md`](./docs/architecture/TIME_TRAVEL.md).
+- Authentication, identity and RBAC (S42, implemented): every mutating REST endpoint and SignalR hub method is enforced server-side through ASP.NET Core JWT bearer authentication and named policies (`Read`, `Operate`, `Engineer`, `Instruct`, `Admin`) over the roles Learner, Instructor, Engineer, Operator and Administrator (plus an opt-in read-only PublicDemo). Production uses a standards-oriented OIDC provider; CI/local use a clearly-labelled, rate-limited `Test`/`Development` identity mode that the server refuses to start with in Production. Audit records carry the authenticated subject, tokens are never placed in URLs or logs, CORS is explicit-origin outside Production, response security headers are applied, and the HMI/simulator login surfaces return to explicit re-authentication on `401` instead of silently degrading to anonymous. The former `CellTemplateAuthorizationPlaceholder` (`X-Operator-Id`) is removed. See [`docs/architecture/IDENTITY_AND_RBAC.md`](./docs/architecture/IDENTITY_AND_RBAC.md).
 
 ## Operator HMI
 
@@ -115,6 +153,7 @@ flowchart LR
     Server --> Mongo[(MongoDB)]
     OpcUa["OPC UA (optional)"] -. telemetry .-> Server
     Mqtt["MQTT (optional)"] -. telemetry .-> Server
+    Modbus["Modbus TCP (optional)"] -. telemetry .-> Server
 ```
 
 The server is the orchestration source of truth. In connected mode, a simulator claims a server-side job and reports its state through the shared contracts. If no job is claimed, the simulator explicitly identifies the run as local and never writes simulated execution state to the server.
@@ -251,17 +290,28 @@ The full contract, stop conditions and human-gate procedure are documented in [t
 - Safety visuals and motion guards are engineering/teaching aids, not certified safety functions.
 - Robot profiles are vendor-neutral generic profiles, not exact OEM models.
 - Replay is read-only: replayed telemetry cannot issue commands to a connector.
-- OPC UA and MQTT writes remain disabled unless deliberately enabled and allow-listed in local configuration.
+- OPC UA, MQTT and Modbus TCP writes remain disabled unless deliberately enabled and allow-listed in local configuration.
+- Control authority (S36) is an explicit, audited arbitration mechanism for training and virtual commissioning, not a certified safety function; an external controller that loses its lease degrades safely and never silently reverts to another authority.
+- The `Development`/`Test` authentication modes exist for local development, CI and the clearly-labelled public demo. They are refused in Production, where an external OIDC provider must be configured; no configuration silently accepts anonymous mutations in Production.
 
 ## Further documentation
 
 - [Orchestration and traceability](./docs/architecture/ORCHESTRATION.md)
+- [Identity, authentication and RBAC](./docs/architecture/IDENTITY_AND_RBAC.md)
+- [Control authority and arbitration](./docs/architecture/CONTROL_AUTHORITY.md)
 - [Industrial signal core](./docs/architecture/INDUSTRIAL_SIGNAL_CORE.md)
 - [Reference cell signal catalog](./docs/architecture/REFERENCE_SIGNAL_CATALOG.md)
 - [Kinematics and frames](./docs/architecture/KINEMATICS_AND_FRAMES.md)
 - [Cell files and editor boundaries](./docs/architecture/CELL_FILES.md)
 - [Faults, timeline, and replay](./docs/architecture/FAULTS_TIMELINE_REPLAY.md)
+- [Instructor fault lab](./docs/architecture/FAULT_LAB.md)
 - [Digital-twin telemetry](./docs/architecture/DIGITAL_TWIN_TELEMETRY.md)
+- [Telemetry and event historian](./docs/architecture/TELEMETRY_HISTORIAN.md)
+- [Deterministic industrial time travel](./docs/architecture/TIME_TRAVEL.md)
+- [Optional OPC UA adapter](./docs/architecture/OPC_UA_ADAPTER.md)
+- [MQTT transport](./docs/architecture/MQTT_SHOWCASE.md)
+- [Modbus TCP adapter](./docs/architecture/MODBUS_TCP_ADAPTER.md)
+- [Signal mapping studio](./docs/architecture/SIGNAL_MAPPING_STUDIO.md)
 - [Predefined industrial scenes](./docs/architecture/PREDEFINED_INDUSTRIAL_SCENES.md)
 - [HMI design system](./docs/architecture/HMI_DESIGN_SYSTEM.md)
 - [Roadmap](./docs/roadmap/README.md)

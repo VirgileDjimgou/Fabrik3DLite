@@ -15,7 +15,7 @@
     <div class="col-lg-4 col-md-6 col-sm-6">
       <HmiTileButton icon="bi-card-list" :label="t('tiles.jobList')" to="/jobs" />
     </div>
-    <div class="col-lg-4 col-md-6 col-sm-6">
+    <div v-if="operator" class="col-lg-4 col-md-6 col-sm-6">
       <HmiTileButton icon="bi-plus-square" :label="t('tiles.newJob')" to="/new-job" />
     </div>
     <div class="col-lg-4 col-md-6 col-sm-6">
@@ -31,9 +31,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HmiTileButton from '@/components/controls/HmiTileButton.vue'
+import { canOperate } from '@/auth/authStore'
 
 const { t } = useI18n()
+const operator = computed(() => canOperate())
 
 </script>

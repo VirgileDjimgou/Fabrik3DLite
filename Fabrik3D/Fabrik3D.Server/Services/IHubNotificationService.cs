@@ -14,4 +14,5 @@ public interface IHubNotificationService
     Task AlarmAcknowledgedAsync(AlarmAcknowledgedEvent evt);
     Task OperatorMessageAsync(OperatorMessageEvent evt);
     Task MachineStateChangedAsync(MachineStateChangedEvent evt);
+    Task ControlAuthorityChangedAsync(ControlAuthorityChangedEvent evt);
 }

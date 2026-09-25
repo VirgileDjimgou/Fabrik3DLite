@@ -7,6 +7,9 @@ import CellEditorPage from './components/CellEditorPage.vue'
 import ScenarioLab from './components/ScenarioLab.vue'
 import SceneSelectorPanelPage from './components/SceneSelectorPanelPage.vue'
 import SignalsPage from './components/SignalsPage.vue'
+import MappingStudioPage from './components/MappingStudioPage.vue'
+import FaultLabPage from './components/FaultLabPage.vue'
+import TimeTravelPage from './components/TimeTravelPage.vue'
 
 // Lightweight, WebGL-free entries used by visual regression and e2e tests
 // to exercise the robot selection, cell editor, and scenario UIs deterministically.
@@ -17,6 +20,9 @@ const root = view === 'robot-catalog' ? RobotCatalogPanelPage
   : view === 'scenario' ? ScenarioLab
   : view === 'scene-presets' ? SceneSelectorPanelPage
   : view === 'signals' ? SignalsPage
+  : view === 'mapping-studio' ? MappingStudioPage
+  : view === 'fault-lab' ? FaultLabPage
+  : view === 'time-travel' ? TimeTravelPage
   : App
 
 createApp(root).mount('#app')

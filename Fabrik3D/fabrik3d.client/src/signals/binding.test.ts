@@ -123,8 +123,8 @@ function createHarness() {
 describe('ReferenceCellSignalBinding catalog', () => {
   it('binds every declared reference-cell signal with no coverage gap', () => {
     const { registry, binding } = createHarness()
-    expect(registry.getAllDefinitions()).toHaveLength(43)
-    expect(binding.catalogSize).toBe(43)
+    expect(registry.getAllDefinitions()).toHaveLength(54)
+    expect(binding.catalogSize).toBe(54)
     expect(binding.coverageDiagnostics()).toEqual([])
     expect(binding.commandSignalIds).toEqual([
       'cnc-1.CycleStart', 'cnc-1.DoorCommand', 'conveyor-1.RunCommand', 'conveyor-1.SpeedReference',
@@ -307,7 +307,7 @@ describe('ReferenceCellSignalBinding lifecycle and performance', () => {
     }
     const elapsedMs = Date.now() - started
     const averageMs = elapsedMs / ticks
-    console.info(`[signal-binding-benchmark] ${ticks} ticks over 43 signals in ${elapsedMs} ms (avg ${averageMs.toFixed(4)} ms)`)
+    console.info(`[signal-binding-benchmark] ${ticks} ticks over 54 signals in ${elapsedMs} ms (avg ${averageMs.toFixed(4)} ms)`)
     expect(averageMs).toBeLessThan(1)
   })
 })

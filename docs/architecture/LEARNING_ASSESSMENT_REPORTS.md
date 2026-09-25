@@ -16,6 +16,8 @@ The default assessment is transparent and configurable in `src/learning/assessme
 
 Each report includes the observed evidence for every criterion, so a learner can see why it passed or did not pass. A no-fault run receives the recovery criterion because no recovery was required.
 
+S38 overlay faults are recorded on the same timeline: an activation is an `alarm` entry and a clear is a `fault-action`. The existing recovery criterion therefore also counts an instructor-injected overlay that was observed and cleared, while replay reconstructs active overlay state read-only. See [FAULTS_TIMELINE_REPLAY.md](FAULTS_TIMELINE_REPLAY.md).
+
 ## Instructor mode and limitations
 
 Instructor mode exposes a scenario reset and an expected-versus-observed command comparison. It is a local UI boundary only: this application has no user identity provider yet, so it must not be treated as access control. When identity support is introduced, the reset command must be authorized server-side.

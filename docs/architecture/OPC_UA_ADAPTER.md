@@ -1,6 +1,6 @@
 # Optional OPC UA adapter
 
-Status: **implemented** (S33). The OPC UA boundary is an infrastructure adapter, disabled by default, that speaks a real OPC UA client transport. It is aligned with selected OPC UA concepts; it does **not** claim IEC 62541 certification or vendor compatibility. MQTT (S34) and Modbus (S35) are still **planned**; nothing in this document applies to them.
+Status: **implemented** (S33). The OPC UA boundary is an infrastructure adapter, disabled by default, that speaks a real OPC UA client transport. It is aligned with selected OPC UA concepts; it does **not** claim IEC 62541 certification or vendor compatibility. MQTT (S34) and Modbus TCP (S35) are now also implemented as separate optional adapters; this document only describes the OPC UA adapter.
 
 The educational sample namespace `ns=2;s=Fabrik3D/{Equipment}/{Field}` remains the example mapping. Protocol node ids are configuration data and never leave this adapter: values are translated into the protocol-independent signal mirror before the Domain or Server can see them.
 
@@ -111,8 +111,11 @@ Recorded measurements (2026-09-25, local Windows/NET 8 CI-class machine):
 
 ## Limitations and deliberate deferrals
 
-- No control-authority arbitration or external-controller mode (S36); writes are operator/server-initiated only.
-- No mapping studio or live monitor UI (S37).
+- No control-authority arbitration or external-controller mode is provided by this adapter (S36);
+  writes are operator/server-initiated only.
+- The mapping studio and live monitor arrive with S37 (see
+  [`SIGNAL_MAPPING_STUDIO.md`](./SIGNAL_MAPPING_STUDIO.md)); the adapter still consumes an
+  explicit node map and never infers wire details.
 - The mirror is in-memory; persistence, retention and history are S40/S41.
 - One endpoint per connector instance; no redundancy or load balancing.
 - User identity supports anonymous or username/password; token/certificate user identities are not implemented.

@@ -13,10 +13,19 @@ public class OrchestrationOptions
     /// <summary>How often the heartbeat monitor scans for stale sessions.</summary>
     public int HeartbeatCheckIntervalSeconds { get; set; } = 5;
 
+    /// <summary>Lease requested for an external control authority when the caller does not specify one.</summary>
+    public int AuthorityLeaseSeconds { get; set; } = 30;
+
     /// <summary>
-    /// Authorization placeholder for cell template writes. When enabled,
-    /// mutations require an <c>X-Operator-Id</c> header. Defaults to off
-    /// because the orchestrator has no real identity provider yet.
+    /// A takeover always requires an explicit confirmation. When a confirmation token is configured
+    /// below it must also match. Identity and role authorization for the takeover are enforced by
+    /// the Engineer policy (S42); this remains a defence-in-depth confirmation boundary.
     /// </summary>
-    public bool RequireCellTemplateAuth { get; set; }
+    public bool RequireAuthorityConfirmation { get; set; } = true;
+
+    /// <summary>
+    /// Optional shared confirmation token for authority takeover. Left empty by default so no secret
+    /// is committed; when set it must be supplied by the operator performing the takeover.
+    /// </summary>
+    public string? AuthorityConfirmationToken { get; set; }
 }

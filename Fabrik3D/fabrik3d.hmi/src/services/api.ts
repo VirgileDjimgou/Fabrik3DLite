@@ -1,21 +1,34 @@
 import { OrchestratorApiError } from '@fabrik3d/contracts'
+import { getAccessToken, notifyUnauthorized } from '@/auth/authStore'
 import type {
+  AcquireControlAuthorityRequest,
   AlarmDto,
+  ControlAuthorityDto,
+  ControlAuthorityEventDto,
   CreateJobRequest,
+  HeartbeatControlAuthorityRequest,
   JobDto,
   MachineStateDto,
   OperatorMessageDto,
+  ReleaseControlAuthorityRequest,
   SimulationSessionDto,
+  TakeoverControlAuthorityRequest,
   TaskDto,
 } from '@fabrik3d/contracts'
 
 export type {
+  AcquireControlAuthorityRequest,
   AlarmDto,
+  ControlAuthorityDto,
+  ControlAuthorityEventDto,
   CreateJobRequest,
+  HeartbeatControlAuthorityRequest,
   JobDto,
   MachineStateDto,
   OperatorMessageDto,
+  ReleaseControlAuthorityRequest,
   SimulationSessionDto,
+  TakeoverControlAuthorityRequest,
   TaskDto,
 } from '@fabrik3d/contracts'
 
@@ -23,11 +36,19 @@ const ORCHESTRATOR_BASE = import.meta.env.VITE_ORCHESTRATOR_URL as string | unde
 const BASE = ORCHESTRATOR_BASE ? `${ORCHESTRATOR_BASE.replace(/\/+$/, '')}/api` : '/api'
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const bearer = getAccessToken()
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers: {
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   })
+  if (res.status === 401 && bearer) {
+    // Explicit re-auth instead of a silent anonymous retry.
+    notifyUnauthorized()
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '')
     let payload: unknown
@@ -70,6 +91,21 @@ export const transitionAlarm = (id: string, state: string, by = 'operator') =>
 // ── Messages ──
 export const getMessages = (limit = 100) =>
   request<OperatorMessageDto[]>('GET', `/messages?limit=${limit}`)
+
+// ── Control authority (S36) ──
+export const getControlAuthority = (scope: string) =>
+  request<ControlAuthorityDto>('GET', `/control-authority/${encodeURIComponent(scope)}`)
+export const acquireControlAuthority = (scope: string, req: AcquireControlAuthorityRequest) =>
+  request<ControlAuthorityDto>('POST', `/control-authority/${encodeURIComponent(scope)}/acquire`, req)
+export const releaseControlAuthority = (scope: string, req: ReleaseControlAuthorityRequest) =>
+  request<ControlAuthorityDto>('POST', `/control-authority/${encodeURIComponent(scope)}/release`, req)
+export const takeoverControlAuthority = (scope: string, req: TakeoverControlAuthorityRequest) =>
+  request<ControlAuthorityDto>('POST', `/control-authority/${encodeURIComponent(scope)}/takeover`, req)
+export const heartbeatControlAuthority = (scope: string, req: HeartbeatControlAuthorityRequest) =>
+  request<ControlAuthorityDto>('POST', `/control-authority/${encodeURIComponent(scope)}/heartbeat`, req)
+export const getControlAuthorityAudit = (scope: string, limit = 50) =>
+  request<ControlAuthorityEventDto[]>(
+    'GET', `/control-authority/${encodeURIComponent(scope)}/audit?limit=${limit}`)
 
 // ── Health ──
 export const getHealth = () =>

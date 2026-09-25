@@ -2,56 +2,9 @@ using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Infrastructure.Repositories;
 using Fabrik3D.Server.Exceptions;
 using Fabrik3D.Server.Services;
-using Fabrik3D.Server.Settings;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 
 namespace Fabrik3D.Server.Tests;
-
-public class CellTemplateAuthorizationTests
-{
-    private const string ValidContent = """
-        {
-          "schemaVersion": "1.0",
-          "id": "cell-1",
-          "name": "Cell",
-          "worldFrameId": "world",
-          "equipment": []
-        }
-        """;
-
-    private static HttpContext ContextWithOperatorId(string? operatorId)
-    {
-        var context = new DefaultHttpContext();
-        if (operatorId is not null) context.Request.Headers["X-Operator-Id"] = operatorId;
-        return context;
-    }
-
-    [Fact]
-    public void Writes_are_allowed_when_authorization_is_disabled()
-    {
-        var placeholder = new CellTemplateAuthorizationPlaceholder(
-            Options.Create(new OrchestrationOptions { RequireCellTemplateAuth = false }));
-
-        Assert.True(placeholder.IsWriteAllowed(ContextWithOperatorId(null), out var reason));
-        Assert.Null(reason);
-    }
-
-    [Fact]
-    public void Writes_require_an_operator_header_when_authorization_is_enabled()
-    {
-        var placeholder = new CellTemplateAuthorizationPlaceholder(
-            Options.Create(new OrchestrationOptions { RequireCellTemplateAuth = true }));
-
-        Assert.False(placeholder.IsWriteAllowed(ContextWithOperatorId(null), out var reason));
-        Assert.NotNull(reason);
-        Assert.Contains("X-Operator-Id", reason);
-
-        Assert.True(placeholder.IsWriteAllowed(ContextWithOperatorId("operator-1"), out var okReason));
-        Assert.Null(okReason);
-    }
-}
 
 [Collection(OrchestrationCollection.Name)]
 public class CellTemplateServiceTests
@@ -79,10 +32,11 @@ public class CellTemplateServiceTests
     public async Task Create_get_update_delete_round_trip_preserves_content_and_metadata()
     {
         var service = Service();
-        var created = await service.CreateAsync(new SaveCellTemplateRequest { Name = "Demo cell", Content = ValidContent });
+        var created = await service.CreateAsync(new SaveCellTemplateRequest { Name = "Demo cell", Content = ValidContent }, "engineer-1");
 
         Assert.Equal("1.0", created.SchemaVersion);
         Assert.Equal(ValidContent, created.Content);
+        Assert.Equal("engineer-1", created.CreatedBy);
 
         var fetched = await service.GetByIdAsync(created.Id);
         Assert.NotNull(fetched);
@@ -90,13 +44,25 @@ public class CellTemplateServiceTests
         Assert.Equal(created.Id, fetched.Id);
         Assert.Equal(ValidContent, fetched.Content);
 
-        var updated = await service.UpdateAsync(created.Id, new SaveCellTemplateRequest { Name = "Demo cell v2", Content = ValidContent });
+        var updated = await service.UpdateAsync(created.Id, new SaveCellTemplateRequest { Name = "Demo cell v2", Content = ValidContent }, "engineer-2");
         Assert.NotNull(updated);
         Assert.Equal("Demo cell v2", updated.Name);
         Assert.Equal(created.Version + 1, updated.Version);
+        Assert.Equal("engineer-1", updated.CreatedBy);
+        Assert.Equal("engineer-2", updated.UpdatedBy);
 
         Assert.True(await service.DeleteAsync(created.Id));
         Assert.Null(await service.GetByIdAsync(created.Id));
+    }
+
+    [Fact]
+    public async Task Anonymous_actor_is_not_recorded_as_an_identity()
+    {
+        var service = Service();
+        var created = await service.CreateAsync(new SaveCellTemplateRequest { Name = "No actor", Content = ValidContent });
+
+        Assert.Null(created.CreatedBy);
+        Assert.Null(created.UpdatedBy);
     }
 
     [Fact]

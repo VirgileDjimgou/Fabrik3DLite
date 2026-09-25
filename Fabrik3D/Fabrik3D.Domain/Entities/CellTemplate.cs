@@ -25,4 +25,10 @@ public class CellTemplate
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public int Version { get; set; }
+
+    /// <summary>Authenticated subject that created the template (S42 audit identity).</summary>
+    public string? CreatedBy { get; set; }
+
+    /// <summary>Authenticated subject that last updated the template (S42 audit identity).</summary>
+    public string? UpdatedBy { get; set; }
 }

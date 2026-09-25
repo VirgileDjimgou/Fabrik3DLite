@@ -1,10 +1,12 @@
 using Fabrik3D.Contracts.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fabrik3D.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[AllowAnonymous]
 public class HealthController : ControllerBase
 {
     /// <summary>Basic health check.</summary>

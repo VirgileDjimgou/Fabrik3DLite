@@ -15,7 +15,7 @@ for (const size of TARGET_SIZES) {
     await page.goto('/?view=signals')
 
     await expect(page.locator('[data-signal-inspector]')).toBeVisible()
-    await expect(page.locator('[data-signal-row]')).toHaveCount(43)
+    await expect(page.locator('[data-signal-row]')).toHaveCount(54)
     await expect(page.locator('[data-signal-value="cnc-1.SpindleSpeed"]')).toHaveText('8000')
 
     await expect(page).toHaveScreenshot(`signal-inspector-${size.name}.png`)

@@ -92,6 +92,15 @@ An update is rejected when:
 
 Rejected updates never mutate the stored sample.
 
+### Authority context (S36)
+
+Source arbitration decides *which value wins* for a signal. Control authority decides *who may drive
+an actuator*; it is a separate concern documented in
+[`CONTROL_AUTHORITY.md`](./CONTROL_AUTHORITY.md). When a value is produced under an authority (for
+example the external-controller closed loop), the sample carries an optional `authorityScope` and
+`authorityMode` so a trace can be correlated to the authority that allowed it. The C# mirror stores
+the same optional fields. Authority never changes the source priority rules above.
+
 ## Determinism guarantees
 
 - Registration, definition listings and snapshots are stable-sorted by signal id.
@@ -145,7 +154,7 @@ The complete signal table, drivers, units and routing are documented in [REFEREN
 
 - **S33 (done)** introduced the first real transport (OPC UA) and mirrored this schema in C#: `Fabrik3D.Domain/Signals/IndustrialSignal.cs`, `Fabrik3D.Infrastructure/Signals/SignalMirrorStore.cs` and the OPC UA adapter described in [OPC_UA_ADAPTER.md](OPC_UA_ADAPTER.md). The C# mirror references this document, uses the same wire names/reason codes and is covered by drift tests; the schema documented here remains the contract of record.
 - **S34/S35** map MQTT and Modbus onto the same mirror.
-- **S38** applies fault overlays on top of canonical definitions without modifying them.
+- **S38** applies fault overlays on top of canonical definitions without modifying them. `ReferenceCellSignalBinding` accepts an optional `SignalOverlayHook`; `tick()` applies the overlay chain to the value on its way out, and the canonical definition and stored sample stay untouched so removing an overlay restores the exact pre-fault value/quality. Overlays carry a deterministic seed for noise/intermittent/drift patterns. See [FAULTS_TIMELINE_REPLAY.md](FAULTS_TIMELINE_REPLAY.md) and [FAULT_LAB.md](FAULT_LAB.md).
 - **S40/S41** historize and reconstruct samples through this model.
 
 ## Decision record (ADR summary)

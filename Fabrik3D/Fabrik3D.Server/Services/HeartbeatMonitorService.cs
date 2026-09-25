@@ -21,6 +21,7 @@ public class HeartbeatMonitorService : BackgroundService
     private readonly SimulationSessionRepository _sessions;
     private readonly IHubNotificationService _hub;
     private readonly ILogger<HeartbeatMonitorService> _log;
+    private readonly ControlAuthorityService? _authority;
     private readonly TimeSpan _timeout;
     private readonly TimeSpan _checkInterval;
 
@@ -28,11 +29,13 @@ public class HeartbeatMonitorService : BackgroundService
         SimulationSessionRepository sessions,
         IHubNotificationService hub,
         ILogger<HeartbeatMonitorService> log,
-        IOptions<OrchestrationOptions> options)
+        IOptions<OrchestrationOptions> options,
+        ControlAuthorityService? authority = null)
     {
         _sessions = sessions;
         _hub = hub;
         _log = log;
+        _authority = authority;
         _timeout = TimeSpan.FromSeconds(Math.Max(1, options.Value.HeartbeatTimeoutSeconds));
         _checkInterval = TimeSpan.FromSeconds(Math.Max(1, options.Value.HeartbeatCheckIntervalSeconds));
     }
@@ -72,6 +75,13 @@ public class HeartbeatMonitorService : BackgroundService
                 session.Id, session.JobId, session.Status.ToString(),
                 session.CurrentPhase, session.MachinedCount,
                 session.RemainingCount, session.TotalCount, now));
+        }
+
+        // The same monitor also owns controller lease expiry so there is a single heartbeat scan
+        // (S36). Expired external leases degrade and never silently revert to another authority.
+        if (_authority is not null)
+        {
+            await _authority.ExpireLeasesAsync(now, cancellationToken);
         }
     }
 }

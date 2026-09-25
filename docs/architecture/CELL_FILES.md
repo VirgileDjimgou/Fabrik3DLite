@@ -21,7 +21,7 @@ Cell configurations are portable, versioned JSON documents that are deterministi
 
 ## Persistence through the orchestrator
 
-Named cell templates are stored via `GET/POST/PUT/DELETE /api/cell-templates`. Content is validated (JSON + supported schema version) and stored verbatim. An authorization placeholder (`X-Operator-Id` header, gated by `Orchestration:RequireCellTemplateAuth`, default off) marks where real identity will plug in. Cell writes also carry the standard `X-Correlation-Id`.
+Named cell templates are stored via `GET/POST/PUT/DELETE /api/cell-templates`. Content is validated (JSON + supported schema version) and stored verbatim. Reads require the `Fabrik3D.Read` policy and writes require `Fabrik3D.Engineer` (S42 identity boundary; see [`IDENTITY_AND_RBAC.md`](./IDENTITY_AND_RBAC.md)). The former `X-Operator-Id` / `Orchestration:RequireCellTemplateAuth` placeholder was removed. Cell writes also carry the standard `X-Correlation-Id`.
 
 ## Module/package boundaries
 

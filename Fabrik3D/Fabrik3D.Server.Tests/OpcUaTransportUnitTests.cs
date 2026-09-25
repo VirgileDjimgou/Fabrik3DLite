@@ -1,5 +1,7 @@
 using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Domain.Signals;
+using Fabrik3D.Infrastructure.Mqtt;
+using Fabrik3D.Infrastructure.Modbus;
 using Fabrik3D.Infrastructure.OpcUa;
 using Fabrik3D.Infrastructure.Signals;
 using Fabrik3D.Server.Controllers;
@@ -216,7 +218,13 @@ public class OpcUaTransportUnitTests
     {
         var disabledOptions = Options.Create(new OpcUaOptions { Enabled = false });
         var disabledConnector = new OpcUaConnector(disabledOptions, new SignalMirrorStore(), NullLogger<OpcUaConnector>.Instance);
-        var disabledController = new ConnectorsController(disabledConnector, disabledOptions);
+        var disabledMqttOptions = Options.Create(new MqttOptions { Enabled = false });
+        var disabledMqttConnector = new MqttConnector(disabledMqttOptions, new SignalMirrorStore(), NullLogger<MqttConnector>.Instance);
+        var disabledModbusOptions = Options.Create(new ModbusOptions { Enabled = false });
+        var disabledModbusConnector = new ModbusConnector(
+            disabledModbusOptions, new SignalMirrorStore(), TimeProvider.System, NullLogger<ModbusConnector>.Instance);
+        var disabledController = new ConnectorsController(
+            disabledConnector, disabledOptions, disabledMqttConnector, disabledMqttOptions, disabledModbusConnector, disabledModbusOptions);
 
         var disabledResult = Assert.IsType<OkObjectResult>(disabledController.GetOpcUa());
         var disabledDto = Assert.IsType<ConnectorStatusDto>(disabledResult.Value);
@@ -227,7 +235,13 @@ public class OpcUaTransportUnitTests
 
         var enabledOptions = Options.Create(new OpcUaOptions { Enabled = true, Endpoint = "opc.tcp://127.0.0.1:4840" });
         var enabledConnector = new OpcUaConnector(enabledOptions, new SignalMirrorStore(), NullLogger<OpcUaConnector>.Instance);
-        var enabledController = new ConnectorsController(enabledConnector, enabledOptions);
+        var enabledMqttOptions = Options.Create(new MqttOptions { Enabled = false });
+        var enabledMqttConnector = new MqttConnector(enabledMqttOptions, new SignalMirrorStore(), NullLogger<MqttConnector>.Instance);
+        var enabledModbusOptions = Options.Create(new ModbusOptions { Enabled = false });
+        var enabledModbusConnector = new ModbusConnector(
+            enabledModbusOptions, new SignalMirrorStore(), TimeProvider.System, NullLogger<ModbusConnector>.Instance);
+        var enabledController = new ConnectorsController(
+            enabledConnector, enabledOptions, enabledMqttConnector, enabledMqttOptions, enabledModbusConnector, enabledModbusOptions);
 
         var enabledResult = Assert.IsType<OkObjectResult>(enabledController.GetOpcUa());
         var enabledDto = Assert.IsType<ConnectorStatusDto>(enabledResult.Value);

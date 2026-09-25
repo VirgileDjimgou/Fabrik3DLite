@@ -61,3 +61,21 @@ public record MachineStateChangedEvent(
     bool IsRunning,
     bool IsPaused,
     DateTime TimestampUtc);
+
+/// <summary>
+/// Broadcast whenever the control authority for a scope changes: acquisition, release, takeover,
+/// degraded (lease lost) or conflict rejection. The payload never contains secrets.
+/// </summary>
+public record ControlAuthorityChangedEvent(
+    string Scope,
+    string Mode,
+    string State,
+    string? OwnerId,
+    string? OwnerKind,
+    string? PreviousMode,
+    string? PreviousOwnerId,
+    string? DegradedReason,
+    DateTime? LeaseExpiresAtUtc,
+    string EventType,
+    DateTime TimestampUtc,
+    string? CorrelationId = null);

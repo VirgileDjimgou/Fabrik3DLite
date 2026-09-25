@@ -60,3 +60,16 @@ lighting and soft shadows. Select a profile with the URL parameter:
 The generated conveyor contains fewer than 8,000 triangles; its LOD and the
 pallet LOD are checked against their manifest budgets. No texture is required
 by the current generated assets, keeping memory use and loading deterministic.
+
+## Reference-cell material flow (S39)
+
+The CNC machine-tending reference cell keeps the same pallet data model and adds
+signal-visible material flow. Each pallet slot moves through `raw → in-process →
+machined` as the workflow picks, machines and returns a part; on the stopped
+pallet the remaining raw and completed machined counts are published as
+`conveyor-1.RawSlotsRemaining` and `conveyor-1.MachinedSlots`. The pallet station
+still only renders slot occupancy; it never owns the transition. The CNC cycle
+itself is deterministic and documented in
+[CNC_AND_SAFETY_VISUALS.md](CNC_AND_SAFETY_VISUALS.md), and the conveyor's
+`SpeedDeviation` signal exposes |actual − reference| for drive diagnostics.
+

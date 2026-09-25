@@ -235,13 +235,17 @@ public sealed record IndustrialSignalDefinition(
     int? StaleAfterMs);
 
 /// <summary>An update proposed by a driver or transport.</summary>
+/// <param name="AuthorityScope">Optional control-authority scope the update belongs to (S36).</param>
+/// <param name="AuthorityMode">Optional wire name of the authority mode that authorized the update.</param>
 public sealed record IndustrialSignalUpdate(
     string SignalId,
     object? Value,
     SignalQuality Quality,
     SignalSource Source,
     SignalOrigin Origin,
-    DateTimeOffset Timestamp);
+    DateTimeOffset Timestamp,
+    string? AuthorityScope = null,
+    string? AuthorityMode = null);
 
 /// <summary>A stored sample. Read-time staleness is derived, never stored.</summary>
 public sealed record IndustrialSignalSample(
@@ -250,7 +254,9 @@ public sealed record IndustrialSignalSample(
     SignalQuality Quality,
     SignalSource Source,
     SignalOrigin Origin,
-    DateTimeOffset Timestamp);
+    DateTimeOffset Timestamp,
+    string? AuthorityScope = null,
+    string? AuthorityMode = null);
 
 /// <summary>Deterministic, versioned mirror snapshot.</summary>
 public sealed record IndustrialSignalSnapshot(

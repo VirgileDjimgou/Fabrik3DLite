@@ -1,25 +1,20 @@
 {
   "schemaVersion": "1.0",
-  "batchId": "2026-09-25-012741",
-  "status": "stopped",
-  "requestedMaxSprints": 10,
+  "batchId": "2026-09-25-171807",
+  "status": "human_required",
+  "requestedMaxSprints": 4,
   "completedThisBatch": 0,
-  "startedAt": "2026-09-25T01:27:41.199Z",
-  "updatedAt": "2026-09-25T04:14:41.297Z",
-  "startSprint": "S33",
+  "startedAt": "2026-09-25T17:18:07.675Z",
+  "updatedAt": "2026-09-25T17:18:07.929Z",
+  "startSprint": null,
   "currentSprint": null,
   "lastCompletedSprint": null,
-  "stopReason": "HUMAN_GATE_RESOLVED: UNRELATED_DIRTY_WORKTREE",
+  "stopReason": "UNRELATED_DIRTY_WORKTREE:  M Fabrik3D/Fabrik3D.Contracts.Tests/TransportContractSerializationTests.cs,  M Fabrik3D/Fabrik3D.Contracts/DTOs/EntityDtos.cs,  M Fabrik3D/Fabrik3D.Contracts/Events/HubEvents.cs,  M Fabrik3D/Fabrik3D.Domain/Entities/CellTemplate.cs,  M Fabrik3D/Fabrik3D.Domain/Mapping/EntityMapper.cs",
   "repairAttempts": 0,
   "workerSessionId": null,
   "lastEvidence": null,
   "lastGreenCommit": null,
   "expectedSprintId": null,
   "pendingCompletedBefore": null,
-  "completedSprints": [],
-  "expectedDirtyPaths": [
-    "docs/roadmap/CURRENT_SPRINT.md",
-    "docs/roadmap/autopilot/state.json",
-    "docs/roadmap/state.json"
-  ]
+  "completedSprints": []
 }

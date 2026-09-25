@@ -16,6 +16,8 @@
     <!-- OPC UA transport stack (S33). Aligned with selected OPC UA concepts; not certified. -->
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.378.176" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" Version="1.5.378.176" />
+    <!-- MQTT client transport (S34). MQTT 5 default with a documented 3.1.1 fallback. -->
+    <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,8 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Server.Authentication;
 using Fabrik3D.Server.Middleware;
 using Fabrik3D.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fabrik3D.Server.Controllers;
@@ -8,6 +10,7 @@ namespace Fabrik3D.Server.Controllers;
 [ApiController]
 [Route("api/simulation-sessions")]
 [Produces("application/json")]
+[Authorize(Policy = Fabrik3DPolicies.Read)]
 public class SimulationSessionsController : ControllerBase
 {
     private readonly SimulationSessionService _svc;
@@ -36,6 +39,7 @@ public class SimulationSessionsController : ControllerBase
 
     /// <summary>Simulator pushes live execution state into a session it owns.</summary>
     [HttpPut("{id}/state")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(SimulationSessionDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
@@ -49,6 +53,7 @@ public class SimulationSessionsController : ControllerBase
 
     /// <summary>Simulator heartbeat to prove the session is still alive.</summary>
     [HttpPost("{id}/heartbeat")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(SimulationSessionDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]

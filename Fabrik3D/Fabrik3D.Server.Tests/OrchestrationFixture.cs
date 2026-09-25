@@ -24,9 +24,11 @@ public sealed class OrchestrationFixture : IAsyncLifetime
     public JobRepository Jobs { get; private set; } = null!;
     public TaskRepository Tasks { get; private set; } = null!;
     public SimulationSessionRepository Sessions { get; private set; } = null!;
+    public ControlAuthorityRepository Authorities { get; private set; } = null!;
     public JobService JobService { get; private set; } = null!;
     public TaskService TaskService { get; private set; } = null!;
     public SimulationSessionService SessionService { get; private set; } = null!;
+    public ControlAuthorityService AuthorityService { get; private set; } = null!;
     public HeartbeatMonitorService Monitor { get; private set; } = null!;
 
     public async Task InitializeAsync()
@@ -42,11 +44,14 @@ public sealed class OrchestrationFixture : IAsyncLifetime
         Jobs = new JobRepository(Context);
         Tasks = new TaskRepository(Context);
         Sessions = new SimulationSessionRepository(Context);
+        Authorities = new ControlAuthorityRepository(Context);
 
         var options = Options.Create(new OrchestrationOptions
         {
             HeartbeatTimeoutSeconds = 5,
             HeartbeatCheckIntervalSeconds = 1,
+            AuthorityLeaseSeconds = 30,
+            RequireAuthorityConfirmation = true,
         });
 
         JobService = new JobService(
@@ -55,8 +60,11 @@ public sealed class OrchestrationFixture : IAsyncLifetime
             Tasks, Jobs, Sessions, Hub, NullLogger<TaskService>.Instance);
         SessionService = new SimulationSessionService(
             Sessions, Hub, NullLogger<SimulationSessionService>.Instance);
+        AuthorityService = new ControlAuthorityService(
+            Authorities, Hub, new AlwaysReadyOwnerProbe(), options, TimeProvider.System,
+            NullLogger<ControlAuthorityService>.Instance);
         Monitor = new HeartbeatMonitorService(
-            Sessions, Hub, NullLogger<HeartbeatMonitorService>.Instance, options);
+            Sessions, Hub, NullLogger<HeartbeatMonitorService>.Instance, options, AuthorityService);
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
@@ -99,4 +107,34 @@ public sealed class RecordingHub : IHubNotificationService
     public Task AlarmAcknowledgedAsync(AlarmAcknowledgedEvent evt) => Task.CompletedTask;
     public Task OperatorMessageAsync(OperatorMessageEvent evt) => Task.CompletedTask;
     public Task MachineStateChangedAsync(MachineStateChangedEvent evt) => Task.CompletedTask;
+
+    public Task ControlAuthorityChangedAsync(ControlAuthorityChangedEvent evt)
+    {
+        lock (_events) _events.Add(evt);
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>Deterministic owner probe: every owner is ready. Used by authority integration tests.</summary>
+public sealed class AlwaysReadyOwnerProbe : Fabrik3D.Domain.Control.IControlAuthorityOwnerProbe
+{
+    public Task<bool> IsOwnerReadyAsync(
+        Fabrik3D.Contracts.Enums.ControlAuthorityOwnerKind ownerKind,
+        string ownerId,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(true);
+}
+
+/// <summary>Deterministic owner probe that refuses a specific owner id.</summary>
+public sealed class UnreadyOwnerProbe : Fabrik3D.Domain.Control.IControlAuthorityOwnerProbe
+{
+    private readonly string _unreadyOwnerId;
+
+    public UnreadyOwnerProbe(string unreadyOwnerId) => _unreadyOwnerId = unreadyOwnerId;
+
+    public Task<bool> IsOwnerReadyAsync(
+        Fabrik3D.Contracts.Enums.ControlAuthorityOwnerKind ownerKind,
+        string ownerId,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(!string.Equals(ownerId, _unreadyOwnerId, StringComparison.Ordinal));
 }

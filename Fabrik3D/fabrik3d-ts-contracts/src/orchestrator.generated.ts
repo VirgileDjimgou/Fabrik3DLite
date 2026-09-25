@@ -165,6 +165,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthConfigDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/dev-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DevTokenRequest"];
+                    "text/json": components["schemas"]["DevTokenRequest"];
+                    "application/*+json": components["schemas"]["DevTokenRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthTokenDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthMeDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cell-templates": {
         parameters: {
             query?: never;
@@ -226,8 +355,8 @@ export interface paths {
                         "application/json": components["schemas"]["ApiErrorDto"];
                     };
                 };
-                /** @description Unauthorized */
-                401: {
+                /** @description Forbidden */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -325,8 +454,8 @@ export interface paths {
                         "application/json": components["schemas"]["ApiErrorDto"];
                     };
                 };
-                /** @description Unauthorized */
-                401: {
+                /** @description Forbidden */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -373,8 +502,8 @@ export interface paths {
                     };
                     content?: never;
                 };
-                /** @description Unauthorized */
-                401: {
+                /** @description Forbidden */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -435,6 +564,364 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/connectors/mqtt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConnectorStatusDto"];
+                        "application/json": components["schemas"]["ConnectorStatusDto"];
+                        "text/json": components["schemas"]["ConnectorStatusDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/connectors/modbus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConnectorStatusDto"];
+                        "application/json": components["schemas"]["ConnectorStatusDto"];
+                        "text/json": components["schemas"]["ConnectorStatusDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/control-authority/{scope}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scope: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ControlAuthorityDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/control-authority/{scope}/acquire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scope: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AcquireControlAuthorityRequest"];
+                    "text/json": components["schemas"]["AcquireControlAuthorityRequest"];
+                    "application/*+json": components["schemas"]["AcquireControlAuthorityRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ControlAuthorityDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/control-authority/{scope}/takeover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scope: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TakeoverControlAuthorityRequest"];
+                    "text/json": components["schemas"]["TakeoverControlAuthorityRequest"];
+                    "application/*+json": components["schemas"]["TakeoverControlAuthorityRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ControlAuthorityDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/control-authority/{scope}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scope: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReleaseControlAuthorityRequest"];
+                    "text/json": components["schemas"]["ReleaseControlAuthorityRequest"];
+                    "application/*+json": components["schemas"]["ReleaseControlAuthorityRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ControlAuthorityDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/control-authority/{scope}/heartbeat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    scope: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["HeartbeatControlAuthorityRequest"];
+                    "text/json": components["schemas"]["HeartbeatControlAuthorityRequest"];
+                    "application/*+json": components["schemas"]["HeartbeatControlAuthorityRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ControlAuthorityDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/control-authority/{scope}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    scope: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ControlAuthorityEventDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Health": {
         parameters: {
             query?: never;
@@ -457,6 +944,219 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/historian/telemetry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    sessionId?: string;
+                    equipmentId?: string;
+                    signalId?: string;
+                    fromUtc?: string;
+                    toUtc?: string;
+                    quality?: string;
+                    source?: string;
+                    correlationId?: string;
+                    skip?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TelemetrySampleDtoHistorianPageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["IngestTelemetryBatchRequest"];
+                    "text/json": components["schemas"]["IngestTelemetryBatchRequest"];
+                    "application/*+json": components["schemas"]["IngestTelemetryBatchRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HistorianIngestResultDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Too Many Requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HistorianIngestResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/historian/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    sessionId?: string;
+                    equipmentId?: string;
+                    kind?: string;
+                    severity?: string;
+                    code?: string;
+                    fromUtc?: string;
+                    toUtc?: string;
+                    correlationId?: string;
+                    skip?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HistorizedEventDtoHistorianPageDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["IngestHistorizedEventBatchRequest"];
+                    "text/json": components["schemas"]["IngestHistorizedEventBatchRequest"];
+                    "application/*+json": components["schemas"]["IngestHistorizedEventBatchRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HistorianIngestResultDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Too Many Requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HistorianIngestResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/historian/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HistorianStatusDto"];
+                    };
                 };
             };
         };
@@ -996,6 +1696,331 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignalMappingSummaryDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mappings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignalMappingDocumentDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: {
+                    expectedVersion?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SignalMappingDocumentDto"];
+                    "text/json": components["schemas"]["SignalMappingDocumentDto"];
+                    "application/*+json": components["schemas"]["SignalMappingDocumentDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignalMappingDocumentDto"];
+                    };
+                };
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignalMappingDocumentDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: {
+                    expectedVersion?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mappings/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SignalMappingDocumentDto"];
+                    "text/json": components["schemas"]["SignalMappingDocumentDto"];
+                    "application/*+json": components["schemas"]["SignalMappingDocumentDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignalMappingValidationResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mappings/{id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignalMappingApplyResultDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mappings/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SignalMappingAuditDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Messages": {
         parameters: {
             query?: never;
@@ -1312,6 +2337,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AcquireControlAuthorityRequest: {
+            mode: string;
+            ownerId?: string | null;
+            ownerKind?: string | null;
+            /** Format: int32 */
+            leaseSeconds?: number;
+            correlationId?: string | null;
+        };
         AlarmAuditDto: {
             action?: string;
             by?: string;
@@ -1355,6 +2388,28 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        AuthConfigDto: {
+            mode?: string;
+            developmentAuth?: boolean;
+            publicDemoEnabled?: boolean;
+            roles?: string[];
+            warning?: string | null;
+        };
+        AuthMeDto: {
+            subject?: string;
+            name?: string | null;
+            roles?: string[];
+            authenticationType?: string;
+        };
+        AuthTokenDto: {
+            accessToken?: string;
+            tokenType?: string;
+            /** Format: date-time */
+            expiresAtUtc?: string;
+            mode?: string;
+            subject?: string;
+            roles?: string[];
+        };
         CellTemplateDto: {
             id?: string;
             name?: string;
@@ -1366,6 +2421,8 @@ export interface components {
             updatedAtUtc?: string;
             /** Format: int32 */
             version?: number;
+            createdBy?: string | null;
+            updatedBy?: string | null;
         };
         ClaimJobRequest: {
             simulatorId: string;
@@ -1400,6 +2457,40 @@ export interface components {
             /** Format: date-time */
             timestampUtc?: string;
         };
+        ControlAuthorityDto: {
+            scope?: string;
+            mode?: string;
+            state?: string;
+            ownerId?: string | null;
+            ownerKind?: string | null;
+            /** Format: date-time */
+            acquiredAtUtc?: string | null;
+            /** Format: date-time */
+            leaseExpiresAtUtc?: string | null;
+            /** Format: date-time */
+            lastHeartbeatUtc?: string | null;
+            /** Format: int32 */
+            version?: number;
+            degradedReason?: string | null;
+            correlationId?: string | null;
+            isPersisted?: boolean;
+            diagnostic?: string | null;
+        };
+        ControlAuthorityEventDto: {
+            id?: string;
+            scope?: string;
+            eventType?: string;
+            mode?: string | null;
+            previousMode?: string | null;
+            ownerId?: string | null;
+            previousOwnerId?: string | null;
+            correlationId?: string | null;
+            detail?: string | null;
+            /** Format: date-time */
+            timestampUtc?: string;
+            actorId?: string | null;
+            actorRole?: string | null;
+        };
         CreateJobRequest: {
             name: string;
             description?: string;
@@ -1419,8 +2510,131 @@ export interface components {
             /** Format: int32 */
             slotColumn?: number;
         };
+        DevTokenRequest: {
+            role: string;
+            subject?: string | null;
+            name?: string | null;
+        };
+        HeartbeatControlAuthorityRequest: {
+            ownerId: string;
+            resume?: boolean;
+            /** Format: int32 */
+            leaseSeconds?: number;
+        };
         HeartbeatRequest: {
             simulatorId: string;
+        };
+        HistorianIngestResultDto: {
+            /** Format: int32 */
+            accepted?: number;
+            /** Format: int32 */
+            sampled?: number;
+            /** Format: int32 */
+            dropped?: number;
+            /** Format: int32 */
+            rejected?: number;
+            enabled?: boolean;
+            degraded?: boolean;
+            status?: string;
+            diagnostics?: string[];
+        };
+        HistorianSignalPolicyDto: {
+            equipmentId?: string;
+            signalId?: string;
+            mode?: string;
+            /** Format: int32 */
+            intervalMilliseconds?: number;
+            /** Format: double */
+            deadband?: number;
+        };
+        HistorianStatusDto: {
+            enabled?: boolean;
+            retentionEnabled?: boolean;
+            schemaVersion?: string;
+            /** Format: int64 */
+            sampleDocumentCount?: number;
+            /** Format: int64 */
+            eventDocumentCount?: number;
+            /** Format: int64 */
+            estimatedStorageBytes?: number;
+            /** Format: int32 */
+            sampledSignalCount?: number;
+            /** Format: int32 */
+            maxAgeDays?: number;
+            /** Format: int64 */
+            maxSamplesPerSignal?: number;
+            /** Format: int64 */
+            maxEventDocuments?: number;
+            /** Format: date-time */
+            lastPrunedAtUtc?: string | null;
+            /** Format: int64 */
+            lastPruneDeletedCount?: number;
+            policies?: components["schemas"]["HistorianSignalPolicyDto"][];
+        };
+        HistorizedEventDto: {
+            id?: string;
+            schemaVersion?: string;
+            /** Format: date-time */
+            timestampUtc?: string;
+            kind?: string;
+            sessionId?: string | null;
+            runId?: string | null;
+            equipmentId?: string | null;
+            severity?: string;
+            code?: string;
+            payload?: string;
+            source?: string;
+            /** Format: int64 */
+            sequence?: number | null;
+            correlationId?: string | null;
+        };
+        HistorizedEventDtoHistorianPageDto: {
+            items?: components["schemas"]["HistorizedEventDto"][];
+            /** Format: int64 */
+            totalCount?: number;
+            /** Format: int32 */
+            skip?: number;
+            /** Format: int32 */
+            limit?: number;
+        };
+        IngestHistorizedEventBatchRequest: {
+            events?: components["schemas"]["IngestHistorizedEventRequest"][];
+            sourceId?: string | null;
+        };
+        IngestHistorizedEventRequest: {
+            /** Format: date-time */
+            timestampUtc?: string;
+            kind?: string;
+            sessionId?: string | null;
+            runId?: string | null;
+            equipmentId?: string | null;
+            severity?: string;
+            code?: string;
+            payload?: string;
+            source?: string;
+            /** Format: int64 */
+            sequence?: number | null;
+            correlationId?: string | null;
+        };
+        IngestTelemetryBatchRequest: {
+            samples?: components["schemas"]["IngestTelemetrySampleRequest"][];
+            sourceId?: string | null;
+        };
+        IngestTelemetrySampleRequest: {
+            /** Format: date-time */
+            timestampUtc?: string;
+            sessionId?: string | null;
+            runId?: string | null;
+            equipmentId: string;
+            signalId: string;
+            /** Format: double */
+            numericValue?: number | null;
+            textValue?: string | null;
+            valueType?: string;
+            quality?: string;
+            source?: string;
+            origin?: string;
+            correlationId?: string | null;
         };
         JobDto: {
             id?: string;
@@ -1485,9 +2699,109 @@ export interface components {
             /** Format: date-time */
             readAtUtc?: string | null;
         };
+        ReleaseControlAuthorityRequest: {
+            ownerId: string;
+            correlationId?: string | null;
+        };
         SaveCellTemplateRequest: {
             name: string;
             content: string;
+        };
+        SignalMappingApplyEntryDto: {
+            protocol?: string;
+            status?: string;
+            /** Format: int32 */
+            entryCount?: number;
+            reason?: string | null;
+        };
+        SignalMappingApplyResultDto: {
+            applied?: boolean;
+            mappingId?: string;
+            /** Format: int32 */
+            version?: number;
+            protocols?: components["schemas"]["SignalMappingApplyEntryDto"][];
+            diagnostics?: components["schemas"]["SignalMappingDiagnosticDto"][];
+            /** Format: date-time */
+            appliedAtUtc?: string;
+            appliedBy?: string | null;
+        };
+        SignalMappingAuditDto: {
+            action?: string;
+            mappingId?: string;
+            /** Format: int32 */
+            version?: number;
+            by?: string;
+            /** Format: date-time */
+            atUtc?: string;
+            detail?: string | null;
+        };
+        SignalMappingDiagnosticDto: {
+            severity?: string;
+            code?: string;
+            message?: string;
+            path?: string | null;
+            entryId?: string | null;
+        };
+        SignalMappingDocumentDto: {
+            schemaVersion?: string;
+            id?: string;
+            name?: string;
+            entries?: components["schemas"]["SignalMappingEntryDto"][];
+            /** Format: int32 */
+            version?: number;
+            description?: string | null;
+        };
+        SignalMappingEntryDto: {
+            id?: string;
+            name?: string;
+            internalSignalId?: string;
+            equipmentId?: string;
+            protocol?: string;
+            direction?: string;
+            dataType?: string;
+            /** Format: double */
+            scale?: number;
+            /** Format: double */
+            offset?: number;
+            unit?: string | null;
+            enabled?: boolean;
+            target?: components["schemas"]["SignalMappingTargetDto"];
+            description?: string | null;
+            notes?: string | null;
+        };
+        SignalMappingSummaryDto: {
+            id?: string;
+            name?: string;
+            /** Format: int32 */
+            version?: number;
+            /** Format: int32 */
+            entryCount?: number;
+            valid?: boolean;
+            /** Format: date-time */
+            updatedAtUtc?: string;
+        };
+        SignalMappingTargetDto: {
+            nodeId?: string | null;
+            topic?: string | null;
+            payloadField?: string | null;
+            retain?: boolean | null;
+            area?: string | null;
+            /** Format: int32 */
+            address?: number | null;
+            /** Format: int32 */
+            width?: number | null;
+            /** Format: int32 */
+            bitIndex?: number | null;
+            byteOrder?: string | null;
+            wordOrder?: string | null;
+            signed?: boolean | null;
+            /** Format: int32 */
+            unitId?: number | null;
+            addressConvention?: string | null;
+        };
+        SignalMappingValidationResultDto: {
+            valid?: boolean;
+            diagnostics?: components["schemas"]["SignalMappingDiagnosticDto"][];
         };
         SimulationSessionDto: {
             id?: string;
@@ -1519,6 +2833,16 @@ export interface components {
             /** Format: int32 */
             scenarioProgress?: number;
         };
+        TakeoverControlAuthorityRequest: {
+            mode: string;
+            ownerId: string;
+            ownerKind?: string | null;
+            confirm?: boolean;
+            confirmationToken?: string | null;
+            /** Format: int32 */
+            leaseSeconds?: number;
+            correlationId?: string | null;
+        };
         TaskDto: {
             id?: string;
             jobId?: string;
@@ -1544,6 +2868,33 @@ export interface components {
             errorMessage?: string | null;
             /** Format: int32 */
             version?: number;
+        };
+        TelemetrySampleDto: {
+            id?: string;
+            schemaVersion?: string;
+            /** Format: date-time */
+            timestampUtc?: string;
+            sessionId?: string | null;
+            runId?: string | null;
+            equipmentId?: string;
+            signalId?: string;
+            /** Format: double */
+            numericValue?: number | null;
+            textValue?: string | null;
+            valueType?: string;
+            quality?: string;
+            source?: string;
+            origin?: string;
+            correlationId?: string | null;
+        };
+        TelemetrySampleDtoHistorianPageDto: {
+            items?: components["schemas"]["TelemetrySampleDto"][];
+            /** Format: int64 */
+            totalCount?: number;
+            /** Format: int32 */
+            skip?: number;
+            /** Format: int32 */
+            limit?: number;
         };
         UpdateMachineStateRequest: {
             simulationSessionId?: string | null;

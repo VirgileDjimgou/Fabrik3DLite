@@ -1,6 +1,8 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Server.Authentication;
 using Fabrik3D.Server.Middleware;
 using Fabrik3D.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fabrik3D.Server.Controllers;
@@ -8,6 +10,7 @@ namespace Fabrik3D.Server.Controllers;
 [ApiController]
 [Route("api/tasks")]
 [Produces("application/json")]
+[Authorize(Policy = Fabrik3DPolicies.Read)]
 public class TasksController : ControllerBase
 {
     private readonly TaskService _svc;
@@ -18,6 +21,7 @@ public class TasksController : ControllerBase
     /// Simulator reports a task lifecycle transition for a session it owns.
     /// </summary>
     [HttpPut("{id}/status")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(TaskDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]

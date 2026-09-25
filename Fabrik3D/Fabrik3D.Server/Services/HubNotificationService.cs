@@ -64,4 +64,11 @@ public class HubNotificationService : IHubNotificationService
             evt.MachineMode, evt.SimulationStatus, evt.RobotState, evt.CncState, evt.CurrentPhase);
         return _hub.Clients.All.SendAsync("MachineStateChanged", evt);
     }
+
+    public Task ControlAuthorityChangedAsync(ControlAuthorityChangedEvent evt)
+    {
+        _log.LogInformation("[Server][SignalR] ControlAuthorityChanged → scope={Scope} {PreviousMode}→{Mode} state={State} owner={OwnerId} event={EventType} correlation={CorrelationId}",
+            evt.Scope, evt.PreviousMode, evt.Mode, evt.State, evt.OwnerId, evt.EventType, evt.CorrelationId);
+        return _hub.Clients.All.SendAsync("ControlAuthorityChanged", evt);
+    }
 }

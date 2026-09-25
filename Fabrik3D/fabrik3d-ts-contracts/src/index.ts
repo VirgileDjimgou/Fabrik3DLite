@@ -14,6 +14,8 @@ export type OperatorMessageDto = CompletedResponse<components['schemas']['Operat
 export type MachineStateDto = CompletedResponse<components['schemas']['MachineStateDto']>
 export type ApiErrorDto = CompletedResponse<components['schemas']['ApiErrorDto']>
 export type CellTemplateDto = CompletedResponse<components['schemas']['CellTemplateDto']>
+export type ControlAuthorityDto = CompletedResponse<components['schemas']['ControlAuthorityDto']>
+export type ControlAuthorityEventDto = CompletedResponse<components['schemas']['ControlAuthorityEventDto']>
 
 export type CreateJobRequest = components['schemas']['CreateJobRequest']
 export type CreateTaskRequest = components['schemas']['CreateTaskRequest']
@@ -23,6 +25,10 @@ export type ClaimJobRequest = components['schemas']['ClaimJobRequest']
 export type UpdateTaskStatusRequest = components['schemas']['UpdateTaskStatusRequest']
 export type HeartbeatRequest = components['schemas']['HeartbeatRequest']
 export type SaveCellTemplateRequest = components['schemas']['SaveCellTemplateRequest']
+export type AcquireControlAuthorityRequest = components['schemas']['AcquireControlAuthorityRequest']
+export type TakeoverControlAuthorityRequest = components['schemas']['TakeoverControlAuthorityRequest']
+export type ReleaseControlAuthorityRequest = components['schemas']['ReleaseControlAuthorityRequest']
+export type HeartbeatControlAuthorityRequest = components['schemas']['HeartbeatControlAuthorityRequest']
 
 // The server always populates the full claim payload.
 export type ClaimResultDto = {

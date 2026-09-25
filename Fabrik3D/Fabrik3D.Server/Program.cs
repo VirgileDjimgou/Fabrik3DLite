@@ -1,21 +1,32 @@
+using Fabrik3D.Domain.Control;
 using Fabrik3D.Infrastructure;
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Server.Authentication;
 using Fabrik3D.Server.Filters;
+using Fabrik3D.Server.Simulation;
 using Fabrik3D.Server.Hubs;
 using Fabrik3D.Server.Middleware;
 using Fabrik3D.Server.Services;
 using Fabrik3D.Server.Settings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Infrastructure (MongoDB + repositories) ────────────────────────
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// ── Identity boundary (S42): authentication, role policies, CORS ───
+builder.Services.AddFabrik3DAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddFabrik3DCors(builder.Configuration, builder.Environment);
+builder.Services.AddFabrik3DAuthRateLimiting();
+
 // ── Orchestration settings ─────────────────────────────────────────
 builder.Services.Configure<OrchestrationOptions>(
     builder.Configuration.GetSection(OrchestrationOptions.SectionName));
+builder.Services.Configure<SecurityHeadersOptions>(
+    builder.Configuration.GetSection(SecurityHeadersOptions.SectionName));
 
 // ── Services ───────────────────────────────────────────────────────
 builder.Services.AddSingleton<HubNotificationService>();
@@ -27,9 +38,26 @@ builder.Services.AddSingleton<AlarmService>();
 builder.Services.AddSingleton<OperatorMessageService>();
 builder.Services.AddSingleton<MachineStateService>();
 builder.Services.AddSingleton<CellTemplateService>();
-builder.Services.AddSingleton<CellTemplateAuthorizationPlaceholder>();
+
+// ── Signal mapping studio (S37) ────────────────────────────────────
+builder.Services.AddSingleton<IInternalSignalCatalog, SignalMirrorCatalog>();
+builder.Services.AddSingleton<SignalMappingStore>();
+builder.Services.AddSingleton<SignalMappingApplyService>();
+
+// ── Telemetry and event historian (S40) ────────────────────────────
+builder.Services.AddSingleton<HistorianService>();
+
+// ── Control authority (S36) ────────────────────────────────────────
+builder.Services.AddSingleton<IControlAuthorityOwnerProbe, ConnectorAuthorityOwnerProbe>();
+builder.Services.AddSingleton<ControlAuthorityService>();
+builder.Services.AddSingleton<IControlAuthorityGate>(sp => sp.GetRequiredService<ControlAuthorityService>());
+builder.Services.AddSingleton<ReferenceCellLoop>();
+
 builder.Services.AddHostedService<HeartbeatMonitorService>();
 builder.Services.AddHostedService<OpcUaConnectorHostedService>();
+builder.Services.AddHostedService<MqttConnectorHostedService>();
+builder.Services.AddHostedService<ModbusConnectorHostedService>();
+builder.Services.AddHostedService<HistorianRetentionService>();
 
 // ── ASP.NET Core ───────────────────────────────────────────────────
 builder.Services.AddControllers(options =>
@@ -69,17 +97,24 @@ builder.Services.AddSwaggerGen(c =>
 // ── SignalR ────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 
-// ── CORS (allow the Vite dev server) ───────────────────────────────
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("DevCors", policy =>
-        policy.SetIsOriginAllowed(_ => true)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
-});
-
 var app = builder.Build();
+
+// Fail startup rather than serve anonymous mutations when production identity is misconfigured.
+var authenticationOptions = app.Services.GetRequiredService<IOptions<Fabrik3DAuthenticationOptions>>().Value;
+AuthenticationStartupGuard.ValidateOrThrow(authenticationOptions, app.Environment);
+
+if (authenticationOptions.IsDevelopmentLike)
+{
+    app.Logger.LogWarning(
+        "[Server][Auth] {Mode} authentication is active (issuer={Issuer}). This mode is for local development, CI and the clearly-labelled public demo only and is refused in Production.",
+        authenticationOptions.NormalizedMode, authenticationOptions.EffectiveIssuer);
+}
+else if (authenticationOptions.NormalizedMode == Fabrik3DAuthenticationOptions.Modes.None)
+{
+    app.Logger.LogWarning(
+        "[Server][Auth] Authentication:Mode=None disables server-side authorization. Local emergency fallback only; anonymous mutations are accepted.");
+}
+
 
 // Production traffic reaches Kestrel through the internal Nginx proxy and a
 // Cloudflare Tunnel. Trust forwarded scheme information before HTTPS handling.
@@ -102,8 +137,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
     });
 }
 
+// OWASP-aligned response hardening headers on every response.
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
 // CORS must come before any endpoint-producing middleware
-app.UseCors("DevCors");
+app.UseCors(Fabrik3DAuthenticationExtensions.CorsPolicyName);
 
 // Correlation ids on every command, state update and log entry
 app.UseMiddleware<CorrelationIdMiddleware>();
@@ -112,9 +150,15 @@ if (!app.Environment.IsEnvironment("Testing"))
 {
     app.UseHttpsRedirection();
 }
+app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<OrchestrationHub>("/hubs/orchestration");
 
 app.Run();
+
+/// <summary>Exposed for WebApplicationFactory-based integration tests.</summary>
+public partial class Program;
+

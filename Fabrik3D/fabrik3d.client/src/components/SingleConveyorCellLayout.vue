@@ -32,7 +32,12 @@
       :machining-duration="5"
     />
     <SafetyGuardSystem :cnc-state="dashCncState" :online="dashConnection !== 'disconnected'" />
-    <IndustrialInfrastructureSystem :cnc-state="dashCncState" :online="dashConnection !== 'disconnected'" />
+    <IndustrialInfrastructureSystem
+      :cnc-state="dashCncState"
+      :online="dashConnection !== 'disconnected'"
+      :emergency-stop="safetyEmergencyStop"
+      :gate-open="!safetyGateClosed"
+    />
 
     <!-- Floor & scene setup -->
     <SingleConveyorFloor />
@@ -123,6 +128,20 @@
       <summary>{{ t('panel.signals') }}</summary>
       <SignalInspectorPanel class="docked-panel" :registry="signalRegistry" :binding="signalBinding" />
     </details>
+    <details v-if="expertMode" class="dock-panel">
+      <summary>{{ t('panel.faultLab') }}</summary>
+      <FaultLabPanel
+        class="docked-panel"
+        :key="timelineRevision"
+        :targets="faultLabTargets"
+        :active-overlays="faultLab.activeOverlays"
+        :authority-blocked="!cellAuthority.canCommand('simulator-1')"
+        :feedback="faultLabFeedback"
+        :feedback-tone="faultLabFeedbackTone"
+        @activate="activateOverlay"
+        @deactivate="clearOverlay"
+      />
+    </details>
   </SimulationDock>
 </template>
 
@@ -184,7 +203,14 @@ import {
 import { createSafetyRobotModel, MotionSafetyEngine, createSingleCellWorld, SafetyInterlockModel } from '../safety'
 import { StepModeController, type LearningCheckpoint } from '../learning/StepModeController'
 import { FaultController, getFaultDefinition, type FaultAction, type FaultType } from '../faults'
+import { FaultLabController } from '../faults/FaultLabController'
+import { REFERENCE_CELL_FAULT_TARGETS } from '../faults/faultTargets'
+import type { OverlayFaultType } from '../faults/types'
 import { TimelineRecorder, type TimelineContext } from '../timeline'
+import { historianBridgeFromEnv } from '../historian'
+import { postHistorianBatch } from '../services/orchestratorApi'
+import { AuthorityStore } from '../twin/authority'
+import FaultLabPanel from './FaultLabPanel.vue'
 import {
   ReferenceCellSignalBinding,
   createReferenceCellSignalRegistry,
@@ -205,6 +231,8 @@ const equipmentRegistry = createSingleConveyorEquipmentRegistry()
 const signalRegistry = createReferenceCellSignalRegistry(equipmentRegistry)
 const signalBinding = shallowRef<ReferenceCellSignalBinding | null>(null)
 const safetyInterlocks = new SafetyInterlockModel()
+const safetyEmergencyStop = ref(false)
+const safetyGateClosed = ref(true)
 const commandError = ref('')
 
 // ── Robot catalog (selection drives the scene, never a rewrite) ────
@@ -220,8 +248,27 @@ const stepMode = new StepModeController()
 const stepCheckpoint = ref<LearningCheckpoint | null>(null)
 const stepSpeed = ref(1)
 const expertMode = ref(false)
-const timeline = new TimelineRecorder()
+// S40 historian bridge: disabled unless VITE_HISTORIAN_ENABLED=true. When disabled it is a pure
+// no-op and the local timeline remains the only record, so offline mode is unchanged.
+const historian = historianBridgeFromEnv(postHistorianBatch)
+const timeline = new TimelineRecorder(undefined, (entry) => { void historian.enqueueTimelineEntry(entry) })
 const faults = new FaultController(timeline)
+// S38 engineering fault lab: overlay faults on the simulated cell. The local
+// authority store defaults to implicit local simulation; when an external
+// controller owns the scope, injection is refused and reported.
+const cellAuthority = new AuthorityStore('cell-1')
+const faultLab = new FaultLabController(
+  timeline,
+  {
+    canInject: () => cellAuthority.canCommand('simulator-1'),
+    blockedReason: () => `Scope '${cellAuthority.snapshot().scope}' is controlled by ${cellAuthority.snapshot().mode}.`,
+  },
+  () => new Date().toISOString(),
+  () => Date.now(),
+)
+const faultLabTargets = REFERENCE_CELL_FAULT_TARGETS
+const faultLabFeedback = ref('')
+const faultLabFeedbackTone = ref<'ok' | 'bad'>('ok')
 const timelineRevision = ref(0)
 const expectedLearningActions = ['start', 'step-next', 'acknowledge', 'reset', 'retry']
 function timelineContext(equipmentId = 'simulator-1'): TimelineContext {
@@ -283,9 +330,20 @@ function getPalletStationRuntime(): PalletStationRuntime | null {
 // Declared signals drive the same workflow/CNC/conveyor/safety paths as the
 // operator controls; read-only signals are derived from real runtime state.
 
+/** Counts the stopped pallet's slots in a given processing state (S39 material flow). */
+function countSlots(status: 'raw' | 'machined'): number {
+  const pallet = palletFeedRef.value?.getFirstStoppedPallet() ?? null
+  if (!pallet) return 0
+  let count = 0
+  for (const row of pallet.slotStatus) {
+    for (const cell of row) if (cell === status) count += 1
+  }
+  return count
+}
+
 function buildSignalBinding(): ReferenceCellSignalBinding {
   const robotView: RobotSignalView = {
-    isServoOn: () => robotController.value !== null,
+    isServoOn: () => robotController.value !== null && !faultLab.isEquipmentFaulted('robot-1', 'actuator-jam') && !faultLab.isEquipmentFaulted('robot-1', 'communications-loss'),
     getWorkflowRunState: () => workflow?.runState ?? 'idle',
     getWorkflowPhase: () => workflow?.phase ?? 'IDLE',
     start: performStart,
@@ -295,6 +353,14 @@ function buildSignalBinding(): ReferenceCellSignalBinding {
   return new ReferenceCellSignalBinding({
     registry: signalRegistry,
     equipment: REFERENCE_CELL_EQUIPMENT_IDS,
+    overlays: {
+      apply: (signalId, value, quality, safeValue, numeric) => {
+        const result = faultLab.apply(signalId, value, quality, safeValue, numeric)
+        return { value: result.value, quality: result.quality }
+      },
+      advanceTick: () => faultLab.advanceTick(),
+      blocksCommand: (signalId) => faultLab.blocksCommand(signalId),
+    },
     views: {
       robot: robotView,
       cnc: {
@@ -307,6 +373,16 @@ function buildSignalBinding(): ReferenceCellSignalBinding {
           cnc.startMachining()
           return true
         },
+        getPhase: () => cncRef.value?.getPhase?.() ?? 'IDLE',
+        getDoorLocked: () => cncRef.value?.getDoorLocked?.() ?? false,
+        getSpindleSpeed: () => cncRef.value?.getSpindleSpeed?.() ?? 0,
+        isSpindleAtSpeed: () => cncRef.value?.isSpindleAtSpeed?.() ?? false,
+        getFeedRate: () => cncRef.value?.getFeedRate?.() ?? 0,
+        isFeedActive: () => cncRef.value?.isFeedActive?.() ?? false,
+        isCoolantOn: () => cncRef.value?.isCoolantOn?.() ?? false,
+        getCycleStep: () => cncRef.value?.getCycleStep?.() ?? 0,
+        getFixtureClamped: () => cncRef.value?.getFixtureClamped?.() ?? false,
+        getPartPresent: () => cncRef.value?.getPartPresent?.() ?? false,
       },
       conveyor: {
         isRunning: () => palletFeedRef.value?.isRunning() ?? false,
@@ -317,6 +393,8 @@ function buildSignalBinding(): ReferenceCellSignalBinding {
         getEncoderPulses: () => palletFeedRef.value?.getEncoderPulses() ?? 0,
         setRunCommand: (run) => palletFeedRef.value?.setRunCommand(run) ?? false,
         setSpeedReference: (speed) => palletFeedRef.value?.setSpeedReference(speed) ?? false,
+        getRawSlotsRemaining: () => countSlots('raw'),
+        getMachinedSlots: () => countSlots('machined'),
       },
       safety: {
         isEmergencyStop: () => safetyInterlocks.getState().emergencyStop,
@@ -363,6 +441,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   bridge.dispose()
+  historian.stop()
   signalBinding.value?.dispose()
   signalRegistry.clear()
 })
@@ -434,6 +513,11 @@ function ensureWorkflow(): PalletMachiningWorkflow | null {
       workflow?.update()
       // refresh CNC state and publish the industrial signal snapshot each frame
       dashCncState.value = cncRef.value?.state ?? 'IDLE'
+      const interlocks = safetyInterlocks.getState()
+      safetyEmergencyStop.value = interlocks.emergencyStop
+      safetyGateClosed.value = interlocks.gateClosed
+      // The simulated E-stop aborts the CNC cycle; recovery requires an explicit reset.
+      cncRef.value?.setEmergencyStop?.(interlocks.emergencyStop)
       signalBinding.value?.tick()
       conveyorBeltSpeed.value = palletFeedRef.value?.getActualSpeed() ?? 0
     }
@@ -482,6 +566,13 @@ function handleReset(): void { commandSignal('robot-1.Reset', true) }
 function performStart(): boolean {
   const wf = ensureWorkflow()
   if (!wf) return false
+  // S38: an active equipment-layer fault refuses the actuator command and
+  // reports the blocker, instead of silently starting.
+  if (faultLab.isEquipmentFaulted('robot-1') || faultLab.isEquipmentFaulted('conveyor-1', 'motor-overload')) {
+    commandError.value = 'Simulated equipment fault blocks the start command.'
+    refreshFaultPanel()
+    return false
+  }
   const pallet = getPalletStationRuntime()?.getFirstStoppedPallet()
   if (!pallet) return false
   timeline.record('command', 'info', timelineContext(), { command: 'start' })
@@ -541,6 +632,30 @@ function injectFault(type: FaultType): void {
 
 function actOnFault(id: string, action: FaultAction): void {
   try { faults.act(id, action, timelineContext()); refreshFaultPanel() } catch (error) { console.warn('[Fault lab]', error) }
+}
+
+function activateOverlay(type: OverlayFaultType, equipmentId: string, signalId: string): void {
+  const result = faultLab.activate({ type, equipmentId, signalIds: signalId ? [signalId] : [] }, timelineContext(equipmentId))
+  if (!result.accepted) {
+    faultLabFeedback.value = result.diagnostics[0]?.message ?? 'Injection refused.'
+    faultLabFeedbackTone.value = 'bad'
+  } else {
+    faultLabFeedback.value = `Overlay '${type}' activated.`
+    faultLabFeedbackTone.value = 'ok'
+  }
+  refreshFaultPanel()
+}
+
+function clearOverlay(id: string): void {
+  const diagnostics = faultLab.deactivate(id, timelineContext())
+  if (diagnostics.length > 0) {
+    faultLabFeedback.value = diagnostics[0]!.message
+    faultLabFeedbackTone.value = 'bad'
+  } else {
+    faultLabFeedback.value = 'Overlay cleared.'
+    faultLabFeedbackTone.value = 'ok'
+  }
+  refreshFaultPanel()
 }
 
 // ── Robot profile selection ────────────────────────────────────────

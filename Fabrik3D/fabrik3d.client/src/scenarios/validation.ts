@@ -2,6 +2,7 @@
 
 import type { ScenarioDefinition } from './types'
 import { FAULT_TYPES } from '../faults/types'
+import { isOverlayFaultType } from '../faults/overlayCatalog'
 
 export interface ScenarioDiagnostic {
   severity: 'error' | 'warning'
@@ -58,6 +59,15 @@ export function validateScenario(scenario: ScenarioDefinition): ScenarioDiagnost
   }
   for (const fault of scenario.faultInjections ?? []) {
     if (!FAULT_TYPES.includes(fault)) diagnostics.push({ severity: 'error', code: 'invalid_fault_type', message: `Scenario '${scenario.id}' contains an unsupported fault '${fault}'.` })
+  }
+
+  for (const [index, overlay] of (scenario.faultOverlays ?? []).entries()) {
+    if (!isOverlayFaultType(overlay.type)) {
+      diagnostics.push({ severity: 'error', code: 'invalid_overlay_type', message: `Scenario '${scenario.id}' faultOverlays[${index}] has an unsupported overlay type '${String(overlay.type)}'.` })
+    }
+    if (typeof overlay.equipmentId !== 'string' || overlay.equipmentId.trim() === '') {
+      diagnostics.push({ severity: 'error', code: 'missing_overlay_equipment', message: `Scenario '${scenario.id}' faultOverlays[${index}] is missing equipmentId.` })
+    }
   }
 
   return diagnostics

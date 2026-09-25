@@ -45,12 +45,35 @@ export interface ScenarioDefinition {
   initialJoints?: number[]
   /** Faults injected at scenario start; makes abnormal situations reproducible. */
   faultInjections?: import('../faults/types').FaultType[]
+  /**
+   * S38: versioned signal/equipment overlay injections. Optional and additive;
+   * older scenario files without this field stay readable and valid.
+   */
+  faultOverlays?: ScenarioFaultOverlaySpec[]
   /** Ordered activities; the scenario completes when all finish. */
   activities: ScenarioActivity[]
   successCriteria: LocalizedText[]
   instructorNotes: LocalizedText
   /** Learner-facing explanation of the scenario. */
   explanation: LocalizedText
+}
+
+/** Versioned scenario overlay-injection schema (S38). */
+export const SCENARIO_OVERLAY_SCHEMA_VERSION = '1.0' as const
+
+export interface ScenarioFaultOverlaySpec {
+  type: import('../faults/types').OverlayFaultType
+  equipmentId: string
+  signalIds?: string[]
+  seed?: number
+  magnitude?: number
+  periodMs?: number
+  delayMs?: number
+}
+
+export interface ScenarioFaultOverlayInjection {
+  schemaVersion: typeof SCENARIO_OVERLAY_SCHEMA_VERSION
+  overlays: ScenarioFaultOverlaySpec[]
 }
 
 /** A runtime observation from the simulator (e.g. a workflow event). */

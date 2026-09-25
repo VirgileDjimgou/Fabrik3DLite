@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Fabrik3D.Infrastructure.OpcUa;
 using Fabrik3D.Infrastructure.Mqtt;
+using Fabrik3D.Infrastructure.Modbus;
 using Fabrik3D.Infrastructure.Signals;
 
 namespace Fabrik3D.Infrastructure;
@@ -26,10 +27,17 @@ public static class InfrastructureServiceRegistration
         services.AddSingleton<OperatorMessageRepository>();
         services.AddSingleton<MachineStateRepository>();
         services.AddSingleton<CellTemplateRepository>();
+        services.AddSingleton<ControlAuthorityRepository>();
+        services.Configure<HistorianOptions>(configuration.GetSection(HistorianOptions.SectionName));
+        services.AddSingleton<HistorianRepository>();
         services.Configure<OpcUaOptions>(configuration.GetSection(OpcUaOptions.SectionName));
         services.AddSingleton<SignalMirrorStore>();
         services.AddSingleton<OpcUaConnector>();
         services.Configure<MqttOptions>(configuration.GetSection(MqttOptions.SectionName));
+        services.AddSingleton<MqttConnector>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
+        services.Configure<ModbusOptions>(configuration.GetSection(ModbusOptions.SectionName));
+        services.AddSingleton<ModbusConnector>();
 
         return services;
     }

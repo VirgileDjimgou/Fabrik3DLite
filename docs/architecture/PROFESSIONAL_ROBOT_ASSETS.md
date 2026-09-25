@@ -17,3 +17,19 @@ The GLB hierarchy must expose a nested `joint:j1` through `joint:j6` chain. `Rob
 3. Add a validated equipment manifest, LOD, material identifiers, and a procedural fallback registration.
 4. Add its catalog visual asset ID and profile mapping; preserve the generic fallback when loading or validation fails.
 5. Add deterministic pivot/FK and package smoke tests before making it selectable.
+
+## Reference-cell composition (S39)
+
+The `cnc-machine-tending` reference cell composes the selectable robot profile
+with a procedural CNC machining centre, the generated conveyor/pallet assets, a
+safety-guard system and industrial infrastructure (cabinets, cable tray, operator
+pedestal, E-stop, scanner, stack lights). Proportions stay in SI metres and at a
+credible industrial scale: the robot mounts at the cell centre, the CNC body is
+2.0 × 2.2 × 1.6 m with a 0.9 × 1.0 m loading door at 1.0 m height, the conveyor
+runs 6 m, and the fence posts are 2.1 m. Materials use a coherent painted-steel /
+stainless / safety-yellow / rubber / glass palette with believable roughness and
+metalness; the shared renderer provides sRGB output, ACES tone mapping, PBR
+environment lighting and shadows. The CNC visual exposes semantic nodes
+(`door:loading`, `spindle:main`, `fixture:chuck`, `axis:feed`, `signal:stack-light`)
+and is instance-owned so it disposes cleanly on scene unload.
+

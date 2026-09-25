@@ -79,8 +79,7 @@
             "name": "by",
             "in": "query",
             "schema": {
-              "type": "string",
-              "default": "operator"
+              "type": "string"
             }
           }
         ],
@@ -133,8 +132,7 @@
             "name": "by",
             "in": "query",
             "schema": {
-              "type": "string",
-              "default": "operator"
+              "type": "string"
             }
           },
           {
@@ -152,6 +150,102 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AlarmDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/config": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthConfigDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/dev-token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTokenRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTokenRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthMeDto"
                 }
               }
             }
@@ -224,8 +318,8 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -339,8 +433,8 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -389,8 +483,8 @@
           "204": {
             "description": "No Content"
           },
-          "401": {
-            "description": "Unauthorized",
+          "403": {
+            "description": "Forbidden",
             "content": {
               "application/json": {
                 "schema": {
@@ -441,6 +535,366 @@
         }
       }
     },
+    "/api/connectors/mqtt": {
+      "get": {
+        "tags": [
+          "Connectors"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/connectors/modbus": {
+      "get": {
+        "tags": [
+          "Connectors"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorStatusDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/control-authority/{scope}": {
+      "get": {
+        "tags": [
+          "ControlAuthority"
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlAuthorityDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/control-authority/{scope}/acquire": {
+      "post": {
+        "tags": [
+          "ControlAuthority"
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcquireControlAuthorityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcquireControlAuthorityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcquireControlAuthorityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlAuthorityDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/control-authority/{scope}/takeover": {
+      "post": {
+        "tags": [
+          "ControlAuthority"
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeoverControlAuthorityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeoverControlAuthorityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TakeoverControlAuthorityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlAuthorityDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/control-authority/{scope}/release": {
+      "post": {
+        "tags": [
+          "ControlAuthority"
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseControlAuthorityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseControlAuthorityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseControlAuthorityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlAuthorityDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/control-authority/{scope}/heartbeat": {
+      "post": {
+        "tags": [
+          "ControlAuthority"
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatControlAuthorityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatControlAuthorityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatControlAuthorityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlAuthorityDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/control-authority/{scope}/audit": {
+      "get": {
+        "tags": [
+          "ControlAuthority"
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ControlAuthorityEventDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Health": {
       "get": {
         "tags": [
@@ -449,6 +903,331 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/historian/telemetry": {
+      "post": {
+        "tags": [
+          "Historian"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestTelemetryBatchRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestTelemetryBatchRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestTelemetryBatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorianIngestResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorianIngestResultDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Historian"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "equipmentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "signalId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fromUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "quality",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetrySampleDtoHistorianPageDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/historian/events": {
+      "post": {
+        "tags": [
+          "Historian"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestHistorizedEventBatchRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestHistorizedEventBatchRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestHistorizedEventBatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorianIngestResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorianIngestResultDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Historian"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "equipmentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fromUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorizedEventDtoHistorianPageDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/historian/status": {
+      "get": {
+        "tags": [
+          "Historian"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistorianStatusDto"
+                }
+              }
+            }
           }
         }
       }
@@ -944,6 +1723,330 @@
         }
       }
     },
+    "/api/mappings": {
+      "get": {
+        "tags": [
+          "Mappings"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SignalMappingSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mappings/{id}": {
+      "get": {
+        "tags": [
+          "Mappings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalMappingDocumentDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Mappings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expectedVersion",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalMappingDocumentDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalMappingDocumentDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalMappingDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalMappingDocumentDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalMappingDocumentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Mappings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expectedVersion",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mappings/validate": {
+      "post": {
+        "tags": [
+          "Mappings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalMappingDocumentDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalMappingDocumentDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalMappingDocumentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalMappingValidationResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mappings/{id}/apply": {
+      "post": {
+        "tags": [
+          "Mappings"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalMappingApplyResultDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mappings/audit": {
+      "get": {
+        "tags": [
+          "Mappings"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SignalMappingAuditDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Messages": {
       "get": {
         "tags": [
@@ -1262,6 +2365,39 @@
   },
   "components": {
     "schemas": {
+      "AcquireControlAuthorityRequest": {
+        "required": [
+          "mode"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "ownerId": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "ownerKind": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "leaseSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "correlationId": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AlarmAuditDto": {
         "type": "object",
         "properties": {
@@ -1387,6 +2523,81 @@
         },
         "additionalProperties": false
       },
+      "AuthConfigDto": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "developmentAuth": {
+            "type": "boolean"
+          },
+          "publicDemoEnabled": {
+            "type": "boolean"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warning": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthMeDto": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authenticationType": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AuthTokenDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          },
+          "expiresAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "CellTemplateDto": {
         "type": "object",
         "properties": {
@@ -1413,6 +2624,14 @@
           "version": {
             "type": "integer",
             "format": "int32"
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "updatedBy": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1510,6 +2729,114 @@
         },
         "additionalProperties": false
       },
+      "ControlAuthorityDto": {
+        "type": "object",
+        "properties": {
+          "scope": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerKind": {
+            "type": "string",
+            "nullable": true
+          },
+          "acquiredAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "leaseExpiresAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastHeartbeatUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "degradedReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPersisted": {
+            "type": "boolean"
+          },
+          "diagnostic": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ControlAuthorityEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "previousMode": {
+            "type": "string",
+            "nullable": true
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "previousOwnerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "timestampUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "actorRole": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateJobRequest": {
         "required": [
           "name"
@@ -1576,6 +2903,51 @@
         },
         "additionalProperties": false
       },
+      "DevTokenRequest": {
+        "required": [
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "subject": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HeartbeatControlAuthorityRequest": {
+        "required": [
+          "ownerId"
+        ],
+        "type": "object",
+        "properties": {
+          "ownerId": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "resume": {
+            "type": "boolean"
+          },
+          "leaseSeconds": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "HeartbeatRequest": {
         "required": [
           "simulatorId"
@@ -1586,6 +2958,347 @@
             "maxLength": 100,
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistorianIngestResultDto": {
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sampled": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dropped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rejected": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "degraded": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistorianSignalPolicyDto": {
+        "type": "object",
+        "properties": {
+          "equipmentId": {
+            "type": "string"
+          },
+          "signalId": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "intervalMilliseconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deadband": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistorianStatusDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "retentionEnabled": {
+            "type": "boolean"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "sampleDocumentCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventDocumentCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "estimatedStorageBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sampledSignalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAgeDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxSamplesPerSignal": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxEventDocuments": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastPrunedAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastPruneDeletedCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "policies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistorianSignalPolicyDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistorizedEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "timestampUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "runId": {
+            "type": "string",
+            "nullable": true
+          },
+          "equipmentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HistorizedEventDtoHistorianPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistorizedEventDto"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "skip": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IngestHistorizedEventBatchRequest": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngestHistorizedEventRequest"
+            }
+          },
+          "sourceId": {
+            "maxLength": 128,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IngestHistorizedEventRequest": {
+        "type": "object",
+        "properties": {
+          "timestampUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "sessionId": {
+            "maxLength": 64,
+            "type": "string",
+            "nullable": true
+          },
+          "runId": {
+            "maxLength": 64,
+            "type": "string",
+            "nullable": true
+          },
+          "equipmentId": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "severity": {
+            "type": "string"
+          },
+          "code": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "payload": {
+            "maxLength": 4096,
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "correlationId": {
+            "maxLength": 128,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IngestTelemetryBatchRequest": {
+        "type": "object",
+        "properties": {
+          "samples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngestTelemetrySampleRequest"
+            }
+          },
+          "sourceId": {
+            "maxLength": 128,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IngestTelemetrySampleRequest": {
+        "required": [
+          "equipmentId",
+          "signalId"
+        ],
+        "type": "object",
+        "properties": {
+          "timestampUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sessionId": {
+            "maxLength": 64,
+            "type": "string",
+            "nullable": true
+          },
+          "runId": {
+            "maxLength": 64,
+            "type": "string",
+            "nullable": true
+          },
+          "equipmentId": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "signalId": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "numericValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "textValue": {
+            "maxLength": 1024,
+            "type": "string",
+            "nullable": true
+          },
+          "valueType": {
+            "type": "string"
+          },
+          "quality": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "correlationId": {
+            "maxLength": 128,
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1760,6 +3473,25 @@
         },
         "additionalProperties": false
       },
+      "ReleaseControlAuthorityRequest": {
+        "required": [
+          "ownerId"
+        ],
+        "type": "object",
+        "properties": {
+          "ownerId": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "correlationId": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SaveCellTemplateRequest": {
         "required": [
           "content",
@@ -1775,6 +3507,298 @@
           "content": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingApplyEntryDto": {
+        "type": "object",
+        "properties": {
+          "protocol": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "entryCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingApplyResultDto": {
+        "type": "object",
+        "properties": {
+          "applied": {
+            "type": "boolean"
+          },
+          "mappingId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "protocols": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalMappingApplyEntryDto"
+            }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalMappingDiagnosticDto"
+            }
+          },
+          "appliedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "appliedBy": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingAuditDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "mappingId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "by": {
+            "type": "string"
+          },
+          "atUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingDiagnosticDto": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
+          },
+          "entryId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingDocumentDto": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalMappingEntryDto"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "internalSignalId": {
+            "type": "string"
+          },
+          "equipmentId": {
+            "type": "string"
+          },
+          "protocol": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "dataType": {
+            "type": "string"
+          },
+          "scale": {
+            "type": "number",
+            "format": "double"
+          },
+          "offset": {
+            "type": "number",
+            "format": "double"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "target": {
+            "$ref": "#/components/schemas/SignalMappingTargetDto"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "entryCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "updatedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingTargetDto": {
+        "type": "object",
+        "properties": {
+          "nodeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "topic": {
+            "type": "string",
+            "nullable": true
+          },
+          "payloadField": {
+            "type": "string",
+            "nullable": true
+          },
+          "retain": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "area": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "bitIndex": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "byteOrder": {
+            "type": "string",
+            "nullable": true
+          },
+          "wordOrder": {
+            "type": "string",
+            "nullable": true
+          },
+          "signed": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "unitId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "addressConvention": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalMappingValidationResultDto": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalMappingDiagnosticDto"
+            }
           }
         },
         "additionalProperties": false
@@ -1861,6 +3885,48 @@
         },
         "additionalProperties": false
       },
+      "TakeoverControlAuthorityRequest": {
+        "required": [
+          "mode",
+          "ownerId"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "ownerId": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "ownerKind": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "confirm": {
+            "type": "boolean"
+          },
+          "confirmationToken": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "leaseSeconds": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "correlationId": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "TaskDto": {
         "type": "object",
         "properties": {
@@ -1921,6 +3987,85 @@
             "nullable": true
           },
           "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TelemetrySampleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "timestampUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sessionId": {
+            "type": "string",
+            "nullable": true
+          },
+          "runId": {
+            "type": "string",
+            "nullable": true
+          },
+          "equipmentId": {
+            "type": "string"
+          },
+          "signalId": {
+            "type": "string"
+          },
+          "numericValue": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "textValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "valueType": {
+            "type": "string"
+          },
+          "quality": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TelemetrySampleDtoHistorianPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelemetrySampleDto"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "skip": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limit": {
             "type": "integer",
             "format": "int32"
           }

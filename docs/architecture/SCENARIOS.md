@@ -9,6 +9,7 @@ A scenario is a versioned definition (`src/scenarios/types.ts`, schema `1.0`):
 - **Metadata**: id, localized title (en/fr/de), level (`beginner` / `intermediate` / `advanced`).
 - **Learning**: localized learning objectives, prerequisites, success criteria.
 - **Cell**: an optional `cellTemplateId` reference and optional `initialJoints`.
+- **Faults**: optional `faultInjections` (S13 scenario-level faults) and the additive, optional `faultOverlays` (S38 signal/equipment overlays). Older scenario files without `faultOverlays` stay readable; unknown overlay classes are dropped with a diagnostic by `readScenarioFaultOverlays`, never guessed.
 - **Activities**: an ordered list; each activity has a localized title + learner instruction and, when provided, an `expectedEvent` (`{ type, match? }`).
 - **Text**: localized `explanation` (learner-facing) and `instructorNotes`.
 

@@ -1,5 +1,7 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Server.Authentication;
 using Fabrik3D.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fabrik3D.Server.Controllers;
@@ -7,6 +9,7 @@ namespace Fabrik3D.Server.Controllers;
 [ApiController]
 [Route("api/machine-state")]
 [Produces("application/json")]
+[Authorize(Policy = Fabrik3DPolicies.Read)]
 public class MachineStateController : ControllerBase
 {
     private readonly MachineStateService _svc;
@@ -25,6 +28,7 @@ public class MachineStateController : ControllerBase
 
     /// <summary>Simulator pushes the current machine state.</summary>
     [HttpPut("current")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(MachineStateDto), 200)]
     public async Task<IActionResult> UpdateCurrent(
         [FromBody] UpdateMachineStateRequest request)

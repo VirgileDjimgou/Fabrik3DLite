@@ -127,4 +127,6 @@ public record CellTemplateDto(
     string Content,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
-    int Version);
+    int Version,
+    string? CreatedBy = null,
+    string? UpdatedBy = null);

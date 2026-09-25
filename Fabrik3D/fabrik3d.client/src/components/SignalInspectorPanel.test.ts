@@ -82,7 +82,7 @@ describe('SignalInspectorPanel', () => {
     const harness = createHarness()
     const wrapper = mountPanel(harness)
     await nextTick()
-    expect(wrapper.findAll('[data-signal-row]')).toHaveLength(43)
+    expect(wrapper.findAll('[data-signal-row]')).toHaveLength(54)
     expect(wrapper.find('[data-signal-value="robot-1.ProgramRunning"]').text()).toBe('true')
     expect(wrapper.find('[data-signal-value="cnc-1.SpindleSpeed"]').text()).toBe('8000')
     expect(wrapper.find('[data-signal-value="conveyor-1.EncoderPulse"]').text()).toBe('4210')
@@ -97,13 +97,13 @@ describe('SignalInspectorPanel', () => {
     await nextTick()
 
     await wrapper.find('[data-signal-equipment-filter]').setValue('cnc-1')
-    expect(wrapper.findAll('[data-signal-row]')).toHaveLength(14)
-    expect(wrapper.find('[data-signal-count]').text()).toBe('14 / 43')
+    expect(wrapper.findAll('[data-signal-row]')).toHaveLength(19)
+    expect(wrapper.find('[data-signal-count]').text()).toBe('19 / 54')
 
     await wrapper.find('[data-signal-equipment-filter]').setValue('all')
     await wrapper.find('[data-signal-search]').setValue('Door')
     const ids = wrapper.findAll('[data-signal-row]').map((row) => row.attributes('data-signal-id'))
-    expect(ids).toEqual(['cnc-1.DoorClosed', 'cnc-1.DoorCommand', 'cnc-1.DoorOpen'])
+    expect(ids).toEqual(['cnc-1.DoorClosed', 'cnc-1.DoorCommand', 'cnc-1.DoorLocked', 'cnc-1.DoorOpen'])
 
     await wrapper.find('[data-signal-search]').setValue('no-such-signal')
     expect(wrapper.find('[data-signal-empty]').exists()).toBe(true)

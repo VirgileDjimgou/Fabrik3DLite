@@ -1,4 +1,7 @@
 export * from './types'
 export * from './catalog'
+export * from './overlayCatalog'
+export * from './overlays'
 export * from './FaultController'
+export * from './FaultLabController'
 export * from './scenarioInjection'

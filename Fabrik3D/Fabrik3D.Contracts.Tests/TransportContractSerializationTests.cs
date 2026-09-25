@@ -31,6 +31,12 @@ public class TransportContractSerializationTests
             new HeartbeatRequest { SimulatorId = "sim-1" },
             new CellTemplateDto("template-1", "Cell", "1.0", "{}", Timestamp, Timestamp, 0),
             new SaveCellTemplateRequest { Name = "Cell", Content = "{}" },
+            new ControlAuthorityDto("cell-1", "external-controller", "held", "modbus", "connector", Timestamp, Timestamp, Timestamp, 1, null, "corr-1", true, null),
+            new ControlAuthorityEventDto("event-1", "cell-1", "authority_acquired", "external-controller", "local-simulation", "modbus", null, "corr-1", "handover", Timestamp),
+            new AcquireControlAuthorityRequest { Mode = "ExternalController", OwnerId = "modbus", OwnerKind = "connector", LeaseSeconds = 30 },
+            new TakeoverControlAuthorityRequest { Mode = "ExternalController", OwnerId = "opcua", OwnerKind = "connector", Confirm = true },
+            new ReleaseControlAuthorityRequest { OwnerId = "modbus" },
+            new HeartbeatControlAuthorityRequest { OwnerId = "modbus", Resume = true, LeaseSeconds = 30 },
         };
 
         foreach (var contract in contracts)
@@ -54,6 +60,7 @@ public class TransportContractSerializationTests
             new AlarmAcknowledgedEvent("alarm-1", "operator", Timestamp),
             new OperatorMessageEvent("message-1", "Title", "Message", "Info", "Server", Timestamp),
             new MachineStateChangedEvent("machine-1", "Automatic", "Running", "Moving", "Idle", "PICK", true, false, Timestamp),
+            new ControlAuthorityChangedEvent("cell-1", "external-controller", "held", "modbus", "connector", "local-simulation", null, null, Timestamp, "authority_acquired", Timestamp, "corr-1"),
         };
 
         foreach (var @event in events)

@@ -108,6 +108,12 @@ private readonly ctrl: RobotMotionRuntime
   private readonly baseTiming: PalletWorkflowTiming
   /** Optional safety engine that gates every motion before execution. */
   private readonly safety: MotionSafetyEngine | null
+  /**
+   * Optional control-authority gate (S36). When it returns false the simulator does not hold
+   * actuator authority and the workflow issues no commands; it keeps rendering and observing.
+   * Undefined keeps the pre-S36 behaviour (always authorized).
+   */
+  authorityGate: (() => boolean) | null = null
 
   private _pallet: PalletData | null = null
   private _currentRow = 0
@@ -119,12 +125,14 @@ private readonly ctrl: RobotMotionRuntime
     callbacks: PalletWorkflowCallbacks,
     timing?: Partial<PalletWorkflowTiming>,
     safety: MotionSafetyEngine | null = null,
+    authorityGate: (() => boolean) | null = null,
   ) {
     this.ctrl = controller
     this.cb = callbacks
     this.baseTiming = { ...DEFAULT_PALLET_TIMING, ...timing }
     this.timing = { ...this.baseTiming }
     this.safety = safety
+    this.authorityGate = authorityGate
   }
 
   /** Changes pedagogical speed without altering workflow transitions. */
@@ -195,6 +203,8 @@ private readonly ctrl: RobotMotionRuntime
 
   update(): void {
     if (this.runState !== 'running' || !this._pallet) return
+    // Denied authority: no actuator command is issued. The scene keeps rendering/observing.
+    if (this.authorityGate && !this.authorityGate()) return
     if (this.phase === 'IDLE' || this.phase === 'COMPLETE') return
     if (this.ctrl.isMoving) return
 

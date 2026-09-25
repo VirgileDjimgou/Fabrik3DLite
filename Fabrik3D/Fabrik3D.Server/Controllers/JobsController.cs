@@ -1,6 +1,8 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Server.Authentication;
 using Fabrik3D.Server.Middleware;
 using Fabrik3D.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fabrik3D.Server.Controllers;
@@ -8,6 +10,7 @@ namespace Fabrik3D.Server.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[Authorize(Policy = Fabrik3DPolicies.Read)]
 public class JobsController : ControllerBase
 {
     private readonly JobService _svc;
@@ -32,6 +35,7 @@ public class JobsController : ControllerBase
 
     /// <summary>Create a new job (optionally with embedded tasks).</summary>
     [HttpPost]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(JobDto), 201)]
     [ProducesResponseType(typeof(ApiErrorDto), 400)]
     public async Task<IActionResult> Create([FromBody] CreateJobRequest request)
@@ -43,6 +47,7 @@ public class JobsController : ControllerBase
 
     /// <summary>Delete a job and its related tasks.</summary>
     [HttpDelete("{id}")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(204)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     public async Task<IActionResult> Delete(string id)
@@ -50,6 +55,7 @@ public class JobsController : ControllerBase
 
     /// <summary>Start a Created/Ready job.</summary>
     [HttpPost("{id}/start")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(JobDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
@@ -72,6 +78,7 @@ public class JobsController : ControllerBase
     /// another simulator are rejected unless the owner's heartbeat expired.
     /// </summary>
     [HttpPost("{id}/claim")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(ClaimResultDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
@@ -84,6 +91,7 @@ public class JobsController : ControllerBase
 
     /// <summary>Pause a Running job.</summary>
     [HttpPost("{id}/pause")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(JobDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
@@ -102,6 +110,7 @@ public class JobsController : ControllerBase
 
     /// <summary>Resume a Paused job.</summary>
     [HttpPost("{id}/resume")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(JobDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
@@ -120,6 +129,7 @@ public class JobsController : ControllerBase
 
     /// <summary>Stop a Running or Paused job.</summary>
     [HttpPost("{id}/stop")]
+    [Authorize(Policy = Fabrik3DPolicies.Operate)]
     [ProducesResponseType(typeof(JobDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]

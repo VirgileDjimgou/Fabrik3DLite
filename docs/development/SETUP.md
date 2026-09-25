@@ -40,6 +40,33 @@ dotnet user-secrets --project Fabrik3D/Fabrik3D.Server set "MongoDb:DatabaseName
 
 The checked-in `appsettings.Local.example.json` documents the expected shape but is not loaded automatically.
 
+## Authentication in local development
+
+The server derives its identity mode from the environment when `Authentication:Mode` is empty: local
+`Development` uses the clearly-labelled development identity mode, `Testing` (CI) uses the test
+identity, and `Production` requires a real OIDC provider. The HMI and simulator login forms call
+`POST /api/auth/dev-token` in Development/Test only; the response is a short-lived token signed with
+an ephemeral process-local key generated at startup. Sign in with any documented role (Learner,
+Instructor, Engineer, Operator, Administrator) to exercise the authorization path.
+
+Production-like OIDC can be exercised locally without committing a secret:
+
+```powershell
+dotnet user-secrets --project Fabrik3D/Fabrik3D.Server set "Authentication:Mode" "Oidc"
+dotnet user-secrets --project Fabrik3D/Fabrik3D.Server set "Authentication:Authority" "https://<issuer>/"
+dotnet user-secrets --project Fabrik3D/Fabrik3D.Server set "Authentication:Audience" "fabrik3d-api"
+```
+
+Set a stable development signing key only if tokens must survive a server restart (never commit it):
+
+```powershell
+dotnet user-secrets --project Fabrik3D/Fabrik3D.Server set "Authentication:SigningKey" "<random-at-least-32-chars>"
+```
+
+`Authentication:Mode=Development`, `Test` or `None`, an OIDC authority missing in Production, or
+`RequireHttpsMetadata=false` in Production makes the server **refuse to start**. See
+[`docs/architecture/IDENTITY_AND_RBAC.md`](../architecture/IDENTITY_AND_RBAC.md).
+
 ## Build and checks
 
 ```powershell

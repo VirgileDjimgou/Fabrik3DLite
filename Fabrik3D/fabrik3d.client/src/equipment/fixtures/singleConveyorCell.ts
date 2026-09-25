@@ -21,6 +21,8 @@ const ROBOT_SIGNALS: EquipmentSignalDeclaration[] = [
   { name: 'GripperOpen', displayName: 'Gripper open', direction: 'input-to-controller', dataType: 'bool', defaultValue: true, semanticCategory: 'status' },
   { name: 'GripperClosed', displayName: 'Gripper closed', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'PayloadDetected', displayName: 'Payload detected', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
+  { name: 'Dwell', displayName: 'Grip dwell active', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
+  { name: 'CycleStep', displayName: 'Workflow step index', direction: 'input-to-controller', dataType: 'uint', min: 0, max: 22, defaultValue: 0, semanticCategory: 'measurement' },
   { name: 'Fault', displayName: 'Robot fault', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'diagnostic' },
   { name: 'ProtectiveStop', displayName: 'Protective stop', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'safety' },
 ]
@@ -29,15 +31,20 @@ const CNC_SIGNALS: EquipmentSignalDeclaration[] = [
   { name: 'Ready', displayName: 'Ready', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'DoorOpen', displayName: 'Door open', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'DoorClosed', displayName: 'Door closed', direction: 'input-to-controller', dataType: 'bool', defaultValue: true, semanticCategory: 'status' },
+  { name: 'DoorLocked', displayName: 'Door interlock locked', direction: 'input-to-controller', dataType: 'bool', defaultValue: true, semanticCategory: 'status' },
   { name: 'DoorCommand', displayName: 'Door command', direction: 'output-from-controller', dataType: 'bool', writable: true, defaultValue: false, semanticCategory: 'command' },
   { name: 'FixtureClamped', displayName: 'Fixture clamped', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'PartPresent', displayName: 'Part present', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'CycleStart', displayName: 'Cycle start', direction: 'output-from-controller', dataType: 'bool', writable: true, defaultValue: false, semanticCategory: 'command' },
   { name: 'CycleRunning', displayName: 'Cycle running', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'CycleComplete', displayName: 'Cycle complete', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
+  { name: 'CycleStep', displayName: 'Cycle phase index', direction: 'input-to-controller', dataType: 'uint', min: 0, max: 9, defaultValue: 0, semanticCategory: 'measurement' },
   { name: 'SpindleRunning', displayName: 'Spindle running', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
+  { name: 'SpindleAtSpeed', displayName: 'Spindle at speed', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'SpindleSpeed', displayName: 'Spindle speed', direction: 'input-to-controller', dataType: 'float', min: 0, max: 24_000, engineeringUnit: 'rpm', defaultValue: 0, semanticCategory: 'measurement' },
+  { name: 'FeedActive', displayName: 'Feed axis cutting', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'FeedRate', displayName: 'Feed rate', direction: 'input-to-controller', dataType: 'float', min: 0, max: 10_000, engineeringUnit: 'mm/min', defaultValue: 0, semanticCategory: 'measurement' },
+  { name: 'CoolantOn', displayName: 'Coolant on', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'Fault', displayName: 'CNC fault', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'diagnostic' },
   { name: 'EmergencyStop', displayName: 'Emergency stop', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'safety' },
 ]
@@ -51,6 +58,9 @@ const CONVEYOR_SIGNALS: EquipmentSignalDeclaration[] = [
   { name: 'PhotoeyeIn', displayName: 'Photoeye infeed', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'PhotoeyeStation', displayName: 'Photoeye station', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'status' },
   { name: 'EncoderPulse', displayName: 'Encoder pulses', direction: 'input-to-controller', dataType: 'uint', defaultValue: 0, semanticCategory: 'measurement' },
+  { name: 'RawSlotsRemaining', displayName: 'Raw slots remaining', direction: 'input-to-controller', dataType: 'uint', min: 0, max: 100, defaultValue: 0, semanticCategory: 'measurement' },
+  { name: 'MachinedSlots', displayName: 'Machined slots', direction: 'input-to-controller', dataType: 'uint', min: 0, max: 100, defaultValue: 0, semanticCategory: 'measurement' },
+  { name: 'SpeedDeviation', displayName: 'Speed deviation', direction: 'input-to-controller', dataType: 'float', min: 0, max: 2, engineeringUnit: 'm/s', defaultValue: 0, semanticCategory: 'measurement' },
 ]
 
 const SAFETY_SIGNALS: EquipmentSignalDeclaration[] = [
@@ -60,6 +70,7 @@ const SAFETY_SIGNALS: EquipmentSignalDeclaration[] = [
   { name: 'LightCurtainClear', displayName: 'Light curtain clear', direction: 'input-to-controller', dataType: 'bool', defaultValue: true, semanticCategory: 'safety' },
   { name: 'ScannerClear', displayName: 'Scanner clear', direction: 'input-to-controller', dataType: 'bool', defaultValue: true, semanticCategory: 'safety' },
   { name: 'SafetyReset', displayName: 'Safety reset', direction: 'output-from-controller', dataType: 'bool', writable: true, defaultValue: false, semanticCategory: 'command' },
+  { name: 'SafetyResetRequired', displayName: 'Safety reset required', direction: 'input-to-controller', dataType: 'bool', defaultValue: false, semanticCategory: 'safety' },
   { name: 'SafetyHealthy', displayName: 'Safety healthy', direction: 'input-to-controller', dataType: 'bool', defaultValue: true, semanticCategory: 'safety' },
 ]
 

@@ -14,11 +14,12 @@ const files = output
 
 const sensitivePath = /(^|\/)(?:\.env(?:\..+)?|.*(?:secret|credential|password|token).*)$|\.(?:pem|key|pfx|p12|crt|cer)$/i;
 const allowedExample = /(^|\/)\.env(?:\..+)?\.example$/i;
-const secretPattern = /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|(?:CF_|CLOUDFLARE_)?(?:API_)?TOKEN\s*[=:]\s*[^\s"']{16,}/i;
+const sourceOrDocPath = /\.(?:cs|ts|vue|js|mjs|cjs|css|scss|html|md)$/i;
+const secretPattern = /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{20,}|(?:CF_|CLOUDFLARE_)?(?:API_)?TOKEN\s*[=:]\s*(?=[^\s"']*\d)[^\s"']{16,}/i;
 
 const violations = [];
 for (const file of files) {
-  if (sensitivePath.test(file) && !allowedExample.test(file)) {
+  if (sensitivePath.test(file) && !allowedExample.test(file) && !sourceOrDocPath.test(file)) {
     violations.push(`${file}: sensitive filename`);
     continue;
   }

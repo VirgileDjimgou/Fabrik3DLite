@@ -28,6 +28,8 @@ Direction is expressed relative to a controller: `in` = input to controller (sta
 | `robot-1.GripperOpen` | in | bool | — | — | derived | binding | True while the workflow is not carrying a part. |
 | `robot-1.GripperClosed` | in | bool | — | — | derived | binding | True while the workflow is carrying a part. |
 | `robot-1.PayloadDetected` | in | bool | — | — | derived | binding | Part is held between pick and place-back. |
+| `robot-1.Dwell` | in | bool | — | — | derived | binding | True during the deterministic pick/load/retrieve/place grip dwell. |
+| `robot-1.CycleStep` | in | uint | — | 0…22 | workflow phase | binding | Stable index of the current workflow phase (`IDLE` = 0). |
 | `robot-1.Fault` | in | bool | — | — | active fault controller | binding | Any active simulated fault targets `robot-1`. |
 | `robot-1.ProtectiveStop` | in | bool | — | — | safety interlock model | binding | E-stop latched or light curtain/scanner not clear. |
 
@@ -35,18 +37,23 @@ Direction is expressed relative to a controller: `in` = input to controller (sta
 
 | Signal | Direction | Type | Unit | Range | Driver (writer) | Consumer (reader) | Behaviour |
 |---|---|---|---|---|---|---|---|
-| `cnc-1.Ready` | in | bool | — | — | derived | binding | Machine `IDLE`, door closed, no CNC fault, no E-stop. |
-| `cnc-1.DoorOpen` | in | bool | — | — | door animation | binding | Door reached its fully open position. |
-| `cnc-1.DoorClosed` | in | bool | — | — | door animation | binding | Door reached its fully closed position. |
-| `cnc-1.DoorCommand` | out | bool | — | — | operator signal, workflow signal | binding → `commandDoor` | Open when `IDLE` (starts a load) or `UNLOADING`; close when `IDLE`/`LOADING`; refused while machining. |
-| `cnc-1.FixtureClamped` | in | bool | — | — | derived | binding | True while `MACHINING` or `UNLOADING`. |
-| `cnc-1.PartPresent` | in | bool | — | — | derived | binding | Machine state is not `IDLE`. |
-| `cnc-1.CycleStart` | out | bool | — | — | workflow signal | binding → `startCycle` | Starts machining only from `LOADING`. |
-| `cnc-1.CycleRunning` | in | bool | — | — | derived | binding | Machine state is `MACHINING`. |
-| `cnc-1.CycleComplete` | in | bool | — | — | derived | binding | Machine state is `UNLOADING` (cycle finished, awaiting unload). |
-| `cnc-1.SpindleRunning` | in | bool | — | — | derived | binding | Machine state is `MACHINING`. |
-| `cnc-1.SpindleSpeed` | in | float | rpm | 0…24000 | derived | binding | Nominal simulated spindle speed while machining, otherwise 0. |
-| `cnc-1.FeedRate` | in | float | mm/min | 0…10000 | derived | binding | Nominal simulated feed while machining, otherwise 0. |
+| `cnc-1.Ready` | in | bool | — | — | derived | binding | Cycle machine `IDLE`, door closed, no CNC fault, no E-stop. |
+| `cnc-1.DoorOpen` | in | bool | — | — | door model | binding | Door reached its fully open position. |
+| `cnc-1.DoorClosed` | in | bool | — | — | door model | binding | Door reached its fully closed position. |
+| `cnc-1.DoorLocked` | in | bool | — | — | door interlock | binding | Door interlock engaged (door closed, no E-stop/fault). |
+| `cnc-1.DoorCommand` | out | bool | — | — | operator signal, workflow signal | binding → `commandDoor` | Open from `IDLE` (starts a load) or while unloading; close only before clamping; refused while machining. |
+| `cnc-1.FixtureClamped` | in | bool | — | — | fixture model | binding | True once clamp engagement completes and until release completes. |
+| `cnc-1.PartPresent` | in | bool | — | — | fixture model | binding | True from cycle start (part in fixture) until unload completes. |
+| `cnc-1.CycleStart` | out | bool | — | — | workflow signal | binding → `startCycle` | Starts the door-close/clamp/feed cycle only from `LOAD_READY`. |
+| `cnc-1.CycleRunning` | in | bool | — | — | derived | binding | Coarse machine state is `MACHINING`. |
+| `cnc-1.CycleComplete` | in | bool | — | — | derived | binding | Coarse machine state is `UNLOADING` (cycle finished, awaiting unload). |
+| `cnc-1.CycleStep` | in | uint | — | 0…9 | cycle machine | binding | Fine-grained cycle phase index (`IDLE` = 0, `FEED` = 6). |
+| `cnc-1.SpindleRunning` | in | bool | — | — | derived | binding | Coarse machine state is `MACHINING`. |
+| `cnc-1.SpindleAtSpeed` | in | bool | — | — | spindle ramp | binding | Spindle reached ≥98 % of nominal while feeding. |
+| `cnc-1.SpindleSpeed` | in | float | rpm | 0…24000 | spindle ramp | binding | Ramps 0→nominal on spin-up, nominal while feeding, ramps back to 0. |
+| `cnc-1.FeedActive` | in | bool | — | — | feed phase | binding | True only during the cutting feed phase. |
+| `cnc-1.FeedRate` | in | float | mm/min | 0…10000 | feed phase | binding | Nominal simulated feed while cutting, otherwise 0. |
+| `cnc-1.CoolantOn` | in | bool | — | — | feed phase | binding | Coolant indicator follows the cutting feed phase. |
 | `cnc-1.Fault` | in | bool | — | — | active fault controller | binding | Any active simulated fault targets `cnc-1`. |
 | `cnc-1.EmergencyStop` | in | bool | — | — | safety interlock model | binding | E-stop latched. |
 
@@ -62,6 +69,9 @@ Direction is expressed relative to a controller: `in` = input to controller (sta
 | `conveyor-1.PhotoeyeIn` | in | bool | — | — | pallet positions | binding | A moving pallet is inside the 1 m infeed window. |
 | `conveyor-1.PhotoeyeStation` | in | bool | — | — | pallet positions | binding | A pallet is stopped at the work position. |
 | `conveyor-1.EncoderPulse` | in | uint | pulses | — | real belt travel (1000 pulses/m) | binding | Accumulates only while the belt moves. |
+| `conveyor-1.RawSlotsRemaining` | in | uint | — | 0…100 | stopped pallet data | binding | Raw parts still unprocessed on the stopped pallet. |
+| `conveyor-1.MachinedSlots` | in | uint | — | 0…100 | stopped pallet data | binding | Slots already returned as machined on the stopped pallet. |
+| `conveyor-1.SpeedDeviation` | in | float | m/s | 0…2 | derived | binding | Absolute difference between actual speed and reference. |
 
 ## Safety `safety-zone` → instance `safety-zone-1`
 
@@ -73,9 +83,10 @@ Direction is expressed relative to a controller: `in` = input to controller (sta
 | `safety-zone-1.LightCurtainClear` | in | bool | — | — | safety interlock model | binding | Light curtain clear. |
 | `safety-zone-1.ScannerClear` | in | bool | — | — | safety interlock model | binding | Safety scanner clear. |
 | `safety-zone-1.SafetyReset` | out | bool | — | — | operator/instructor signal | binding → `SafetyInterlockModel.reset` | Accepted only when gate closed, curtain clear and scanner clear. |
+| `safety-zone-1.SafetyResetRequired` | in | bool | — | — | safety interlock model | binding | True while the E-stop is latched or any interlock is unhealthy. |
 | `safety-zone-1.SafetyHealthy` | in | bool | — | — | safety interlock model | binding | All of the above conditions are healthy. |
 
-Total: **43 signals** (14 robot, 14 CNC, 8 conveyor, 7 safety).
+Total: **54 signals** (16 robot, 19 CNC, 11 conveyor, 8 safety).
 
 ## Command routing
 

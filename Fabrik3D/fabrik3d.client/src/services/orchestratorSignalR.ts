@@ -5,9 +5,11 @@
  */
 
 import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
+import { getAccessToken, isTokenExpired, notifyUnauthorized } from '@/auth/authStore'
 import type {
   AlarmAcknowledgedEvent,
   AlarmRaisedEvent,
+  ControlAuthorityChangedEvent,
   JobStateChangedEvent,
   MachineStateChangedEvent,
   OperatorMessageEvent,
@@ -19,6 +21,7 @@ import { logSignalR } from './devLogger'
 export type {
   AlarmAcknowledgedEvent,
   AlarmRaisedEvent,
+  ControlAuthorityChangedEvent,
   JobStateChangedEvent,
   MachineStateChangedEvent,
   OperatorMessageEvent,
@@ -38,6 +41,7 @@ export type OrchestrationCallbacks = {
   onAlarmAcknowledged?: (evt: AlarmAcknowledgedEvent) => void
   onOperatorMessage?: (evt: OperatorMessageEvent) => void
   onMachineStateChanged?: (evt: MachineStateChangedEvent) => void
+  onControlAuthorityChanged?: (evt: ControlAuthorityChangedEvent) => void
   onConnectionStateChanged?: (state: ConnectionState) => void
 }
 
@@ -71,7 +75,11 @@ export async function connect(hubUrl?: string): Promise<void> {
   }
 
   connection = new HubConnectionBuilder()
-    .withUrl(url)
+    .withUrl(url, {
+      // The server reads the JWT from the `access_token` query parameter for the /hubs path only.
+      // Tokens are never logged and never used for REST URLs.
+      accessTokenFactory: () => getAccessToken() ?? '',
+    })
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Information)
     .build()
@@ -104,6 +112,10 @@ export async function connect(hubUrl?: string): Promise<void> {
     logSignalR('MachineStateChanged', evt)
     callbacks.onMachineStateChanged?.(evt)
   })
+  connection.on('ControlAuthorityChanged', (evt: ControlAuthorityChangedEvent) => {
+    logSignalR('ControlAuthorityChanged', evt)
+    callbacks.onControlAuthorityChanged?.(evt)
+  })
 
   connection.onreconnecting(() => {
     console.warn('[SignalR] Reconnecting to orchestration hub')
@@ -116,6 +128,9 @@ export async function connect(hubUrl?: string): Promise<void> {
   connection.onclose(() => {
     console.warn('[SignalR] Orchestration hub closed')
     callbacks.onConnectionStateChanged?.('disconnected')
+    // A closed hub with an expired/missing token is an explicit re-auth signal, not silent anonymity.
+    const bearer = getAccessToken()
+    if (!bearer || isTokenExpired(bearer)) notifyUnauthorized()
   })
 
   try {

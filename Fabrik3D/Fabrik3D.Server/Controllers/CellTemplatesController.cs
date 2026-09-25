@@ -1,5 +1,7 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Server.Authentication;
 using Fabrik3D.Server.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fabrik3D.Server.Controllers;
@@ -7,17 +9,16 @@ namespace Fabrik3D.Server.Controllers;
 [ApiController]
 [Route("api/cell-templates")]
 [Produces("application/json")]
+[Authorize(Policy = Fabrik3DPolicies.Read)]
 public class CellTemplatesController : ControllerBase
 {
     private readonly CellTemplateService _svc;
-    private readonly CellTemplateAuthorizationPlaceholder _authz;
+    private readonly ICurrentIdentity _identity;
 
-    public CellTemplatesController(
-        CellTemplateService svc,
-        CellTemplateAuthorizationPlaceholder authz)
+    public CellTemplatesController(CellTemplateService svc, ICurrentIdentity identity)
     {
         _svc = svc;
-        _authz = authz;
+        _identity = identity;
     }
 
     /// <summary>List named cell templates.</summary>
@@ -36,46 +37,41 @@ public class CellTemplatesController : ControllerBase
         return dto is null ? NotFound() : Ok(dto);
     }
 
-    /// <summary>Create a named cell template.</summary>
+    /// <summary>Create a named cell template (engineering).</summary>
     [HttpPost]
+    [Authorize(Policy = Fabrik3DPolicies.Engineer)]
     [ProducesResponseType(typeof(CellTemplateDto), 201)]
     [ProducesResponseType(typeof(ApiErrorDto), 400)]
-    [ProducesResponseType(typeof(ApiErrorDto), 401)]
+    [ProducesResponseType(typeof(ApiErrorDto), 403)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
     public async Task<IActionResult> Create([FromBody] SaveCellTemplateRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        if (!_authz.IsWriteAllowed(HttpContext, out var reason))
-            return Unauthorized(new ApiErrorDto("authorization_required", reason ?? "Authorization required.", StatusCodes.Status401Unauthorized));
-        var dto = await _svc.CreateAsync(request);
+        var dto = await _svc.CreateAsync(request, _identity.AuditId);
         return CreatedAtAction(nameof(Get), new { id = dto.Id }, dto);
     }
 
-    /// <summary>Update a named cell template.</summary>
+    /// <summary>Update a named cell template (engineering).</summary>
     [HttpPut("{id}")]
+    [Authorize(Policy = Fabrik3DPolicies.Engineer)]
     [ProducesResponseType(typeof(CellTemplateDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 400)]
-    [ProducesResponseType(typeof(ApiErrorDto), 401)]
+    [ProducesResponseType(typeof(ApiErrorDto), 403)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
     public async Task<IActionResult> Update(string id, [FromBody] SaveCellTemplateRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        if (!_authz.IsWriteAllowed(HttpContext, out var reason))
-            return Unauthorized(new ApiErrorDto("authorization_required", reason ?? "Authorization required.", StatusCodes.Status401Unauthorized));
-        var dto = await _svc.UpdateAsync(id, request);
+        var dto = await _svc.UpdateAsync(id, request, _identity.AuditId);
         return dto is null ? NotFound() : Ok(dto);
     }
 
-    /// <summary>Delete a named cell template.</summary>
+    /// <summary>Delete a named cell template (engineering).</summary>
     [HttpDelete("{id}")]
+    [Authorize(Policy = Fabrik3DPolicies.Engineer)]
     [ProducesResponseType(204)]
-    [ProducesResponseType(typeof(ApiErrorDto), 401)]
+    [ProducesResponseType(typeof(ApiErrorDto), 403)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     public async Task<IActionResult> Delete(string id)
-    {
-        if (!_authz.IsWriteAllowed(HttpContext, out var reason))
-            return Unauthorized(new ApiErrorDto("authorization_required", reason ?? "Authorization required.", StatusCodes.Status401Unauthorized));
-        return await _svc.DeleteAsync(id) ? NoContent() : NotFound();
-    }
+        => await _svc.DeleteAsync(id) ? NoContent() : NotFound();
 }

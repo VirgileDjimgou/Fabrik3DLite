@@ -54,8 +54,53 @@ Task transitions follow `TaskStateTransitionRules` (`Pending`/`Ready` → `Runni
 
 - The simulator heartbeats every 5 s while a session is active.
 - `HeartbeatMonitorService` scans running/paused sessions every `Orchestration:HeartbeatCheckIntervalSeconds` (default 5 s) and marks sessions whose heartbeat is older than `Orchestration:HeartbeatTimeoutSeconds` (default 15 s) as `Faulted`, broadcasting `SimulationStateChanged`.
+- The same monitor also expires external control-authority leases (S36); see `CONTROL_AUTHORITY.md`. There is a single heartbeat scanner, not one per concern.
 - A heartbeat from the owning simulator revives a faulted session back to `Running` (recovery).
 - The HMI displays the session status (including `Faulted`) and the last heartbeat time.
+
+## Control authority (S36)
+
+Sessions describe *what the simulator executes*; `ControlAuthority` describes *who may drive the
+actuators* for a scope. They are separate concepts: a simulator can own a session while being denied
+actuator control because an external controller holds `external-controller` authority for the cell.
+
+- Modes `local-simulation`, `external-controller`, `observed-twin`, `replay`; exactly one authority per
+  equipment/actuator scope.
+- Handover is explicit, precondition-checked and audited; concurrent acquisition fails closed with
+  `authority_conflict`.
+- Loss of an external controller degrades its authority (`authority_lost`) and never silently reverts to
+  another authority.
+- REST endpoints under `/api/control-authority` and the `ControlAuthorityChanged` SignalR event expose
+  the state; the full model is documented in [`CONTROL_AUTHORITY.md`](./CONTROL_AUTHORITY.md).
+
+## Telemetry and event historian (S40)
+
+Live orchestration and durable history are separate concerns. The historian persists *selected*
+telemetry samples and orchestration events (commands, state transitions, alarms, acknowledgements,
+authority changes, fault actions) with source, quality, timestamp and correlation id.
+
+- Ingestion is batched, validated, rate-limited and bounded: `POST /api/historian/telemetry` and
+  `POST /api/historian/events`.
+- Queries are read-only and deterministic: `GET /api/historian/telemetry|events|status`, filterable by
+  session/equipment/signal/kind/time/severity.
+- Retention is bounded by age and document count with a background pruner; sampling is conservative
+  and never full-rate by default.
+- The historian is disabled by default and additive. A disabled or failing historian never breaks live
+  orchestration or the simulator; storage failures are logged, counted, retried once and dropped.
+- The schema, indexes, measured numbers and the criteria for adopting a dedicated time-series database
+  are documented in [`TELEMETRY_HISTORIAN.md`](./TELEMETRY_HISTORIAN.md).
+
+## Authentication and authorization (S42)
+
+Every orchestration endpoint and hub method is authenticated and authorized server-side; hidden UI is
+not a control. The server validates JWT bearer tokens (external OIDC in production, a guarded
+dev/test mode for CI/local) and maps roles to named policies (`Read`, `Operate`, `Engineer`,
+`Instruct`, `Admin`). Mutating command, state, task, heartbeat, cell-template, mapping-apply and
+control-authority operations require the appropriate policy; violations return a structured `401`
+(`unauthorized`) or `403` (`forbidden`). The hub accepts an `access_token` query parameter during
+negotiation and uses the same policies as REST. Audit records (authority, alarms, templates, mapping)
+carry the authenticated subject and role. See [`IDENTITY_AND_RBAC.md`](./IDENTITY_AND_RBAC.md) and
+[ADR 0003](../adr/0003-identity-and-rbac.md).
 
 ## Correlation ids
 
@@ -80,3 +125,12 @@ Task transitions follow `TaskStateTransitionRules` (`Pending`/`Ready` → `Runni
 | `session_already_claimed` | Job session is owned by another live simulator |
 | `job_not_claimable` | Job state does not allow claiming |
 | `task_not_runnable` | Task's job has no active session |
+| `authority_conflict` | Another owner holds the control authority for the scope |
+| `authority_not_acquired` | Caller does not hold the authority it needs to command |
+| `authority_handover_rejected` | A handover precondition failed (unhealthy connector, unconfirmed takeover, bad token) |
+| `authority_lost` | External controller lease expired / owner unhealthy; commands fail closed |
+| `authority_replay_read_only` | Replay tried to acquire authority or command |
+| `authority_not_owner` | Caller is not the holder of the authority |
+| `unauthorized` | Authentication is required (missing/invalid/expired token) |
+| `forbidden` | Authenticated principal lacks the required role/policy |
+| `invalid_role` | Requested dev/test identity role is not one this server can issue |

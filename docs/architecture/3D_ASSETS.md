@@ -110,3 +110,34 @@ The first production-style generated assets are the generic conveyor and pallet
 station; see [INDUSTRIAL_SCENE.md](INDUSTRIAL_SCENE.md) for their runtime
 bindings, deterministic collision proxies, quality profiles and regeneration
 workflow.
+
+## Reference-cell budgets and measured values
+
+S39 made the CNC machine-tending reference cell the deep demonstration baseline.
+Its visual state is driven by `CncCycleMachine`; the visual geometry is built by
+`equipment/visuals/cncMachineVisual.ts` and measured deterministically with
+`measureSceneResources` in `cncMachineVisual.test.ts` (no GPU required):
+
+| Metric | Documented budget | Measured (CNC visual, S39) |
+|---|---|---|
+| Draw calls | ≤ 60 | 28 |
+| Triangles | ≤ 6 000 | 764 |
+| Meshes | ≤ 40 | 28 |
+| Textures | 0 (procedural, no external download) | 0 |
+
+The machine visual uses a coherent painted-steel / stainless / safety-yellow /
+rubber / glass palette with believable roughness and metalness. Build/dispose was
+repeated 25 times in the same process and produced identical metrics every cycle,
+which demonstrates deterministic disposal and no per-instance resource
+accumulation.
+
+The one signal-binding tick is also budgeted, because it runs every frame for the
+whole catalog: `binding.test.ts` drives 1 000 ticks and asserts < 1 ms per tick
+(measured average is printed by the test). The reference target remains a stable
+60 fps at 1080p on the documented reference machine and browser; that wall-clock
+GPU frame time must be re-measured on reference hardware (see the visual
+regression run), and is not asserted from geometry counts alone. No asset is
+downloaded at runtime: the reference cell's GLB packages are generated
+deterministically and the procedural CNC/conveyor/pallet builders remain the
+fallback.
+

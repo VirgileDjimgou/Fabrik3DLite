@@ -25,7 +25,16 @@ export interface TimelineContext {
 export class TimelineRecorder {
   private sequence = 0
   private readonly entries: TimelineEntry[] = []
-  constructor(private readonly now: () => string = () => new Date().toISOString()) {}
+
+  /**
+   * @param now deterministic clock (defaults to the system clock)
+   * @param onRecord optional non-critical sink (for example the S40 historian bridge). A sink
+   * exception must never break the simulation, so it is swallowed.
+   */
+  constructor(
+    private readonly now: () => string = () => new Date().toISOString(),
+    private readonly onRecord?: (entry: TimelineEntry) => void,
+  ) {}
 
   record(kind: TimelineKind, severity: TimelineSeverity, context: TimelineContext, payload: Record<string, unknown> = {}): TimelineEntry {
     const entry: TimelineEntry = {
@@ -34,6 +43,11 @@ export class TimelineRecorder {
       correlationId: context.correlationId, source: context.source, payload: { ...payload },
     }
     this.entries.push(entry)
+    try {
+      this.onRecord?.(entry)
+    } catch {
+      // The sink (historian bridge) is non-critical and never affects local timeline semantics.
+    }
     return entry
   }
 

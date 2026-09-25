@@ -1,7 +1,9 @@
 import { HubConnectionBuilder, HubConnection, LogLevel } from '@microsoft/signalr'
+import { getAccessToken, isTokenExpired, notifyUnauthorized } from '@/auth/authStore'
 import type {
   AlarmAcknowledgedEvent,
   AlarmRaisedEvent,
+  ControlAuthorityChangedEvent,
   JobStateChangedEvent,
   MachineStateChangedEvent,
   OperatorMessageEvent,
@@ -12,6 +14,7 @@ import type {
 export type {
   AlarmAcknowledgedEvent,
   AlarmRaisedEvent,
+  ControlAuthorityChangedEvent,
   JobStateChangedEvent,
   MachineStateChangedEvent,
   OperatorMessageEvent,
@@ -33,6 +36,7 @@ export type HubCallbacks = {
   onAlarmAcknowledged?: (e: AlarmAcknowledgedEvent) => void
   onOperatorMessage?: (e: OperatorMessageEvent) => void
   onMachineStateChanged?: (e: MachineStateChangedEvent) => void
+  onControlAuthorityChanged?: (e: ControlAuthorityChangedEvent) => void
   onConnectionStateChanged?: (s: ConnectionState) => void
 }
 
@@ -60,7 +64,11 @@ export async function connect(): Promise<void> {
   if (connection) return
   const url = resolveHubUrl()
   connection = new HubConnectionBuilder()
-    .withUrl(url).withAutomaticReconnect()
+    .withUrl(url, {
+      // SignalR passes the JWT as the `access_token` query parameter during negotiation; the
+      // server reads it only for the /hubs path. Tokens are never logged or placed in REST URLs.
+      accessTokenFactory: () => getAccessToken() ?? '',
+    }).withAutomaticReconnect()
     .configureLogging(LogLevel.Information).build()
 
   connection.on('JobStateChanged', (e) => dispatch('onJobStateChanged', e))
@@ -70,10 +78,16 @@ export async function connect(): Promise<void> {
   connection.on('AlarmAcknowledged', (e) => dispatch('onAlarmAcknowledged', e))
   connection.on('OperatorMessage', (e) => dispatch('onOperatorMessage', e))
   connection.on('MachineStateChanged', (e) => dispatch('onMachineStateChanged', e))
+  connection.on('ControlAuthorityChanged', (e) => dispatch('onControlAuthorityChanged', e))
 
   connection.onreconnecting(() => dispatch('onConnectionStateChanged', 'reconnecting'))
   connection.onreconnected(() => dispatch('onConnectionStateChanged', 'connected'))
-  connection.onclose(() => dispatch('onConnectionStateChanged', 'disconnected'))
+  connection.onclose(() => {
+    dispatch('onConnectionStateChanged', 'disconnected')
+    // A closed hub with an expired token is an explicit re-auth signal, never silent anonymity.
+    const bearer = getAccessToken()
+    if (!bearer || isTokenExpired(bearer)) notifyUnauthorized()
+  })
 
   try {
     await connection.start()

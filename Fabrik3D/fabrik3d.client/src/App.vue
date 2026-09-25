@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import SceneHost from './components/SceneHost.vue'
 import SceneSelectorPanel from './components/SceneSelectorPanel.vue'
 import CellEditor from './components/CellEditor.vue'
+import SimulatorAuthBar from './components/SimulatorAuthBar.vue'
 import { createDefaultRobotCatalog } from './robot/catalog'
 import { resetFloatingOverlays } from './composables/useDraggableOverlay'
 import { createDefaultScenePresetCatalog, DEFAULT_SCENE_PRESET_ID, SceneSelectionController } from './scenes'
@@ -64,6 +65,12 @@ function changeLocale(event: Event): void {
         data-mode="editing"
         @click="setMode('editing')"
       >{{ t('app.edit') }}</button>
+      <a
+        v-if="mode === 'editing'"
+        class="reset-panels"
+        data-action="mapping-studio"
+        href="?view=mapping-studio"
+      >{{ t('app.mappingStudio') }}</a>
       <button type="button" class="reset-panels" data-action="reset-panels" @click="resetPanels">{{ t('app.resetPanels') }}</button>
       <label class="language-select">
         <span>{{ t('app.language') }}</span>
@@ -73,6 +80,7 @@ function changeLocale(event: Event): void {
           <option value="de">Deutsch</option>
         </select>
       </label>
+      <SimulatorAuthBar />
     </div>
     <SceneSelectorPanel :presets="scenePresets" :selected-id="selectedSceneId" :locale="locale" @select="selectScene" @reset="resetScene" />
     <SceneHost v-if="mode === 'execution'" :key="sceneHostKey" :preset="selectedScene" />

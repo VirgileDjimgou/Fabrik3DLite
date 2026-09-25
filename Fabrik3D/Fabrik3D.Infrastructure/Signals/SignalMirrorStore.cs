@@ -132,7 +132,9 @@ public sealed class SignalMirrorStore
                 update.Quality,
                 update.Source,
                 update.Origin,
-                update.Timestamp);
+                update.Timestamp,
+                update.AuthorityScope,
+                update.AuthorityMode);
 
             _samples[update.SignalId] = sample;
             return new SignalMirrorWriteResult(true, null, sample);
