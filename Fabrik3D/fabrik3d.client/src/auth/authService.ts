@@ -37,11 +37,35 @@ export async function devLogin(role: string, subject?: string, name?: string): P
   })
   const next = identityFromToken(token.accessToken, token.mode)
   setSession(token.accessToken, next)
-  return next
+  // Enrich with the server-resolved organization; a failure keeps the token-authenticated identity.
+  return (await refreshIdentity().catch(() => null)) ?? next
 }
 
 export function logout(): void {
   clearSession()
+}
+
+/** Re-validates the current token and refreshes roles plus the resolved organization (S43). */
+export async function refreshIdentity(): Promise<AuthIdentity | null> {
+  const token = getAccessToken()
+  if (!token) return null
+  const me = await json<{
+    subject: string
+    name?: string | null
+    roles: string[]
+    organizationId?: string | null
+    organizationName?: string | null
+  }>('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+  const next: AuthIdentity = {
+    subject: me.subject,
+    name: me.name ?? me.subject,
+    roles: me.roles,
+    mode: 'server',
+    organizationId: me.organizationId ?? null,
+    organizationName: me.organizationName ?? null,
+  }
+  setSession(token, next)
+  return next
 }
 
 /**
@@ -50,13 +74,8 @@ export function logout(): void {
  */
 export async function bootstrap(): Promise<void> {
   if (!restoreSession()) return
-  const token = getAccessToken()
-  if (!token) return
   try {
-    const me = await json<{ subject: string; name?: string | null; roles: string[] }>('/auth/me', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    setSession(token, { subject: me.subject, name: me.name ?? me.subject, roles: me.roles, mode: 'server' })
+    await refreshIdentity()
   } catch (error) {
     const status = (error as { status?: number }).status
     if (status === 401 || status === 403) clearSession({ expired: true })

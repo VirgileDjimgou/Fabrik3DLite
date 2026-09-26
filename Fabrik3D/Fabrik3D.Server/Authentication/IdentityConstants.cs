@@ -45,6 +45,13 @@ public static class Fabrik3DPolicies
     /// <summary>Machine control: job/task lifecycle, alarms, session and machine state, telemetry ingest.</summary>
     public const string Operate = "Fabrik3D.Operate";
 
+    /// <summary>
+    /// Training evidence reporting: starting/reporting/completing the caller's own training session
+    /// (S44). Instructors read within their organization through <see cref="Read"/> plus the
+    /// instructor-correction policy <see cref="Instruct"/>.
+    /// </summary>
+    public const string Train = "Fabrik3D.Train";
+
     /// <summary>Engineering: cell templates, signal mappings, connector configuration, forced handover.</summary>
     public const string Engineer = "Fabrik3D.Engineer";
 
@@ -63,6 +70,7 @@ public static class Fabrik3DPolicies
         {
             [Read] = [Fabrik3DRoles.Learner, Fabrik3DRoles.Instructor, Fabrik3DRoles.Engineer, Fabrik3DRoles.Operator, Fabrik3DRoles.Administrator, Fabrik3DRoles.PublicDemo],
             [Operate] = [Fabrik3DRoles.Operator, Fabrik3DRoles.Engineer, Fabrik3DRoles.Administrator],
+            [Train] = [Fabrik3DRoles.Learner, Fabrik3DRoles.Instructor, Fabrik3DRoles.Administrator],
             [Engineer] = [Fabrik3DRoles.Engineer, Fabrik3DRoles.Administrator],
             [Instruct] = [Fabrik3DRoles.Instructor, Fabrik3DRoles.Administrator],
             [Admin] = [Fabrik3DRoles.Administrator],

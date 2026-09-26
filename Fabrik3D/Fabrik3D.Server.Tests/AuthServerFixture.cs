@@ -41,6 +41,9 @@ public sealed class AuthServerFixture : IAsyncLifetime
                     ["Authentication:SigningKey"] = SigningKey,
                     ["Authentication:AccessTokenLifetimeMinutes"] = "15",
                     ["Authentication:PublicDemoEnabled"] = "true",
+                    // The whole collection shares one loopback partition; a large deterministic test
+                    // suite must not exhaust the conservative production dev-token window.
+                    ["Authentication:AuthRateLimitPermitLimit"] = "10000",
                     ["Historian:Enabled"] = "false",
                     ["OpcUa:Enabled"] = "false",
                     ["Mqtt:Enabled"] = "false",
@@ -51,6 +54,38 @@ public sealed class AuthServerFixture : IAsyncLifetime
     }
 
     public Task<HttpClient> CreateAnonymousClientAsync() => Task.FromResult(Factory.CreateClient());
+
+    /// <summary>Connection string of the shared MongoDB container (used to boot additional hosts).</summary>
+    public string ConnectionString => _mongo.GetConnectionString();
+
+    /// <summary>
+    /// Boots a second host against the shared container in multi-organization mode
+    /// (<c>Tenancy:SingleOrganization=false</c>) with its own database so membership enforcement can
+    /// be exercised without affecting the single-organization fixture.
+    /// </summary>
+    public WebApplicationFactory<Program> CreateMultiOrganizationFactory() =>
+        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+            builder.ConfigureAppConfiguration((_, configuration) =>
+            {
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["MongoDb:ConnectionString"] = ConnectionString,
+                    ["MongoDb:DatabaseName"] = $"Fabrik3D_tenancy_tests_{Guid.NewGuid():N}",
+                    ["Authentication:Mode"] = "Test",
+                    ["Authentication:SigningKey"] = SigningKey,
+                    ["Authentication:AccessTokenLifetimeMinutes"] = "15",
+                    ["Authentication:PublicDemoEnabled"] = "true",
+                    ["Authentication:AuthRateLimitPermitLimit"] = "10000",
+                    ["Tenancy:SingleOrganization"] = "false",
+                    ["Historian:Enabled"] = "false",
+                    ["OpcUa:Enabled"] = "false",
+                    ["Mqtt:Enabled"] = "false",
+                    ["Modbus:Enabled"] = "false",
+                });
+            });
+        });
 
     /// <summary>Creates a client carrying a real test identity token for the given role.</summary>
     public async Task<HttpClient> CreateClientAsync(string role, string? subject = null)

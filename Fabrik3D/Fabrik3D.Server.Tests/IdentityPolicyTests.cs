@@ -35,10 +35,15 @@ public class IdentityPolicyTests
             new[] { Fabrik3DRoles.Instructor, Fabrik3DRoles.Administrator },
             Fabrik3DPolicies.RolesFor(Fabrik3DPolicies.Instruct));
 
+        Assert.Equal(
+            new[] { Fabrik3DRoles.Learner, Fabrik3DRoles.Instructor, Fabrik3DRoles.Administrator },
+            Fabrik3DPolicies.RolesFor(Fabrik3DPolicies.Train));
+
         Assert.Equal(new[] { Fabrik3DRoles.Administrator }, Fabrik3DPolicies.RolesFor(Fabrik3DPolicies.Admin));
 
         // Public demo can only ever read.
         Assert.DoesNotContain(Fabrik3DRoles.PublicDemo, Fabrik3DPolicies.RolesFor(Fabrik3DPolicies.Operate));
+        Assert.DoesNotContain(Fabrik3DRoles.PublicDemo, Fabrik3DPolicies.RolesFor(Fabrik3DPolicies.Train));
         Assert.DoesNotContain(Fabrik3DRoles.PublicDemo, Fabrik3DPolicies.RolesFor(Fabrik3DPolicies.Engineer));
         Assert.DoesNotContain(Fabrik3DRoles.PublicDemo, Fabrik3DPolicies.RolesFor(Fabrik3DPolicies.Admin));
     }

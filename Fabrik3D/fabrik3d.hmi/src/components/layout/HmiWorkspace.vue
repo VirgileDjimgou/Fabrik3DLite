@@ -5,6 +5,15 @@
       <span>Fabrik3D HMI v1.0.0</span>
       <span class="hmi-mode" aria-label="Active operating mode">{{ mode }}</span>
       <div class="d-flex align-items-center gap-2">
+        <!-- Separate instructor surface (S45); operators keep their existing workflow unchanged. -->
+        <router-link
+          v-if="canInstruct()"
+          to="/instructor"
+          class="btn btn-outline-secondary btn-sm py-0"
+          data-testid="hmi-instructor-link"
+        >
+          <i class="bi bi-mortarboard me-1"></i>{{ t('instructor.open') }}
+        </router-link>
         <span class="hmi-user small" data-testid="hmi-user">
           <i class="bi bi-person-circle me-1"></i>{{ userLabel }}
         </span>
@@ -57,7 +66,7 @@ import HmiAuthorityIndicator from '@/components/controls/HmiAuthorityIndicator.v
 import { useMachineState } from '@/composables/useMachineState'
 import { useOperatingMode } from '@/composables/useOperatingMode'
 import { useControlAuthority } from '@/composables/useControlAuthority'
-import { canEngineer, identity } from '@/auth/authStore'
+import { canEngineer, canInstruct, identity } from '@/auth/authStore'
 import { logout } from '@/auth/authService'
 
 const { t } = useI18n()
@@ -71,7 +80,9 @@ const userLabel = computed(() => {
   const current = identity.value
   if (!current) return ''
   const role = current.roles[0] ?? 'Operator'
-  return `${current.name ?? current.subject} · ${role}`
+  const organization = current.organizationName ?? current.organizationId
+  const base = `${current.name ?? current.subject} · ${role}`
+  return organization ? `${base} · ${organization}` : base
 })
 
 const { authority, feedback, feedbackMessage, scope, acquire, release, takeover } = useControlAuthority()

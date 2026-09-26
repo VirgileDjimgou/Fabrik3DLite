@@ -10,6 +10,9 @@ public class SimulationSession
     [BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; } = null!;
 
+    /// <summary>Tenant boundary (S43). Null on legacy documents; readers treat it as the default organization.</summary>
+    public string? OrganizationId { get; set; }
+
     [BsonRepresentation(BsonType.ObjectId)]
     public string JobId { get; set; } = null!;
 

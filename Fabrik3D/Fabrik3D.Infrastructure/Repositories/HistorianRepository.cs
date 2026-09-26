@@ -1,6 +1,8 @@
 using Fabrik3D.Domain.Entities;
+using Fabrik3D.Domain.Organizations;
 using Fabrik3D.Infrastructure.Historian;
 using Fabrik3D.Infrastructure.Persistence;
+using Fabrik3D.Infrastructure.Tenancy;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -9,25 +11,47 @@ namespace Fabrik3D.Infrastructure.Repositories;
 /// <summary>
 /// Persistence for the telemetry/event historian (S40). Append-only writes, deterministic
 /// newest-first reads, intentional indexes and bounded pruning. Read methods can never issue
-/// a command; there is no actuator dependency in this type.
+/// a command; there is no actuator dependency in this type. Reads are tenant-scoped (S43);
+/// pruning and storage estimation remain global maintenance operations.
 /// </summary>
 public class HistorianRepository
 {
     private readonly MongoDbContext _ctx;
+    private readonly ITenantContext? _tenant;
 
-    public HistorianRepository(MongoDbContext ctx) => _ctx = ctx;
+    public HistorianRepository(MongoDbContext ctx) : this(ctx, null) { }
+
+    public HistorianRepository(MongoDbContext ctx, ITenantContext? tenant)
+    {
+        _ctx = ctx;
+        _tenant = tenant;
+    }
+
+    private FilterDefinition<TelemetrySample> SampleScope() =>
+        TenantQuery.For<TelemetrySample>(_tenant?.Scope, s => s.OrganizationId);
+
+    private FilterDefinition<HistorizedEvent> EventScope() =>
+        TenantQuery.For<HistorizedEvent>(_tenant?.Scope, e => e.OrganizationId);
 
     // ── Writes ──────────────────────────────────────────────────────
 
     public async Task InsertSamplesAsync(IReadOnlyCollection<TelemetrySample> samples, CancellationToken ct = default)
     {
         if (samples.Count == 0) return;
+        foreach (var sample in samples)
+        {
+            sample.OrganizationId = TenantQuery.BackfillOrganizationId(sample.OrganizationId, _tenant?.Scope);
+        }
         await _ctx.TelemetrySamples.InsertManyAsync(samples, cancellationToken: ct);
     }
 
     public async Task InsertEventsAsync(IReadOnlyCollection<HistorizedEvent> events, CancellationToken ct = default)
     {
         if (events.Count == 0) return;
+        foreach (var entry in events)
+        {
+            entry.OrganizationId = TenantQuery.BackfillOrganizationId(entry.OrganizationId, _tenant?.Scope);
+        }
         await _ctx.HistorizedEvents.InsertManyAsync(events, cancellationToken: ct);
     }
 
@@ -37,7 +61,7 @@ public class HistorianRepository
     {
         var (skip, limit) = HistorianQueryBuilder.NormalizePage(query.Skip, query.Limit, maxPageSize);
         return await _ctx.TelemetrySamples
-            .Find(HistorianQueryBuilder.BuildTelemetryFilter(query))
+            .Find(SampleScope() & HistorianQueryBuilder.BuildTelemetryFilter(query))
             .SortByDescending(s => s.TimestampUtc)
             .ThenByDescending(s => s.Id)
             .Skip(skip)
@@ -46,13 +70,14 @@ public class HistorianRepository
     }
 
     public Task<long> CountSamplesAsync(TelemetrySampleQuery query) =>
-        _ctx.TelemetrySamples.CountDocumentsAsync(HistorianQueryBuilder.BuildTelemetryFilter(query));
+        _ctx.TelemetrySamples.CountDocumentsAsync(
+            SampleScope() & HistorianQueryBuilder.BuildTelemetryFilter(query));
 
     public async Task<List<HistorizedEvent>> QueryEventsAsync(HistorizedEventQuery query, int maxPageSize)
     {
         var (skip, limit) = HistorianQueryBuilder.NormalizePage(query.Skip, query.Limit, maxPageSize);
         return await _ctx.HistorizedEvents
-            .Find(HistorianQueryBuilder.BuildEventFilter(query))
+            .Find(EventScope() & HistorianQueryBuilder.BuildEventFilter(query))
             .SortByDescending(e => e.TimestampUtc)
             .ThenByDescending(e => e.Id)
             .Skip(skip)
@@ -61,7 +86,8 @@ public class HistorianRepository
     }
 
     public Task<long> CountEventsAsync(HistorizedEventQuery query) =>
-        _ctx.HistorizedEvents.CountDocumentsAsync(HistorianQueryBuilder.BuildEventFilter(query));
+        _ctx.HistorizedEvents.CountDocumentsAsync(
+            EventScope() & HistorianQueryBuilder.BuildEventFilter(query));
 
     /// <summary>
     /// Logical (uncompressed) size of both historian collections in bytes, read from collStats.
@@ -198,6 +224,18 @@ public class HistorianRepository
             new CreateIndexModel<TelemetrySample>(
                 Builders<TelemetrySample>.IndexKeys.Ascending(s => s.CorrelationId),
                 new CreateIndexOptions { Name = "correlation" }),
+            new CreateIndexModel<TelemetrySample>(
+                Builders<TelemetrySample>.IndexKeys
+                    .Ascending(s => s.OrganizationId)
+                    .Ascending(s => s.EquipmentId)
+                    .Ascending(s => s.SignalId)
+                    .Descending(s => s.TimestampUtc),
+                new CreateIndexOptions { Name = "organization_equipment_signal_timestamp" }),
+            new CreateIndexModel<TelemetrySample>(
+                Builders<TelemetrySample>.IndexKeys
+                    .Ascending(s => s.OrganizationId)
+                    .Descending(s => s.TimestampUtc),
+                new CreateIndexOptions { Name = "organization_timestamp" }),
         ], ct);
 
         var events = _ctx.HistorizedEvents;
@@ -226,6 +264,17 @@ public class HistorianRepository
             new CreateIndexModel<HistorizedEvent>(
                 Builders<HistorizedEvent>.IndexKeys.Descending(e => e.TimestampUtc),
                 new CreateIndexOptions { Name = "timestamp" }),
+            new CreateIndexModel<HistorizedEvent>(
+                Builders<HistorizedEvent>.IndexKeys
+                    .Ascending(e => e.OrganizationId)
+                    .Descending(e => e.TimestampUtc),
+                new CreateIndexOptions { Name = "organization_timestamp" }),
+            new CreateIndexModel<HistorizedEvent>(
+                Builders<HistorizedEvent>.IndexKeys
+                    .Ascending(e => e.OrganizationId)
+                    .Ascending(e => e.SessionId)
+                    .Descending(e => e.TimestampUtc),
+                new CreateIndexOptions { Name = "organization_session_timestamp" }),
         ], ct);
     }
 

@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import HmiShell from '@/components/layout/HmiShell.vue'
+import { canInstruct, isAuthenticated, restoreSession } from '@/auth/authStore'
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -14,6 +15,17 @@ export const routes: RouteRecordRaw[] = [
       { path: 'alarms',          name: 'alarms',          component: () => import('@/views/AlarmsView.vue') },
       { path: 'settings',        name: 'settings',        component: () => import('@/views/SettingsView.vue') },
       { path: 'robot-positions', name: 'robotPositions',  component: () => import('@/views/RobotPositionsView.vue') },
+      {
+        // Separate instructor surface (S45). The route guard is a UX separation only; the server
+        // enforces the Instructor role on every dashboard request.
+        path: 'instructor',
+        name: 'instructor',
+        component: () => import('@/views/InstructorDashboardView.vue'),
+        beforeEnter: () => {
+          if (!isAuthenticated()) restoreSession()
+          return canInstruct() ? true : { name: 'home' }
+        },
+      },
     ],
   },
 ]

@@ -30,6 +30,27 @@ export type TakeoverControlAuthorityRequest = components['schemas']['TakeoverCon
 export type ReleaseControlAuthorityRequest = components['schemas']['ReleaseControlAuthorityRequest']
 export type HeartbeatControlAuthorityRequest = components['schemas']['HeartbeatControlAuthorityRequest']
 
+// Training sessions and assessment (S44).
+export type TrainingSessionDto = CompletedResponse<components['schemas']['TrainingSessionDto']>
+export type TrainingActionDto = CompletedResponse<components['schemas']['TrainingActionDto']>
+export type TrainingAssessmentDto = CompletedResponse<components['schemas']['TrainingAssessmentDto']>
+export type TrainingReportDto = CompletedResponse<components['schemas']['TrainingReportDto']>
+export type TrainingIngestionResultDto = CompletedResponse<components['schemas']['TrainingIngestionResultDto']>
+export type StartTrainingSessionRequest = components['schemas']['StartTrainingSessionRequest']
+export type ReportTrainingActionsRequest = components['schemas']['ReportTrainingActionsRequest']
+export type CompleteTrainingSessionRequest = components['schemas']['CompleteTrainingSessionRequest']
+export type CorrectAssessmentRequest = components['schemas']['CorrectAssessmentRequest']
+
+// Instructor and class dashboard (S45).
+export type InstructorMetricsDto = CompletedResponse<components['schemas']['InstructorMetricsDto']>
+export type TrainingMetricCountDto = CompletedResponse<components['schemas']['TrainingMetricCountDto']>
+export type TrainingClassDto = CompletedResponse<components['schemas']['TrainingClassDto']>
+export type TrainingResourceAssignmentDto = CompletedResponse<components['schemas']['TrainingResourceAssignmentDto']>
+export type RestartTrainingSessionResultDto = CompletedResponse<components['schemas']['RestartTrainingSessionResultDto']>
+export type RestartTrainingSessionRequest = components['schemas']['RestartTrainingSessionRequest']
+export type UpsertTrainingClassRequest = components['schemas']['UpsertTrainingClassRequest']
+export type AssignTrainingResourceRequest = components['schemas']['AssignTrainingResourceRequest']
+
 // The server always populates the full claim payload.
 export type ClaimResultDto = {
   job: JobDto

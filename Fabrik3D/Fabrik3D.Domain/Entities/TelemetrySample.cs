@@ -21,6 +21,9 @@ public class TelemetrySample
 
     public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
 
+    /// <summary>Tenant boundary (S43). Null on legacy documents; readers treat it as the default organization.</summary>
+    public string? OrganizationId { get; set; }
+
     /// <summary>Optional simulation session / run reference.</summary>
     public string? SessionId { get; set; }
 

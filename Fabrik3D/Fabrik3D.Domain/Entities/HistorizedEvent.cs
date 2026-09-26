@@ -20,6 +20,9 @@ public class HistorizedEvent
 
     public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
 
+    /// <summary>Tenant boundary (S43). Null on legacy documents; readers treat it as the default organization.</summary>
+    public string? OrganizationId { get; set; }
+
     [BsonRepresentation(BsonType.String)]
     public HistorianEventKind Kind { get; set; } = HistorianEventKind.Event;
 

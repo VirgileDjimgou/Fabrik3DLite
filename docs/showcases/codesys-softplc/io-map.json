@@ -1,0 +1,298 @@
+{
+  "schemaVersion": "1.0",
+  "id": "codesys-softplc-showcase-io-map",
+  "name": "CODESYS / SoftPLC showcase I/O map (Modbus TCP)",
+  "description": "Versioned S37 mapping document for the S46 CNC reference-cell showcase. It is the single source of truth projected into the Modbus TCP connector configuration, so the documented addresses and the automated fixture exercise exactly the same map. All addresses are zero-based holding registers; every register point states byte order explicitly and no endianness is inferred.",
+  "entries": [
+    {
+      "id": "cell-start",
+      "name": "Cell start command",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.Start",
+      "equipmentId": "showcase.cell",
+      "direction": "read",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller output. Momentary start request; a rising edge is acted on while the cell is ready and a pallet is present.",
+      "target": {
+        "area": "holding-register",
+        "address": 0,
+        "width": 16,
+        "bitIndex": 0,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cell-stop",
+      "name": "Cell stop command",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.Stop",
+      "equipmentId": "showcase.cell",
+      "direction": "read",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller output. When set while the robot or CNC cycle is active the cell latches a fault and quiesces.",
+      "target": {
+        "area": "holding-register",
+        "address": 0,
+        "width": 16,
+        "bitIndex": 1,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cell-reset",
+      "name": "Cell reset command",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.Reset",
+      "equipmentId": "showcase.cell",
+      "direction": "read",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller output. Clears a latched fault or completion and returns the cell to the ready sequence.",
+      "target": {
+        "area": "holding-register",
+        "address": 0,
+        "width": 16,
+        "bitIndex": 2,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "pallet-present",
+      "name": "Pallet detection photo-eye",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.PalletPresent",
+      "equipmentId": "showcase.cell",
+      "direction": "read",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller output. Simulated pallet-present sensor on the infeed conveyor; start is refused until it is true.",
+      "target": {
+        "area": "holding-register",
+        "address": 1,
+        "width": 16,
+        "bitIndex": 0,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cycle-target",
+      "name": "Robot cycle target position",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.CycleTarget",
+      "equipmentId": "showcase.cell",
+      "direction": "read",
+      "dataType": "uint",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller output. Normalized robot transfer-axis setpoint (0-100 engineering units) for the pick-and-place cycle.",
+      "target": {
+        "area": "holding-register",
+        "address": 2,
+        "width": 16,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cell-ready",
+      "name": "Cell ready status",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.Ready",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Permissives satisfied: no stop, no latched fault.",
+      "target": {
+        "area": "holding-register",
+        "address": 10,
+        "width": 16,
+        "bitIndex": 0,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cell-running",
+      "name": "Cell running status",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.Running",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. True during the robot and CNC phases, false in ready, complete and fault.",
+      "target": {
+        "area": "holding-register",
+        "address": 10,
+        "width": 16,
+        "bitIndex": 1,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "robot-cycle-complete",
+      "name": "Robot cycle complete status",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.RobotCycleComplete",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Latched when the robot has transferred the pallet to the CNC; cleared by reset.",
+      "target": {
+        "area": "holding-register",
+        "address": 10,
+        "width": 16,
+        "bitIndex": 2,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cnc-cycle-complete",
+      "name": "CNC cycle complete status",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.CncCycleComplete",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Latched when the virtual CNC cycle has finished; cleared by reset.",
+      "target": {
+        "area": "holding-register",
+        "address": 10,
+        "width": 16,
+        "bitIndex": 3,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cycle-complete",
+      "name": "Full cycle complete status",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.CycleComplete",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Latched when the whole pallet cycle is complete; cleared by reset.",
+      "target": {
+        "area": "holding-register",
+        "address": 10,
+        "width": 16,
+        "bitIndex": 4,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "cell-fault",
+      "name": "Cell fault status",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.Fault",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "bool",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Latched on stop during a cycle; cleared by reset only.",
+      "target": {
+        "area": "holding-register",
+        "address": 10,
+        "width": 16,
+        "bitIndex": 5,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "actuator-position",
+      "name": "Virtual actuator position",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.ActuatorPosition",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "uint",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Normalized transfer-axis position (0-100) the virtual actuator has reached.",
+      "target": {
+        "area": "holding-register",
+        "address": 11,
+        "width": 16,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "sensor-position",
+      "name": "Virtual sensor position feedback",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.SensorPosition",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "uint",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Virtual position sensor measurement returned to the controller, closing the loop.",
+      "target": {
+        "area": "holding-register",
+        "address": 12,
+        "width": 16,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    },
+    {
+      "id": "parts-completed",
+      "name": "Completed part count",
+      "protocol": "modbus",
+      "internalSignalId": "showcase.cell.PartsCompleted",
+      "equipmentId": "showcase.cell",
+      "direction": "write",
+      "dataType": "uint",
+      "scale": 1,
+      "offset": 0,
+      "enabled": true,
+      "description": "Controller input. Number of finished pallets produced since power-up; cleared only by a controller restart.",
+      "target": {
+        "area": "holding-register",
+        "address": 13,
+        "width": 16,
+        "byteOrder": "big-endian",
+        "addressConvention": "zero-based"
+      }
+    }
+  ]
+}

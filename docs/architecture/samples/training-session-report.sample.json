@@ -1,0 +1,301 @@
+{
+  "schemaVersion": "1.0",
+  "reportKind": "server-training-report",
+  "generatedAtUtc": "2026-01-01T00:00:00Z",
+  "assessmentAuthority": "server",
+  "educationalScope": "educational",
+  "disclaimer": "Educational training record. This assessment describes a simulated exercise and does not certify professional competence, safety qualification or industrial readiness.",
+  "session": {
+    "id": "65f1c2a4b3d4e5f6a7b8c9d0",
+    "organizationId": "default",
+    "classId": null,
+    "learnerSubject": "learner-42",
+    "alias": "learner-42",
+    "scenarioId": "pick-and-place",
+    "scenarioVersion": "1.0",
+    "simulationSessionId": null,
+    "simulatorId": "simulator-1",
+    "startedAtUtc": "2026-01-01T00:00:00Z",
+    "endedAtUtc": "2026-01-01T00:05:00Z",
+    "status": "completed",
+    "completed": true,
+    "completionPercent": 100,
+    "expectedActions": [
+      "PICK_PART",
+      "COMPLETE"
+    ],
+    "actionCount": 4,
+    "faultCount": 1,
+    "hintCount": 0,
+    "safetyViolationCount": 0,
+    "recoveryActionCount": 1,
+    "score": 100,
+    "possibleScore": 100,
+    "assessmentSchemaVersion": "1.0",
+    "scoringRuleVersion": "1.0",
+    "softwareVersion": "1.0.0.0",
+    "assessmentStatus": "Computed",
+    "assessmentDiagnostic": null,
+    "assessment": {
+      "scoringRuleVersion": "1.0",
+      "assessmentSchemaVersion": "1.0",
+      "softwareVersion": "1.0.0.0",
+      "computedScore": 100,
+      "computedPossibleScore": 100,
+      "effectiveScore": 100,
+      "effectivePossibleScore": 100,
+      "complete": true,
+      "status": "Computed",
+      "diagnostic": null,
+      "disclaimer": "Educational training record. This assessment describes a simulated exercise and does not certify professional competence, safety qualification or industrial readiness.",
+      "educationalScope": "educational",
+      "criteria": [
+        {
+          "id": "completion",
+          "label": "Scenario completion",
+          "explanation": "The simulator reported the scenario as completed.",
+          "points": 40,
+          "earned": 40,
+          "passed": true,
+          "evidence": [
+            "a2"
+          ]
+        },
+        {
+          "id": "expected-actions",
+          "label": "Expected actions observed",
+          "explanation": "2/2 expected actions were observed.",
+          "points": 25,
+          "earned": 25,
+          "passed": true,
+          "evidence": [
+            "a1",
+            "a2"
+          ]
+        },
+        {
+          "id": "fault-recovery",
+          "label": "Simulated fault recovery",
+          "explanation": "1/1 simulated faults were recovered.",
+          "points": 15,
+          "earned": 15,
+          "passed": true,
+          "evidence": [
+            "f1"
+          ]
+        },
+        {
+          "id": "safety-compliance",
+          "label": "Safety compliance",
+          "explanation": "No safety violations were recorded.",
+          "points": 10,
+          "earned": 10,
+          "passed": true,
+          "evidence": []
+        },
+        {
+          "id": "hint-discipline",
+          "label": "Hint discipline",
+          "explanation": "Hints used (0) stayed within the tolerated maximum (3).",
+          "points": 10,
+          "earned": 10,
+          "passed": true,
+          "evidence": []
+        }
+      ],
+      "assessmentVersion": 1,
+      "corrections": [],
+      "computedAtUtc": "2026-01-01T00:05:00Z"
+    },
+    "audit": [
+      {
+        "action": "started",
+        "subject": "learner-42",
+        "detail": "scenario=pick-and-place",
+        "atUtc": "2026-01-01T00:00:00Z"
+      },
+      {
+        "action": "completed",
+        "subject": "learner-42",
+        "detail": null,
+        "atUtc": "2026-01-01T00:05:00Z"
+      }
+    ],
+    "version": 3
+  },
+  "assessment": {
+    "scoringRuleVersion": "1.0",
+    "assessmentSchemaVersion": "1.0",
+    "softwareVersion": "1.0.0.0",
+    "computedScore": 100,
+    "computedPossibleScore": 100,
+    "effectiveScore": 100,
+    "effectivePossibleScore": 100,
+    "complete": true,
+    "status": "Computed",
+    "diagnostic": null,
+    "disclaimer": "Educational training record. This assessment describes a simulated exercise and does not certify professional competence, safety qualification or industrial readiness.",
+    "educationalScope": "educational",
+    "criteria": [
+      {
+        "id": "completion",
+        "label": "Scenario completion",
+        "explanation": "The simulator reported the scenario as completed.",
+        "points": 40,
+        "earned": 40,
+        "passed": true,
+        "evidence": [
+          "a2"
+        ]
+      },
+      {
+        "id": "expected-actions",
+        "label": "Expected actions observed",
+        "explanation": "2/2 expected actions were observed.",
+        "points": 25,
+        "earned": 25,
+        "passed": true,
+        "evidence": [
+          "a1",
+          "a2"
+        ]
+      },
+      {
+        "id": "fault-recovery",
+        "label": "Simulated fault recovery",
+        "explanation": "1/1 simulated faults were recovered.",
+        "points": 15,
+        "earned": 15,
+        "passed": true,
+        "evidence": [
+          "f1"
+        ]
+      },
+      {
+        "id": "safety-compliance",
+        "label": "Safety compliance",
+        "explanation": "No safety violations were recorded.",
+        "points": 10,
+        "earned": 10,
+        "passed": true,
+        "evidence": []
+      },
+      {
+        "id": "hint-discipline",
+        "label": "Hint discipline",
+        "explanation": "Hints used (0) stayed within the tolerated maximum (3).",
+        "points": 10,
+        "earned": 10,
+        "passed": true,
+        "evidence": []
+      }
+    ],
+    "assessmentVersion": 1,
+    "corrections": [],
+    "computedAtUtc": "2026-01-01T00:05:00Z"
+  },
+  "actions": [
+    {
+      "id": "65f1c2a4b3d4e5f6a7b8c001",
+      "actionId": "a1",
+      "correlationId": "run-42",
+      "role": "observed",
+      "type": "PICK_PART",
+      "target": "pallet-1",
+      "expectedActionId": "PICK_PART",
+      "correctness": "correct",
+      "severity": "info",
+      "timestampUtc": "2026-01-01T00:00:10Z",
+      "sequence": 1,
+      "isFault": false,
+      "isHint": false,
+      "isRecovery": false,
+      "isSafetyViolation": false,
+      "hint": null,
+      "safetyViolation": null,
+      "recovery": null,
+      "schemaVersion": "1.0",
+      "recordedAtUtc": "2026-01-01T00:00:11Z"
+    },
+    {
+      "id": "65f1c2a4b3d4e5f6a7b8c002",
+      "actionId": "f1",
+      "correlationId": "run-42",
+      "role": "observed",
+      "type": "fault",
+      "target": "cnc-1",
+      "expectedActionId": null,
+      "correctness": "unknown",
+      "severity": "error",
+      "timestampUtc": "2026-01-01T00:01:00Z",
+      "sequence": 2,
+      "isFault": true,
+      "isHint": false,
+      "isRecovery": false,
+      "isSafetyViolation": false,
+      "hint": null,
+      "safetyViolation": null,
+      "recovery": null,
+      "schemaVersion": "1.0",
+      "recordedAtUtc": "2026-01-01T00:01:01Z"
+    },
+    {
+      "id": "65f1c2a4b3d4e5f6a7b8c003",
+      "actionId": "r1",
+      "correlationId": "run-42",
+      "role": "observed",
+      "type": "recovery",
+      "target": "cnc-1",
+      "expectedActionId": null,
+      "correctness": "correct",
+      "severity": "info",
+      "timestampUtc": "2026-01-01T00:02:00Z",
+      "sequence": 3,
+      "isFault": false,
+      "isHint": false,
+      "isRecovery": true,
+      "isSafetyViolation": false,
+      "hint": null,
+      "safetyViolation": null,
+      "recovery": {
+        "faultId": "f1",
+        "recoveredActionId": null,
+        "successful": true,
+        "target": "cnc-1"
+      },
+      "schemaVersion": "1.0",
+      "recordedAtUtc": "2026-01-01T00:02:01Z"
+    },
+    {
+      "id": "65f1c2a4b3d4e5f6a7b8c004",
+      "actionId": "a2",
+      "correlationId": "run-42",
+      "role": "observed",
+      "type": "COMPLETE",
+      "target": null,
+      "expectedActionId": "COMPLETE",
+      "correctness": "correct",
+      "severity": "info",
+      "timestampUtc": "2026-01-01T00:05:00Z",
+      "sequence": 4,
+      "isFault": false,
+      "isHint": false,
+      "isRecovery": false,
+      "isSafetyViolation": false,
+      "hint": null,
+      "safetyViolation": null,
+      "recovery": null,
+      "schemaVersion": "1.0",
+      "recordedAtUtc": "2026-01-01T00:05:01Z"
+    }
+  ],
+  "metrics": {
+    "scenarioCompleted": true,
+    "stepsAttempted": 0,
+    "faultsEncountered": 1,
+    "hintsUsed": 0,
+    "recoveryActions": 1,
+    "safetyViolations": 0,
+    "incorrectActions": 0
+  }
+}

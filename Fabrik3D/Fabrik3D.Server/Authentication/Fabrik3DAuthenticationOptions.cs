@@ -39,6 +39,13 @@ public sealed class Fabrik3DAuthenticationOptions
     /// <summary>Accepted clock skew for token validation, in seconds.</summary>
     public double ClockSkewSeconds { get; set; } = 30;
 
+    /// <summary>
+    /// Fixed-window permit limit per client address for authentication-sensitive endpoints such as
+    /// <c>POST /api/auth/dev-token</c>. Defaults to a conservative 30 per minute; test hosts raise it
+    /// so a large deterministic test suite sharing one loopback address is not throttled.
+    /// </summary>
+    public int AuthRateLimitPermitLimit { get; set; } = 30;
+
     /// <summary>Enables the clearly-labelled public/demo read-only role.</summary>
     public bool PublicDemoEnabled { get; set; }
 

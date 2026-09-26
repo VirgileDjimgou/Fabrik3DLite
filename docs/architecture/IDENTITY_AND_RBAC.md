@@ -93,6 +93,7 @@ Roles: `Learner`, `Instructor`, `Engineer`, `Operator`, `Administrator`, plus a 
 |---|:--:|:--:|:--:|:--:|:--:|:--:|
 | `Fabrik3D.Read` | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `Fabrik3D.Operate` | – | – | ✓ | ✓ | ✓ | – |
+| `Fabrik3D.Train` | ✓ | ✓ | – | – | ✓ | – |
 | `Fabrik3D.Engineer` | – | – | ✓ | – | ✓ | – |
 | `Fabrik3D.Instruct` | – | ✓ | – | – | ✓ | – |
 | `Fabrik3D.Admin` | – | – | – | – | ✓ | – |
@@ -118,6 +119,7 @@ are protected at the class level with `[Authorize]` and mutating actions overrid
 | `MappingsController` `/api/mappings` | `Read` | `Engineer` (validate/upsert/apply/delete) |
 | `ControlAuthorityController` `/api/control-authority` | `Read` | `Operate` (acquire/release/heartbeat), `Engineer` (forced takeover) |
 | `HistorianController` `/api/historian` | `Read` | `Operate` (telemetry/event ingest) |
+| `TrainingController` `/api/training/sessions` | `Read` | `Train` (start/report/complete/import), `Instruct` (assessment corrections) |
 | `ConnectorsController` `/api/connectors` | `Read` | – |
 | `AuthController` `/api/auth` | `config` is anonymous | `dev-token` anonymous + rate-limited (404 outside dev/test); `me` authenticated |
 | `HealthController` `/api/health`, `/api/Health` | anonymous | – |
@@ -135,7 +137,8 @@ token in the query string.
 - alarm acknowledgement/transition,
 - cell-template writes,
 - signal-mapping apply,
-- future training actions (S44+).
+- training session lifecycle and audited assessment corrections (S44), which also record the owning
+  learner subject and the correcting instructor subject.
 
 Existing audit entries created before S42 remain valid; new entries always carry an identity. No new
 anonymous audit entry is produced when a caller is unauthenticated because unauthenticated mutations
@@ -209,7 +212,7 @@ anonymous mutations in Production.
 |---|---|---|
 | `GET /api/auth/config` | anonymous | Public discovery of mode, roles, dev-auth label and public demo availability |
 | `POST /api/auth/dev-token` | anonymous (dev/test only, rate-limited) | Issues a short-lived identity token; `404` outside dev/test |
-| `GET /api/auth/me` | authenticated | Server-side principal (`sub`, name, roles, authentication type) |
+| `GET /api/auth/me` | authenticated | Server-side principal (`sub`, name, roles, authentication type) plus the resolved organization |
 
 ## Testing
 
@@ -225,11 +228,27 @@ anonymous mutations in Production.
   `cell-templates.spec.ts` (Engineer/Learner roles) and `hmi-design-system.spec.ts` (seeded operator
   session) exercise authenticated workflows against the real server.
 
+## Organizations and tenancy (S43)
+
+Roles answer *what* a principal may do; organizations answer *whose* data it may do it on. S43 adds a
+tenant boundary on top of this identity boundary:
+
+- `TenantContextMiddleware` resolves the active organization after authentication and before
+  authorization, from validated claims and active `Membership` rows only. A client-supplied
+  `X-Organization-Id` is accepted only when an active membership exists, a revoked membership is
+  rejected mid-session, and missing/ambiguous contexts fail closed in multi-organization mode.
+- Repositories filter tenant-scoped data server-side through `TenantQuery.For`; front-ends display
+  the resolved organization but never decide access. All role policies above still apply on top of
+  tenancy.
+- `GET /api/auth/me` reports the resolved organization; `/api/organizations/context` reports the
+  selectable organizations. See [ORGANIZATIONS_AND_TENANCY.md](./ORGANIZATIONS_AND_TENANCY.md) and
+  [ADR 0004](../adr/0004-organizations-and-tenancy.md).
+
 ## Limitations / not in this sprint
 
-- No tenant/organization model (S43).
 - No billing/subscription identity.
 - No silent refresh-token rotation in the application.
 - No formal standards certification claim.
-- `Instruct` and `Admin` policies are defined and tested at the matrix level; dedicated training and
-  administration endpoints arrive with later sprints (S44+).
+- `Instruct` and `Admin` are defined and tested at the matrix level; the `Instruct` policy protects
+  training-assessment corrections (S44) and administration endpoints as they arrive. The `Instruct`
+  and `Admin` role assignment surfaces remain minimal.

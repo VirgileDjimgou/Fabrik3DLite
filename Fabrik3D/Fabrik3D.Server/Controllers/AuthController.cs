@@ -1,4 +1,6 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Domain.Organizations;
+using Fabrik3D.Infrastructure.Repositories;
 using Fabrik3D.Server.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,17 +21,23 @@ public class AuthController : ControllerBase
     private readonly Fabrik3DAuthenticationOptions _options;
     private readonly DevelopmentTokenIssuer _issuer;
     private readonly ICurrentIdentity _identity;
+    private readonly ITenantContext _tenant;
+    private readonly OrganizationRepository _organizations;
     private readonly ILogger<AuthController> _log;
 
     public AuthController(
         IOptions<Fabrik3DAuthenticationOptions> options,
         DevelopmentTokenIssuer issuer,
         ICurrentIdentity identity,
+        ITenantContext tenant,
+        OrganizationRepository organizations,
         ILogger<AuthController> log)
     {
         _options = options.Value;
         _issuer = issuer;
         _identity = identity;
+        _tenant = tenant;
+        _organizations = organizations;
         _log = log;
     }
 
@@ -107,10 +115,16 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     [Authorize(Policy = Fabrik3DPolicies.Authenticated)]
     [ProducesResponseType(typeof(AuthMeDto), 200)]
-    public IActionResult Me()
-        => Ok(new AuthMeDto(
+    public async Task<IActionResult> Me()
+    {
+        var organizationId = _tenant.OrganizationId;
+        var organization = await _organizations.GetByIdAsync(organizationId);
+        return Ok(new AuthMeDto(
             _identity.Subject,
             _identity.Name,
             _identity.Roles,
-            User.Identity?.AuthenticationType ?? "none"));
+            User.Identity?.AuthenticationType ?? "none",
+            organizationId,
+            organization?.Name));
+    }
 }

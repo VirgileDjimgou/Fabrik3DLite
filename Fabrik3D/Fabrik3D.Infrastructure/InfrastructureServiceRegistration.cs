@@ -30,6 +30,16 @@ public static class InfrastructureServiceRegistration
         services.AddSingleton<ControlAuthorityRepository>();
         services.Configure<HistorianOptions>(configuration.GetSection(HistorianOptions.SectionName));
         services.AddSingleton<HistorianRepository>();
+        // ── Tenancy (S43) ──────────────────────────────────────────────
+        services.AddSingleton<OrganizationRepository>();
+        services.AddSingleton<MembershipRepository>();
+        services.AddSingleton<TrainingClassRepository>();
+        services.AddSingleton<TrainingResourceRepository>();
+        // Training sessions and deterministic assessment (S44)
+        services.AddSingleton<TrainingSessionRepository>();
+        services.AddSingleton<TrainingActionRepository>();
+        services.AddSingleton<Tenancy.TenantMigrationService>();
+        services.AddSingleton<Tenancy.TenantIndexInitializer>();
         services.Configure<OpcUaOptions>(configuration.GetSection(OpcUaOptions.SectionName));
         services.AddSingleton<SignalMirrorStore>();
         services.AddSingleton<OpcUaConnector>();

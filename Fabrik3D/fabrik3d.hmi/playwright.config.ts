@@ -19,13 +19,13 @@ export default defineConfig({
     {
       // API-level orchestration flows — run against the live orchestrator.
       name: 'orchestrator-api',
-      testMatch: /(orchestration-smoke|orchestration-claim|cell-templates)\.spec\.ts/,
+      testMatch: /(orchestration-smoke|orchestration-claim|cell-templates|tenancy-isolation|training-session|instructor-dashboard)\.spec\.ts/,
       use: { baseURL: API_BASE_URL },
     },
     {
       // Rendered HMI flows — run against a locally served HMI build.
       name: 'hmi-ui',
-      testMatch: /hmi-design-system\.spec\.ts/,
+      testMatch: /(hmi-design-system|instructor-dashboard-visual)\.spec\.ts/,
       use: { baseURL: HMI_BASE_URL },
     },
   ],

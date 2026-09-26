@@ -281,6 +281,15 @@ register read-modify-write, non-allow-listed and read-only rejections) and grace
 The tests are deterministic: no wall-clock randomness, no hand-started server, fixed register banks.
 Environment: local Windows/.NET 8 CI-class machine.
 
+## Showcase
+
+The S46 CODESYS / SoftPLC showcase exercises this adapter end to end with a committed, versioned I/O
+map and a documented sequence. The automated substitute fixture drives the reference cell through the
+real connector and the S36 authority gate; the real CODESYS run is a manual checklist. See
+[`../showcases/codesys-softplc/README.md`](../showcases/codesys-softplc/README.md). No
+showcase-specific code is added to the adapter or the server: the showcase projects its map through
+`SignalMappingProjection`, exactly like any other mapping.
+
 ## Recorded measurements
 
 - Poll cycle latency (7 mapped points, 100 ms interval, in-process fixture): the integration test

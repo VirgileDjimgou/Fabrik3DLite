@@ -2058,6 +2058,536 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/organizations/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TenantContextDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OrganizationDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateOrganizationRequest"];
+                    "text/json": components["schemas"]["CreateOrganizationRequest"];
+                    "application/*+json": components["schemas"]["CreateOrganizationRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OrganizationDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations/{organizationId}/memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MembershipDto"][];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpsertMembershipRequest"];
+                    "text/json": components["schemas"]["UpsertMembershipRequest"];
+                    "application/*+json": components["schemas"]["UpsertMembershipRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MembershipDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations/{organizationId}/memberships/{membershipId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    organizationId: string;
+                    membershipId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations/classes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingClassDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpsertTrainingClassRequest"];
+                    "text/json": components["schemas"]["UpsertTrainingClassRequest"];
+                    "application/*+json": components["schemas"]["UpsertTrainingClassRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingClassDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations/classes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpsertTrainingClassRequest"];
+                    "text/json": components["schemas"]["UpsertTrainingClassRequest"];
+                    "application/*+json": components["schemas"]["UpsertTrainingClassRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingClassDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations/resources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    classId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingResourceAssignmentDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AssignTrainingResourceRequest"];
+                    "text/json": components["schemas"]["AssignTrainingResourceRequest"];
+                    "application/*+json": components["schemas"]["AssignTrainingResourceRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingResourceAssignmentDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations/resources/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/organizations/migrate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TenantMigrationResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/simulation-sessions/{id}": {
         parameters: {
             query?: never;
@@ -2333,6 +2863,737 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/training/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    classId?: string;
+                    learnerSubject?: string;
+                    scenarioId?: string;
+                    status?: string;
+                    fromUtc?: string;
+                    toUtc?: string;
+                    skip?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingSessionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["StartTrainingSessionRequest"];
+                    "text/json": components["schemas"]["StartTrainingSessionRequest"];
+                    "application/*+json": components["schemas"]["StartTrainingSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingSessionDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingActionDto"][];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReportTrainingActionsRequest"];
+                    "text/json": components["schemas"]["ReportTrainingActionsRequest"];
+                    "application/*+json": components["schemas"]["ReportTrainingActionsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingIngestionResultDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CompleteTrainingSessionRequest"];
+                    "text/json": components["schemas"]["CompleteTrainingSessionRequest"];
+                    "application/*+json": components["schemas"]["CompleteTrainingSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingSessionDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingSessionDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/{id}/assessment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingAssessmentDto"];
+                    };
+                };
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingReportDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/{id}/assessment/corrections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CorrectAssessmentRequest"];
+                    "text/json": components["schemas"]["CorrectAssessmentRequest"];
+                    "application/*+json": components["schemas"]["CorrectAssessmentRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingAssessmentDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ImportLocalTrainingReportRequest"];
+                    "text/json": components["schemas"]["ImportLocalTrainingReportRequest"];
+                    "application/*+json": components["schemas"]["ImportLocalTrainingReportRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TrainingSessionDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/sessions/{id}/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RestartTrainingSessionRequest"];
+                    "text/json": components["schemas"]["RestartTrainingSessionRequest"];
+                    "application/*+json": components["schemas"]["RestartTrainingSessionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RestartTrainingSessionResultDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/training/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    classId?: string;
+                    scenarioId?: string;
+                    fromUtc?: string;
+                    toUtc?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["InstructorMetricsDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2388,6 +3649,11 @@ export interface components {
                 [key: string]: string[] | null;
             } | null;
         };
+        AssignTrainingResourceRequest: {
+            kind: string;
+            resourceId: string;
+            classId?: string | null;
+        };
         AuthConfigDto: {
             mode?: string;
             developmentAuth?: boolean;
@@ -2400,6 +3666,8 @@ export interface components {
             name?: string | null;
             roles?: string[];
             authenticationType?: string;
+            organizationId?: string;
+            organizationName?: string | null;
         };
         AuthTokenDto: {
             accessToken?: string;
@@ -2432,6 +3700,13 @@ export interface components {
             job?: components["schemas"]["JobDto"];
             session?: components["schemas"]["SimulationSessionDto"];
             tasks?: components["schemas"]["TaskDto"][];
+        };
+        CompleteTrainingSessionRequest: {
+            completed?: boolean;
+            /** Format: int32 */
+            completionPercent?: number | null;
+            /** Format: date-time */
+            endedAtUtc?: string | null;
         };
         ConnectorStatusDto: {
             connector?: string;
@@ -2491,12 +3766,24 @@ export interface components {
             actorId?: string | null;
             actorRole?: string | null;
         };
+        CorrectAssessmentRequest: {
+            reason: string;
+            /** Format: int32 */
+            adjustedScore?: number;
+        };
         CreateJobRequest: {
             name: string;
             description?: string;
             machineMode?: string;
             tasks?: components["schemas"]["CreateTaskRequest"][];
             metadata?: {
+                [key: string]: string;
+            };
+        };
+        CreateOrganizationRequest: {
+            name: string;
+            slug?: string | null;
+            settings?: {
                 [key: string]: string;
             };
         };
@@ -2597,6 +3884,27 @@ export interface components {
             /** Format: int32 */
             limit?: number;
         };
+        ImportLocalReportMetricsDto: {
+            scenarioCompleted?: boolean;
+            /** Format: int32 */
+            stepsAttempted?: number;
+            /** Format: int32 */
+            faultsEncountered?: number;
+            /** Format: int32 */
+            hintsUsed?: number;
+            /** Format: int32 */
+            recoveryActions?: number;
+        };
+        ImportLocalTrainingReportRequest: {
+            schemaVersion?: string | null;
+            sessionAlias?: string | null;
+            /** Format: date-time */
+            generatedAt?: string | null;
+            scenarioId: string;
+            metrics?: components["schemas"]["ImportLocalReportMetricsDto"];
+            expectedActions?: string[];
+            observedActions?: string[];
+        };
         IngestHistorizedEventBatchRequest: {
             events?: components["schemas"]["IngestHistorizedEventRequest"][];
             sourceId?: string | null;
@@ -2635,6 +3943,58 @@ export interface components {
             source?: string;
             origin?: string;
             correlationId?: string | null;
+        };
+        InstructorMetricsDto: {
+            assessmentSchemaVersion?: string;
+            definitionsVersion?: string;
+            scoringRuleVersion?: string;
+            /** Format: date-time */
+            generatedAtUtc?: string;
+            classId?: string | null;
+            scenarioId?: string | null;
+            /** Format: date-time */
+            fromUtc?: string | null;
+            /** Format: date-time */
+            toUtc?: string | null;
+            /** Format: int32 */
+            sessionCount?: number;
+            /** Format: int32 */
+            completedCount?: number;
+            /** Format: int32 */
+            failedCount?: number;
+            /** Format: int32 */
+            runningCount?: number;
+            /** Format: int32 */
+            terminalCount?: number;
+            /** Format: double */
+            completionRate?: number;
+            /** Format: int32 */
+            meanSessionSeconds?: number;
+            /** Format: int32 */
+            meanDiagnosisSeconds?: number;
+            /** Format: int32 */
+            totalActions?: number;
+            /** Format: int32 */
+            incorrectActionCount?: number;
+            /** Format: int32 */
+            hintCount?: number;
+            /** Format: int32 */
+            sessionsWithHints?: number;
+            /** Format: double */
+            meanHintsPerSession?: number;
+            /** Format: int32 */
+            faultCount?: number;
+            /** Format: int32 */
+            recoveryActionCount?: number;
+            /** Format: int32 */
+            safetyViolationCount?: number;
+            /** Format: int32 */
+            sessionsWithSafetyViolations?: number;
+            commonIncorrectActions?: components["schemas"]["TrainingMetricCountDto"][];
+            repeatedFaultTypes?: components["schemas"]["TrainingMetricCountDto"][];
+            safetyMistakeRules?: components["schemas"]["TrainingMetricCountDto"][];
+            truncated?: boolean;
+            educationalNote?: string;
         };
         JobDto: {
             id?: string;
@@ -2685,6 +4045,19 @@ export interface components {
             /** Format: date-time */
             lastUpdatedAtUtc?: string;
         };
+        MembershipDto: {
+            id?: string;
+            organizationId?: string;
+            subject?: string;
+            role?: string;
+            status?: string;
+            /** Format: date-time */
+            createdAtUtc?: string;
+            /** Format: date-time */
+            updatedAtUtc?: string;
+            /** Format: int32 */
+            version?: number;
+        };
         OperatorMessageDto: {
             id?: string;
             title?: string;
@@ -2699,9 +4072,78 @@ export interface components {
             /** Format: date-time */
             readAtUtc?: string | null;
         };
+        OrganizationDto: {
+            id?: string;
+            name?: string;
+            slug?: string;
+            settings?: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            createdAtUtc?: string;
+            /** Format: date-time */
+            updatedAtUtc?: string;
+            /** Format: int32 */
+            version?: number;
+        };
+        OrganizationSummaryDto: {
+            id?: string;
+            name?: string;
+            slug?: string;
+        };
         ReleaseControlAuthorityRequest: {
             ownerId: string;
             correlationId?: string | null;
+        };
+        ReportTrainingActionsRequest: {
+            actions: components["schemas"]["ReportedTrainingAction"][];
+        };
+        ReportedHintDto: {
+            hintId: string;
+            /** Format: int32 */
+            level?: number;
+            /** Format: date-time */
+            revealedAtUtc?: string;
+        };
+        ReportedRecoveryDto: {
+            faultId?: string | null;
+            recoveredActionId?: string | null;
+            successful?: boolean;
+            target?: string | null;
+        };
+        ReportedSafetyViolationDto: {
+            ruleId: string;
+            description?: string;
+            severity?: string | null;
+        };
+        ReportedTrainingAction: {
+            actionId: string;
+            correlationId?: string | null;
+            role?: string | null;
+            type: string;
+            target?: string | null;
+            expectedActionId?: string | null;
+            correctness?: string | null;
+            severity?: string | null;
+            /** Format: date-time */
+            timestampUtc?: string;
+            /** Format: int64 */
+            sequence?: number;
+            isFault?: boolean;
+            isHint?: boolean;
+            isRecovery?: boolean;
+            isSafetyViolation?: boolean;
+            hint?: components["schemas"]["ReportedHintDto"];
+            safetyViolation?: components["schemas"]["ReportedSafetyViolationDto"];
+            recovery?: components["schemas"]["ReportedRecoveryDto"];
+        };
+        RestartTrainingSessionRequest: {
+            reason?: string | null;
+        };
+        RestartTrainingSessionResultDto: {
+            session?: components["schemas"]["TrainingSessionDto"];
+            restartedFromSessionId?: string;
+            reason?: string | null;
         };
         SaveCellTemplateRequest: {
             name: string;
@@ -2833,6 +4275,15 @@ export interface components {
             /** Format: int32 */
             scenarioProgress?: number;
         };
+        StartTrainingSessionRequest: {
+            scenarioId: string;
+            scenarioVersion?: string | null;
+            classId?: string | null;
+            simulationSessionId?: string | null;
+            simulatorId?: string | null;
+            alias?: string | null;
+            expectedActions?: string[];
+        };
         TakeoverControlAuthorityRequest: {
             mode: string;
             ownerId: string;
@@ -2896,6 +4347,223 @@ export interface components {
             /** Format: int32 */
             limit?: number;
         };
+        TenantContextDto: {
+            organizationId?: string;
+            organizationName?: string;
+            platformAdmin?: boolean;
+            singleOrganization?: boolean;
+            clientSelectionAccepted?: boolean;
+            availableOrganizations?: components["schemas"]["OrganizationSummaryDto"][];
+        };
+        TenantMigrationResultDto: {
+            organizationId?: string;
+            alreadyMigrated?: boolean;
+            migratedDocuments?: {
+                [key: string]: number;
+            };
+            /** Format: date-time */
+            completedAtUtc?: string;
+        };
+        TrainingActionDto: {
+            id?: string;
+            actionId?: string;
+            correlationId?: string | null;
+            role?: string;
+            type?: string;
+            target?: string | null;
+            expectedActionId?: string | null;
+            correctness?: string;
+            severity?: string;
+            /** Format: date-time */
+            timestampUtc?: string;
+            /** Format: int64 */
+            sequence?: number;
+            isFault?: boolean;
+            isHint?: boolean;
+            isRecovery?: boolean;
+            isSafetyViolation?: boolean;
+            hint?: components["schemas"]["ReportedHintDto"];
+            safetyViolation?: components["schemas"]["ReportedSafetyViolationDto"];
+            recovery?: components["schemas"]["ReportedRecoveryDto"];
+            schemaVersion?: string;
+            /** Format: date-time */
+            recordedAtUtc?: string;
+        };
+        TrainingAssessmentDto: {
+            scoringRuleVersion?: string;
+            assessmentSchemaVersion?: string;
+            softwareVersion?: string;
+            /** Format: int32 */
+            computedScore?: number;
+            /** Format: int32 */
+            computedPossibleScore?: number;
+            /** Format: int32 */
+            effectiveScore?: number;
+            /** Format: int32 */
+            effectivePossibleScore?: number;
+            complete?: boolean;
+            status?: string;
+            diagnostic?: string | null;
+            disclaimer?: string;
+            educationalScope?: string;
+            criteria?: components["schemas"]["TrainingCriterionDto"][];
+            /** Format: int32 */
+            assessmentVersion?: number;
+            corrections?: components["schemas"]["TrainingCorrectionDto"][];
+            /** Format: date-time */
+            computedAtUtc?: string;
+        };
+        TrainingAuditEntryDto: {
+            action?: string;
+            subject?: string;
+            detail?: string | null;
+            /** Format: date-time */
+            atUtc?: string;
+        };
+        TrainingClassDto: {
+            id?: string;
+            organizationId?: string;
+            name?: string;
+            description?: string;
+            instructorSubjects?: string[];
+            learnerSubjects?: string[];
+            scheduleMetadata?: {
+                [key: string]: string;
+            };
+            /** Format: date-time */
+            createdAtUtc?: string;
+            /** Format: date-time */
+            updatedAtUtc?: string;
+            /** Format: int32 */
+            version?: number;
+        };
+        TrainingCorrectionDto: {
+            /** Format: int32 */
+            fromVersion?: number;
+            /** Format: int32 */
+            toVersion?: number;
+            /** Format: int32 */
+            previousEffectiveScore?: number;
+            /** Format: int32 */
+            newEffectiveScore?: number;
+            reason?: string;
+            correctedBySubject?: string;
+            /** Format: date-time */
+            correctedAtUtc?: string;
+        };
+        TrainingCriterionDto: {
+            id?: string;
+            label?: string;
+            explanation?: string;
+            /** Format: int32 */
+            points?: number;
+            /** Format: int32 */
+            earned?: number;
+            passed?: boolean;
+            evidence?: string[];
+        };
+        TrainingIngestionResultDto: {
+            /** Format: int32 */
+            inserted?: number;
+            /** Format: int32 */
+            duplicates?: number;
+            /** Format: int32 */
+            actionCount?: number;
+            /** Format: int32 */
+            faultCount?: number;
+            /** Format: int32 */
+            hintCount?: number;
+            /** Format: int32 */
+            safetyViolationCount?: number;
+            /** Format: int32 */
+            recoveryActionCount?: number;
+            assessment?: components["schemas"]["TrainingAssessmentDto"];
+        };
+        TrainingMetricCountDto: {
+            key?: string;
+            /** Format: int32 */
+            count?: number;
+        };
+        TrainingReportDto: {
+            schemaVersion?: string;
+            reportKind?: string;
+            /** Format: date-time */
+            generatedAtUtc?: string;
+            assessmentAuthority?: string;
+            educationalScope?: string;
+            disclaimer?: string;
+            session?: components["schemas"]["TrainingSessionDto"];
+            assessment?: components["schemas"]["TrainingAssessmentDto"];
+            actions?: components["schemas"]["TrainingActionDto"][];
+            metrics?: components["schemas"]["TrainingReportMetricsDto"];
+        };
+        TrainingReportMetricsDto: {
+            scenarioCompleted?: boolean;
+            /** Format: int32 */
+            stepsAttempted?: number;
+            /** Format: int32 */
+            faultsEncountered?: number;
+            /** Format: int32 */
+            hintsUsed?: number;
+            /** Format: int32 */
+            recoveryActions?: number;
+            /** Format: int32 */
+            safetyViolations?: number;
+            /** Format: int32 */
+            incorrectActions?: number;
+        };
+        TrainingResourceAssignmentDto: {
+            id?: string;
+            organizationId?: string;
+            classId?: string | null;
+            kind?: string;
+            resourceId?: string;
+            /** Format: date-time */
+            createdAtUtc?: string;
+        };
+        TrainingSessionDto: {
+            id?: string;
+            organizationId?: string | null;
+            classId?: string | null;
+            learnerSubject?: string;
+            alias?: string | null;
+            scenarioId?: string;
+            scenarioVersion?: string;
+            simulationSessionId?: string | null;
+            simulatorId?: string | null;
+            /** Format: date-time */
+            startedAtUtc?: string;
+            /** Format: date-time */
+            endedAtUtc?: string | null;
+            status?: string;
+            completed?: boolean;
+            /** Format: int32 */
+            completionPercent?: number;
+            expectedActions?: string[];
+            /** Format: int32 */
+            actionCount?: number;
+            /** Format: int32 */
+            faultCount?: number;
+            /** Format: int32 */
+            hintCount?: number;
+            /** Format: int32 */
+            safetyViolationCount?: number;
+            /** Format: int32 */
+            recoveryActionCount?: number;
+            /** Format: int32 */
+            score?: number;
+            /** Format: int32 */
+            possibleScore?: number;
+            assessmentSchemaVersion?: string;
+            scoringRuleVersion?: string;
+            softwareVersion?: string;
+            assessmentStatus?: string;
+            assessmentDiagnostic?: string | null;
+            assessment?: components["schemas"]["TrainingAssessmentDto"];
+            audit?: components["schemas"]["TrainingAuditEntryDto"][];
+            /** Format: int32 */
+            version?: number;
+        };
         UpdateMachineStateRequest: {
             simulationSessionId?: string | null;
             simulatorId?: string | null;
@@ -2939,6 +4607,20 @@ export interface components {
             simulationSessionId: string;
             simulatorId: string;
             errorMessage?: string | null;
+        };
+        UpsertMembershipRequest: {
+            subject: string;
+            role: string;
+            status?: string | null;
+        };
+        UpsertTrainingClassRequest: {
+            name: string;
+            description?: string;
+            instructorSubjects?: string[];
+            learnerSubjects?: string[];
+            scheduleMetadata?: {
+                [key: string]: string;
+            };
         };
     };
     responses: never;

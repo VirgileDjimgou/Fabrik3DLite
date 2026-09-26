@@ -48,4 +48,6 @@ public record AuthMeDto(
     string Subject,
     string? Name,
     IReadOnlyList<string> Roles,
-    string AuthenticationType);
+    string AuthenticationType,
+    string OrganizationId,
+    string? OrganizationName);

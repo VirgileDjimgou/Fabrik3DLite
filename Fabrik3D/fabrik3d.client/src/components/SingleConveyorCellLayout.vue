@@ -109,7 +109,7 @@
   <SimulationDock side="bottom" :label="t('dock.learning')" :initial-open="false">
     <details class="dock-panel" open>
       <summary>{{ t('panel.learning') }}</summary>
-      <LearningReportPanel class="docked-panel" :key="timelineRevision" :entries="timeline.all" :expected-actions="expectedLearningActions" @reset-scenario="instructorResetScenario" />
+      <LearningReportPanel class="docked-panel" :key="timelineRevision" :entries="timeline.all" :expected-actions="expectedLearningActions" scenario-id="pallet-processing" @reset-scenario="instructorResetScenario" />
     </details>
     <details v-if="expertMode" class="dock-panel" open>
       <summary>{{ t('panel.safety') }}</summary>

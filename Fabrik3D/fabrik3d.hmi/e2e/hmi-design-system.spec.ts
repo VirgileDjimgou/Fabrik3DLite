@@ -14,7 +14,16 @@ test.describe('industrial HMI visual hierarchy', () => {
       })
       expect(tokenResponse.ok()).toBeTruthy()
       const token = await tokenResponse.json() as { accessToken: string; mode: string }
-      const seededIdentity = JSON.stringify({ subject: 'e2e-operator', name: 'e2e-operator', roles: ['Operator'], mode: token.mode })
+      // The seeded identity mirrors the server-resolved organization (S43) so the workspace renders
+      // the same context label it would after a real /api/auth/me refresh.
+      const seededIdentity = JSON.stringify({
+        subject: 'e2e-operator',
+        name: 'e2e-operator',
+        roles: ['Operator'],
+        mode: token.mode,
+        organizationId: 'default',
+        organizationName: 'Default organization',
+      })
 
       await page.addInitScript(([accessToken, identity]) => {
         sessionStorage.setItem('fabrik3d.auth.token', accessToken)

@@ -3,7 +3,7 @@
     <template v-if="authenticated">
       <span class="auth-bar__identity" data-auth-identity>
         <i class="bi bi-person-check"></i>
-        {{ identity?.name ?? identity?.subject }} · {{ role }}
+        {{ identity?.name ?? identity?.subject }} · {{ role }}<template v-if="organization"> · {{ organization }}</template>
       </span>
       <button type="button" class="reset-panels" data-auth-logout @click="signOut">{{ t('auth.signOut') }}</button>
     </template>
@@ -40,6 +40,7 @@ const busy = ref(false)
 const error = ref('')
 
 const authenticated = computed(() => isAuthenticated())
+const organization = computed(() => identity.value?.organizationName ?? identity.value?.organizationId ?? '')
 const expired = sessionExpired
 const roleOptions = computed(() => {
   const roles = config.value?.roles ?? ['Operator']

@@ -19,6 +19,9 @@ export interface AuthIdentity {
   name?: string | null
   roles: string[]
   mode: string
+  /** Active organization resolved server-side (S43); display context only, never an access control. */
+  organizationId?: string | null
+  organizationName?: string | null
 }
 
 export interface AuthToken {

@@ -28,6 +28,18 @@ builder.Services.Configure<OrchestrationOptions>(
 builder.Services.Configure<SecurityHeadersOptions>(
     builder.Configuration.GetSection(SecurityHeadersOptions.SectionName));
 
+// ── Tenancy (S43): organization context, administration and migration ─
+builder.Services.Configure<TenancyOptions>(
+    builder.Configuration.GetSection(TenancyOptions.SectionName));
+builder.Services.AddSingleton<Fabrik3D.Domain.Organizations.ITenantContext, HttpTenantContext>();
+builder.Services.AddSingleton<OrganizationService>();
+builder.Services.AddHostedService<TenancyBootstrapService>();
+
+// ── Training sessions and deterministic assessment (S44) ───────────
+builder.Services.Configure<TrainingOptions>(
+    builder.Configuration.GetSection(TrainingOptions.SectionName));
+builder.Services.AddSingleton<TrainingService>();
+
 // ── Services ───────────────────────────────────────────────────────
 builder.Services.AddSingleton<HubNotificationService>();
 builder.Services.AddSingleton<IHubNotificationService>(sp => sp.GetRequiredService<HubNotificationService>());
@@ -152,6 +164,9 @@ if (!app.Environment.IsEnvironment("Testing"))
 }
 app.UseRateLimiter();
 app.UseAuthentication();
+// Tenant context is resolved from the authenticated principal (and validated membership only); it
+// never trusts a client-supplied organization id.
+app.UseMiddleware<TenantContextMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

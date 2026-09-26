@@ -102,6 +102,19 @@ negotiation and uses the same policies as REST. Audit records (authority, alarms
 carry the authenticated subject and role. See [`IDENTITY_AND_RBAC.md`](./IDENTITY_AND_RBAC.md) and
 [ADR 0003](../adr/0003-identity-and-rbac.md).
 
+## Organizations and tenancy (S43)
+
+Jobs, tasks, simulation sessions, alarms, messages, cell templates and historian records carry an
+explicit `OrganizationId`. The server resolves the active organization from the authenticated
+principal and an active membership (`X-Organization-Id` is accepted only after server-side
+membership validation), and every tenant-scoped repository query filters by that organization.
+Cross-organization identifiers resolve to `404` without leaking existence and a forged selection
+returns a structured `403`. Pre-S43 documents are deterministically migrated to the default
+organization; a missing `OrganizationId` is read as the default organization and backfilled on
+write. Single-organization on-premise installs and the clearly-labelled public demo need no
+configuration. See [`ORGANIZATIONS_AND_TENANCY.md`](./ORGANIZATIONS_AND_TENANCY.md) and
+[ADR 0004](../adr/0004-organizations-and-tenancy.md).
+
 ## Correlation ids
 
 - Every REST command carries an `X-Correlation-Id` header (generated client-side, or assigned by `CorrelationIdMiddleware` when absent).

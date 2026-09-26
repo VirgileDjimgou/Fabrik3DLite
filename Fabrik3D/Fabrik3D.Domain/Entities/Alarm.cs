@@ -10,6 +10,9 @@ public class Alarm
     [BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; } = null!;
 
+    /// <summary>Tenant boundary (S43). Null on legacy documents; readers treat it as the default organization.</summary>
+    public string? OrganizationId { get; set; }
+
     public string Code { get; set; } = string.Empty;
 
     public string Title { get; set; } = string.Empty;

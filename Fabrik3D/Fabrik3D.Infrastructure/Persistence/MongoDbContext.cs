@@ -1,4 +1,6 @@
 using Fabrik3D.Domain.Entities;
+using Fabrik3D.Domain.Organizations;
+using Fabrik3D.Domain.Training;
 using Fabrik3D.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -22,6 +24,20 @@ public class MongoDbContext
     public IMongoCollection<OperatorMessage> OperatorMessages => _database.GetCollection<OperatorMessage>("operatorMessages");
     public IMongoCollection<MachineState> MachineStates => _database.GetCollection<MachineState>("machineStates");
     public IMongoCollection<CellTemplate> CellTemplates => _database.GetCollection<CellTemplate>("cellTemplates");
+
+    // ── Tenancy (S43) ───────────────────────────────────────────────
+    public IMongoCollection<Organization> Organizations => _database.GetCollection<Organization>("organizations");
+    public IMongoCollection<Membership> Memberships => _database.GetCollection<Membership>("memberships");
+    public IMongoCollection<TrainingClass> TrainingClasses => _database.GetCollection<TrainingClass>("trainingClasses");
+    public IMongoCollection<TrainingResourceAssignment> TrainingResourceAssignments =>
+        _database.GetCollection<TrainingResourceAssignment>("trainingResourceAssignments");
+
+    // ── Training sessions and deterministic assessment (S44) ────────
+    public IMongoCollection<TrainingSession> TrainingSessions =>
+        _database.GetCollection<TrainingSession>(TrainingSchema.TrainingSessionCollection);
+
+    public IMongoCollection<TrainingActionRecord> TrainingActions =>
+        _database.GetCollection<TrainingActionRecord>(TrainingSchema.TrainingActionCollection);
 
     /// <summary>One authority document per equipment/actuator scope (S36).</summary>
     public IMongoCollection<ControlAuthority> ControlAuthorities => _database.GetCollection<ControlAuthority>("controlAuthorities");

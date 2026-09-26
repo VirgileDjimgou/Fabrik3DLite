@@ -35,6 +35,9 @@ exports[`learning report > derives report values from a fixed trace and renders 
     "possibleScore": 100,
     "score": 100,
   },
+  "assessmentAuthority": "local",
+  "disclaimer": "Simulated educational training data only. This local report does not certify professional competence, safety qualification or industrial readiness.",
+  "educationalScope": "educational",
   "expectedActions": [
     "step-next",
   ],

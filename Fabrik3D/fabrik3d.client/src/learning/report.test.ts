@@ -14,4 +14,14 @@ describe('learning report', () => {
     expect(report).toMatchSnapshot()
     expect(renderLearningReportHtml(report)).toContain('Score: 100/100')
   })
+
+  it('labels a local report with its educational scope and never claims certification', () => {
+    const report = createLearningReport(trace, 'Ada', ['step-next'], undefined, () => '2026-01-02T00:00:00.000Z')
+
+    expect(report.assessmentAuthority).toBe('local')
+    expect(report.educationalScope).toBe('educational')
+    expect(report.disclaimer).toMatch(/does not certify/)
+    expect(renderLearningReportHtml(report)).toContain('does not certify')
+    expect(renderLearningReportHtml(report)).toContain('Assessment authority: local')
+  })
 })

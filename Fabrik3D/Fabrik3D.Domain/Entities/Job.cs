@@ -10,6 +10,9 @@ public class Job
     [BsonRepresentation(BsonType.ObjectId)]
     public string Id { get; set; } = null!;
 
+    /// <summary>Tenant boundary (S43). Null on legacy documents; readers treat it as the default organization.</summary>
+    public string? OrganizationId { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public string Description { get; set; } = string.Empty;

@@ -11,6 +11,14 @@ The HMI follows an ISA-101-inspired, vendor-neutral approach: a quiet neutral ba
 
 Controls have a 44px minimum target and visible keyboard focus. Desktop/laptop layouts retain the content/status hierarchy; below the desktop breakpoint the status pane reflows underneath rather than disappearing.
 
+## Persona surfaces
+
+Operator, engineering and instructor personas use distinct surfaces. The instructor and class dashboard
+(`/instructor`, S45) is role-gated and reuses the same tokens, semantic status colours, empty/error
+states and confirmation dialog as the operator surface; it never changes operator navigation. Its
+workflows, metrics definitions and limitations are documented in
+[`INSTRUCTOR_DASHBOARD.md`](INSTRUCTOR_DASHBOARD.md).
+
 ## Language and safety boundaries
 
 English, French, and German use the same terminology keys and are tested for completeness. The UI reports request failures and disables commands while pending, but it is not a safety controller: the server remains the orchestration source of truth and must validate every state transition.

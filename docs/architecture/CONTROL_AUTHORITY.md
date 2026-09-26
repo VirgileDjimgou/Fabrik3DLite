@@ -143,6 +143,12 @@ The same test proves exclusivity (local simulation is denied while the external 
 scope and a denied request has no actuator effect), loss-of-controller degraded behaviour (no silent
 takeover) and explicit release back to local simulation.
 
+The S46 CODESYS / SoftPLC showcase reuses the same model at a documented scale: its automated
+substitute fixture acquires external authority explicitly, drives the full permissives → start →
+pallet → robot → CNC → completion → stop/fault → reset sequence, refuses local simulation during the
+run, and demonstrates degraded mode on controller loss. See
+[`../showcases/codesys-softplc/sequence.md`](../showcases/codesys-softplc/sequence.md).
+
 ## Limitations
 
 - This is **not** a safety authority and carries no certification. It is a training/VC arbitration

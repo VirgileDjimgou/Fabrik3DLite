@@ -111,14 +111,23 @@ public static class Fabrik3DAuthenticationExtensions
         {
             limiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             limiter.AddPolicy(AuthRateLimitPolicy, context =>
-                RateLimitPartition.GetFixedWindowLimiter(
+            {
+                // Resolved lazily so the configured limit is honoured even when the host is built
+                // with additional configuration sources (for example test hosts).
+                var permitLimit = context.RequestServices
+                    .GetRequiredService<IOptions<Fabrik3DAuthenticationOptions>>()
+                    .Value.AuthRateLimitPermitLimit;
+                if (permitLimit < 1) permitLimit = 1;
+
+                return RateLimitPartition.GetFixedWindowLimiter(
                     partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                     factory: _ => new FixedWindowRateLimiterOptions
                     {
-                        PermitLimit = 30,
+                        PermitLimit = permitLimit,
                         Window = TimeSpan.FromMinutes(1),
                         QueueLimit = 0,
-                    }));
+                    });
+            });
         });
 
         return services;
