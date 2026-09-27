@@ -37,6 +37,9 @@ test.describe('operator HMI accessibility', () => {
   })
 
   test('is keyboard reachable with a visible focus indicator', async ({ page }) => {
+    // Wait for the authenticated workspace to be interactive before exercising the keyboard;
+    // otherwise the first Tab can land on <body> while the app is still hydrating.
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
     await page.keyboard.press('Tab')
     const first = await page.evaluate(() => {
       const element = document.activeElement as HTMLElement | null
@@ -51,7 +54,11 @@ test.describe('operator HMI accessibility', () => {
   })
 
   test('meets the WCAG 2.2 target-size minimum on navigation controls', async ({ page }) => {
-    const sizes = await page.locator('nav.hmi-bottom-nav a, nav.hmi-bottom-nav button').evaluateAll((elements) =>
+    const controls = page.locator('nav.hmi-bottom-nav a, nav.hmi-bottom-nav button')
+    // Wait for the bottom navigation to render before measuring; otherwise evaluateAll can run
+    // against an empty set while the workspace is still hydrating.
+    await expect(controls.first()).toBeVisible()
+    const sizes = await controls.evaluateAll((elements) =>
       elements.map((element) => {
         const rect = element.getBoundingClientRect()
         return { width: rect.width, height: rect.height }

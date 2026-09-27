@@ -189,3 +189,13 @@ topic and payload field plus direction and datatype; an explicit apply projects 
 connector's `SignalMap`. As before, command publishes still require `AllowWrites` and an exact
 `CommandAllowList` entry, so the studio never bypasses MQTT write policy.
 
+## Observability and metrics (S49)
+
+Command publishes emit an OpenTelemetry-compatible `fabrik3d.connector.operation` span
+(`ActivityKind.Client`, source `Fabrik3D.Server`) carrying `connector.protocol=mqtt`,
+`connector.operation=publish`, the `mqtt.topic` and the `mqtt.retain` flag; payloads are never
+logged. Reconnects, accepted/rejected updates and fail-closed write attempts increment the
+`fabrik3d.connector.*` instruments, and the adapter's health/diagnostics counters are projected
+read-only as gauges at scrape time by `ConnectorMetricsSampler`. See
+[`../operations/OBSERVABILITY.md`](../operations/OBSERVABILITY.md).
+

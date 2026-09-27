@@ -135,9 +135,9 @@ Node.js 24.18.0, .NET 10.0.401 SDK building .NET 8 targets (`dotnet test`, `vite
 
 | Measurement | Result | Source |
 | --- | --- | --- |
-| Metric recording — API records (200,000) | 696.3 ms, **287,236 records/s** | `ObservabilityPerformanceTests.Recording_200k_api_requests_stays_within_the_budget` |
-| Metric recording — signal updates (200,000) | 34.6 ms, **5,773,489 updates/s** | `ObservabilityPerformanceTests.Recording_200k_signal_updates_stays_within_the_budget` |
-| Client frame sampling (100,000 frames) | 11.1 ms, **~9,009,009 frames/s** | `frameMetrics.performance.test.ts` |
+| Metric recording — API records (200,000) | 618.2 ms, **323,510 records/s** | `ObservabilityPerformanceTests.Recording_200k_api_requests_stays_within_the_budget` |
+| Metric recording — signal updates (200,000) | 29.5 ms, **6,775,183 updates/s** | `ObservabilityPerformanceTests.Recording_200k_signal_updates_stays_within_the_budget` |
+| Client frame sampling (100,000 frames) | 9.7 ms, **~10.3M frames/s** | `frameMetrics.performance.test.ts` |
 
 These are instrumentation-overhead measurements, not end-to-end throughput claims. End-to-end
 performance measurements are recorded in [PERFORMANCE.md](./PERFORMANCE.md).

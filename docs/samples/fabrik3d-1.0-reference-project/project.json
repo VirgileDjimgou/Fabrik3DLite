@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "id": "fabrik3d-1.0-reference-project",
+  "title": "Fabrik3D 1.0 reference cell project",
+  "description": "A minimal, self-contained sample project that a new user can open: the CNC machine-tending reference cell, the complete pallet-processing learning scenario, an OPC UA / MQTT / Modbus signal mapping, and an example server-assessed training-session report. Everything here is simulated training data.",
+  "productVersion": "1.0.0",
+  "cell": {
+    "file": "reference-cell.cell.json",
+    "schemaVersion": "1.0",
+    "robotId": "medium-6axis",
+    "scenePresetId": "cnc-machine-tending"
+  },
+  "scenario": {
+    "id": "pallet-processing",
+    "source": "built-in-catalog"
+  },
+  "mapping": {
+    "file": "reference-cell-mapping.json",
+    "id": "reference-cell-mapping",
+    "schemaVersion": "1.0"
+  },
+  "trainingSession": {
+    "file": "training-session-report.sample.json",
+    "reportKind": "server-training-report",
+    "schemaVersion": "1.0"
+  }
+}

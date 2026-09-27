@@ -135,3 +135,13 @@ Recorded measurements (2026-09-25, local Windows/NET 8 CI-class machine):
 **Decision.** S33 adds a C# mirror in `Fabrik3D.Domain/Signals` + `Fabrik3D.Infrastructure/Signals` that mirrors the schema-1.0 semantics of `INDUSTRIAL_SIGNAL_CORE.md`, and a real `OpcUaConnector` that translates node values into mirror updates. The TypeScript document stays the contract of record; the C# mirror references it and is covered by drift tests (wire-name round trips, identical arbitration/reason codes, quality/staleness semantics). Protocol node ids and `Opc.Ua` types remain inside `Fabrik3D.Infrastructure/OpcUa`.
 
 **Consequences.** Later transports (MQTT S34, Modbus S35) map onto the same mirror; the historian and replay can reuse it. There are two implementations of one schema, so the drift tests are mandatory and the representational differences are documented above. The mirror is intentionally in-memory until a sprint needs persistence.
+
+## Observability and metrics (S49)
+
+Writes emit an OpenTelemetry-compatible `fabrik3d.connector.operation` span
+(`ActivityKind.Client`, source `Fabrik3D.Server`) carrying `connector.protocol=opcua`,
+`connector.operation=write` and the `signal.id`; the value is never logged and no node id is exposed
+outside the adapter. The adapter's existing health/diagnostics counters are projected read-only as
+`fabrik3d.connector.*` gauges at scrape time by `ConnectorMetricsSampler`, and the fail-closed write
+path increments `fabrik3d.connector.write.attempts{outcome=accepted|rejected}`. Scraping never
+connects, writes or mutates connector state. See [`../operations/OBSERVABILITY.md`](../operations/OBSERVABILITY.md).

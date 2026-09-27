@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "id": "sample-cell-medium-6axis",
+  "name": "Sample cell (medium-6axis)",
+  "worldFrameId": "world",
+  "equipment": [
+    {
+      "id": "robot-1",
+      "definitionId": "medium-6axis",
+      "transform": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    },
+    {
+      "id": "cnc-1",
+      "definitionId": "educational-cnc",
+      "transform": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 3.4
+        },
+        "rotation": {
+          "x": 0,
+          "y": 3.141592653589793,
+          "z": 0
+        }
+      }
+    },
+    {
+      "id": "conveyor-1",
+      "definitionId": "belt-conveyor",
+      "transform": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": -2.4
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    },
+    {
+      "id": "pallet-station-1",
+      "definitionId": "pallet-station",
+      "transform": {
+        "position": {
+          "x": 0,
+          "y": 0.64,
+          "z": -2.4
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ]
+}

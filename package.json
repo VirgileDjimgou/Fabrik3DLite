@@ -23,6 +23,7 @@
     "contracts:generate": "node scripts/generate-contracts.mjs",
     "contracts:check": "node scripts/generate-contracts.mjs --check",
     "assets:generate": "node scripts/generate-industrial-glb-assets.mjs",
+    "docs:check": "node scripts/docs/check-docs.mjs",
     "lifecycle:verify-config": "node scripts/lifecycle/verify-config.mjs",
     "lifecycle:backup": "node scripts/lifecycle/backup.mjs",
     "lifecycle:restore": "node scripts/lifecycle/restore.mjs",

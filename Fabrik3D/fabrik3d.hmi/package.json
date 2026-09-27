@@ -10,7 +10,8 @@
     "type-check": "vue-tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --config=playwright.accessibility.config.ts"
   },
   "dependencies": {
     "@microsoft/signalr": "^9.0.0",

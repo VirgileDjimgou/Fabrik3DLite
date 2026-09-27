@@ -91,6 +91,16 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 
 This roadmap contains exactly 50 sprints. There is no S51. New work after S50 must be proposed as a separate, explicitly approved roadmap revision that preserves history.
 
+## 1.0 baseline
+
+S50 completes phase 12 and delivers the Fabrik3D 1.0 training/virtual-commissioning baseline: holistic
+re-validation of the S01-S49 feature set plus the complete documentation set. See the
+[release notes](../releases/RELEASE_NOTES_1.0.md), the
+[architecture overview](../architecture/OVERVIEW.md), the
+[documentation index](../DOCUMENTATION_INDEX.md) and the
+[limitations/non-claims](../operations/LIMITATIONS.md). The 1.0 baseline is **not** a safety,
+compliance or competence certification.
+
 ## Quality policy
 
 Every sprint adds or updates tests appropriate to its scope and runs the applicable baseline gates. See [`QUALITY_GATES.md`](QUALITY_GATES.md). A sprint is not complete if a required gate fails or if an existing feature is silently removed.

@@ -315,3 +315,12 @@ showcase-specific code is added to the adapter or the server: the showcase proje
 - No conformance certification; the implementation is based on the public specification only.
 - The mapping is validated at startup and is not silently hot-swapped; an explicit restart applies a
   new mapping version, so semantics cannot change mid-cycle.
+
+## Observability and metrics (S49)
+
+Writes emit an OpenTelemetry-compatible `fabrik3d.connector.operation` span (`ActivityKind.Client`,
+source `Fabrik3D.Server`) carrying `connector.protocol=modbus`, `connector.operation=write` and the
+`signal.id`; raw register payloads are never logged. Poll-cycle reconnects, accepted/rejected updates
+and fail-closed write attempts increment the `fabrik3d.connector.*` instruments, and the adapter's
+per-point diagnostics are projected read-only as gauges at scrape time by `ConnectorMetricsSampler`.
+See [`../operations/OBSERVABILITY.md`](../operations/OBSERVABILITY.md).

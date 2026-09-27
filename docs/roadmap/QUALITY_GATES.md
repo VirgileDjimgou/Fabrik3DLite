@@ -52,6 +52,7 @@ node scripts/sprint-runner.mjs validate
 dotnet build Fabrik3D/Fabrik3D.slnx
 dotnet test Fabrik3D/Fabrik3D.slnx
 npm run contracts:check
+npm run docs:check
 npm --prefix Fabrik3D/fabrik3d.client run type-check
 npm --prefix Fabrik3D/fabrik3d.client run test
 npm --prefix Fabrik3D/fabrik3d.client run build
@@ -61,6 +62,9 @@ npm --prefix Fabrik3D/fabrik3d.hmi run test
 npm --prefix Fabrik3D/fabrik3d.hmi run build
 npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e
 ```
+
+`npm run docs:check` (added in S50) verifies that the 1.0 documentation set exists, that relative
+Markdown links resolve, and that the 1.0 reference sample project is well-formed.
 
 Sprints whose scope touches connectors, deployment, hardening or the 1.0 baseline additionally require:
 

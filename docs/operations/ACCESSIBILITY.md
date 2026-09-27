@@ -51,6 +51,16 @@ against the live orchestrator:
 npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e -- --project=hmi-ui
 ```
 
+The same spec also runs as an **engine matrix** (Chromium, Google Chrome, Microsoft Edge, Firefox,
+WebKit) through `playwright.accessibility.config.ts`:
+
+```powershell
+npm --prefix Fabrik3D/fabrik3d.hmi run test:a11y
+```
+
+S49 result: **15/15 passed** (3 checks × 5 engines). Browser versions and the full matrix are recorded
+in [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md).
+
 ## Findings and fixes
 
 | # | Finding | Severity | Fix | Verified by |
@@ -84,8 +94,9 @@ beyond A1–A7.
 
 ## Known limitations
 
-- Automated checks cover Chromium; see [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md). Assistive-technology
-  (screen-reader) validation with NVDA/JAWS/VoiceOver was **not** performed and remains a gap.
+- Automated checks cover Chromium, Google Chrome, Microsoft Edge, Firefox and WebKit (Safari engine);
+  see [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md). Assistive-technology (screen-reader) validation with
+  NVDA/JAWS/VoiceOver was **not** performed and remains a gap.
 - No third-party axe-core/WAVE scan was executed in this environment.
 - The simulator's WebGL canvas is visual-only and is not exposed as an accessible control surface;
   the engineering inspector panels provide the textual equivalents.

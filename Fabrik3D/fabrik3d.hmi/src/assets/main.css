@@ -61,6 +61,14 @@ html, body {
 .hmi-icon { color: var(--hmi-icon-color); }
 button, a, select, input { min-height: var(--hmi-touch-target); }
 :focus-visible { outline: 3px solid var(--hmi-focus); outline-offset: 2px; }
+/* Bootstrap styles button focus with a box-shadow and `outline: 0`. That indicator is invisible in
+   forced-colours/high-contrast modes, so restore an explicit outline with matching specificity for
+   every interactive control to guarantee a visible keyboard focus indicator (WCAG 2.2 AA 2.4.7). */
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible, .btn:focus-visible {
+  outline: 3px solid var(--hmi-focus);
+  outline-offset: 2px;
+}
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
 .hmi-mode { font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--hmi-warning); }
 .hmi-status { display:inline-flex; gap:.35rem; align-items:center; font-size:.875rem; font-weight:600; }

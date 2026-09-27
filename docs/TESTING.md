@@ -18,6 +18,28 @@ The S47 Siemens / PLCSIM interoperability profile reuses that fixture (no TIA Po
 
 The S48 packaging/lifecycle tests run against disposable MongoDB (Testcontainers) and the real `Program.cs` pipeline: `dotnet test Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj --filter "FullyQualifiedName~DeploymentConfigurationValidatorTests|FullyQualifiedName~DeploymentHttpTests|FullyQualifiedName~SchemaMigrationRunnerTests|FullyQualifiedName~SecretRedactorTests|FullyQualifiedName~SupportBundleBuilderTests"`. They cover fail-fast configuration validation, version/liveness/readiness endpoints, support-bundle authorization and redaction, and migration ordering/idempotence. The container-level procedures and their recorded evidence are in [docs/operations/VALIDATION.md](operations/VALIDATION.md).
 
+The S49 observability, security, accessibility and performance checks:
+
+```powershell
+# Backend observability + security-hardening unit/HTTP tests (no Docker required)
+dotnet test Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj --filter "FullyQualifiedName~Observability|FullyQualifiedName~SecurityHardening"
+
+# Client frame-sampler tests and the recorded sampling benchmark
+npm --prefix Fabrik3D/fabrik3d.client run test -- src/observability
+npm --prefix Fabrik3D/fabrik3d.client run test -- src/observability/frameMetrics.performance.test.ts --reporter=verbose
+
+# Recorded WebGL frame time (headless; included in test:visual)
+npm --prefix Fabrik3D/fabrik3d.client run test:visual
+
+# Concurrent SignalR client load harness (Testing-mode orchestrator on 127.0.0.1:7249)
+npm --prefix Fabrik3D/fabrik3d.client run load:signalr
+
+# WCAG 2.2 AA matrix across Chromium/Chrome/Edge/Firefox/WebKit (server + served HMI build)
+npm --prefix Fabrik3D/fabrik3d.hmi run test:a11y
+```
+
+The S49 observability and performance methodology, reference hardware and recorded numbers are in [docs/operations/OBSERVABILITY.md](operations/OBSERVABILITY.md), [PERFORMANCE.md](operations/PERFORMANCE.md), [SECURITY_HARDENING.md](operations/SECURITY_HARDENING.md), [ACCESSIBILITY.md](operations/ACCESSIBILITY.md) and [BROWSER_SUPPORT.md](operations/BROWSER_SUPPORT.md).
+
 For the end-to-end tests, start the server in the `Testing` environment with an isolated MongoDB database, then run:
 
 ```powershell
@@ -25,12 +47,15 @@ $env:ASPNETCORE_ENVIRONMENT = 'Testing'
 $env:ASPNETCORE_URLS = 'http://127.0.0.1:7249'
 $env:MongoDb__ConnectionString = 'mongodb://localhost:27017'
 $env:MongoDb__DatabaseName = 'Fabrik3D_e2e'
+$env:VITE_ORCHESTRATOR_URL = 'http://127.0.0.1:7249'   # rendered HMI preview proxies the API/hub
 dotnet run --project Fabrik3D/Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj --no-launch-profile
 
 # The HMI project must be built once; Playwright serves it with `vite preview`.
 npm --prefix Fabrik3D/fabrik3d.hmi run build
 npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e
 ```
+
+The rendered `hmi-ui` specs (including the accessibility checks) load through the HMI preview server, which proxies `/api` and `/hubs` to `VITE_ORCHESTRATOR_URL` (default `https://localhost:7249`). Set it to the HTTP Testing server (`http://127.0.0.1:7249`) so the connection badge reaches its steady connected state.
 
 The suite runs in two Playwright projects:
 

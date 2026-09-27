@@ -26,35 +26,38 @@ Harness: `Fabrik3D/fabrik3d.client/scripts/signalr-load.mjs` (`npm --prefix Fabr
 run against a disposable Testing-mode orchestrator with MongoDB.
 
 ```text
-clients=25           connectMs=2605.3   meanConnectMs=104.21
-broadcasts=200       messagesReceived=5000   messageWindowMs=4684.6
-messagesPerSecond=1067
+clients=25           connectMs=2056.0   meanConnectMs=82.24
+broadcasts=200       messagesReceived=5000   messageWindowMs=4870.8
+messagesPerSecond=1027
 ```
 
-25 concurrent clients connected with a mean of 104 ms each; the server delivered every one of the
-5,000 expected messages (200 `JobStateChanged` broadcasts × 25 clients, no loss) over a 4.68 s window
-at ~1,067 delivered messages/s.
+25 concurrent clients connected with a mean of 82 ms each; the server delivered every one of the
+5,000 expected messages (200 `JobStateChanged` broadcasts × 25 clients, no loss) over a 4.87 s window
+at ~1,027 delivered messages/s.
 
 ### Instrumentation overhead
 
 | Measurement | Result | Source |
 | --- | --- | --- |
-| Metric recording — 200,000 API records | 696.3 ms, **287,236 records/s** | `ObservabilityPerformanceTests` |
-| Metric recording — 200,000 signal updates | 34.6 ms, **5,773,489 updates/s** | `ObservabilityPerformanceTests` |
-| Client frame sampling — 100,000 frames | 10.3 ms, **~9.7M frames/s** | `frameMetrics.performance.test.ts` |
+| Metric recording — 200,000 API records | 618.2 ms, **323,510 records/s** | `ObservabilityPerformanceTests` |
+| Metric recording — 200,000 signal updates | 29.5 ms, **6,775,183 updates/s** | `ObservabilityPerformanceTests` |
+| Client frame sampling — 100,000 frames | 9.7 ms, **~10.3M frames/s** | `frameMetrics.performance.test.ts` |
 
-### WebGL frame time (headless browser)
+### WebGL frame time (headless browsers, software rendering)
 
 `Fabrik3D/fabrik3d.client/e2e/perf.spec.ts` records real `requestAnimationFrame` intervals while the
-reference scene renders in headless Chromium (software rendering):
+reference scene renders:
 
 ```text
-frames=9  mean=340.72ms  p50=350.00ms  p95=366.70ms  max=366.70ms   (~3 fps)
+Chromium:  frames=11   mean=278.77ms  p50=283.30ms  p95=316.60ms  max=316.60ms   (~3.6 fps)
+WebKit:    frames=103  mean=29.17ms   p50=27.00ms   p95=40.00ms   max=50.00ms     (~34 fps)
+Firefox:   render + measurement passed (page console line not forwarded by the runner)
 ```
 
-This is a **software-rendering upper bound for CI**, not a GPU result; it is the worst case for the
-documented reference scene and will be far faster on hardware-accelerated browsers. The scenario
-only requires the scene to keep rendering; it is not a latency budget.
+These are **software-rendering upper bounds for CI**, not GPU results; they are the worst case for the
+documented reference scene and will be far faster on hardware-accelerated browsers. The scenario only
+requires the scene to keep rendering; it is not a latency budget. The per-engine accessibility matrix
+and versions are in [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md).
 
 ## Measurements recorded by earlier sprints
 
