@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Domain.Entities;
 using Fabrik3D.Domain.Historian;
 using Fabrik3D.Infrastructure.Historian;
+using Fabrik3D.Infrastructure.Observability;
 using Fabrik3D.Infrastructure.Repositories;
 using Fabrik3D.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
@@ -29,6 +31,7 @@ public sealed class HistorianService
     private readonly ConcurrentDictionary<string, SamplingState> _sampling = new(StringComparer.Ordinal);
     private readonly SamplingPolicy _defaultPolicy;
     private readonly Dictionary<string, SamplingPolicy> _signalPolicies;
+    private readonly Observability.ObservabilityMetrics? _metrics;
 
     private long _acceptedSamples;
     private long _droppedSamples;
@@ -42,12 +45,14 @@ public sealed class HistorianService
         HistorianRepository repository,
         IOptions<HistorianOptions> options,
         ILogger<HistorianService> log,
-        TimeProvider time)
+        TimeProvider time,
+        Observability.ObservabilityMetrics? metrics = null)
     {
         _repository = repository;
         _options = options.Value;
         _log = log;
         _time = time;
+        _metrics = metrics;
 
         var defaultMode = SamplingVocabulary.TryParseMode(_options.DefaultSamplingMode, out var parsed)
             ? parsed
@@ -170,11 +175,13 @@ public sealed class HistorianService
             return new HistorianIngestResultDto(0, sampled, dropped, rejected, true, false, "accepted", diagnostics);
         }
 
+        var writeStopwatch = Stopwatch.StartNew();
         var stored = await TryInsertWithRetryAsync(
             () => _repository.InsertSamplesAsync(accepted, cancellationToken),
             accepted.Count,
             "telemetry",
             cancellationToken);
+        writeStopwatch.Stop();
 
         if (!stored)
         {
@@ -184,6 +191,7 @@ public sealed class HistorianService
         }
 
         Interlocked.Add(ref _acceptedSamples, accepted.Count);
+        RecordHistorianWrite("samples", accepted.Count, writeStopwatch.Elapsed.TotalMilliseconds);
         return new HistorianIngestResultDto(accepted.Count, sampled, dropped, rejected, true, false, "accepted", diagnostics);
     }
 
@@ -238,11 +246,13 @@ public sealed class HistorianService
             return new HistorianIngestResultDto(0, 0, 0, rejected, true, false, "accepted", diagnostics);
         }
 
+        var eventWriteStopwatch = Stopwatch.StartNew();
         var stored = await TryInsertWithRetryAsync(
             () => _repository.InsertEventsAsync(accepted, cancellationToken),
             accepted.Count,
             "event",
             cancellationToken);
+        eventWriteStopwatch.Stop();
 
         if (!stored)
         {
@@ -251,7 +261,21 @@ public sealed class HistorianService
         }
 
         Interlocked.Add(ref _acceptedEvents, accepted.Count);
+        RecordHistorianWrite("events", accepted.Count, eventWriteStopwatch.Elapsed.TotalMilliseconds);
         return new HistorianIngestResultDto(accepted.Count, 0, 0, rejected, true, false, "accepted", diagnostics);
+    }
+
+    /// <summary>
+    /// Records a historian write on the shared meter and span. Both are no-ops when observability is
+    /// disabled and instrumentation never affects the returned ingest result.
+    /// </summary>
+    private void RecordHistorianWrite(string kind, int count, double elapsedMs)
+    {
+        if (_metrics is null || count <= 0) return;
+        using var activity = Fabrik3DTelemetry.StartActivity(Fabrik3DTelemetry.HistorianWriteSpan, ActivityKind.Internal,
+            new Dictionary<string, object?> { ["historian.kind"] = kind, ["historian.count"] = count });
+        _metrics.RecordHistorianWrite(kind, count, elapsedMs);
+        activity?.SetTag("historian.records", count);
     }
 
     // ── Queries ─────────────────────────────────────────────────────

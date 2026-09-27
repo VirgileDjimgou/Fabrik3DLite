@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import SceneHost from './components/SceneHost.vue'
 import SceneSelectorPanel from './components/SceneSelectorPanel.vue'
 import CellEditor from './components/CellEditor.vue'
@@ -8,11 +8,13 @@ import { createDefaultRobotCatalog } from './robot/catalog'
 import { resetFloatingOverlays } from './composables/useDraggableOverlay'
 import { createDefaultScenePresetCatalog, DEFAULT_SCENE_PRESET_ID, SceneSelectionController } from './scenes'
 import { useSimulatorI18n, type SimulatorLocale } from './i18n/simulator'
+import { getVersion } from './services/orchestratorApi'
 
 type ShellMode = 'execution' | 'editing'
 
 const catalog = createDefaultRobotCatalog()
 const mode = ref<ShellMode>('execution')
+const buildVersion = ref('')
 const sceneCatalog = createDefaultScenePresetCatalog()
 const sceneSelection = new SceneSelectionController(sceneCatalog, DEFAULT_SCENE_PRESET_ID)
 const scenePresets = sceneCatalog.list()
@@ -46,6 +48,20 @@ function resetScene(): void {
 function changeLocale(event: Event): void {
   setLocale((event.target as HTMLSelectElement).value as SimulatorLocale)
 }
+
+onMounted(async () => {
+  // Surface the orchestrator build version in the console and the mode bar (S48).
+  try {
+    const version = await getVersion()
+    buildVersion.value = version.version
+    console.log(
+      `[Simulator] Fabrik3D v${version.version} profile=${version.profile} ` +
+        `environment=${version.environment} build=${version.buildId ?? version.informationalVersion}`,
+    )
+  } catch {
+    buildVersion.value = ''
+  }
+})
 </script>
 
 <template>
@@ -81,6 +97,7 @@ function changeLocale(event: Event): void {
         </select>
       </label>
       <SimulatorAuthBar />
+      <span v-if="buildVersion" class="build-version" data-testid="simulator-build-version">v{{ buildVersion }}</span>
     </div>
     <SceneSelectorPanel :presets="scenePresets" :selected-id="selectedSceneId" :locale="locale" @select="selectScene" @reset="resetScene" />
     <SceneHost v-if="mode === 'execution'" :key="sceneHostKey" :preset="selectedScene" />
@@ -120,4 +137,5 @@ function changeLocale(event: Event): void {
 .reset-panels:hover { border-color: #00cc88; color: #fff; }
 .language-select { display: flex; align-items: center; gap: .3rem; padding: 0 .25rem; color: #9fc4d2; font: inherit; }
 .language-select select { border: 1px solid #34758a; border-radius: .25rem; background: #10232d; color: #fff; padding: .23rem .3rem; font: inherit; }
+.build-version { align-self: center; padding: 0 .4rem; color: #9fc4d2; font: inherit; }
 </style>

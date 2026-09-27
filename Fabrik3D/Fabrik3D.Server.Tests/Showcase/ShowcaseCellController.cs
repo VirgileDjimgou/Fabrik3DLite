@@ -1,9 +1,22 @@
 using Fabrik3D.Contracts.Enums;
 using Fabrik3D.Domain.Control;
-using Fabrik3D.Infrastructure.Modbus;
 using Fabrik3D.Infrastructure.Signals;
 
 namespace Fabrik3D.Server.Tests.Showcase;
+
+/// <summary>
+/// Outcome of one cell output write through whichever connector transport the harness uses. It is a
+/// transport-neutral projection of the Modbus/OPC UA write results so the deterministic cell state
+/// machine can be shared by every showcase substitute instead of forking per protocol.
+/// </summary>
+internal readonly record struct ShowcaseWriteOutcome(bool Accepted, string? RejectionReason);
+
+/// <summary>
+/// Writes one internal signal value out to the controller. The delegate hides the concrete connector
+/// (Modbus, OPC UA) so the same cell state machine drives every substitute.
+/// </summary>
+internal delegate Task<ShowcaseWriteOutcome> ShowcaseWriteDelegate(
+    string signalId, object value, CancellationToken cancellationToken);
 
 /// <summary>Deterministic phases of the showcase reference cell.</summary>
 internal enum ShowcasePhase
@@ -38,12 +51,15 @@ internal sealed record ShowcaseTickResult(
     IReadOnlyList<string> RejectedWrites);
 
 /// <summary>
-/// Test-only deterministic virtual cell for the S46 showcase. It is the Fabrik3D side of the closed
-/// loop: it consumes controller outputs from the real Modbus-connector signal mirror
+/// Test-only deterministic virtual cell for the S46/S47 showcases. It is the Fabrik3D side of the
+/// closed loop: it consumes controller outputs from a transport-neutral signal mirror
 /// (<c>showcase.cell.*</c> command/feedback signals) and publishes its virtual actuator and sensor
-/// values back to the controller through the real <see cref="ModbusConnector"/> write path. Every
-/// tick is authorized through the S36 <see cref="IControlAuthorityGate"/> before it can move the
-/// actuator or emit a protocol write, so a denied tick has no actuator and no protocol effect.
+/// values back to the controller through the harness-supplied <see cref="ShowcaseWriteDelegate"/>.
+/// Every tick is authorized through the S36 <see cref="IControlAuthorityGate"/> before it can move
+/// the actuator or emit a protocol write, so a denied tick has no actuator and no protocol effect.
+///
+/// The same state machine is driven by both the Modbus (S46) and the OPC UA (S47) substitutes; the
+/// transport is selected by the write delegate, never by a fork of this class.
 ///
 /// This is an educational reference model, not a certified controller, and it is not part of the
 /// shipped Fabrik3D server.
@@ -55,7 +71,7 @@ internal sealed class ShowcaseCellController
 
     private readonly IControlAuthorityGate _gate;
     private readonly SignalMirrorStore _mirror;
-    private readonly ModbusConnector _connector;
+    private readonly ShowcaseWriteDelegate _write;
     private readonly string _scope;
     private readonly object _lock = new();
 
@@ -71,12 +87,12 @@ internal sealed class ShowcaseCellController
     public ShowcaseCellController(
         IControlAuthorityGate gate,
         SignalMirrorStore mirror,
-        ModbusConnector connector,
+        ShowcaseWriteDelegate write,
         string? scope = null)
     {
         _gate = gate;
         _mirror = mirror;
-        _connector = connector;
+        _write = write;
         _scope = string.IsNullOrWhiteSpace(scope) ? ShowcaseSignalMap.Scope : scope;
     }
 
@@ -259,7 +275,7 @@ internal sealed class ShowcaseCellController
 
     private async Task WriteAsync(string signalId, object value, List<string> rejected, CancellationToken cancellationToken)
     {
-        var result = await _connector.WriteAsync(signalId, value, cancellationToken);
+        var result = await _write(signalId, value, cancellationToken);
         if (!result.Accepted)
         {
             rejected.Add($"{signalId}:{result.RejectionReason}");

@@ -895,6 +895,87 @@
         }
       }
     },
+    "/api/diagnostics/status": {
+      "get": {
+        "tags": [
+          "Diagnostics"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObservabilityStatusDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/diagnostics/metrics": {
+      "get": {
+        "tags": [
+          "Diagnostics"
+        ],
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/diagnostics/simulator": {
+      "post": {
+        "tags": [
+          "Diagnostics"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulatorMetricsDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulatorMetricsDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulatorMetricsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Health": {
       "get": {
         "tags": [
@@ -902,7 +983,102 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReportDto"
+                }
+              }
+            }
           }
         }
       }
@@ -2803,6 +2979,55 @@
         }
       }
     },
+    "/api/support/bundle": {
+      "get": {
+        "tags": [
+          "Support"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportBundleDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportBundleDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportBundleDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/tasks/{id}/status": {
       "put": {
         "tags": [
@@ -3693,6 +3918,35 @@
           }
         }
       }
+    },
+    "/api/version": {
+      "get": {
+        "tags": [
+          "Version"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4353,6 +4607,60 @@
             "maxLength": 200,
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HealthCheckDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "HealthReportDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthCheckDto"
+            }
           }
         },
         "additionalProperties": false
@@ -5093,6 +5401,36 @@
         },
         "additionalProperties": false
       },
+      "ObservabilityStatusDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "metricsEndpointEnabled": {
+            "type": "boolean"
+          },
+          "exporter": {
+            "type": "string"
+          },
+          "otlpEndpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "serviceName": {
+            "type": "string"
+          },
+          "seriesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "droppedSeries": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
       "OperatorMessageDto": {
         "type": "object",
         "properties": {
@@ -5784,6 +6122,39 @@
         },
         "additionalProperties": false
       },
+      "SimulatorMetricsDto": {
+        "type": "object",
+        "properties": {
+          "sourceId": {
+            "type": "string"
+          },
+          "frameTimeMs": {
+            "type": "number",
+            "format": "double"
+          },
+          "drawCalls": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "triangles": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "textureBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "heapUsedBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "StartTrainingSessionRequest": {
         "required": [
           "scenarioId"
@@ -5825,6 +6196,90 @@
             "items": {
               "type": "string"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SupportBundleConnectorDto": {
+        "type": "object",
+        "properties": {
+          "protocol": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string"
+          },
+          "lastError": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SupportBundleDto": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "string"
+          },
+          "generatedAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "$ref": "#/components/schemas/VersionDto"
+          },
+          "health": {
+            "$ref": "#/components/schemas/HealthReportDto"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "connectors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportBundleConnectorDto"
+            }
+          },
+          "migrations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportBundleMigrationDto"
+            }
+          },
+          "recentLogs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "redactedKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SupportBundleMigrationDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "appliedAtUtc": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -6808,6 +7263,35 @@
             "additionalProperties": {
               "type": "string"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "VersionDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "informationalVersion": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "buildId": {
+            "type": "string",
+            "nullable": true
+          },
+          "startedAtUtc": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false

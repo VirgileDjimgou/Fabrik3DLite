@@ -22,7 +22,19 @@ public sealed class SecurityHeadersOptions
 
     public string CrossOriginOpenerPolicy { get; set; } = "same-origin";
 
+    /// <summary>Cross-Origin-Resource-Policy. Defaults to same-site; tighten to same-origin when isolated.</summary>
+    public string CrossOriginResourcePolicy { get; set; } = "same-site";
+
+    /// <summary>Blocks legacy Flash/PDF cross-domain policy files.</summary>
+    public string PermittedCrossDomainPolicies { get; set; } = "none";
+
     public string PermissionsPolicy { get; set; } = "geolocation=(), camera=(), microphone=()";
+
+    /// <summary>
+    /// Optional Strict-Transport-Security value. Left empty by default because TLS terminates at the
+    /// deployment proxy/tunnel and HSTS for a host is a deployment decision, not a per-request default.
+    /// </summary>
+    public string? StrictTransportSecurity { get; set; }
 
     /// <summary>Optional Content-Security-Policy. Empty means "not sent" (documented default).</summary>
     public string? ContentSecurityPolicy { get; set; }

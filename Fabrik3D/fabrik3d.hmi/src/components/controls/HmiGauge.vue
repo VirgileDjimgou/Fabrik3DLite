@@ -1,6 +1,12 @@
 <template>
   <div class="hmi-gauge">
-    <svg :viewBox="`0 0 ${size} ${size}`" :width="size" :height="size">
+    <svg
+      :viewBox="`0 0 ${size} ${size}`"
+      :width="size"
+      :height="size"
+      role="img"
+      :aria-label="label ? `${label} ${displayValue}%` : `${displayValue}%`"
+    >
       <circle :cx="center" :cy="center" :r="radius"
         fill="none" :stroke="trackColor" :stroke-width="strokeWidth"
         :stroke-dasharray="circumference" stroke-dashoffset="0"

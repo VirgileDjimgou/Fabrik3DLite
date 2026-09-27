@@ -922,6 +922,124 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diagnostics/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ObservabilityStatusDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diagnostics/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    format?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diagnostics/simulator": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SimulatorMetricsDto"];
+                    "text/json": components["schemas"]["SimulatorMetricsDto"];
+                    "application/*+json": components["schemas"]["SimulatorMetricsDto"];
+                };
+            };
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Health": {
         parameters: {
             query?: never;
@@ -943,7 +1061,96 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["HealthDto"];
+                        "application/json": components["schemas"]["HealthDto"];
+                        "text/json": components["schemas"]["HealthDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HealthReportDto"];
+                        "application/json": components["schemas"]["HealthReportDto"];
+                        "text/json": components["schemas"]["HealthReportDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HealthReportDto"];
+                        "application/json": components["schemas"]["HealthReportDto"];
+                        "text/json": components["schemas"]["HealthReportDto"];
+                    };
+                };
+                /** @description Service Unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["HealthReportDto"];
+                        "application/json": components["schemas"]["HealthReportDto"];
+                        "text/json": components["schemas"]["HealthReportDto"];
+                    };
                 };
             };
         };
@@ -2802,6 +3009,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/support/bundle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SupportBundleDto"];
+                        "application/json": components["schemas"]["SupportBundleDto"];
+                        "text/json": components["schemas"]["SupportBundleDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApiErrorDto"];
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                        "text/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/{id}/status": {
         parameters: {
             query?: never;
@@ -3594,6 +3849,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/version": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VersionDto"];
+                        "application/json": components["schemas"]["VersionDto"];
+                        "text/json": components["schemas"]["VersionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3801,6 +4093,24 @@ export interface components {
             role: string;
             subject?: string | null;
             name?: string | null;
+        };
+        HealthCheckDto: {
+            name?: string;
+            status?: string;
+            detail?: string | null;
+        };
+        HealthDto: {
+            status?: string;
+            /** Format: date-time */
+            timestamp?: string;
+            version?: string;
+        };
+        HealthReportDto: {
+            status?: string;
+            /** Format: date-time */
+            timestamp?: string;
+            version?: string;
+            checks?: components["schemas"]["HealthCheckDto"][];
         };
         HeartbeatControlAuthorityRequest: {
             ownerId: string;
@@ -4058,6 +4368,17 @@ export interface components {
             /** Format: int32 */
             version?: number;
         };
+        ObservabilityStatusDto: {
+            enabled?: boolean;
+            metricsEndpointEnabled?: boolean;
+            exporter?: string;
+            otlpEndpoint?: string | null;
+            serviceName?: string;
+            /** Format: int32 */
+            seriesCount?: number;
+            /** Format: int64 */
+            droppedSeries?: number;
+        };
         OperatorMessageDto: {
             id?: string;
             title?: string;
@@ -4275,6 +4596,21 @@ export interface components {
             /** Format: int32 */
             scenarioProgress?: number;
         };
+        SimulatorMetricsDto: {
+            sourceId?: string;
+            /** Format: double */
+            frameTimeMs?: number;
+            /** Format: int64 */
+            drawCalls?: number;
+            /** Format: int32 */
+            triangles?: number;
+            /** Format: int64 */
+            textureBytes?: number;
+            /** Format: int64 */
+            heapUsedBytes?: number;
+            /** Format: date-time */
+            timestamp?: string;
+        };
         StartTrainingSessionRequest: {
             scenarioId: string;
             scenarioVersion?: string | null;
@@ -4283,6 +4619,32 @@ export interface components {
             simulatorId?: string | null;
             alias?: string | null;
             expectedActions?: string[];
+        };
+        SupportBundleConnectorDto: {
+            protocol?: string;
+            enabled?: boolean;
+            state?: string;
+            lastError?: string | null;
+        };
+        SupportBundleDto: {
+            schemaVersion?: string;
+            /** Format: date-time */
+            generatedAtUtc?: string;
+            version?: components["schemas"]["VersionDto"];
+            health?: components["schemas"]["HealthReportDto"];
+            configuration?: {
+                [key: string]: string;
+            };
+            connectors?: components["schemas"]["SupportBundleConnectorDto"][];
+            migrations?: components["schemas"]["SupportBundleMigrationDto"][];
+            recentLogs?: string[];
+            redactedKeys?: string[];
+        };
+        SupportBundleMigrationDto: {
+            version?: string;
+            name?: string;
+            /** Format: date-time */
+            appliedAtUtc?: string;
         };
         TakeoverControlAuthorityRequest: {
             mode: string;
@@ -4621,6 +4983,16 @@ export interface components {
             scheduleMetadata?: {
                 [key: string]: string;
             };
+        };
+        VersionDto: {
+            version?: string;
+            informationalVersion?: string;
+            environment?: string;
+            profile?: string;
+            runtime?: string;
+            buildId?: string | null;
+            /** Format: date-time */
+            startedAtUtc?: string;
         };
     };
     responses: never;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AssetPackageImporter } from './AssetPackageImporter'
+import { ASSET_PACKAGE_LIMITS, AssetPackageImporter } from './AssetPackageImporter'
 import { INDUSTRIAL_CONVEYOR_MANIFEST } from './industrialAssets'
 
 const bytes = new TextEncoder().encode('not-a-real-glb')
@@ -18,5 +18,17 @@ describe('trusted asset package importer', () => {
   it('rejects a missing package member', async () => {
     const value = input(); const { ['thumbnail.svg']: _removed, ...files } = value.files
     await expect(new AssetPackageImporter().import({ ...value, files })).rejects.toThrow("Package is missing 'thumbnail.svg'")
+  })
+  it('rejects an undeclared extra file inside the package', async () => {
+    const value = input()
+    await expect(new AssetPackageImporter().import({ ...value, files: { ...value.files, 'payload.exe': bytes } }))
+      .rejects.toThrow("undeclared file 'payload.exe'")
+  })
+  it('bounds the number of files a package may declare', async () => {
+    const value = input()
+    const files: Record<string, Uint8Array> = { ...value.files }
+    for (let index = 0; index < ASSET_PACKAGE_LIMITS.maxFiles + 5; index++) files[`extra/${index}.glb`] = bytes
+    await expect(new AssetPackageImporter().import({ ...value, files }))
+      .rejects.toThrow(`above the ${ASSET_PACKAGE_LIMITS.maxFiles} file limit`)
   })
 })

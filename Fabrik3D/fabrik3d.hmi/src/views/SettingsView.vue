@@ -26,6 +26,23 @@
         </div>
       </div>
     </div>
+    <div class="card mb-3" data-testid="about-installation">
+      <div class="card-header">{{ t('settings.about') }}</div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-sm-4">{{ t('settings.version') }}</dt>
+          <dd class="col-sm-8">{{ versionInfo?.version ?? '—' }}</dd>
+          <dt class="col-sm-4">{{ t('settings.profile') }}</dt>
+          <dd class="col-sm-8">{{ versionInfo?.profile ?? '—' }}</dd>
+          <dt class="col-sm-4">{{ t('settings.environment') }}</dt>
+          <dd class="col-sm-8">{{ versionInfo?.environment ?? '—' }}</dd>
+          <dt class="col-sm-4">{{ t('settings.runtime') }}</dt>
+          <dd class="col-sm-8">{{ versionInfo?.runtime ?? '—' }}</dd>
+          <dt class="col-sm-4">{{ t('settings.build') }}</dt>
+          <dd class="col-sm-8">{{ versionInfo?.buildId ?? versionInfo?.informationalVersion ?? '—' }}</dd>
+        </dl>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -33,11 +50,13 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as api from '@/services/api'
+import type { VersionDto } from '@fabrik3d/contracts'
 
 const { t, locale } = useI18n()
 const backendUrl = (import.meta.env.VITE_ORCHESTRATOR_URL as string) || window.location.origin
 const healthOk = ref(false)
 const healthVersion = ref('')
+const versionInfo = ref<VersionDto | null>(null)
 
 onMounted(async () => {
   try {
@@ -45,5 +64,8 @@ onMounted(async () => {
     healthOk.value = h.status === 'Healthy'
     healthVersion.value = h.version
   } catch { healthOk.value = false }
+  try {
+    versionInfo.value = await api.getVersion()
+  } catch { versionInfo.value = null }
 })
 </script>

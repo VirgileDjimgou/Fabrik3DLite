@@ -11,6 +11,7 @@
     "type-check": "vue-tsc --build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "load:signalr": "node scripts/signalr-load.mjs",
     "test:visual": "vite build && playwright test",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",

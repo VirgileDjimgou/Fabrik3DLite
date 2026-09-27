@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Text;
 using Fabrik3D.Domain.Signals;
+using Fabrik3D.Infrastructure.Observability;
 using Fabrik3D.Infrastructure.Signals;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -214,6 +216,16 @@ public sealed class MqttConnector : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(topic);
         Interlocked.Increment(ref _writeAttempts);
+        using var activity = Fabrik3DTelemetry.StartActivity(
+            Fabrik3DTelemetry.ConnectorOperationSpan,
+            ActivityKind.Client,
+            new Dictionary<string, object?>
+            {
+                ["connector.protocol"] = "mqtt",
+                ["connector.operation"] = "publish",
+                ["mqtt.topic"] = topic,
+                ["mqtt.retain"] = retain,
+            });
 
         if (!_options.Enabled)
         {

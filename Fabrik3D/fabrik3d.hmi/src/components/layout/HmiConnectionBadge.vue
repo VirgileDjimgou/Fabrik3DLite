@@ -1,5 +1,5 @@
 <template>
-  <HmiStatusIndicator :state="state" :label="label" />
+  <HmiStatusIndicator :state="state" :label="label" data-testid="hmi-connection-badge" />
 </template>
 
 <script setup lang="ts">

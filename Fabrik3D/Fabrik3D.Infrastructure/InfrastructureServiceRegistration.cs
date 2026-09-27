@@ -1,3 +1,4 @@
+using Fabrik3D.Infrastructure.Migrations;
 using Fabrik3D.Infrastructure.Persistence;
 using Fabrik3D.Infrastructure.Repositories;
 using Fabrik3D.Infrastructure.Settings;
@@ -40,6 +41,10 @@ public static class InfrastructureServiceRegistration
         services.AddSingleton<TrainingActionRepository>();
         services.AddSingleton<Tenancy.TenantMigrationService>();
         services.AddSingleton<Tenancy.TenantIndexInitializer>();
+
+        // ── Schema migrations (S48) ────────────────────────────────────
+        services.AddSingleton<ISchemaMigration, BaselineIndexesMigration>();
+        services.AddSingleton<SchemaMigrationRunner>();
         services.Configure<OpcUaOptions>(configuration.GetSection(OpcUaOptions.SectionName));
         services.AddSingleton<SignalMirrorStore>();
         services.AddSingleton<OpcUaConnector>();

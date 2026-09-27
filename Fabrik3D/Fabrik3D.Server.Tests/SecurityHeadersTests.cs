@@ -24,7 +24,11 @@ public class SecurityHeadersTests
         Assert.Equal("DENY", Single(response.Headers, "X-Frame-Options"));
         Assert.Equal("no-referrer", Single(response.Headers, "Referrer-Policy"));
         Assert.Equal("same-origin", Single(response.Headers, "Cross-Origin-Opener-Policy"));
+        Assert.Equal("same-site", Single(response.Headers, "Cross-Origin-Resource-Policy"));
+        Assert.Equal("none", Single(response.Headers, "X-Permitted-Cross-Domain-Policies"));
         Assert.Contains("camera=()", Single(response.Headers, "Permissions-Policy"), StringComparison.Ordinal);
+        // Strict-Transport-Security is a deployment decision and is not asserted by default.
+        Assert.Null(Single(response.Headers, "Strict-Transport-Security"));
     }
 
     [Theory]

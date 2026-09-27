@@ -19,6 +19,9 @@ public static class Fabrik3DAuthenticationExtensions
     public const string CorsPolicyName = "Fabrik3DCors";
     public const string AuthRateLimitPolicy = "auth";
 
+    /// <summary>Rate-limit policy for the additive simulator performance-report endpoint (S49).</summary>
+    public const string SimulatorMetricsRateLimitPolicy = "simulator-metrics";
+
     public static IServiceCollection AddFabrik3DAuthentication(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -67,12 +70,21 @@ public static class Fabrik3DAuthenticationExtensions
         IHostEnvironment environment)
     {
         var options = configuration.GetSection(CorsOptions.SectionName).Get<CorsOptions>() ?? new CorsOptions();
+        services.Configure<CorsOptions>(configuration.GetSection(CorsOptions.SectionName));
+
+        // A production-like deployment profile (Production/OnPrem/Demo) never reflects arbitrary
+        // origins, even when the ASP.NET Core environment name is not literally "Production".
+        var profile = configuration["Deployment:Profile"];
+        var productionLike = environment.IsProduction()
+            || string.Equals(profile, "Production", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(profile, "OnPrem", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(profile, "Demo", StringComparison.OrdinalIgnoreCase);
 
         services.AddCors(cors =>
         {
             cors.AddPolicy(CorsPolicyName, policy =>
             {
-                switch (CorsPolicyRules.Resolve(options.AllowedOrigins, environment.IsProduction()))
+                switch (CorsPolicyRules.Resolve(options.AllowedOrigins, productionLike))
                 {
                     case CorsOriginMode.Explicit:
                         policy.WithOrigins(options.AllowedOrigins)
@@ -117,6 +129,23 @@ public static class Fabrik3DAuthenticationExtensions
                 var permitLimit = context.RequestServices
                     .GetRequiredService<IOptions<Fabrik3DAuthenticationOptions>>()
                     .Value.AuthRateLimitPermitLimit;
+                if (permitLimit < 1) permitLimit = 1;
+
+                return RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = permitLimit,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                    });
+            });
+
+            limiter.AddPolicy(SimulatorMetricsRateLimitPolicy, context =>
+            {
+                var permitLimit = context.RequestServices
+                    .GetRequiredService<IOptions<Fabrik3D.Server.Observability.Fabrik3DObservabilityOptions>>()
+                    .Value.SimulatorMetricsRateLimitPerMinute;
                 if (permitLimit < 1) permitLimit = 1;
 
                 return RateLimitPartition.GetFixedWindowLimiter(

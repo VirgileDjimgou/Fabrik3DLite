@@ -41,6 +41,11 @@ export type ReportTrainingActionsRequest = components['schemas']['ReportTraining
 export type CompleteTrainingSessionRequest = components['schemas']['CompleteTrainingSessionRequest']
 export type CorrectAssessmentRequest = components['schemas']['CorrectAssessmentRequest']
 
+// Deployment packaging and lifecycle (S48).
+export type VersionDto = CompletedResponse<components['schemas']['VersionDto']>
+export type HealthReportDto = CompletedResponse<components['schemas']['HealthReportDto']>
+export type SupportBundleDto = CompletedResponse<components['schemas']['SupportBundleDto']>
+
 // Instructor and class dashboard (S45).
 export type InstructorMetricsDto = CompletedResponse<components['schemas']['InstructorMetricsDto']>
 export type TrainingMetricCountDto = CompletedResponse<components['schemas']['TrainingMetricCountDto']>

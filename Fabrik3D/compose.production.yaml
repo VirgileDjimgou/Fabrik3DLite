@@ -1,5 +1,17 @@
 name: fabrik3d
 
+# On-premise / production compose stack (S48).
+#
+# Secure defaults:
+#   - MongoDB is only reachable on the internal network; its port is never published.
+#   - The orchestrator runs a production-like profile with Swagger/debug disabled and CORS denied
+#     unless explicit origins are configured.
+#   - Secrets come from an env file (see Fabrik3D/env/*.env.example) and are never baked into images.
+#
+# Start with an explicit profile:
+#   docker compose -f Fabrik3D/compose.production.yaml --env-file Fabrik3D/env/onprem.env up --build -d
+# The default env file below keeps `docker compose config` valid for CI without committing secrets.
+
 services:
   mongo:
     image: mongo:8.0
@@ -10,6 +22,17 @@ services:
       GLIBC_TUNABLES: glibc.pthread.rseq=1
     volumes:
       - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval \"quit(db.adminCommand('ping').ok ? 0 : 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - internal
 
@@ -17,16 +40,46 @@ services:
     build:
       context: .
       dockerfile: Fabrik3D.Server/Dockerfile
+    image: ${ORCHESTRATOR_IMAGE:-fabrik3d/orchestrator:1.0.0}
     restart: unless-stopped
+    env_file:
+      - ${FABRIK3D_ENV_FILE:-env/onprem.env.example}
     ports:
-      - "8080:8080"
+      - "${ORCHESTRATOR_PORT:-8080}:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      MongoDb__ConnectionString: mongodb://mongo:27017
-      MongoDb__DatabaseName: Fabrik3D
+      Deployment__Profile: ${FABRIK3D_PROFILE:-OnPrem}
+      MongoDb__ConnectionString: ${MONGO_CONNECTION_STRING:-mongodb://mongo:27017}
+      MongoDb__DatabaseName: ${MONGO_DATABASE_NAME:-Fabrik3D}
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      # Bind to the loopback literal: some base images resolve `localhost` to ::1 only while
+      # Kestrel/Nginx listen on IPv4, which would make the probe fail spuriously.
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/api/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g
+        reservations:
+          cpus: "0.5"
+          memory: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - internal
 
@@ -34,11 +87,36 @@ services:
     build:
       context: .
       dockerfile: fabrik3d.client/Dockerfile
+    image: ${SIMULATOR_IMAGE:-fabrik3d/simulator:1.0.0}
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "${SIMULATOR_PORT:-8081}:80"
     depends_on:
-      - orchestrator
+      orchestrator:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1 (not `localhost`): the container /etc/hosts resolves localhost to ::1 while
+      # nginx listens on IPv4, so a `localhost` probe would fail spuriously.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+        reservations:
+          cpus: "0.25"
+          memory: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - internal
 
@@ -46,11 +124,36 @@ services:
     build:
       context: .
       dockerfile: fabrik3d.hmi/Dockerfile
+    image: ${HMI_IMAGE:-fabrik3d/hmi:1.0.0}
     restart: unless-stopped
     ports:
-      - "8082:80"
+      - "${HMI_PORT:-8082}:80"
     depends_on:
-      - orchestrator
+      orchestrator:
+        condition: service_healthy
+    healthcheck:
+      # 127.0.0.1 (not `localhost`): the container /etc/hosts resolves localhost to ::1 while
+      # nginx listens on IPv4, so a `localhost` probe would fail spuriously.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512m
+        reservations:
+          cpus: "0.25"
+          memory: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - internal
 

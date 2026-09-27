@@ -14,6 +14,7 @@ import type {
   SimulationSessionDto,
   TakeoverControlAuthorityRequest,
   TaskDto,
+  VersionDto,
 } from '@fabrik3d/contracts'
 
 export type {
@@ -30,6 +31,7 @@ export type {
   SimulationSessionDto,
   TakeoverControlAuthorityRequest,
   TaskDto,
+  VersionDto,
 } from '@fabrik3d/contracts'
 
 const ORCHESTRATOR_BASE = import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined
@@ -110,3 +112,6 @@ export const getControlAuthorityAudit = (scope: string, limit = 50) =>
 // ── Health ──
 export const getHealth = () =>
   request<{ status: string; timestamp: string; version: string }>('GET', '/health')
+
+// ── Version / about (S48) ──
+export const getVersion = () => request<VersionDto>('GET', '/version')

@@ -14,10 +14,24 @@ import { ref, onMounted, provide } from 'vue'
 import { useThreeScene } from '../composables/useThreeScene'
 import { useAnimationLoop } from '../composables/useAnimationLoop'
 import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY } from '../composables/injectionKeys'
+import { FrameMetricsSampler, SimulatorMetricsReporter } from '../observability/frameMetrics'
+import { estimateSceneTextureMemory } from '../equipment/assets/sceneMetrics'
+import { getAccessToken } from '../auth/authStore'
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const { context, errorMessage, init } = useThreeScene(containerRef)
 const { onFrame, start } = useAnimationLoop()
+
+// Local, bounded client performance instrumentation (S49). Reporting is off unless explicitly
+// enabled with VITE_OBSERVABILITY_ENABLED=true and never affects rendering.
+const frameSampler = new FrameMetricsSampler()
+const metricsReporter = new SimulatorMetricsReporter({
+  enabled: import.meta.env.VITE_OBSERVABILITY_ENABLED === 'true',
+  baseUrl: (import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined) ?? window.location.origin,
+  sourceId: 'simulator',
+  intervalMs: 5000,
+  getAccessToken,
+})
 
 // Let child components register into the scene / animation loop
 provide(SCENE_CONTEXT_KEY, context)
@@ -28,11 +42,21 @@ onMounted(() => {
 
   if (context.value) {
     // Drive controls + render each frame
-    onFrame(() => {
+    onFrame((_time, delta) => {
       const ctx = context.value
       if (!ctx) return
       ctx.controls.update()
       ctx.renderer.render(ctx.scene, ctx.camera)
+      frameSampler.record({
+        frameMs: delta * 1000,
+        drawCalls: ctx.renderer.info.render.calls,
+        triangles: ctx.renderer.info.render.triangles,
+      })
+      if (metricsReporter.enabled) {
+        const memory = estimateSceneTextureMemory(ctx.scene)
+        frameSampler.recordResources({ textureBytes: memory.estimatedBytes, textureCount: memory.textureCount })
+        void metricsReporter.maybeReport(frameSampler)
+      }
     })
     start()
   }

@@ -33,6 +33,7 @@ import type {
   UpdateMachineStateRequest,
   UpdateSimulationStateRequest,
   UpdateTaskStatusRequest,
+  VersionDto,
 } from '@fabrik3d/contracts'
 
 export type {
@@ -56,6 +57,7 @@ export type {
   UpdateMachineStateRequest,
   UpdateSimulationStateRequest,
   UpdateTaskStatusRequest,
+  VersionDto,
 } from '@fabrik3d/contracts'
 
 const ORCHESTRATOR_BASE = import.meta.env.VITE_ORCHESTRATOR_URL as string | undefined
@@ -268,3 +270,8 @@ export const heartbeatControlAuthority = (scope: string, payload: HeartbeatContr
 export const getControlAuthorityAudit = (scope: string, limit = 50) =>
   request<ControlAuthorityEventDto[]>(
     'GET', `/control-authority/${encodeURIComponent(scope)}/audit?limit=${limit}`)
+
+// ── Version / about (S48) ────────────────────────────────────────────
+
+/** Product and build version surfaced in the simulator console and about surface. */
+export const getVersion = () => request<VersionDto>('GET', '/version')

@@ -102,6 +102,12 @@ Reconnect: bounded exponential backoff between `ReconnectDelaySeconds` and `MaxR
 dotnet test Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj --filter "FullyQualifiedName~OpcUa"
 ```
 
+The in-process fixture is also reused by the S47 **Siemens / PLCSIM interoperability profile**
+(`docs/showcases/siemens-plcsim/`): the committed Siemens OPC UA I/O map is projected into this
+connector and the real fixture serves the same symbolic tags in its own namespace, so CI exercises
+the documented mapping, handshake, sequence and failure handling with no TIA Portal, PLCSIM or
+licence. A real PLCSIM run is an explicitly manual step; no live Siemens integration is claimed.
+
 Covered: option validation; node-map validation; write policy and allow-list rejection; quality/timestamp mapping; read-time staleness; connect; subscription delivery; bad/uncertain quality; invalid node ids; prohibited and allow-listed writes observed by the fixture; untrusted-certificate refusal and explicit development trust; reconnect after fixture restart; graceful shutdown; mirror throughput and sustained subscription delivery. Docker is only needed for the existing MongoDB integration tests, not for the OPC UA fixture.
 
 Recorded measurements (2026-09-25, local Windows/NET 8 CI-class machine):

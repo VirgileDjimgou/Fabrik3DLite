@@ -124,7 +124,14 @@ public sealed class TenantContextMiddleware
         }
 
         context.Items[ItemKey] = new TenantContextState(scope, clientSelectionAccepted);
-        await _next(context);
+        using (_log.BeginScope(new Dictionary<string, object?>
+        {
+            ["OrganizationId"] = scope?.OrganizationId,
+            ["TenantScope"] = scope?.IsPlatformAdmin == true ? "platform-admin" : "organization",
+        }))
+        {
+            await _next(context);
+        }
     }
 
     private static bool IsPlatformAdmin(ClaimsPrincipal? user, TenancyOptions opts)

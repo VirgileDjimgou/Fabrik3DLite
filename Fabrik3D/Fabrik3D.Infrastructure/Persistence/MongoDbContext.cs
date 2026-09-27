@@ -1,8 +1,10 @@
 using Fabrik3D.Domain.Entities;
 using Fabrik3D.Domain.Organizations;
 using Fabrik3D.Domain.Training;
+using Fabrik3D.Infrastructure.Migrations;
 using Fabrik3D.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace Fabrik3D.Infrastructure.Persistence;
@@ -15,6 +17,24 @@ public class MongoDbContext
     {
         var client = new MongoClient(settings.Value.ConnectionString);
         _database = client.GetDatabase(settings.Value.DatabaseName);
+    }
+
+    /// <summary>Underlying database handle for diagnostics and migration bookkeeping.</summary>
+    public IMongoDatabase Database => _database;
+
+    /// <summary>Returns true when the database answers a lightweight ping command.</summary>
+    public async Task<bool> PingAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _database.RunCommandAsync<BsonDocument>(
+                new BsonDocument("ping", 1), cancellationToken: cancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public IMongoCollection<Job> Jobs => _database.GetCollection<Job>("jobs");
@@ -52,4 +72,8 @@ public class MongoDbContext
     /// <summary>Bounded event/command/alarm history (S40).</summary>
     public IMongoCollection<HistorizedEvent> HistorizedEvents =>
         _database.GetCollection<HistorizedEvent>(Fabrik3D.Domain.Historian.HistorianSchema.HistorizedEventCollection);
+
+    /// <summary>Applied schema-migration bookkeeping (S48). Additive and versioned.</summary>
+    public IMongoCollection<MigrationRecord> SchemaMigrations =>
+        _database.GetCollection<MigrationRecord>("schemaMigrations");
 }

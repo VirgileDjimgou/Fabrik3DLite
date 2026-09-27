@@ -32,6 +32,10 @@ test.describe('industrial HMI visual hierarchy', () => {
 
       await page.goto('/')
       await expect(page.getByRole('link', { name: /Select job|Selectionner|Auftrag zum Starten/ })).toBeVisible()
+      // The header renders the live SignalR connection state. This test runs against a live
+      // orchestrator, so wait for the steady connected state before capturing the baseline; without
+      // this the screenshot can race the transport and alternate between Connected/Disconnected.
+      await expect(page.getByTestId('hmi-connection-badge')).toHaveClass(/hmi-status--success/)
 
       // Screenshot baselines are platform-specific (the committed ones are
       // win32). Compare them on the platform that owns the baseline, or when

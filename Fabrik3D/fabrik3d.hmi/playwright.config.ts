@@ -25,7 +25,7 @@ export default defineConfig({
     {
       // Rendered HMI flows — run against a locally served HMI build.
       name: 'hmi-ui',
-      testMatch: /(hmi-design-system|instructor-dashboard-visual)\.spec\.ts/,
+      testMatch: /(hmi-design-system|hmi-accessibility|instructor-dashboard-visual)\.spec\.ts/,
       use: { baseURL: HMI_BASE_URL },
     },
   ],

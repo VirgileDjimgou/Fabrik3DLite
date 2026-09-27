@@ -13,12 +13,26 @@ public static class CellFileContentValidator
     public static readonly string[] SupportedVersions = ["0.9", "1.0"];
 
     /// <summary>
+    /// Hard upper bound on persisted cell-file size (characters). Prevents oversized uploads from
+    /// exhausting memory or the database; well above any real reference cell.
+    /// </summary>
+    public const int MaxContentLengthChars = 2_000_000;
+
+    /// <summary>
     /// Validates that content is a JSON object with a supported schemaVersion.
     /// Returns an error message, or null when the content is acceptable.
     /// </summary>
-    public static string? ValidateContent(string content)
+    public static string? ValidateContent(string content) => ValidateContent(content, MaxContentLengthChars);
+
+    /// <summary>
+    /// Validates content against an explicit maximum size. The size check runs before JSON parsing so
+    /// oversized input is rejected without allocating a document.
+    /// </summary>
+    public static string? ValidateContent(string content, int maxLengthChars)
     {
         if (string.IsNullOrWhiteSpace(content)) return "Cell file content is required.";
+        if (maxLengthChars > 0 && content.Length > maxLengthChars)
+            return $"Cell file exceeds the maximum size of {maxLengthChars} characters.";
         try
         {
             using var document = JsonDocument.Parse(content);

@@ -127,7 +127,7 @@ function nonEmpty(value: string, label: string, issues: string[]): void {
   if (!value.trim()) issues.push(`${label} is required.`)
 }
 
-function validPackagePath(path: string): boolean {
+export function validPackagePath(path: string): boolean {
   return path.length > 0
     && !path.startsWith('/')
     && !path.includes('\\')

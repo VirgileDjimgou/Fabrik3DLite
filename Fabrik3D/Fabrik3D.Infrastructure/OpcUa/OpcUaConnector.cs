@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Fabrik3D.Domain.Signals;
+using Fabrik3D.Infrastructure.Observability;
 using Fabrik3D.Infrastructure.Signals;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -197,6 +199,15 @@ public sealed class OpcUaConnector : IAsyncDisposable
     public async Task<OpcUaWriteResult> WriteAsync(string signalId, object? value, CancellationToken cancellationToken)
     {
         Interlocked.Increment(ref _writeAttempts);
+        using var activity = Fabrik3DTelemetry.StartActivity(
+            Fabrik3DTelemetry.ConnectorOperationSpan,
+            ActivityKind.Client,
+            new Dictionary<string, object?>
+            {
+                ["connector.protocol"] = "opcua",
+                ["connector.operation"] = "write",
+                ["signal.id"] = signalId,
+            });
 
         if (!_options.Enabled)
         {

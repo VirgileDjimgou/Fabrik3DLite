@@ -94,6 +94,29 @@ npm --prefix Fabrik3D/fabrik3d.hmi run dev
 
 Default backend development endpoints are defined in `Fabrik3D.Server/Properties/launchSettings.json`. Swagger is available at `/swagger` when the server runs in the Development environment.
 
+## On-premise deployment profiles and lifecycle (S48)
+
+Production-like deployments select an environment overlay through `Deployment:Profile`
+(`Production`, `OnPrem` or `Demo`) while the ASP.NET Core environment stays `Production`, so secure
+defaults apply without weakening the identity guard. The server validates resolved configuration at
+startup and fails fast on unsafe values (missing persistence, wildcard CORS, Swagger enabled in a
+production-like profile without `Deployment:AllowSwaggerInProduction=true`, `Authentication:Mode=None`,
+an unknown profile or invalid retention values).
+
+The container stack and its lifecycle tooling are exercised without committing secrets:
+
+```powershell
+docker compose -f Fabrik3D/compose.production.yaml config --quiet
+node scripts/lifecycle/verify-config.mjs   # healthchecks, depends_on conditions, no inline secrets
+node scripts/lifecycle/backup.mjs          # mongodump + dry-run verification + manifest/checksum
+node scripts/lifecycle/restore.mjs --file <archive> --yes
+```
+
+Read-only diagnostics are exposed at `GET /api/health/live`, `GET /api/health/ready` (dependency
+checks; `503` when unhealthy), `GET /api/version`, and the administrator-only
+`GET /api/support/bundle` (secret-redacted). See the [deployment guide](../operations/DEPLOYMENT.md)
+for the full procedure and [VALIDATION.md](../operations/VALIDATION.md) for recorded evidence.
+
 ## Dependency audits
 
 ```powershell

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Fabrik3D.Domain.Signals;
+using Fabrik3D.Infrastructure.Observability;
 using Fabrik3D.Infrastructure.Signals;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -233,6 +234,15 @@ public sealed class ModbusConnector : IAsyncDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(signalId);
         Interlocked.Increment(ref _writeAttempts);
+        using var activity = Fabrik3DTelemetry.StartActivity(
+            Fabrik3DTelemetry.ConnectorOperationSpan,
+            ActivityKind.Client,
+            new Dictionary<string, object?>
+            {
+                ["connector.protocol"] = "modbus",
+                ["connector.operation"] = "write",
+                ["signal.id"] = signalId,
+            });
 
         if (!_options.Enabled)
         {

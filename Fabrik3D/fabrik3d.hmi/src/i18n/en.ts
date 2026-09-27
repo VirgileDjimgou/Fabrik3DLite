@@ -1,5 +1,6 @@
 export default {
   nav: {
+    label: 'Primary navigation',
     back: 'Back', home: 'Home', new: 'New', edit: 'Edit',
     delete: 'Delete', job: 'Job', messages: 'Messages',
     confirm: 'Confirm', next: 'Next',
@@ -50,6 +51,8 @@ export default {
   settings: {
     title: 'Settings', language: 'Language',
     backendUrl: 'Backend URL', connectionStatus: 'Connection Status',
+    about: 'About this installation', version: 'Version', profile: 'Deployment profile',
+    environment: 'Environment', runtime: 'Runtime', build: 'Build',
   },
   robotPositions: {
     title: 'Robot Positions',

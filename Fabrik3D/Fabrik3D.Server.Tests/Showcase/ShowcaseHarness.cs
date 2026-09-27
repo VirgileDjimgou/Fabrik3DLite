@@ -164,7 +164,15 @@ internal sealed class ShowcaseHarness : IAsyncDisposable
         var mirror = new SignalMirrorStore();
         var connector = new ModbusConnector(
             Options.Create(options), mirror, TimeProvider.System, NullLogger<ModbusConnector>.Instance);
-        var cell = new ShowcaseCellController(gate, mirror, connector, scope);
+        var cell = new ShowcaseCellController(
+            gate,
+            mirror,
+            async (signalId, value, cancellationToken) =>
+            {
+                var result = await connector.WriteAsync(signalId, value, cancellationToken);
+                return new ShowcaseWriteOutcome(result.Accepted, result.RejectionReason);
+            },
+            scope);
 
         await connector.StartAsync(cancellationToken);
         return new ShowcaseHarness(fixture, connector, mirror, cell, ioMap);

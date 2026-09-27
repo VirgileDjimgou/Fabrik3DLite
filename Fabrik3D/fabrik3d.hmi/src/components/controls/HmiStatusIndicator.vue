@@ -1,6 +1,6 @@
 <template>
   <span class="hmi-status" :class="`hmi-status--${state}`" role="status">
-    <i class="bi" :class="icon"></i><span>{{ label }}</span>
+    <i class="bi" :class="icon" aria-hidden="true"></i><span>{{ label }}</span>
   </span>
 </template>
 <script setup lang="ts">

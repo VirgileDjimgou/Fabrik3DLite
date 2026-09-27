@@ -14,6 +14,10 @@ RUN dotnet publish "Fabrik3D.Server/Fabrik3D.ServerTaskManager.csproj" \
     /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# curl is used only by the container healthcheck (compose `healthcheck` for orchestrator).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080

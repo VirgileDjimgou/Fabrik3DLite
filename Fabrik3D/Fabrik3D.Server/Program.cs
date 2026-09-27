@@ -2,10 +2,12 @@ using Fabrik3D.Domain.Control;
 using Fabrik3D.Infrastructure;
 using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Server.Authentication;
+using Fabrik3D.Server.Deployment;
 using Fabrik3D.Server.Filters;
 using Fabrik3D.Server.Simulation;
 using Fabrik3D.Server.Hubs;
 using Fabrik3D.Server.Middleware;
+using Fabrik3D.Server.Observability;
 using Fabrik3D.Server.Services;
 using Fabrik3D.Server.Settings;
 using Microsoft.AspNetCore.Mvc;
@@ -14,8 +16,38 @@ using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Apply the environment-specific deployment overlay (Production/OnPrem/Demo) selected by
+// Deployment:Profile without changing the ASP.NET Core environment name. Production-like profiles
+// therefore keep every production guard while still loading their own secure defaults.
+var declaredProfile = builder.Configuration["Deployment:Profile"];
+if (!string.IsNullOrWhiteSpace(declaredProfile)
+    && !declaredProfile.Equals(builder.Environment.EnvironmentName, StringComparison.OrdinalIgnoreCase))
+{
+    builder.Configuration.AddJsonFile(
+        $"appsettings.{declaredProfile}.json", optional: true, reloadOnChange: false);
+}
+
 // ── Infrastructure (MongoDB + repositories) ────────────────────────
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// ── Observability (S49): OpenTelemetry-compatible traces, metrics and log enrichment ─
+builder.Services.Configure<Fabrik3DObservabilityOptions>(
+    builder.Configuration.GetSection(Fabrik3DObservabilityOptions.SectionName));
+builder.Services.AddSingleton<ObservabilityMetrics>();
+builder.Services.AddSingleton<ConnectorMetricsSampler>();
+builder.Services.AddHostedService<ObservabilityConsoleExporter>();
+
+// ── Deployment profile, versioning and diagnostics (S48) ───────────
+builder.Services.Configure<DeploymentOptions>(
+    builder.Configuration.GetSection(DeploymentOptions.SectionName));
+builder.Services.AddSingleton<VersionInfo>();
+builder.Services.AddSingleton<RecentLogBuffer>();
+builder.Services.AddSingleton<Microsoft.Extensions.Logging.ILoggerProvider, RecentLogBufferProvider>();
+builder.Services.AddSingleton<IMongoHealthProbe, MongoHealthProbe>();
+builder.Services.AddSingleton<IConnectorHealthSummaryProvider, ConnectorHealthSummaryProvider>();
+builder.Services.AddSingleton<HealthReportService>();
+builder.Services.AddSingleton<SupportBundleBuilder>();
+builder.Services.AddHostedService<SchemaMigrationHostedService>();
 
 // ── Identity boundary (S42): authentication, role policies, CORS ───
 builder.Services.AddFabrik3DAuthentication(builder.Configuration, builder.Environment);
@@ -115,6 +147,24 @@ var app = builder.Build();
 var authenticationOptions = app.Services.GetRequiredService<IOptions<Fabrik3DAuthenticationOptions>>().Value;
 AuthenticationStartupGuard.ValidateOrThrow(authenticationOptions, app.Environment);
 
+// Fail fast on invalid or unsafe deployment configuration instead of starting partially secure.
+var deploymentOptions = app.Services.GetRequiredService<IOptions<DeploymentOptions>>().Value;
+var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>().Value;
+var orchestrationOptions = app.Services.GetRequiredService<IOptions<OrchestrationOptions>>().Value;
+var configurationErrors = DeploymentConfigurationValidator.Validate(
+    app.Configuration,
+    app.Environment,
+    deploymentOptions,
+    authenticationOptions,
+    corsOptions,
+    orchestrationOptions);
+if (configurationErrors.Count > 0)
+{
+    throw new InvalidOperationException(
+        "Invalid deployment configuration:" + Environment.NewLine + " - " +
+        string.Join(Environment.NewLine + " - ", configurationErrors));
+}
+
 if (authenticationOptions.IsDevelopmentLike)
 {
     app.Logger.LogWarning(
@@ -139,7 +189,9 @@ forwardedHeaders.KnownProxies.Clear();
 app.UseForwardedHeaders(forwardedHeaders);
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+// Swagger is a development/diagnostic surface. It is enabled only when the resolved deployment
+// configuration allows it; production-like profiles keep it off unless explicitly opted in.
+if (deploymentOptions.ResolveSwaggerEnabled(app.Environment.EnvironmentName))
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
@@ -157,6 +209,9 @@ app.UseCors(Fabrik3DAuthenticationExtensions.CorsPolicyName);
 
 // Correlation ids on every command, state update and log entry
 app.UseMiddleware<CorrelationIdMiddleware>();
+
+// OpenTelemetry-compatible request spans + API latency metrics + structured log enrichment
+app.UseMiddleware<ObservabilityMiddleware>();
 
 if (!app.Environment.IsEnvironment("Testing"))
 {

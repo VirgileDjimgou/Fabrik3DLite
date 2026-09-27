@@ -1,4 +1,4 @@
-import { manifestFiles, type EquipmentAssetManifest, validateEquipmentAssetManifest } from './types'
+import { manifestFiles, validPackagePath, validateEquipmentAssetManifest, type EquipmentAssetManifest } from './types'
 
 export interface AssetPackageInput {
   manifest: unknown
@@ -14,6 +14,13 @@ export class AssetPackageImportError extends Error {
   constructor(readonly diagnostics: readonly string[]) { super(diagnostics.join(' ')); this.name = 'AssetPackageImportError' }
 }
 
+/** Bounded limits so a malicious package cannot exhaust memory or smuggle extra files (S49). */
+export const ASSET_PACKAGE_LIMITS = {
+  maxFiles: 64,
+  maxFileBytes: 64 * 1024 * 1024,
+  maxTotalBytes: 256 * 1024 * 1024,
+} as const
+
 /** Trusted, in-memory importer. Server persistence remains the catalog authority. */
 export class AssetPackageImporter {
   private readonly installed = new Map<string, ImportedAssetPackage>()
@@ -26,7 +33,33 @@ export class AssetPackageImporter {
     const manifest = input.manifest
     const key = `${manifest.id}@${manifest.version}`
     if (this.installed.has(key)) diagnostics.push(`Asset version '${key}' is already installed.`)
-    for (const path of manifestFiles(manifest)) {
+
+    const declared = new Set(manifestFiles(manifest))
+    const keys = Object.keys(input.files)
+    if (keys.length > ASSET_PACKAGE_LIMITS.maxFiles) {
+      diagnostics.push(`Package declares ${keys.length} files, above the ${ASSET_PACKAGE_LIMITS.maxFiles} file limit.`)
+    }
+    let totalBytes = 0
+    for (const path of keys) {
+      if (!validPackagePath(path)) {
+        diagnostics.push(`Package file '${path}' is not a safe package-relative path.`)
+        continue
+      }
+      if (!declared.has(path)) {
+        diagnostics.push(`Package contains undeclared file '${path}'.`)
+        continue
+      }
+      const size = input.files[path]?.byteLength ?? 0
+      if (size > ASSET_PACKAGE_LIMITS.maxFileBytes) {
+        diagnostics.push(`Package file '${path}' exceeds the ${ASSET_PACKAGE_LIMITS.maxFileBytes} byte file limit.`)
+      }
+      totalBytes += size
+    }
+    if (totalBytes > ASSET_PACKAGE_LIMITS.maxTotalBytes) {
+      diagnostics.push(`Package size ${totalBytes} bytes exceeds the ${ASSET_PACKAGE_LIMITS.maxTotalBytes} byte limit.`)
+    }
+
+    for (const path of declared) {
       const bytes = input.files[path]
       if (!bytes) { diagnostics.push(`Package is missing '${path}'.`); continue }
       const expected = expectedHash(manifest, path)

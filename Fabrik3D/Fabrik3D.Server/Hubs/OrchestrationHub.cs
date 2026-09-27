@@ -1,4 +1,5 @@
 using Fabrik3D.Server.Authentication;
+using Fabrik3D.Server.Observability;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -13,13 +14,19 @@ namespace Fabrik3D.Server.Hubs;
 [Authorize(Policy = Fabrik3DPolicies.Read)]
 public class OrchestrationHub : Hub
 {
+    private readonly ObservabilityMetrics? _metrics;
+
+    public OrchestrationHub(ObservabilityMetrics? metrics = null) => _metrics = metrics;
+
     public override async Task OnConnectedAsync()
     {
+        _metrics?.RecordSignalRConnection(1);
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        _metrics?.RecordSignalRConnection(-1);
         await base.OnDisconnectedAsync(exception);
     }
 }

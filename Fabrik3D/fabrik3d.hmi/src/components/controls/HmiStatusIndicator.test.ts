@@ -7,5 +7,7 @@ describe('HmiStatusIndicator', () => {
     expect(wrapper.attributes('role')).toBe('status')
     expect(wrapper.classes()).toContain(`hmi-status--${state}`)
     expect(wrapper.text()).toContain(state)
+    // The decorative icon must never be announced; the label carries the meaning.
+    expect(wrapper.get('i').attributes('aria-hidden')).toBe('true')
   })
 })

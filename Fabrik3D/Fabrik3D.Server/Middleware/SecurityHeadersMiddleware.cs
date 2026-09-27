@@ -29,6 +29,9 @@ public sealed class SecurityHeadersMiddleware
             Set(headers, "X-Frame-Options", _options.FrameOptions);
             Set(headers, "Referrer-Policy", _options.ReferrerPolicy);
             Set(headers, "Cross-Origin-Opener-Policy", _options.CrossOriginOpenerPolicy);
+            Set(headers, "Cross-Origin-Resource-Policy", _options.CrossOriginResourcePolicy);
+            Set(headers, "X-Permitted-Cross-Domain-Policies", _options.PermittedCrossDomainPolicies);
+            Set(headers, "Strict-Transport-Security", _options.StrictTransportSecurity);
             Set(headers, "Permissions-Policy", _options.PermissionsPolicy);
             Set(headers, "Content-Security-Policy", _options.ContentSecurityPolicy);
         }

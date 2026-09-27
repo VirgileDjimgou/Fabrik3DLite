@@ -103,6 +103,8 @@ the reference-cell performance notes are in
 - Real Modbus TCP client transport (S35, implemented): a small self-contained Modbus TCP client based on the public specification, disabled by default, polling coils, discrete inputs, input registers and holding registers into the signal mirror with explicit address convention, unit id, data width, byte order, word order, bit index, scaling, signedness and direction. No byte order is ever guessed; mapping validation rejects ambiguous endianness, invalid widths, addresses, scales and unsafe overlaps. Bounded-backoff reconnect, illegal-address and timeout accounting, fail-closed writes (`AllowWrites` + writable point + exact allow-list), health/diagnostics counters and `GET /api/connectors/modbus`. Verified with an automated in-process Modbus TCP fixture (`Fabrik3D.Modbus.Fixture`, no Docker). Based on the public Modbus TCP specification; not conformance-certified. A Fabrik3D-side Modbus server/slave endpoint is deliberately out of scope.
 - Explicit control authority and arbitration (S36, implemented): modes `local-simulation`, `external-controller`, `observed-twin` and `replay`; exactly one authority per equipment/actuator scope; explicit, precondition-checked, quiesced and audited handover; lease heartbeat with a documented degraded mode that never silently reverts to another authority. REST under `/api/control-authority` and the `ControlAuthorityChanged` SignalR event; continuously visible EN/FR/DE authority indicator in the HMI; the simulator cannot command actuators without authority and replay can never command. Verified end-to-end with the in-process Modbus fixture driving a virtual actuator and sensor in a closed loop. This is a training/VC arbitration mechanism, not a certified safety authority.
 - CODESYS / SoftPLC interoperability showcase (S46, implemented as documentation + automated fixture): a versioned Modbus TCP I/O map, a self-authored IEC 61131-3 reference program, setup/sequence/troubleshooting docs and a manual real-run checklist, plus an automated substitute fixture that drives the reference cell through the documented sequence with per-step assertions. The fixture proves the closed loop controller output → Fabrik3D actuator → virtual sensor → controller input through the real Modbus connector and the S36 authority gate, with writes enabled and allow-listed only for the showcase. CI requires no proprietary software; a real CODESYS run is explicitly manual. See [`docs/showcases/codesys-softplc/`](./docs/showcases/codesys-softplc/).
+- Siemens / PLCSIM interoperability profile (S47, implemented as documentation + automated fixture): a versioned **OPC UA** I/O map (`ns=3;s="Fabrik3D_Cell_DB"."Tag"`) for an S7-1500 or PLCSIM Advanced OPC UA server, with tag mapping, handshake, machine-state sequence, diagnostics, failure handling and a TIA Portal/PLCSIM setup guide, plus an automated OPC UA substitute (real connector against the in-process OPC UA fixture) covering the same mapping, handshake, sequence and failure handling. Scope limits, legal constraints and explicit non-claims are documented; no Siemens project file, binary, license or secret is committed, and a real PLCSIM run is an explicitly manual step with an exact evidence checklist. See [`docs/showcases/siemens-plcsim/`](./docs/showcases/siemens-plcsim/).
+- On-premise packaging and lifecycle (S48, implemented): a hardened `compose.production.yaml` with healthchecks for every service, `depends_on: service_healthy` ordering, internal-only MongoDB, least-privilege security options, resource limits and log rotation; environment-specific overlays (`Production`, `OnPrem`, `Demo`) loaded through `Deployment:Profile` without changing the ASP.NET Core environment; fail-fast configuration validation; externalised secrets via env files/Docker secrets; additive, versioned, idempotent schema migrations with bookkeeping; readiness/liveness split (`/api/health/live`, `/api/health/ready`) and a `/api/version` endpoint surfaced in the HMI and simulator; an administrator-only, secret-redacted support bundle; and `scripts/lifecycle/` backup/restore/config-verification tooling. Documented in [`docs/operations/`](./docs/operations/) and [ADR 0006](./docs/adr/0006-on-premise-deployment-and-migration.md); measured idle stack usage ≈ 298 MiB RAM.
 - Bounded telemetry and event historian (S40, implemented): durable, versioned `telemetrySamples` and `historizedEvents` documents with source, quality, timestamp and correlation id; conservative per-signal sampling (on-change/periodic/deadband); validated, rate-limited batch ingestion (`POST /api/historian/telemetry|events`); read-only filtered, paginated, deterministic queries (`GET /api/historian/telemetry|events|status`); intentional indexes; age/count retention with a background pruner. Disabled by default and fully additive: a disabled or failing historian never breaks live orchestration, and there is no command path from history. Measured on the sprint workstation: 20,000 samples ingested at ~24,000 samples/s, representative query p95 18 ms, ≈270 bytes/sample. See [`docs/architecture/TELEMETRY_HISTORIAN.md`](./docs/architecture/TELEMETRY_HISTORIAN.md).
 - Deterministic industrial time travel (S41, implemented): a framework-independent reconstruction engine folds the local timeline or an S40 historian window into a versioned, read-only cell snapshot at a selected time — robot joints/pose (exact, interpolated or held, reported explicitly), CNC sub-state, equipment, material/pallet/slot, signals, alarms, fault overlays, job/session and control-authority state. A replay controller provides play/pause/step/jump-to-event/speed/timeline markers with frame-rate-independent stepping, and a hard code-level isolation gate blocks every OPC UA/MQTT/Modbus write and authority acquisition while replaying. An engineering/instructor surface (`?view=time-travel`) shows unmistakable LIVE/SIMULATION/REPLAY mode indication, a scrubber, event markers and reconstructed state panels; the operator HMI is unchanged. See [`docs/architecture/TIME_TRAVEL.md`](./docs/architecture/TIME_TRAVEL.md).
 - Authentication, identity and RBAC (S42, implemented): every mutating REST endpoint and SignalR hub method is enforced server-side through ASP.NET Core JWT bearer authentication and named policies (`Read`, `Operate`, `Train`, `Engineer`, `Instruct`, `Admin`) over the roles Learner, Instructor, Engineer, Operator and Administrator (plus an opt-in read-only PublicDemo). Production uses a standards-oriented OIDC provider; CI/local use a clearly-labelled, rate-limited `Test`/`Development` identity mode that the server refuses to start with in Production. Audit records carry the authenticated subject, tokens are never placed in URLs or logs, CORS is explicit-origin outside Production, response security headers are applied, and the HMI/simulator login surfaces return to explicit re-authentication on `401` instead of silently degrading to anonymous. The former `CellTemplateAuthorizationPlaceholder` (`X-Operator-Id`) is removed. See [`docs/architecture/IDENTITY_AND_RBAC.md`](./docs/architecture/IDENTITY_AND_RBAC.md).
@@ -239,21 +241,34 @@ Swagger is available from the server launch profile, usually at `/swagger`. For 
 
 ### Run with Docker
 
-The production-style stack — MongoDB, orchestrator, simulator, and HMI behind Nginx — is described by [`Fabrik3D/compose.production.yaml`](./Fabrik3D/compose.production.yaml). Docker Engine with Compose v2 is the only prerequisite; images are built locally from this repository.
+The production-style stack — MongoDB, orchestrator, simulator, and HMI behind Nginx — is described by [`Fabrik3D/compose.production.yaml`](./Fabrik3D/compose.production.yaml). Docker Engine with Compose v2 is the only prerequisite; images are built locally from this repository. Every service has a healthcheck and downstream services wait for `service_healthy`; MongoDB is never published outside the internal network.
 
 ```bash
+# Validate the rendered configuration without starting anything
+docker compose -f Fabrik3D/compose.production.yaml config --quiet
+node scripts/lifecycle/verify-config.mjs
+
+# Copy a NON-SECRET profile template and fill in your OIDC authority and origins
+cp Fabrik3D/env/onprem.env.example /etc/fabrik3d/onprem.env
+
 # Build and start the whole stack
-docker compose -f Fabrik3D/compose.production.yaml up --build
+FABRIK3D_ENV_FILE=/etc/fabrik3d/onprem.env \
+  docker compose -f Fabrik3D/compose.production.yaml up --build -d
 
 # Stop (add -v to also reset the MongoDB volume)
 docker compose -f Fabrik3D/compose.production.yaml down
 ```
 
-| Service           | URL                   |
-| ----------------- | --------------------- |
-| Simulator         | http://localhost:8081 |
-| Operator HMI      | http://localhost:8082 |
-| Orchestration API | http://localhost:8080 |
+| Service           | URL                   | Notes |
+| ----------------- | --------------------- | ----- |
+| Simulator         | http://localhost:8081 | Nginx |
+| Operator HMI      | http://localhost:8082 | Nginx |
+| Orchestration API | http://localhost:8080 | `/api/health`, `/api/health/ready`, `/api/version` |
+| MongoDB           | internal only         | not published |
+
+A production-like profile **refuses to start without a configured OIDC authority** (see [ADR 0003](./docs/adr/0003-identity-and-rbac.md)); the committed templates intentionally leave it empty. Readiness is meaningful: `GET /api/health/ready` returns `503` when MongoDB is unreachable, and `GET /api/version` reports the running build.
+
+Operational guides: [deployment](./docs/operations/DEPLOYMENT.md) · [administrator](./docs/operations/ADMINISTRATOR_GUIDE.md) · [backup/restore](./docs/operations/BACKUP_RESTORE.md) · [upgrade/rollback](./docs/operations/UPGRADE_ROLLBACK.md) · [support bundle](./docs/operations/SUPPORT_BUNDLE.md) · [requirements](./docs/operations/REQUIREMENTS.md).
 
 The Docker [workflow](./.github/workflows/docker.yml) validates the compose file and builds the same images on every push, so the Docker badge above reflects whether the container setup still builds.
 
