@@ -137,6 +137,34 @@ The HMI is the operator-facing surface of Fabrik3D. It provides a touch-oriented
 | **Jobs**        | Work queue, state, mode, progress, creation time, and operator actions.                                      |
 | **Current job** | Job, session, task, pallet, CNC, robot, and progress details for the active execution.                       |
 
+## Profiles, roles and simulation scope
+
+The simulator and the HMI share the same identity layer. Mutating endpoints and hub methods are enforced
+server-side through named policies over five documented roles (plus an opt-in read-only `PublicDemo` for
+the public demo). Production uses an OIDC provider; local development and CI use the clearly-labelled
+`Development`/`Test` identity mode, which the server refuses to start with in Production.
+
+| Policy (`Fabrik3D.*`) | Learner | Instructor | Engineer | Operator | Administrator |
+| --------------------- | :-----: | :--------: | :------: | :------: | :-----------: |
+| `Read`                |    ✓    |     ✓      |    ✓     |    ✓     |       ✓       |
+| `Operate`             |         |            |    ✓     |    ✓     |       ✓       |
+| `Train`               |    ✓    |     ✓      |          |          |       ✓       |
+| `Engineer`            |         |            |    ✓     |          |       ✓       |
+| `Instruct`            |         |     ✓      |          |          |       ✓       |
+| `Admin`               |         |            |          |          |       ✓       |
+
+Deployment profiles select secure defaults without changing the ASP.NET Core environment:
+**`Production`** (customer install), **`OnPrem`** (training centre behind a local IdP) and **`Demo`**
+(public, read-only, connectors disabled). See [DEPLOYMENT.md](./docs/operations/DEPLOYMENT.md).
+
+**What you can simulate today with the 1.0 feature set:** external-controller closed loops through a
+SoftPLC (Modbus TCP) or a Siemens PLCSIM-style OPC UA profile and the audited control-authority gate;
+mapping internal signals to OPC UA / MQTT / Modbus targets from the studio; deterministic physical and
+signal fault injection; historian-backed, read-only industrial time travel; multi-organization training
+with server-assessed sessions and an instructor dashboard; and the full on-prem stack with
+health/version/diagnostics and a secret-redacted support bundle. All cell behaviour is simulated;
+connectors talk to real endpoints only when explicitly enabled and allow-listed.
+
 ## Demonstrations and evidence
 
 | Scenario              | Evidence                                                                                              |
@@ -146,6 +174,25 @@ The HMI is the operator-facing surface of Fabrik3D. It provides a touch-oriented
 | Cell editor           | A medium six-axis cell with robot, CNC, conveyor, and pallet station validates without schema errors. |
 | Backend               | The live orchestration API exposes alarms, templates, jobs, sessions, tasks, and state endpoints.     |
 | CODESYS/SoftPLC showcase | A Modbus TCP fixture controller drives the reference cell through the documented sequence (4 automated showcase tests; recorded closed-loop latency 468.52 ms). See [docs/showcases/codesys-softplc/evidence.md](./docs/showcases/codesys-softplc/evidence.md). |
+| Signal mapping (S37)  | The studio validates the reference mapping, resolves a duplicate-target conflict, applies six mappings and monitors `cnc-1` live. |
+| Fault injection (S38) | An inverted overlay flips `conveyor-1.PhotoeyeStation`, propagates through the signal view and clears without a reload. |
+| Time travel (S40–S41) | Replay reconstructs phases, alarms and fault markers read-only and jumps deterministically to a marker. |
+| Roles and tenancy (S42–S45) | An Administrator session shows the server-resolved organization; instructor aggregates are tenant-scoped. |
+
+### Feature evidence captured on 2026-09-27 (S33–S50)
+
+<p align="center">
+  <img src="./artifacts/demo/client/shots/04-mapping-studio.png" alt="Signal mapping studio with live monitor" width="31%" />
+  <img src="./artifacts/demo/client/shots/05b-fault-lab-active.png" alt="Fault lab injecting an inverted signal overlay" width="31%" />
+  <img src="./artifacts/demo/client/shots/06b-time-travel-scrubbed.png" alt="Deterministic read-only time travel at a scrubbed timestamp" width="31%" />
+</p>
+<p align="center">
+  <img src="./artifacts/demo/hmi/shots/01b-hmi-workspace.png" alt="Operator HMI with control-authority commands and live machine state" width="31%" />
+  <img src="./artifacts/demo/client/shots/10b-simulator-authenticated.png" alt="Simulator authenticated as Administrator in the default organization" width="31%" />
+  <img src="./artifacts/demo/hmi/shots/03-instructor-dashboard.png" alt="Instructor dashboard with tenant-scoped aggregate metrics" width="31%" />
+</p>
+
+Short WebM captures: [scenario](./artifacts/demo/client/videos/02-scenario-lab.webm) · [mapping studio](./artifacts/demo/client/videos/04-mapping-studio.webm) · [fault lab](./artifacts/demo/client/videos/05-fault-lab.webm) · [time travel](./artifacts/demo/client/videos/06-time-travel.webm) · [HMI login](./artifacts/demo/hmi/videos/01-hmi-login.webm). The complete interactive gallery (28 screenshots, 11 videos, captured against the live stack) is [artifacts/demo/index.html](./artifacts/demo/index.html); it is reproducible with the `e2e-demo` Playwright suites (`playwright.demo.config.ts` in both frontends).
 
 <p align="center">
   <img src="./docs/evidence/simulation-2026-09-18/01-scenario-basic-completed.png" alt="Completed Robot axes scenario" width="420" />
@@ -157,7 +204,7 @@ The HMI is the operator-facing surface of Fabrik3D. It provides a touch-oriented
   <img src="./docs/evidence/simulation-2026-09-18/04-backend-api-active.png" alt="Active Fabrik3D orchestration API" width="420" />
 </p>
 
-The latest evidence set is available in [docs/evidence/simulation-2026-09-18](./docs/evidence/simulation-2026-09-18/).
+The original 2026-09-18 evidence set is available in [docs/evidence/simulation-2026-09-18](./docs/evidence/simulation-2026-09-18/); the newer 1.0 feature captures are linked above.
 
 ## Architecture
 
@@ -281,6 +328,49 @@ A production-like profile **refuses to start without a configured OIDC authority
 Operational guides: [deployment](./docs/operations/DEPLOYMENT.md) · [administrator](./docs/operations/ADMINISTRATOR_GUIDE.md) · [backup/restore](./docs/operations/BACKUP_RESTORE.md) · [upgrade/rollback](./docs/operations/UPGRADE_ROLLBACK.md) · [support bundle](./docs/operations/SUPPORT_BUNDLE.md) · [observability](./docs/operations/OBSERVABILITY.md) · [performance](./docs/operations/PERFORMANCE.md) · [security hardening](./docs/operations/SECURITY_HARDENING.md) · [accessibility](./docs/operations/ACCESSIBILITY.md) · [browser support](./docs/operations/BROWSER_SUPPORT.md) · [release-candidate checklist](./docs/operations/RELEASE_CANDIDATE_CHECKLIST.md) · [requirements](./docs/operations/REQUIREMENTS.md).
 
 The Docker [workflow](./.github/workflows/docker.yml) validates the compose file and builds the same images on every push, so the Docker badge above reflects whether the container setup still builds.
+
+### Hosted deployment on Hetzner with Cloudflare Tunnel
+
+The public demo runs this stack on a Hetzner Cloud host and publishes it through a Cloudflare Tunnel, so
+no inbound port other than SSH is required. TLS is terminated by Cloudflare.
+
+```bash
+# 1. Provision a Hetzner Cloud host (Ubuntu 24.04, Docker Engine 24+ and Compose v2)
+ssh -i "$HETZNER_SSH_KEY" root@<server-ip>        # key path comes from your secret store
+
+# 2. Deploy the stack (all secret values stay outside the repository)
+git clone <repository-url> && cd Fabrik3DLite
+cp Fabrik3D/env/demo.env.example /etc/fabrik3d/demo.env    # non-secret template
+FABRIK3D_ENV_FILE=/etc/fabrik3d/demo.env \
+  docker compose -f Fabrik3D/compose.production.yaml up -d --build
+
+# 3. Publish both interfaces through the tunnel (token from your secret store)
+cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TUNNEL_TOKEN"
+```
+
+Tunnel ingress routes the public hostnames to the locally published ports:
+
+```yaml
+ingress:
+  - hostname: fabrik3d.<your-domain>      # simulator
+    service: http://127.0.0.1:8081
+  - hostname: fabrik3d-hmi.<your-domain>  # operator HMI
+    service: http://127.0.0.1:8082
+  - service: http_status:404
+```
+
+Credentials are **never** stored in this repository — it contains only non-secret `*.env.example`
+templates, and the commit hook blocks credential-shaped content:
+
+| Secret | Where it must live |
+| ------ | ------------------ |
+| `HETZNER_SSH_KEY` (private key path) | operator secret store / password manager |
+| `CLOUDFLARE_TUNNEL_TOKEN` | server-side env file (`0600`), Docker secret or systemd unit |
+| `CF_API_TOKEN` (optional DNS automation) | CI/secret store only |
+| OIDC client secret, signing keys, connector credentials | `/etc/fabrik3d/*.env` (`0600`) or secret manager |
+
+Redeploy with `git pull && docker compose ... up -d --build`; rotate secrets in the store, recreate the
+orchestrator container and restart `cloudflared`. Logs and the support bundle are secret-redacted.
 
 ## Verification
 
