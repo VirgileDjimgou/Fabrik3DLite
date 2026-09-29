@@ -6,269 +6,446 @@
 [![Node.js 20+](https://img.shields.io/badge/Node.js-20.19%2B-5FA04E)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7%2F8-47A248)](https://www.mongodb.com/)
 
-Fabrik3DLite is an educational industrial simulation, training, digital-twin and lightweight
-virtual-commissioning platform. It combines a Three.js robotic-cell simulator, an ASP.NET Core
-orchestrator, MongoDB persistence and a dedicated Vue operator HMI.
+Fabrik3DLite is an educational industrial-software demonstrator for designing, simulating, supervising, and understanding a robotic cell. It brings together a 3D robotic-cell simulator, an orchestration backend, and a dedicated operator HMI around an explicit digital-twin model.
 
-The repository is at the **Fabrik3D 1.0 baseline (S50)**. It is suitable for learning, technical
-demonstrations and prototyping; it is **not** a safety-certified control system, an exact OEM
-emulator or a substitute for commissioning a physical cell.
+**This repository is at the Fabrik3D 1.0 training/virtual-commissioning baseline (S50).** That baseline
+is a validation and documentation milestone, not a safety certification. Start with the
+[documentation index](./docs/DOCUMENTATION_INDEX.md), the
+[architecture overview](./docs/architecture/OVERVIEW.md), the
+[1.0 release notes](./docs/releases/RELEASE_NOTES_1.0.md), the
+[limitations/non-claims](./docs/operations/LIMITATIONS.md), and the
+[1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md).
 
-## Try the live demo
+It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
 
-| Surface | Link | Main use |
-| --- | --- | --- |
-| **3D simulator** | [fabrik3d.patrickdjimgou.dev](https://fabrik3d.patrickdjimgou.dev) | Run cells, scenarios, faults, signal tools and engineering views. |
-| **Operator HMI** | [fabrik3d-hmi.patrickdjimgou.dev](https://fabrik3d-hmi.patrickdjimgou.dev) | Prepare jobs, supervise execution, alarms, messages and machine state. |
+## Live demo
 
-The public demo is a shared, resettable training environment hosted on Hetzner through Cloudflare
-Tunnel. All equipment and production state are simulated. OPC UA, MQTT and Modbus TCP connectors
-are implemented but disabled in the public deployment.
+The public demonstration runs the complete Docker stack simulator, operator HMI, ASP.NET Core orchestrator, and MongoDB on Hetzner and is published through Cloudflare Tunnel. Both interfaces use the same live orchestration backend.
 
-### Visual tour
+| Interface        | Link                                                      | Use it for                                                                       |
+| ---------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **3D simulator** | [Open the simulator](https://fabrik3d.patrickdjimgou.dev) | Run scenes, guided learning scenarios, fault exercises, and cell editing.        |
+| **Operator HMI** | [Open the HMI](https://fabrik3d-hmi.patrickdjimgou.dev)   | Create and supervise jobs, inspect machine state, and follow execution progress. |
+
+### Demo limitations
+
+- This is a shared public training environment: jobs, simulated machine state, and learning data may be changed or reset by other visitors.
+- Every robot, CNC, alarm, safety condition, and production signal is simulated; the hosted demo is not connected to physical equipment.
+- OPC UA, MQTT and Modbus TCP integrations are implemented but disabled in the public deployment. No command is sent to an industrial controller.
+- Availability is best-effort. The instance can be restarted or updated without notice during maintenance and development.
+
+### Product walkthrough
+
+https://github.com/user-attachments/assets/29b87539-a47f-4b07-9dd0-f6e0fa9c2436
+
+_The walkthrough covers a completed scenario, CNC fault recovery, cell editing, and orchestration through the backend API._
+
+## What is implemented
+
+### 3D simulation and learning
+
+- A Three.js robotic CNC-tending cell: pallet feed, six-axis robot, CNC door and machining cycle, part return, and runtime dashboard.
+- Five versioned industrial scene presets: CNC tending, vision sorting, palletizing, assembly/inspection, and robot-safety training.
+- Eleven guided scenarios, from robot axes and coordinate frames to complete pallet processing and fault-recovery exercises.
+- Selectable compact, medium, and heavy generic six-axis robot profiles with reach, payload, joint-limit, tool-compatibility, kinematic, and safety data.
+- Deterministic FK/IK-oriented kinematics, SI units, cell/work-object frames, reachability checks, collision primitives, and swept-path checks.
+- A training fault lab with typed simulated faults, acknowledgement/reset/retry rules, ordered timeline, deterministic replay, and local learning reports.
+- Advanced signal/equipment fault injection (S38): deterministic, seeded overlays (forced/frozen/inverted/delayed/noisy/drifting/intermittent/disconnected/degraded, plus actuator jam/slow, motor overload, vacuum loss, sensor contamination, communications loss) that propagate through the I/O chain, never mutate canonical signal definitions, and are authority-gated so they can never write to a connector.
+
+#### CNC reference-cell walkthrough
+
+The `cnc-machine-tending` preset is the flagship, deep reference cell. Its complete
+flow is deterministic and signal-driven:
+
+1. **Pallet feed** — the conveyor brings a raw-material pallet to the work
+   position; the infeed and station photoeyes, encoder count and raw/machined slot
+   counts are published as signals.
+2. **Robot load** — the pallet workflow picks a raw part, approaches the CNC and
+   inserts it. Gripper open/closed, payload, dwell and workflow-step signals track
+   the motion.
+3. **CNC cycle** — a deterministic cycle machine runs door close → fixture clamp →
+   spindle spin-up → feed (coolant on) → spindle spin-down → unclamp → door open.
+   `cnc-1.CycleStep`, `SpindleSpeed`, `SpindleAtSpeed`, `FeedActive`, `CoolantOn`,
+   `FixtureClamped`, `PartPresent`, `DoorLocked` report the exact state the visuals
+   render.
+4. **Part return** — the robot retrieves the machined part and returns it to the
+   same pallet slot; the slot transitions raw → in-process → machined.
+5. **Abnormal conditions** — jams, blocked sensors, door/spindle faults, vacuum
+   loss and communications loss are injected through the S38 fault lab, propagate
+   through the signals, refuse unsafe commands, and recover deterministically when
+   the overlay is cleared. The simulated E-stop aborts the cycle and only resets
+   once the light curtain and scanner are clear and the gate is closed.
+
+Every state-bearing CNC visual maps to a runtime state/signal
+(`equipment/visuals/referenceCellVisualMap.ts`), and the geometry, disposal and
+cycle determinism budgets are covered by tests. Measured geometry budgets and
+the reference-cell performance notes are in
+[3D_ASSETS.md](./docs/architecture/3D_ASSETS.md).
+
+### Industrial signal foundation
+
+- A versioned, protocol-independent signal model (schema `1.0`) with typed values, engineering units, direction semantics, quality, update origin, source arbitration, range/enum validation and read-time staleness.
+- A deterministic `SignalRegistry` with stable ids, discovery by equipment and equipment-SDK integration through optional signal declarations.
+- A signal-driven CNC reference cell: 54 vendor-neutral signals across robot, CNC, conveyor and safety equipment, bound to the actual runtime. Command signals (Start/Stop/Reset, door, cycle start, conveyor run/speed, safety reset) drive the same workflow, CNC, conveyor and interlock paths as the operator controls, and status signals are derived from real state each frame.
+- An engineering I/O signal inspector (`?view=signals` or the expert dock panel) with filters, live quality/source/timestamp and binding-coverage diagnostics.
+- A signal mapping studio (`?view=mapping-studio`, engineering mode only) that connects internal signals to OPC UA / MQTT / Modbus targets: versioned `1.0` mapping files, deterministic serialization, import/export, legacy migration, row-level validation, conflict detection, an explicit all-or-nothing apply, and a live signal monitor. Mapping files are data only and never bypass connector write policy. See [Signal mapping studio](./docs/architecture/SIGNAL_MAPPING_STUDIO.md).
+- Deterministic snapshot serialization, schema-version validation and a documented migration mechanism. The server-side C# mirror (schema `1.0`) backs the real OPC UA, MQTT and Modbus TCP transports; samples carry an optional control-authority scope/mode context (S36).
+
+### Cell authoring
+
+- Visual editor with grid snapping, overlap detection, undo/redo, reference reset, and 2D plan view.
+- Versioned portable cell files (`1.0`) with deterministic import/export, validation, legacy `0.9` migration, and compact/medium/heavy samples.
+- Equipment, scene, visual-asset, collision-proxy, port, anchor, parameter, and telemetry-extension registries.
+- Named cell-template persistence through the orchestrator.
+
+### Orchestration and supervision
+
+- ASP.NET Core server with MongoDB persistence, OpenAPI/Swagger, SignalR, shared contracts, correlation IDs, and optimistic concurrency.
+- Explicit job claim model: the HMI creates work, a simulator claims it, and only that simulator can update its tasks, session, heartbeat, or machine state.
+- Job, task, session, machine-state, alarm, message, and cell-template APIs.
+- Heartbeat monitoring and faulted-session recovery.
+- Separate, multilingual operator HMI (English, French, German) for jobs, active execution, alarms, messages, operating modes, and settings.
+- Optional OPC UA, MQTT and Modbus TCP boundaries, kept outside core domain behavior and disabled by default.
+- Real OPC UA client transport (S33, implemented): session/subscription lifecycle, bounded-backoff reconnect, explicit certificate trust (development auto-accept is opt-in and warned), monitored items from an explicit node map, quality/timestamp mapping into the protocol-free signal mirror, fail-closed write policy (`AllowWrites` + exact allow-list + writable signal), health/diagnostics counters and `GET /api/connectors/opcua`. Aligned with selected OPC UA concepts; not IEC 62541 certified.
+- Real MQTT client transport (S34, implemented with MQTTnet 4.3.7.1207; MQTT 5 by default with a documented 3.1.1 fallback): disabled by default, bounded-backoff reconnect, declared telemetry/command subscriptions, explicit QoS and retained-message policy, session expiry and Last Will, versioned payload validation with `source`/`quality`/`cellId`/`sessionId`/`correlationId`, mapping into the signal mirror as `observed`, fail-closed command allow-list, health/diagnostics counters and `GET /api/connectors/mqtt`. A retained telemetry value without a fresh valid timestamp is only ever surfaced as historical stale state. Verified with an automated Mosquitto Docker fixture; MQTT is an integration boundary and never the internal orchestration bus.
+- Real Modbus TCP client transport (S35, implemented): a small self-contained Modbus TCP client based on the public specification, disabled by default, polling coils, discrete inputs, input registers and holding registers into the signal mirror with explicit address convention, unit id, data width, byte order, word order, bit index, scaling, signedness and direction. No byte order is ever guessed; mapping validation rejects ambiguous endianness, invalid widths, addresses, scales and unsafe overlaps. Bounded-backoff reconnect, illegal-address and timeout accounting, fail-closed writes (`AllowWrites` + writable point + exact allow-list), health/diagnostics counters and `GET /api/connectors/modbus`. Verified with an automated in-process Modbus TCP fixture (`Fabrik3D.Modbus.Fixture`, no Docker). Based on the public Modbus TCP specification; not conformance-certified. A Fabrik3D-side Modbus server/slave endpoint is deliberately out of scope.
+- Explicit control authority and arbitration (S36, implemented): modes `local-simulation`, `external-controller`, `observed-twin` and `replay`; exactly one authority per equipment/actuator scope; explicit, precondition-checked, quiesced and audited handover; lease heartbeat with a documented degraded mode that never silently reverts to another authority. REST under `/api/control-authority` and the `ControlAuthorityChanged` SignalR event; continuously visible EN/FR/DE authority indicator in the HMI; the simulator cannot command actuators without authority and replay can never command. Verified end-to-end with the in-process Modbus fixture driving a virtual actuator and sensor in a closed loop. This is a training/VC arbitration mechanism, not a certified safety authority.
+- CODESYS / SoftPLC interoperability showcase (S46, implemented as documentation + automated fixture): a versioned Modbus TCP I/O map, a self-authored IEC 61131-3 reference program, setup/sequence/troubleshooting docs and a manual real-run checklist, plus an automated substitute fixture that drives the reference cell through the documented sequence with per-step assertions. The fixture proves the closed loop controller output → Fabrik3D actuator → virtual sensor → controller input through the real Modbus connector and the S36 authority gate, with writes enabled and allow-listed only for the showcase. CI requires no proprietary software; a real CODESYS run is explicitly manual. See [`docs/showcases/codesys-softplc/`](./docs/showcases/codesys-softplc/).
+- Siemens / PLCSIM interoperability profile (S47, implemented as documentation + automated fixture): a versioned **OPC UA** I/O map (`ns=3;s="Fabrik3D_Cell_DB"."Tag"`) for an S7-1500 or PLCSIM Advanced OPC UA server, with tag mapping, handshake, machine-state sequence, diagnostics, failure handling and a TIA Portal/PLCSIM setup guide, plus an automated OPC UA substitute (real connector against the in-process OPC UA fixture) covering the same mapping, handshake, sequence and failure handling. Scope limits, legal constraints and explicit non-claims are documented; no Siemens project file, binary, license or secret is committed, and a real PLCSIM run is an explicitly manual step with an exact evidence checklist. See [`docs/showcases/siemens-plcsim/`](./docs/showcases/siemens-plcsim/).
+- On-premise packaging and lifecycle (S48, implemented): a hardened `compose.production.yaml` with healthchecks for every service, `depends_on: service_healthy` ordering, internal-only MongoDB, least-privilege security options, resource limits and log rotation; environment-specific overlays (`Production`, `OnPrem`, `Demo`) loaded through `Deployment:Profile` without changing the ASP.NET Core environment; fail-fast configuration validation; externalised secrets via env files/Docker secrets; additive, versioned, idempotent schema migrations with bookkeeping; readiness/liveness split (`/api/health/live`, `/api/health/ready`) and a `/api/version` endpoint surfaced in the HMI and simulator; an administrator-only, secret-redacted support bundle; and `scripts/lifecycle/` backup/restore/config-verification tooling. Documented in [`docs/operations/`](./docs/operations/) and [ADR 0006](./docs/adr/0006-on-premise-deployment-and-migration.md); measured idle stack usage ≈ 298 MiB RAM.
+- Observability, performance, security and release-candidate hardening (S49, implemented): OpenTelemetry-compatible traces (`ActivitySource`) and metrics (`Meter`) with a bounded in-process aggregate, an authenticated Prometheus/JSON diagnostics surface (`GET /api/diagnostics/status|metrics`, `POST /api/diagnostics/simulator`), and structured logs enriched with correlation id, trace/span ids and the authenticated subject. The same instruments cover API latency, SignalR connections/messages, connector health/reconnects/updates/writes, signal updates, historian writes/latency, authority transitions and simulator frame/draw-call reports. External export is **disabled by default** (no collector required on-prem) and instrumentation is additive/disableable. Recorded performance and SignalR load measurements state the reference hardware/browser; security hardening is OWASP-aligned with IEC 62443 zone/conduit concepts applied to connector boundaries (no certification claim); accessibility findings/fixes target WCAG 2.2 AA and a 5-engine browser matrix is recorded. See [`docs/operations/OBSERVABILITY.md`](./docs/operations/OBSERVABILITY.md), [PERFORMANCE.md](./docs/operations/PERFORMANCE.md), [SECURITY_HARDENING.md](./docs/operations/SECURITY_HARDENING.md), [ACCESSIBILITY.md](./docs/operations/ACCESSIBILITY.md), [BROWSER_SUPPORT.md](./docs/operations/BROWSER_SUPPORT.md) and the [release-candidate checklist](./docs/operations/RELEASE_CANDIDATE_CHECKLIST.md).
+- 1.0 commercialization baseline (S50, **validation and documentation**): holistic re-validation of the S01-S49 feature set across architecture, migrations, contracts, API, HMI, simulator, signals, connectors, external control, faults, historian, time travel, auth/tenancy, instructor workflow and Docker/prem deployment, plus a complete documentation set. Adds the [architecture overview](./docs/architecture/OVERVIEW.md), the [documentation index](./docs/DOCUMENTATION_INDEX.md), audience guides ([learner](./docs/guides/LEARNER_QUICKSTART.md), [instructor](./docs/guides/INSTRUCTOR_GUIDE.md), [external controller](./docs/guides/EXTERNAL_CONTROLLER_GUIDE.md), [signal mapping](./docs/guides/SIGNAL_MAPPING_GUIDE.md), [fault lab](./docs/guides/FAULT_LAB_GUIDE.md)), operations references ([limitations](./docs/operations/LIMITATIONS.md), [security model](./docs/operations/SECURITY_MODEL.md), [data and privacy](./docs/operations/DATA_AND_PRIVACY.md)), the [1.0 release notes](./docs/releases/RELEASE_NOTES_1.0.md), a self-contained [1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md) (reference cell + scenario + mapping + example training report), and an automated `npm run docs:check` documentation/sample integrity gate. It introduces no new features and preserves S01-S49 public behavior.
+- Bounded telemetry and event historian (S40, implemented): durable, versioned `telemetrySamples` and `historizedEvents` documents with source, quality, timestamp and correlation id; conservative per-signal sampling (on-change/periodic/deadband); validated, rate-limited batch ingestion (`POST /api/historian/telemetry|events`); read-only filtered, paginated, deterministic queries (`GET /api/historian/telemetry|events|status`); intentional indexes; age/count retention with a background pruner. Disabled by default and fully additive: a disabled or failing historian never breaks live orchestration, and there is no command path from history. Measured on the sprint workstation: 20,000 samples ingested at ~24,000 samples/s, representative query p95 18 ms, ≈270 bytes/sample. See [`docs/architecture/TELEMETRY_HISTORIAN.md`](./docs/architecture/TELEMETRY_HISTORIAN.md).
+- Deterministic industrial time travel (S41, implemented): a framework-independent reconstruction engine folds the local timeline or an S40 historian window into a versioned, read-only cell snapshot at a selected time — robot joints/pose (exact, interpolated or held, reported explicitly), CNC sub-state, equipment, material/pallet/slot, signals, alarms, fault overlays, job/session and control-authority state. A replay controller provides play/pause/step/jump-to-event/speed/timeline markers with frame-rate-independent stepping, and a hard code-level isolation gate blocks every OPC UA/MQTT/Modbus write and authority acquisition while replaying. An engineering/instructor surface (`?view=time-travel`) shows unmistakable LIVE/SIMULATION/REPLAY mode indication, a scrubber, event markers and reconstructed state panels; the operator HMI is unchanged. See [`docs/architecture/TIME_TRAVEL.md`](./docs/architecture/TIME_TRAVEL.md).
+- Authentication, identity and RBAC (S42, implemented): every mutating REST endpoint and SignalR hub method is enforced server-side through ASP.NET Core JWT bearer authentication and named policies (`Read`, `Operate`, `Train`, `Engineer`, `Instruct`, `Admin`) over the roles Learner, Instructor, Engineer, Operator and Administrator (plus an opt-in read-only PublicDemo). Production uses a standards-oriented OIDC provider; CI/local use a clearly-labelled, rate-limited `Test`/`Development` identity mode that the server refuses to start with in Production. Audit records carry the authenticated subject, tokens are never placed in URLs or logs, CORS is explicit-origin outside Production, response security headers are applied, and the HMI/simulator login surfaces return to explicit re-authentication on `401` instead of silently degrading to anonymous. The former `CellTemplateAuthorizationPlaceholder` (`X-Operator-Id`) is removed. See [`docs/architecture/IDENTITY_AND_RBAC.md`](./docs/architecture/IDENTITY_AND_RBAC.md).
+- Organizations, tenancy and classroom boundaries (S43, implemented): organizations, memberships, classes/cohorts and training-resource assignments are modeled and persisted; every tenant-scoped query (jobs, tasks, sessions, alarms, messages, cell templates, historian, classes, resources) filters by the server-resolved organization. A client-supplied `X-Organization-Id` is validated against an active membership; forged, revoked or ambiguous contexts fail closed with a structured `403`/`409`, and cross-organization object ids behave as `404` without leaking existence. Pre-S43 documents migrate deterministically to the default organization with an idempotent, tested migration and legacy compatibility readers. Single-organization on-prem installs and the clearly-labelled public demo work unchanged; tenant indexes keep scoped queries off full collection scans. See [`docs/architecture/ORGANIZATIONS_AND_TENANCY.md`](./docs/architecture/ORGANIZATIONS_AND_TENANCY.md) and [ADR 0004](./docs/adr/0004-organizations-and-tenancy.md).
+- Server-side training sessions and assessment (S44, implemented): a simulator run can be persisted as a versioned `TrainingSession` with typed expected/observed actions, faults, hints, safety violations and recovery actions; a pure, versioned deterministic engine computes the authoritative score server-side (identical evidence + rule version ⇒ identical result), never trusting a client score. Ingestion is bounded and idempotent by correlation/action id, learner ownership and tenant boundaries are enforced server-side, and instructors can append audited assessment corrections that preserve the computed score. The local/offline report keeps working and is labelled `local`; a synced run is labelled `SERVER-ASSESSED`, sync failure is explicit and retryable, and every report states its educational scope and never claims professional certification. See [`docs/architecture/TRAINING_SESSIONS.md`](./docs/architecture/TRAINING_SESSIONS.md) and [ADR 0005](./docs/adr/0005-server-side-assessment-authority.md).
+
+## Operator HMI
+
+The HMI is the operator-facing surface of Fabrik3D. It provides a touch-oriented command area, a live machine-status sidebar, job preparation and supervision views, and a persistent action bar. The same orchestration state is shared with the simulator through the ASP.NET Core backend and SignalR.
 
 <p align="center">
-  <img src="./artifacts/demo/client/shots/01-simulator-3d-scene.png" alt="Fabrik3D robotic CNC cell in the 3D simulator" width="48%" />
-  <img src="./artifacts/demo/hmi/shots/01b-hmi-workspace.png" alt="Fabrik3D operator HMI connected to the orchestration backend" width="48%" />
+  <img src="./media/HMI_Home.png" alt="Fabrik3D HMI home screen with operator commands and live machine status" width="31%" />
+  <img src="./media/HMI_Jobs.png" alt="Fabrik3D HMI job list with execution state and actions" width="31%" />
+  <img src="./media/HMI_CurrentJob.png" alt="Fabrik3D HMI current job view with session and machine state" width="31%" />
+</p>
+
+| View            | Purpose                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Home**        | Access to start, pause, resume, jobs, positions, messages, and settings, with continuous production context. |
+| **Jobs**        | Work queue, state, mode, progress, creation time, and operator actions.                                      |
+| **Current job** | Job, session, task, pallet, CNC, robot, and progress details for the active execution.                       |
+
+## Profiles, roles and simulation scope
+
+The simulator and the HMI share the same identity layer. Mutating endpoints and hub methods are enforced
+server-side through named policies over five documented roles (plus an opt-in read-only `PublicDemo` for
+the public demo). Production uses an OIDC provider; local development and CI use the clearly-labelled
+`Development`/`Test` identity mode, which the server refuses to start with in Production.
+
+| Policy (`Fabrik3D.*`) | Learner | Instructor | Engineer | Operator | Administrator |
+| --------------------- | :-----: | :--------: | :------: | :------: | :-----------: |
+| `Read`                |    ✓    |     ✓      |    ✓     |    ✓     |       ✓       |
+| `Operate`             |         |            |    ✓     |    ✓     |       ✓       |
+| `Train`               |    ✓    |     ✓      |          |          |       ✓       |
+| `Engineer`            |         |            |    ✓     |          |       ✓       |
+| `Instruct`            |         |     ✓      |          |          |       ✓       |
+| `Admin`               |         |            |          |          |       ✓       |
+
+Deployment profiles select secure defaults without changing the ASP.NET Core environment:
+**`Production`** (customer install), **`OnPrem`** (training centre behind a local IdP) and **`Demo`**
+(public, read-only, connectors disabled). See [DEPLOYMENT.md](./docs/operations/DEPLOYMENT.md).
+
+**What you can simulate today with the 1.0 feature set:** external-controller closed loops through a
+SoftPLC (Modbus TCP) or a Siemens PLCSIM-style OPC UA profile and the audited control-authority gate;
+mapping internal signals to OPC UA / MQTT / Modbus targets from the studio; deterministic physical and
+signal fault injection; historian-backed, read-only industrial time travel; multi-organization training
+with server-assessed sessions and an instructor dashboard; and the full on-prem stack with
+health/version/diagnostics and a secret-redacted support bundle. All cell behaviour is simulated;
+connectors talk to real endpoints only when explicitly enabled and allow-listed.
+
+## Demonstrations and evidence
+
+| Scenario                    | Evidence                                                                                                                                                                                                                                                        |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Basic guided scenario       | `Robot axes` completed at 100% with its five expected activities.                                                                                                                                                                                               |
+| Fault recovery              | A simulated CNC fault requires acknowledgement and reset before retry.                                                                                                                                                                                          |
+| Cell editor                 | A medium six-axis cell with robot, CNC, conveyor, and pallet station validates without schema errors.                                                                                                                                                           |
+| Backend                     | The live orchestration API exposes alarms, templates, jobs, sessions, tasks, and state endpoints.                                                                                                                                                               |
+| CODESYS/SoftPLC showcase    | A Modbus TCP fixture controller drives the reference cell through the documented sequence (4 automated showcase tests; recorded closed-loop latency 468.52 ms). See [docs/showcases/codesys-softplc/evidence.md](./docs/showcases/codesys-softplc/evidence.md). |
+| Signal mapping (S37)        | The studio validates the reference mapping, resolves a duplicate-target conflict, applies six mappings and monitors `cnc-1` live.                                                                                                                               |
+| Fault injection (S38)       | An inverted overlay flips `conveyor-1.PhotoeyeStation`, propagates through the signal view and clears without a reload.                                                                                                                                         |
+| Time travel (S40–S41)       | Replay reconstructs phases, alarms and fault markers read-only and jumps deterministically to a marker.                                                                                                                                                         |
+| Roles and tenancy (S42–S45) | An Administrator session shows the server-resolved organization; instructor aggregates are tenant-scoped.                                                                                                                                                       |
+
+### Feature evidence captured on 2026-09-27 (S33–S50)
+
+<p align="center">
+  <img src="./artifacts/demo/client/shots/04-mapping-studio.png" alt="Signal mapping studio with live monitor" width="31%" />
+  <img src="./artifacts/demo/client/shots/05b-fault-lab-active.png" alt="Fault lab injecting an inverted signal overlay" width="31%" />
+  <img src="./artifacts/demo/client/shots/06b-time-travel-scrubbed.png" alt="Deterministic read-only time travel at a scrubbed timestamp" width="31%" />
+</p>
+<p align="center">
+  <img src="./artifacts/demo/hmi/shots/01b-hmi-workspace.png" alt="Operator HMI with control-authority commands and live machine state" width="31%" />
+  <img src="./artifacts/demo/client/shots/10b-simulator-authenticated.png" alt="Simulator authenticated as Administrator in the default organization" width="31%" />
+  <img src="./artifacts/demo/hmi/shots/03-instructor-dashboard.png" alt="Instructor dashboard with tenant-scoped aggregate metrics" width="31%" />
+</p>
+
+Short WebM captures: [scenario](./artifacts/demo/client/videos/02-scenario-lab.webm) · [mapping studio](./artifacts/demo/client/videos/04-mapping-studio.webm) · [fault lab](./artifacts/demo/client/videos/05-fault-lab.webm) · [time travel](./artifacts/demo/client/videos/06-time-travel.webm) · [HMI login](./artifacts/demo/hmi/videos/01-hmi-login.webm). The complete interactive gallery (28 screenshots, 11 videos, captured against the live stack) is [artifacts/demo/index.html](./artifacts/demo/index.html); it is reproducible with the `e2e-demo` Playwright suites (`playwright.demo.config.ts` in both frontends).
+
+<p align="center">
+  <img src="./docs/evidence/simulation-2026-09-18/01-scenario-basic-completed.png" alt="Completed Robot axes scenario" width="420" />
+  <img src="./docs/evidence/simulation-2026-09-18/02-cnc-fault-recovery-ready.png" alt="CNC fault recovery procedure" width="420" />
 </p>
 
 <p align="center">
-  <img src="./artifacts/demo/client/shots/07-robot-catalog.png" alt="Compact, medium and heavy generic robot profiles in the robot catalog" width="31%" />
-  <img src="./artifacts/demo/client/shots/10b-simulator-authenticated.png" alt="Simulator authenticated with the Administrator role and resolved organization" width="31%" />
-  <img src="./artifacts/demo/hmi/shots/03-instructor-dashboard.png" alt="Tenant-scoped instructor dashboard and training aggregates" width="31%" />
+  <img src="./docs/evidence/simulation-2026-09-18/03-editor-medium-valid.png" alt="Validated medium robot cell in the editor" width="420" />
+  <img src="./docs/evidence/simulation-2026-09-18/04-backend-api-active.png" alt="Active Fabrik3D orchestration API" width="420" />
 </p>
 
-<p align="center">
-  <img src="./artifacts/demo/client/shots/04-mapping-studio.png" alt="OPC UA MQTT and Modbus signal mapping configuration" width="31%" />
-  <img src="./artifacts/demo/client/shots/05b-fault-lab-active.png" alt="Fault lab with an active simulated signal fault" width="31%" />
-  <img src="./artifacts/demo/client/shots/06b-time-travel-scrubbed.png" alt="Read-only industrial time travel at a selected timestamp" width="31%" />
-</p>
-
-Short recordings: [guided scenario](./artifacts/demo/client/videos/02-scenario-lab.webm) ·
-[mapping studio](./artifacts/demo/client/videos/04-mapping-studio.webm) ·
-[fault lab](./artifacts/demo/client/videos/05-fault-lab.webm) ·
-[time travel](./artifacts/demo/client/videos/06-time-travel.webm) ·
-[authentication](./artifacts/demo/client/videos/08-simulator-auth.webm) ·
-[instructor dashboard](./artifacts/demo/hmi/videos/03-instructor-dashboard.webm).
-The [complete interactive gallery](./artifacts/demo/index.html) contains 28 screenshots and 11
-Playwright-recorded videos captured against the live stack.
-
-## What Fabrik3D can do today
-
-| Area | Implemented capabilities |
-| --- | --- |
-| **3D cells and robots** | Five industrial scene presets; compact, medium and heavy generic six-axis robot profiles; FK/IK-oriented kinematics; frames; reachability; collision and swept-path checks; visual cell editor; portable versioned cell files. |
-| **CNC reference cell** | Deterministic pallet feed, robot load/unload, CNC door/fixture/spindle/feed/coolant sequence, part return, safety interlocks and 54 live vendor-neutral signals. |
-| **Learning** | Eleven guided scenarios, step mode, hints, deterministic scoring, local reports and server-assessed training sessions with audited instructor corrections. |
-| **Faults and replay** | Seeded physical, equipment, communications and signal faults; acknowledgement/reset/retry workflow; event timeline; historian-backed read-only time travel with play, pause, step and event markers. |
-| **Industrial I/O** | Typed signal registry, engineering inspector and versioned mapping studio for real optional OPC UA, MQTT and Modbus TCP clients. Writes are disabled by default and require an exact allow-list. |
-| **External control** | Audited authority modes (`local-simulation`, `external-controller`, `observed-twin`, `replay`) and closed-loop showcase profiles for CODESYS/SoftPLC over Modbus TCP and Siemens S7-1500/PLCSIM Advanced over OPC UA. |
-| **Operations** | Jobs, tasks, sessions, alarms, messages, templates, SignalR updates, health/readiness/version endpoints, OpenTelemetry-compatible metrics, secret-redacted support bundles, schema migrations, backup and restore. |
-| **Training organizations** | Server-enforced authentication, roles, organizations, memberships, classes, resource assignments, tenant isolation and instructor aggregates. |
-| **Deployment** | Hardened Docker Compose stack with `Production`, `OnPrem` and read-only `Demo` profiles, internal-only MongoDB, healthchecks, resource limits and fail-fast production configuration. |
-
-The simulator can therefore model a complete nominal CNC tending cycle, abnormal recovery, safety
-conditions, signal mapping, external-controller handover, classroom assessment and historical
-analysis. Connectors can communicate with real endpoints only when an administrator explicitly
-enables and allow-lists them; the hosted demo never writes to industrial machinery.
-
-Detailed references: [release notes 1.0](./docs/releases/RELEASE_NOTES_1.0.md) ·
-[architecture overview](./docs/architecture/OVERVIEW.md) ·
-[documentation index](./docs/DOCUMENTATION_INDEX.md) ·
-[1.0 sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md).
-
-## Profiles, identities and permissions
-
-### Robot and deployment profiles
-
-- Robot profiles are vendor-neutral **compact**, **medium** and **heavy** configurations with explicit
-  reach, payload, joint, tool, kinematic and safety metadata. They do not claim OEM equivalence.
-- `Production` is the hardened customer profile, `OnPrem` targets a training centre behind its own
-  identity provider, and `Demo` is the public read-only profile with connectors disabled.
-- `Development` and `Test` identities are limited to local development and CI. The server refuses to
-  use them in Production, where an external OIDC authority is mandatory.
-
-### Roles
-
-Authorization is enforced by the server for REST and SignalR, not by hidden UI controls.
-
-| Policy | Learner | Instructor | Engineer | Operator | Administrator |
-| --- | :---: | :---: | :---: | :---: | :---: |
-| Read | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Operate |  |  | ✓ | ✓ | ✓ |
-| Train | ✓ | ✓ |  |  | ✓ |
-| Engineer |  |  | ✓ |  | ✓ |
-| Instruct |  | ✓ |  |  | ✓ |
-| Admin |  |  |  |  | ✓ |
-
-An optional `PublicDemo` identity grants read-only access for the clearly labelled hosted demo.
-See [identity and RBAC](./docs/architecture/IDENTITY_AND_RBAC.md),
-[organizations and tenancy](./docs/architecture/ORGANIZATIONS_AND_TENANCY.md) and the
-[instructor guide](./docs/guides/INSTRUCTOR_GUIDE.md).
+The original 2026-09-18 evidence set is available in [docs/evidence/simulation-2026-09-18](./docs/evidence/simulation-2026-09-18/); the newer 1.0 feature captures are linked above.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    HMI["Operator HMI\nVue 3"] -->|REST + SignalR| API["Orchestrator\nASP.NET Core"]
-    SIM["3D simulator\nVue 3 + Three.js"] -->|REST + SignalR| API
-    API --> DB[(MongoDB)]
-    PLC["OPC UA / MQTT / Modbus\noptional, disabled by default"] -. mapped signals .-> API
+    HMI["Operator HMI\nVue 3"] -->|REST + SignalR| Server["Orchestrator\nASP.NET Core"]
+    Simulator["3D Simulator\nVue 3 + Three.js"] -->|REST + SignalR| Server
+    Server --> Contracts["Shared contracts"]
+    Server --> Mongo[(MongoDB)]
+    OpcUa["OPC UA (optional)"] -. telemetry .-> Server
+    Mqtt["MQTT (optional)"] -. telemetry .-> Server
+    Modbus["Modbus TCP (optional)"] -. telemetry .-> Server
 ```
 
-The server is the orchestration source of truth, the simulator executes and visualizes the cell, and
-the HMI remains the operator surface. Definition, runtime, visual, collision and telemetry models are
-kept separate.
+The server is the orchestration source of truth. In connected mode, a simulator claims a server-side job and reports its state through the shared contracts. If no job is claimed, the simulator explicitly identifies the run as local and never writes simulated execution state to the server.
+
+## Core workflow
+
+```mermaid
+sequenceDiagram
+    participant Operator as Operator
+    participant HMI as Operator HMI
+    participant API as ASP.NET Core orchestrator
+    participant Simulator as 3D simulator
+    participant Mongo as MongoDB
+
+    Operator->>HMI: Create and prepare job
+    HMI->>API: REST: create/start job
+    API->>Mongo: Persist job and tasks
+    Simulator->>API: Claim runnable job
+    API->>Simulator: Job, session, task assignment
+    loop Each pallet slot
+        Simulator->>API: Task, machine, session and heartbeat updates
+        API-->>HMI: SignalR state changes
+    end
+    Operator->>HMI: Pause, resume or stop
+    HMI->>API: Command job transition
+    API-->>Simulator: SignalR command/state update
+```
+
+1. The operator prepares a job through the HMI or API; jobs may carry pallet-slot tasks.
+2. The simulator claims the runnable job, processes the physical-cell model, and reports progress through the backend.
+3. The HMI remains the operator interface and receives the resulting state changes in real time.
+
+The backend enforces ownership: a foreign or offline simulator cannot overwrite an active session.
+
+## Repository layout
+
+```text
+Fabrik3DLite/
+├─ Fabrik3D/
+│  ├─ fabrik3d.client/          # 3D simulator, editor, scenarios, safety
+│  ├─ fabrik3d.hmi/             # Operator HMI
+│  ├─ Fabrik3D.Server/          # API, SignalR hub, orchestration services
+│  ├─ Fabrik3D.Contracts/       # C# contracts and generated TS contract source
+│  ├─ Fabrik3D.Domain/          # Domain entities and transition rules
+│  ├─ Fabrik3D.Infrastructure/  # MongoDB persistence and optional adapters
+│  └─ Fabrik3D.slnx
+├─ docs/                        # Architecture, setup, testing, roadmap, evidence
+├─ media/                       # Demo video, GIF, and legacy screenshots
+└─ scripts/                     # Contract, asset, and roadmap automation
+```
 
 ## Run locally
 
-Prerequisites: .NET 8 SDK, Node.js 20.19+ or 22.12+, and MongoDB at
-`mongodb://localhost:27017`.
+### Prerequisites
+
+- .NET 8 SDK
+- Node.js 20.19+ or 22.12+
+- MongoDB running locally at `mongodb://localhost:27017`
+
+### Start the services
 
 ```powershell
-# Terminal 1 — API and Swagger
-dotnet run --project Fabrik3D/Fabrik3D.Server
+# Terminal 1 — server and Swagger
+cd Fabrik3D/Fabrik3D.Server
+dotnet run
 
-# Terminal 2 — 3D simulator
-npm --prefix Fabrik3D/fabrik3d.client install
-npm --prefix Fabrik3D/fabrik3d.client run dev
+# Terminal 2 — simulator
+cd Fabrik3D/fabrik3d.client
+npm install
+npm run dev
 
-# Terminal 3 — operator HMI
-npm --prefix Fabrik3D/fabrik3d.hmi install
-npm --prefix Fabrik3D/fabrik3d.hmi run dev
+# Terminal 3 — HMI
+cd Fabrik3D/fabrik3d.hmi
+npm install
+npm run dev
 ```
 
-See [local setup](./docs/development/SETUP.md) for identity settings and URLs, or use the production-
-style Compose stack:
+Swagger is available from the server launch profile, usually at `/swagger`. For detailed configuration, URL troubleshooting, and environment overrides, see [local setup](./docs/development/SETUP.md) and [troubleshooting](./docs/development/TROUBLESHOOTING.md).
+
+### Run with Docker
+
+The production-style stack — MongoDB, orchestrator, simulator, and HMI behind Nginx — is described by [`Fabrik3D/compose.production.yaml`](./Fabrik3D/compose.production.yaml). Docker Engine with Compose v2 is the only prerequisite; images are built locally from this repository. Every service has a healthcheck and downstream services wait for `service_healthy`; MongoDB is never published outside the internal network.
 
 ```bash
+# Validate the rendered configuration without starting anything
 docker compose -f Fabrik3D/compose.production.yaml config --quiet
 node scripts/lifecycle/verify-config.mjs
 
-# Copy the non-secret template outside the repository and provide the required OIDC values.
-sudo install -d -m 700 /etc/fabrik3d
-sudo cp Fabrik3D/env/onprem.env.example /etc/fabrik3d/onprem.env
-sudo chmod 600 /etc/fabrik3d/onprem.env
+# Copy a NON-SECRET profile template and fill in your OIDC authority and origins
+cp Fabrik3D/env/onprem.env.example /etc/fabrik3d/onprem.env
 
+# Build and start the whole stack
 FABRIK3D_ENV_FILE=/etc/fabrik3d/onprem.env \
   docker compose -f Fabrik3D/compose.production.yaml up --build -d
+
+# Stop (add -v to also reset the MongoDB volume)
+docker compose -f Fabrik3D/compose.production.yaml down
 ```
 
-| Service | Default URL | Notes |
-| --- | --- | --- |
-| Simulator | `http://localhost:8081` | Nginx frontend |
-| Operator HMI | `http://localhost:8082` | Nginx frontend |
-| API | `http://localhost:8080` | `/api/health/ready`, `/api/version` |
-| MongoDB | internal only | Never published by the production Compose file |
+| Service           | URL                   | Notes                                              |
+| ----------------- | --------------------- | -------------------------------------------------- |
+| Simulator         | http://localhost:8081 | Nginx                                              |
+| Operator HMI      | http://localhost:8082 | Nginx                                              |
+| Orchestration API | http://localhost:8080 | `/api/health`, `/api/health/ready`, `/api/version` |
+| MongoDB           | internal only         | not published                                      |
 
-## Deploy on Hetzner through Cloudflare Tunnel
+A production-like profile **refuses to start without a configured OIDC authority** (see [ADR 0003](./docs/adr/0003-identity-and-rbac.md)); the committed templates intentionally leave it empty. Readiness is meaningful: `GET /api/health/ready` returns `503` when MongoDB is unreachable, and `GET /api/version` reports the running build.
 
-The following is the configuration pattern used by the public demo. It exposes the web surfaces
-through Cloudflare Tunnel without opening application ports on the Hetzner firewall. This repository
-does **not** contain a deployment workflow that automatically changes production infrastructure.
+Operational guides: [deployment](./docs/operations/DEPLOYMENT.md) · [administrator](./docs/operations/ADMINISTRATOR_GUIDE.md) · [backup/restore](./docs/operations/BACKUP_RESTORE.md) · [upgrade/rollback](./docs/operations/UPGRADE_ROLLBACK.md) · [support bundle](./docs/operations/SUPPORT_BUNDLE.md) · [observability](./docs/operations/OBSERVABILITY.md) · [performance](./docs/operations/PERFORMANCE.md) · [security hardening](./docs/operations/SECURITY_HARDENING.md) · [accessibility](./docs/operations/ACCESSIBILITY.md) · [browser support](./docs/operations/BROWSER_SUPPORT.md) · [release-candidate checklist](./docs/operations/RELEASE_CANDIDATE_CHECKLIST.md) · [requirements](./docs/operations/REQUIREMENTS.md).
 
-### 1. Keep credentials outside Git
+The Docker [workflow](./.github/workflows/docker.yml) validates the compose file and builds the same images on every push, so the Docker badge above reflects whether the container setup still builds.
 
-| Credential | Safe location |
-| --- | --- |
-| Hetzner SSH **private** key | Operator workstation SSH agent or password manager; upload only the public key to Hetzner. |
-| `CLOUDFLARE_TUNNEL_TOKEN` | Root-readable server environment file (`0600`), systemd credential or external secret manager. |
-| Cloudflare API token, if DNS automation is added | CI/provider secret store only; use the narrowest zone permissions. |
-| OIDC client secret and connector credentials | `/etc/fabrik3d/*.env` (`0600`) or a deployment secret manager. |
+### Hosted deployment on Hetzner with Cloudflare Tunnel
 
-Never paste real keys or tokens into this README, an issue, a commit, a Compose file or a shell history.
-The repository security hook rejects credential-shaped content.
-
-### 2. Connect and start the stack
-
-```powershell
-# Workstation: this variable is a local file path, never the private-key content.
-$env:HETZNER_HOST = "<server-ip-or-dns>"
-$env:HETZNER_USER = "<non-root-deploy-user>"
-$env:HETZNER_SSH_KEY_PATH = "$env:USERPROFILE\.ssh\fabrik3d_hetzner"
-ssh -i $env:HETZNER_SSH_KEY_PATH "$env:HETZNER_USER@$env:HETZNER_HOST"
-```
+The public demo runs this stack on a Hetzner Cloud host and publishes it through a Cloudflare Tunnel, so
+no inbound port other than SSH is required. TLS is terminated by Cloudflare.
 
 ```bash
-# Hetzner host: Docker Engine 24+ and Compose v2 are expected.
-git clone https://github.com/VirgileDjimgou/Fabrik3DLite.git
-cd Fabrik3DLite
+# 1. Provision a Hetzner Cloud host (Ubuntu 24.04, Docker Engine 24+ and Compose v2)
+ssh -i "$HETZNER_SSH_KEY" root@<server-ip>        # key path comes from your secret store
 
-sudo install -d -m 700 /etc/fabrik3d
-sudo cp Fabrik3D/env/demo.env.example /etc/fabrik3d/demo.env
-sudo chmod 600 /etc/fabrik3d/demo.env
-sudoedit /etc/fabrik3d/demo.env  # configure origins/OIDC; do not commit this file
-
-FABRIK3D_PROFILE=Demo FABRIK3D_ENV_FILE=/etc/fabrik3d/demo.env \
+# 2. Deploy the stack (all secret values stay outside the repository)
+git clone <repository-url> && cd Fabrik3DLite
+cp Fabrik3D/env/demo.env.example /etc/fabrik3d/demo.env    # non-secret template
+FABRIK3D_ENV_FILE=/etc/fabrik3d/demo.env \
   docker compose -f Fabrik3D/compose.production.yaml up -d --build
 
-curl --fail http://127.0.0.1:8080/api/health/ready
-curl --fail http://127.0.0.1:8080/api/version
+# 3. Publish both interfaces through the tunnel (token from your secret store)
+cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TUNNEL_TOKEN"
 ```
 
-### 3. Configure Cloudflare Tunnel
-
-Create the tunnel in Cloudflare Zero Trust, keep its token in the server secret store, and configure
-these public-hostname routes in the dashboard or in the tunnel configuration:
+Tunnel ingress routes the public hostnames to the locally published ports:
 
 ```yaml
 ingress:
-  - hostname: fabrik3d.<your-domain>
+  - hostname: fabrik3d.<your-domain> # simulator
     service: http://127.0.0.1:8081
-  - hostname: fabrik3d-hmi.<your-domain>
+  - hostname: fabrik3d-hmi.<your-domain> # operator HMI
     service: http://127.0.0.1:8082
   - service: http_status:404
 ```
 
-Run `cloudflared` as a managed service with automatic restart. If testing interactively, load the
-token from the protected environment rather than typing it into the command:
+Credentials are **never** stored in this repository — it contains only non-secret `*.env.example`
+templates, and the commit hook blocks credential-shaped content:
 
-```bash
-sudo install -m 600 /dev/null /etc/fabrik3d/cloudflared.env
-sudoedit /etc/fabrik3d/cloudflared.env  # add the tunnel token from Cloudflare Zero Trust
+| Secret                                                  | Where it must live                                           |
+| ------------------------------------------------------- | ------------------------------------------------------------ |
+| `HETZNER_SSH_KEY` (private key path)                    | operator secret store / password manager                     |
+| `CLOUDFLARE_TUNNEL_TOKEN`                               | server-side env file (`0600`), Docker secret or systemd unit |
+| `CF_API_TOKEN` (optional DNS automation)                | CI/secret store only                                         |
+| OIDC client secret, signing keys, connector credentials | `/etc/fabrik3d/*.env` (`0600`) or secret manager             |
 
-set -a
-. /etc/fabrik3d/cloudflared.env  # mode 0600; contains CLOUDFLARE_TUNNEL_TOKEN
-set +a
-cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TUNNEL_TOKEN"
-```
-
-Restrict inbound Hetzner traffic to SSH from trusted administration addresses; the tunnel creates the
-outbound application connection. Rotate a leaked key/token immediately, then restart `cloudflared`
-and recreate affected containers. Full procedures are in the
-[deployment](./docs/operations/DEPLOYMENT.md),
-[security hardening](./docs/operations/SECURITY_HARDENING.md),
-[backup/restore](./docs/operations/BACKUP_RESTORE.md) and
-[upgrade/rollback](./docs/operations/UPGRADE_ROLLBACK.md) guides.
+Redeploy with `git pull && docker compose ... up -d --build`; rotate secrets in the store, recreate the
+orchestrator container and restart `cloudflared`. Logs and the support bundle are secret-redacted.
 
 ## Verification
 
+The project has deterministic tests for contracts, state transitions, geometry, kinematics, safety checks, editor persistence, scenarios, visual regressions, and orchestration ownership.
+
 ```powershell
+# From the repository root
 npm run docs:check
 npm run contracts:check
-npm run type-check
+npm --prefix Fabrik3D/fabrik3d.client run type-check
 npm --prefix Fabrik3D/fabrik3d.client run test
 npm --prefix Fabrik3D/fabrik3d.client run test:visual
+npm --prefix Fabrik3D/fabrik3d.hmi run type-check
 npm --prefix Fabrik3D/fabrik3d.hmi run test
+npm --prefix Fabrik3D/fabrik3d.hmi run build
 dotnet test Fabrik3D/Fabrik3D.slnx --no-build
-npm run security:scan
 ```
 
-See [TESTING.md](./docs/TESTING.md) for the complete test matrix and recorded validation scope.
+See [the testing guide](./docs/TESTING.md) for test layers, isolated MongoDB integration tests, and the connected E2E configuration.
 
-## Boundaries
+### Autonomous sprint batches (maintainers)
 
-- Faults, safety conditions, learning data and hosted cell behaviour are simulated.
-- Safety visuals and motion guards are teaching aids, not certified safety functions.
-- Replay cannot acquire control authority or write to a connector.
-- OPC UA, MQTT and Modbus TCP writes require explicit enablement, a writable mapping and an exact
-  allow-list; protocol support is not a conformance certification.
-- CODESYS and Siemens profiles are documented interoperability showcases, not vendor partnerships;
-  proprietary projects, licenses and binaries are not included.
-- Production requires an external OIDC provider and fail-closed configuration.
+`Start Next Sprint` (or `/start-next-sprint` in OpenCode) starts the bounded autopilot: up to **10** sprints implemented one at a time in fresh child sessions, each independently verified before the following sprint may start, with immediate stops for human gates, external blockers or unresolved failures.
 
-Start with the [documentation index](./docs/DOCUMENTATION_INDEX.md), the audience guides for
-[learners](./docs/guides/LEARNER_QUICKSTART.md),
-[instructors](./docs/guides/INSTRUCTOR_GUIDE.md) and
-[external controllers](./docs/guides/EXTERNAL_CONTROLLER_GUIDE.md), and the explicit
-[limitations and non-claims](./docs/operations/LIMITATIONS.md).
+```powershell
+npm run sprint:batch:dry-run   # preview the sprints that would run; mutates nothing
+npm run sprint:batch:start     # launch the detached bounded batch
+npm run sprint:batch:status    # read-only progress, lock and human-gate state
+npm run sprint:batch:stop      # graceful stop after the current worker returns
+```
+
+The full contract, stop conditions and human-gate procedure are documented in [the sprint autopilot guide](./docs/roadmap/AUTOPILOT.md).
+
+## Scope and boundaries
+
+- All educational fault, safety, and learning data are explicitly simulated.
+- Safety visuals and motion guards are engineering/teaching aids, not certified safety functions.
+- Robot profiles are vendor-neutral generic profiles, not exact OEM models.
+- Replay is read-only: replayed telemetry cannot issue commands to a connector.
+- OPC UA, MQTT and Modbus TCP writes remain disabled unless deliberately enabled and allow-listed in local configuration.
+- Control authority (S36) is an explicit, audited arbitration mechanism for training and virtual commissioning, not a certified safety function; an external controller that loses its lease degrades safely and never silently reverts to another authority.
+- The CODESYS / SoftPLC showcase (S46) is documentation plus a deterministic automated substitute fixture; the real PLC run is a manual checklist, no CODESYS project or vendor code is committed, and no certification or vendor partnership is claimed.
+- The `Development`/`Test` authentication modes exist for local development, CI and the clearly-labelled public demo. They are refused in Production, where an external OIDC provider must be configured; no configuration silently accepts anonymous mutations in Production.
+
+## Further documentation
+
+- [Documentation index](./docs/DOCUMENTATION_INDEX.md)
+- [Architecture overview](./docs/architecture/OVERVIEW.md)
+- [Release notes 1.0](./docs/releases/RELEASE_NOTES_1.0.md)
+- [Limitations and non-claims](./docs/operations/LIMITATIONS.md)
+- [Security model](./docs/operations/SECURITY_MODEL.md)
+- [Data and privacy](./docs/operations/DATA_AND_PRIVACY.md)
+- [1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md)
+- [Learner quick start](./docs/guides/LEARNER_QUICKSTART.md)
+- [Instructor guide](./docs/guides/INSTRUCTOR_GUIDE.md)
+- [External controller guide](./docs/guides/EXTERNAL_CONTROLLER_GUIDE.md)
+- [Signal mapping guide](./docs/guides/SIGNAL_MAPPING_GUIDE.md)
+- [Fault lab guide](./docs/guides/FAULT_LAB_GUIDE.md)
+- [Orchestration and traceability](./docs/architecture/ORCHESTRATION.md)
+- [Identity, authentication and RBAC](./docs/architecture/IDENTITY_AND_RBAC.md)
+- [Control authority and arbitration](./docs/architecture/CONTROL_AUTHORITY.md)
+- [Industrial signal core](./docs/architecture/INDUSTRIAL_SIGNAL_CORE.md)
+- [Reference cell signal catalog](./docs/architecture/REFERENCE_SIGNAL_CATALOG.md)
+- [Kinematics and frames](./docs/architecture/KINEMATICS_AND_FRAMES.md)
+- [Cell files and editor boundaries](./docs/architecture/CELL_FILES.md)
+- [Faults, timeline, and replay](./docs/architecture/FAULTS_TIMELINE_REPLAY.md)
+- [Instructor fault lab](./docs/architecture/FAULT_LAB.md)
+- [Digital-twin telemetry](./docs/architecture/DIGITAL_TWIN_TELEMETRY.md)
+- [Telemetry and event historian](./docs/architecture/TELEMETRY_HISTORIAN.md)
+- [Deterministic industrial time travel](./docs/architecture/TIME_TRAVEL.md)
+- [Optional OPC UA adapter](./docs/architecture/OPC_UA_ADAPTER.md)
+- [MQTT transport](./docs/architecture/MQTT_SHOWCASE.md)
+- [Modbus TCP adapter](./docs/architecture/MODBUS_TCP_ADAPTER.md)
+- [CODESYS / SoftPLC showcase](./docs/showcases/codesys-softplc/README.md)
+- [Signal mapping studio](./docs/architecture/SIGNAL_MAPPING_STUDIO.md)
+- [Predefined industrial scenes](./docs/architecture/PREDEFINED_INDUSTRIAL_SCENES.md)
+- [HMI design system](./docs/architecture/HMI_DESIGN_SYSTEM.md)
+- [Roadmap](./docs/roadmap/README.md)
