@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fabrik3D — Démonstration complète de l'écosystème</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#262b36; --text:#e6e9ef; --muted:#9aa3b2; --accent:#4da3ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 "Segoe UI", system-ui, sans-serif; }
+  header { padding:36px 40px 20px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; color:var(--muted); }
+  main { padding:24px 40px 80px; max-width:1200px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:0 0 26px; }
+  section h2 { margin:0 0 4px; font-size:19px; }
+  section .sprint { color:var(--accent); font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
+  section p.desc { color:var(--muted); margin:8px 0 16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
+  figure { margin:0; background:#10131a; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  figure img { width:100%; display:block; }
+  figure figcaption { padding:8px 10px; font-size:12.5px; color:var(--muted); }
+  video { width:100%; display:block; background:#000; border-radius:10px; }
+  .media-note { color:var(--muted); font-size:12.5px; margin-top:6px; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th, td { text-align:left; padding:7px 9px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; }
+  code { background:#0c0f14; padding:1px 5px; border-radius:4px; font-size:12.5px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Fabrik3D — Démonstration complète de l'écosystème</h1>
+  <p>Capture réelle du système en fonctionnement : orchestrateur .NET + MongoDB, simulateur 3D, HMI opérateur, contrats TypeScript, tests et fonctionnalités S34–S50. Généré le 27/09/2026.</p>
+</header>
+<main>
+
+<section>
+  <div class="sprint">Écosystème</div>
+  <h2>Architecture exécutée pour cette démonstration</h2>
+  <table>
+    <tr><th>Composant</th><th>Technologie</th><th>URL locale</th></tr>
+    <tr><td>Orchestrateur (source de vérité)</td><td>ASP.NET Core 8, SignalR, Swagger</td><td><a href="http://127.0.0.1:7249/swagger" target="_blank">http://127.0.0.1:7249</a></td></tr>
+    <tr><td>Simulateur (cellule 3D + ateliers)</td><td>Vue 3, Three.js, Vite</td><td><a href="http://127.0.0.1:4173" target="_blank">http://127.0.0.1:4173</a></td></tr>
+    <tr><td>HMI opérateur / instructeur</td><td>Vue 3, Bootstrap, Vite</td><td><a href="http://127.0.0.1:5274" target="_blank">http://127.0.0.1:5274</a></td></tr>
+    <tr><td>Persistance</td><td>MongoDB 7 (conteneur Docker)</td><td>mongodb://localhost:27017</td></tr>
+    <tr><td>Contrats</td><td>OpenAPI → TypeScript généré</td><td>Fabrik3D/fabrik3d-ts-contracts</td></tr>
+  </table>
+  <p class="media-note">Les serveurs utilisés pour la capture sont toujours en cours d'exécution : vous pouvez naviguer directement dans l'application aux URLs ci-dessus.</p>
+</section>
+
+<section>
+  <div class="sprint">S39 — Cellule de référence</div>
+  <h2>Simulateur 3D — cellule CNC haute fidélité</h2>
+  <p class="desc">Scène WebGL avec la cellule de référence (conveyor, CNC, robot), connectée en temps réel à l'orchestrateur via SignalR.</p>
+  <div class="grid">
+    <figure><img src="client/shots/01-simulator-3d-scene.png" alt="Scène 3D" /><figcaption>Vue initiale de la cellule 3D</figcaption></figure>
+    <figure><img src="client/shots/01b-simulator-3d-scene-later.png" alt="Scène 3D après animation" /><figcaption>Quelques secondes plus tard — état de simulation vivant</figcaption></figure>
+  </div>
+  <p class="media-note">Vidéo :</p>
+  <video src="client/videos/01-simulator-3d-scene.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S28–S39</div>
+  <h2>Scénarios pédagogiques — traitement de palettes de bout en bout</h2>
+  <p class="desc">Catalogue de scénarios, exécution déterministe avec progression et activités complétées.</p>
+  <div class="grid">
+    <figure><img src="client/shots/02-scenario-catalog.png" alt="Catalogue" /><figcaption>Catalogue des scénarios</figcaption></figure>
+    <figure><img src="client/shots/02c-scenario-running.png" alt="Exécution" /><figcaption>Scénario en cours d'exécution</figcaption></figure>
+    <figure><img src="client/shots/02d-scenario-completed.png" alt="Terminé" /><figcaption>Terminé — 100%</figcaption></figure>
+  </div>
+  <video src="client/videos/02-scenario-lab.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S31</div>
+  <h2>Inspecteur de signaux industriels</h2>
+  <p class="desc">Catalogue de signaux typés avec qualité, fraîcheur et valeurs en direct.</p>
+  <figure><img src="client/shots/03-signal-inspector.png" alt="Inspecteur de signaux" /><figcaption>Inspecteur de signaux</figcaption></figure>
+  <video src="client/videos/03-signal-inspector.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S37 — Signal Mapping Studio</div>
+  <h2>Studio de mapping de signaux</h2>
+  <p class="desc">Import, validation, résolution de conflits, application et surveillance live des mappings internes ↔ OPC UA / MQTT / Modbus.</p>
+  <div class="grid">
+    <figure><img src="client/shots/04-mapping-studio.png" alt="Studio" /><figcaption>Mapping de référence validé (0 erreur)</figcaption></figure>
+    <figure><img src="client/shots/04b-mapping-applied.png" alt="Appliqué" /><figcaption>Application réussie + moniteur live (cnc-1)</figcaption></figure>
+  </div>
+  <video src="client/videos/04-mapping-studio.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S38 — Fault Lab</div>
+  <h2>Laboratoire de fautes (injection simulée)</h2>
+  <p class="desc">Activation d'un overlay inversé sur le photoeye du convoyeur, propagation observable, puis effacement contrôlé.</p>
+  <div class="grid">
+    <figure><img src="client/shots/05a-fault-lab-idle.png" alt="Repos" /><figcaption>Avant injection</figcaption></figure>
+    <figure><img src="client/shots/05b-fault-lab-active.png" alt="Actif" /><figcaption>Après injection — valeur aval inversée</figcaption></figure>
+    <figure><img src="client/shots/05c-fault-lab-cleared.png" alt="Effacé" /><figcaption>Après effacement — valeur restaurée</figcaption></figure>
+  </div>
+  <video src="client/videos/05-fault-lab.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S40–S41 — Historian + Time Travel</div>
+  <h2>Voyage dans le temps industriel (lecture seule)</h2>
+  <p class="desc">Reconstruction déterministe depuis l'historien : scrub temporel, exactitude (interpolé/exact), saut vers un marqueur d'alarme, bandeau lecture seule.</p>
+  <div class="grid">
+    <figure><img src="client/shots/06a-time-travel-entered.png" alt="Entrée replay" /><figcaption>Entrée en mode replay</figcaption></figure>
+    <figure><img src="client/shots/06b-time-travel-scrubbed.png" alt="Scrub" /><figcaption>Scrub à 11 s — MACHINING interpolé</figcaption></figure>
+    <figure><img src="client/shots/06c-time-travel-marker.png" alt="Marqueur" /><figcaption>Saut au marqueur d'alarme</figcaption></figure>
+  </div>
+  <video src="client/videos/06-time-travel.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S26–S29</div>
+  <h2>Catalogue robots, éditeur de cellule, préréglages de scène</h2>
+  <figure><img src="client/shots/07-robot-catalog.png" alt="Catalogue robots" /><figcaption>Catalogue robots</figcaption></figure>
+  <figure><img src="client/shots/08-cell-editor.png" alt="Éditeur de cellule" /><figcaption>Éditeur de cellule</figcaption></figure>
+  <figure><img src="client/shots/09-scene-presets.png" alt="Préréglages" /><figcaption>Préréglages de scène</figcaption></figure>
+  <video src="client/videos/07-catalog-editor-presets.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S42–S43 — Identité, RBAC, tenants</div>
+  <h2>Authentification du simulateur</h2>
+  <p class="desc">Connexion développement (rôle Administrateur), identité affichée avec organisation active.</p>
+  <div class="grid">
+    <figure><img src="client/shots/10a-simulator-login-form.png" alt="Formulaire" /><figcaption>Formulaire de connexion</figcaption></figure>
+    <figure><img src="client/shots/10b-simulator-authenticated.png" alt="Connecté" /><figcaption>Session authentifiée (demo-admin, Administrator)</figcaption></figure>
+  </div>
+  <video src="client/videos/08-simulator-auth.webm" controls preload="metadata"></video>
+</section>
+
+<section>
+  <div class="sprint">S48–S49 — Déploiement, observabilité</div>
+  <h2>Orchestrateur — API, santé, diagnostics</h2>
+  <p class="desc">Swagger OpenAPI complet, sondes de santé <code>/api/health/live|ready</code>, version, diagnostics et métriques.</p>
+  <div class="grid">
+    <figure><img src="client/shots/11a-swagger-overview.png" alt="Swagger" /><figcaption>Swagger — contrats REST</figcaption></figure>
+    <figure><img src="client/shots/11b-health-ready.png" alt="Health ready" /><figcaption>/api/health/ready — Mongo, historian, connecteurs</figcaption></figure>
+    <figure><img src="client/shots/11c-version.png" alt="Version" /><figcaption>/api/version</figcaption></figure>
+    <figure><img src="client/shots/11d-diagnostics-status.png" alt="Diagnostics" /><figcaption>/api/diagnostics/status (admin)</figcaption></figure>
+    <figure><img src="client/shots/11e-diagnostics-metrics.png" alt="Métriques" /><figcaption>/api/diagnostics/metrics (admin)</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <div class="sprint">S42 + S45 — HMI opérateur & instructeur</div>
+  <h2>HMI — connexion, poste opérateur, tableau de bord instructeur</h2>
+  <p class="desc">Surface opérateur distincte de la surface instructeur, avec état de connexion SignalR temps réel et séparation des rôles.</p>
+  <div class="grid">
+    <figure><img src="hmi/shots/01a-hmi-login.png" alt="Login HMI" /><figcaption>Écran de connexion HMI</figcaption></figure>
+    <figure><img src="hmi/shots/01b-hmi-workspace.png" alt="Workspace HMI" /><figcaption>Poste opérateur connecté</figcaption></figure>
+    <figure><img src="hmi/shots/02-hmi-home-connected.png" alt="Accueil HMI" /><figcaption>Accueil opérateur — connexion établie</figcaption></figure>
+    <figure><img src="hmi/shots/03-instructor-dashboard.png" alt="Dashboard instructeur" /><figcaption>Tableau de bord instructeur</figcaption></figure>
+  </div>
+  <video src="hmi/videos/01-hmi-login.webm" controls preload="metadata"></video>
+  <p class="media-note">Autres vidéos HMI : <a href="hmi/videos/02-hmi-workspace.webm">poste opérateur</a> · <a href="hmi/videos/03-instructor-dashboard.webm">tableau de bord instructeur</a></p>
+</section>
+
+<section>
+  <div class="sprint">S34–S50 — Cartographie des fonctionnalités</div>
+  <h2>Nouveautés récemment implémentées</h2>
+  <table>
+    <tr><th>Sprint</th><th>Fonctionnalité</th><th>Preuve visuelle</th></tr>
+    <tr><td>S34</td><td>Transport MQTT réel (Mosquitto)</td><td>Connecteurs + tests d'intégration</td></tr>
+    <tr><td>S35</td><td>Adaptateur Modbus TCP</td><td>Fixture Modbus + tests</td></tr>
+    <tr><td>S36</td><td>Mode contrôleur externe & arbitrage d'autorité</td><td>HMI (indicateur d'autorité)</td></tr>
+    <tr><td>S37</td><td>Studio de mapping de signaux</td><td>04-*</td></tr>
+    <tr><td>S38</td><td>Injection de fautes physique & signal</td><td>05-*</td></tr>
+    <tr><td>S39</td><td>Cellule CNC de référence</td><td>01-*</td></tr>
+    <tr><td>S40</td><td>Historien télémétrie & événements</td><td>01/06 (persistance)</td></tr>
+    <tr><td>S41</td><td>Time travel industriel déterministe</td><td>06-*</td></tr>
+    <tr><td>S42</td><td>Authentification, identité, RBAC</td><td>10-* + HMI 01</td></tr>
+    <tr><td>S43</td><td>Organisations, tenancy, classes</td><td>HMI 03 (contexte org)</td></tr>
+    <tr><td>S44</td><td>Sessions de formation & évaluation serveur</td><td>HMI 03</td></tr>
+    <tr><td>S45</td><td>Tableau de bord instructeur</td><td>hmi 03-*</td></tr>
+    <tr><td>S46</td><td>Parcours CODESYS / SoftPLC</td><td>Docs + tests showcase</td></tr>
+    <tr><td>S47</td><td>Profil Siemens S7-1500 / PLCSIM</td><td>Docs + tests</td></tr>
+    <tr><td>S48</td><td>Empaquetage on-premise & cycle de vie</td><td>11-* (health/version)</td></tr>
+    <tr><td>S49</td><td>Observabilité, performance, sécurité</td><td>11d/11e</td></tr>
+    <tr><td>S50</td><td>Base de commercialisation</td><td>Docs + validation RC</td></tr>
+  </table>
+</section>
+
+</main>
+</body>
+</html>
