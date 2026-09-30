@@ -153,6 +153,19 @@ Unhandled exception. System.InvalidOperationException: Invalid deployment config
   are rejected.
 - Do not expose the MongoDB port. It is intentionally unpublished.
 
+### Hetzner behind Cloudflare Tunnel
+
+The `compose.hetzner.yaml` overlay binds all three diagnostic host ports to `127.0.0.1`; the
+Cloudflare Tunnel connector instead reaches `simulator:80` and `hmi:80` on the
+`fabrik3d-internal` Docker network. Keep the tunnel token in a server-side, access-controlled file
+outside the checkout. Do not publish the orchestrator or MongoDB directly to the internet.
+
+The overlay does not provide authentication. Before switching the hosted stack to the current
+release, configure a real HTTPS OIDC authority and complete the frontend sign-in flow; the
+production startup guard deliberately rejects an empty authority. Validate the merged Compose
+configuration with `docker compose -f compose.production.yaml -f compose.hetzner.yaml config --quiet`
+from `Fabrik3D/`, then take a verified database backup before replacing the running containers.
+
 ## Endpoints
 
 | Endpoint | Auth | Purpose |

@@ -1,0 +1,23 @@
+# Overlay for the Hetzner deployment behind the existing Cloudflare Tunnel.
+# The tunnel connects to the internal Docker network by service name; host ports
+# are loopback-only for local diagnostics and must not be exposed publicly.
+#
+# Usage (from Fabrik3D/):
+#   FABRIK3D_ENV_FILE=/etc/fabrik3d/demo.env FABRIK3D_PROFILE=Demo \
+#     docker compose -f compose.production.yaml -f compose.hetzner.yaml up -d
+#
+# The OIDC authority and other deployment-specific values belong in the
+# untracked env file on the server, never in this overlay.
+
+services:
+  orchestrator:
+    ports: !override
+      - "127.0.0.1:${ORCHESTRATOR_PORT:-8080}:8080"
+
+  simulator:
+    ports: !override
+      - "127.0.0.1:${SIMULATOR_PORT:-8081}:80"
+
+  hmi:
+    ports: !override
+      - "127.0.0.1:${HMI_PORT:-8082}:80"

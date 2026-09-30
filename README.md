@@ -352,12 +352,23 @@ Tunnel ingress routes the public hostnames to the locally published ports:
 
 ```yaml
 ingress:
-  - hostname: fabrik3d.<your-domain> # simulator
+  - hostname: fabrik3d.<your-domain>      # simulator
     service: http://127.0.0.1:8081
-  - hostname: fabrik3d-hmi.<your-domain> # operator HMI
+  - hostname: fabrik3d-hmi.<your-domain>  # operator HMI
     service: http://127.0.0.1:8082
   - service: http_status:404
 ```
+
+**Identity mode of the hosted public demo.** The deployed demo runs
+`ASPNETCORE_ENVIRONMENT=Demo`, `Deployment:Profile=Demo` with the clearly-labelled
+`Authentication:Mode=Test` identity and the read-only `PublicDemo` role enabled
+(`Fabrik3D/env/demo.env.example`). Every visitor sees the
+`TEST AUTHENTICATION — NOT PRODUCTION SECURITY` banner, token issuance is rate-limited, the
+support bundle and historian are disabled, and all connectors stay off. The frontends do not yet
+implement a browser OIDC redirect, so a customer install that requires real sign-in must configure
+`Authentication:Mode=Oidc` with a reachable HTTPS authority (see
+[DEPLOYMENT.md](./docs/operations/DEPLOYMENT.md)) and provide the sign-in flow before exposing it.
+The `Development`/`Test` modes are refused when `ASPNETCORE_ENVIRONMENT=Production`.
 
 Credentials are **never** stored in this repository — it contains only non-secret `*.env.example`
 templates, and the commit hook blocks credential-shaped content:
