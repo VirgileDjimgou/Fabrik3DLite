@@ -127,7 +127,7 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 
 - [Validation](operations/VALIDATION.md) — recorded S48 lifecycle transcript
 - [Validation 1.0](operations/VALIDATION_1.0.md) — recorded S50 1.0 gate and lifecycle transcript
-- [Validation post-1.0](operations/VALIDATION_POST_1.0.md) — S58 automated/fixture evidence, the unresolved real-PLC human gate and unvalidated claims
+- [Validation post-1.0](operations/VALIDATION_POST_1.0.md) — automated flagship workflow/fixture evidence plus explicitly deferred real-PLC validation
 - [TESTING.md](TESTING.md) — test layers and commands
 - [Dependency audit](development/DEPENDENCY_AUDIT.md)
 - [Troubleshooting](development/TROUBLESHOOTING.md)
@@ -153,4 +153,4 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 | Simulated robot/CNC/conveyor/faults/signals/learning data | Simulated |
 | OPC UA dev certificate auto-accept | Experimental (explicit opt-in) |
 | Real CODESYS / PLCSIM runs | Manual checklist |
-| HMI robot-positions view | Placeholder |
+| HMI robot positions and guarded manual jog | Implemented (simulated reference cell) |
