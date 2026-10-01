@@ -37,6 +37,16 @@ builder.Services.AddSingleton<ObservabilityMetrics>();
 builder.Services.AddSingleton<ConnectorMetricsSampler>();
 builder.Services.AddHostedService<ObservabilityConsoleExporter>();
 
+// Optional OTLP export: only wired when explicitly enabled with a valid absolute endpoint.
+var observabilityStartupOptions = builder.Configuration
+    .GetSection(Fabrik3DObservabilityOptions.SectionName)
+    .Get<Fabrik3DObservabilityOptions>() ?? new Fabrik3DObservabilityOptions();
+builder.Services.AddFabrik3DOtlpExporter(observabilityStartupOptions);
+
+// Unhandled exceptions return the documented ApiErrorDto shape instead of the framework default.
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 // ── Deployment profile, versioning and diagnostics (S48) ───────────
 builder.Services.Configure<DeploymentOptions>(
     builder.Configuration.GetSection(DeploymentOptions.SectionName));
@@ -222,6 +232,16 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 
 // OpenTelemetry-compatible request spans + API latency metrics + structured log enrichment
 app.UseMiddleware<ObservabilityMiddleware>();
+
+// Placed after the correlation middleware so error responses carry the same correlation id.
+app.UseExceptionHandler();
+
+if (observabilityStartupOptions.NormalizedExporter() == Fabrik3DObservabilityOptions.Exporters.Otlp
+    && !ObservabilityOtlp.IsEnabled(observabilityStartupOptions))
+{
+    app.Logger.LogWarning(
+        "[Server][Observability] Exporter=Otlp but Observability:OtlpEndpoint is missing or not an absolute URI; OTLP export is disabled.");
+}
 
 if (!app.Environment.IsEnvironment("Testing"))
 {

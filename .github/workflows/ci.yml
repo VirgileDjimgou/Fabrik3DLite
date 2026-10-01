@@ -88,6 +88,16 @@ jobs:
           VITE_ORCHESTRATOR_URL: http://127.0.0.1:7249
         run: npm --prefix Fabrik3D/fabrik3d.hmi run test:e2e
 
+      - name: Documentation and repository policy gates
+        run: |
+          npm run docs:check
+          npm run security:scan
+          npm run repo:policy
+      - name: Dependency audits
+        run: npm run audit
+      - name: Autopilot and script tests
+        run: npm run sprint:batch:test
+
       - name: Upload failed test evidence
         if: failure()
         uses: actions/upload-artifact@v4

@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 const API_BASE_URL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:7249'
@@ -51,6 +52,18 @@ test.describe('operator HMI accessibility', () => {
     expect(first!.tag).not.toBe('BODY')
     expect(first!.outlineStyle).not.toBe('none')
     expect(parseFloat(first!.outlineWidth)).toBeGreaterThan(0)
+  })
+
+  test('has no critical or serious automated WCAG violations on the workspace', async ({ page }) => {
+    await expect(page.getByRole('navigation', { name: 'Primary navigation' })).toBeVisible()
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze()
+    const blocking = results.violations.filter((violation) => violation.impact === 'critical' || violation.impact === 'serious')
+    expect(
+      blocking.map((violation) => `${violation.id}: ${violation.help}`),
+      `axe-core found blocking violations:\n${blocking.map((violation) => `${violation.id}: ${violation.help}`).join('\n')}`,
+    ).toEqual([])
   })
 
   test('meets the WCAG 2.2 target-size minimum on navigation controls', async ({ page }) => {

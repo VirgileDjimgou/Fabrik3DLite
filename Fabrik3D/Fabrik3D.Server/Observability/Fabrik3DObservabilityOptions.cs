@@ -20,14 +20,17 @@ public sealed class Fabrik3DObservabilityOptions
     public bool MetricsEndpointEnabled { get; set; } = true;
 
     /// <summary>
-    /// External exporter. Supported values: <c>None</c> (default) and <c>Console</c> (writes periodic
-    /// snapshots through the logger for local diagnosis). <c>Otlp</c> is documented as wiring the
-    /// framework-compatible OTLP exporter at deployment time; it is not enabled here so on-prem
-    /// installs never require an external dependency.
+    /// External exporter. Supported values: <c>None</c> (default), <c>Console</c> (periodic snapshots
+    /// through the logger for local diagnosis) and <c>Otlp</c> (standard OpenTelemetry OTLP gRPC
+    /// export of the Fabrik3D activity source and meter to <see cref="OtlpEndpoint"/>). External
+    /// export stays disabled by default so on-prem installs never require a collector.
     /// </summary>
     public string Exporter { get; set; } = Exporters.None;
 
-    /// <summary>Optional OTLP endpoint hint recorded in the status endpoint for operators.</summary>
+    /// <summary>
+    /// Absolute OTLP gRPC endpoint (for example <c>http://localhost:4317</c>). Required when
+    /// <see cref="Exporter"/> is <c>Otlp</c>; ignored otherwise.
+    /// </summary>
     public string? OtlpEndpoint { get; set; }
 
     /// <summary>Interval, in seconds, for console exporter snapshots when <see cref="Exporter"/> is Console.</summary>

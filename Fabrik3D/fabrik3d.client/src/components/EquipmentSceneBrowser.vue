@@ -1,10 +1,10 @@
 <template>
   <section class="browser" data-equipment-scene-browser>
-    <header><strong>Equipment & scenes</strong><input v-model="query" type="search" placeholder="Search catalog" aria-label="Search catalog" /></header>
+    <header><strong>{{ t('browser.title') }}</strong><input v-model="query" type="search" :placeholder="t('browser.search')" :aria-label="t('browser.search')" /></header>
     <div class="filters"><button v-for="item in categories" :key="item" type="button" :class="{ active: category === item }" @click="category = item">{{ item }}</button></div>
     <ul>
       <li v-for="item in filtered" :key="item.id" :data-browser-item="item.id">
-        <span class="thumbnail" aria-hidden="true">{{ item.thumbnail }}</span><span><strong>{{ item.label }}</strong><small>{{ item.category }} · {{ item.license }}</small></span><em :class="item.ready ? 'ready' : 'static'">{{ item.ready ? 'simulation-ready' : 'visual/layout' }}</em>
+        <span class="thumbnail" aria-hidden="true">{{ item.thumbnail }}</span><span><strong>{{ item.label }}</strong><small>{{ item.category }} · {{ item.license }}</small></span><em :class="item.ready ? 'ready' : 'static'">{{ item.ready ? t('browser.simulationReady') : t('browser.visualLayout') }}</em>
       </li>
     </ul>
   </section>
@@ -13,6 +13,8 @@
 import { computed, ref } from 'vue'
 import { createIndustrialAssetRegistry } from '../equipment/assets'
 import { createDefaultScenePresetCatalog } from '../scenes'
+import { useSimulatorI18n } from '../i18n/simulator'
+const { t } = useSimulatorI18n()
 const query = ref(''); const category = ref('all')
 const entries = [
   ...createIndustrialAssetRegistry().list().map(asset => ({ id: asset.id, label: asset.description, category: 'equipment', ready: asset.source === 'glb', license: asset.source === 'glb' ? asset.manifest.license.name : 'procedural', thumbnail: '▣' })),

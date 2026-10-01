@@ -2,6 +2,7 @@
   "name": "fabrik3d-workspace",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Workspace-level roadmap automation for Fabrik3D",
   "scripts": {
     "restore": "npm run restore:simulator && npm run restore:hmi",

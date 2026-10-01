@@ -16,7 +16,7 @@ namespace Fabrik3D.Server.Tests;
 ///
 /// The external controller is the committed CODESYS/SoftPLC substitute fixture (real Modbus TCP
 /// transport, no proprietary software). It is deliberately labelled a <em>fixture</em>, not a real
-/// Siemens/PLCSIM run; the real-PLC proof remains a manual checklist with its unresolved human gate.
+/// Siemens/PLCSIM run; the real-PLC proof was removed from Roadmap Revision 2 and remains unvalidated.
 /// Historian and time-travel fidelity are covered by the dedicated <c>Historian*</c> and
 /// <c>time-travel</c> suites recorded in <c>docs/operations/VALIDATION_POST_1.0.md</c>.
 /// </summary>

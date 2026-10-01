@@ -56,6 +56,9 @@ been performed.
 - **Historian ingest**: bounded batch sizes, schema-versioned payloads, per-source rate limiting and
   read-time staleness; malformed/replayed/out-of-order data is rejected without mutating state.
 - Request bodies are validated by ASP.NET Core model validation with a structured `ApiErrorDto`.
+- Unhandled exceptions are normalized by `ApiExceptionHandler` to a `500` `ApiErrorDto`
+  (`code = "internal_error"`) that never echoes the exception message or internal detail; the
+  `X-Correlation-Id` response header identifies the occurrence. Tested by `ApiExceptionHandlerTests`.
 
 ### Rate limiting
 

@@ -16,6 +16,7 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 | [Learner quick start](guides/LEARNER_QUICKSTART.md) | Learner |
 | [1.0 reference sample project](samples/fabrik3d-1.0-reference-project/README.md) | Learner / instructor |
 | [Release notes 1.0](releases/RELEASE_NOTES_1.0.md) | Everyone |
+| [Release notes 1.1](releases/RELEASE_NOTES_1.1.md) | Everyone |
 | [Limitations and non-claims](operations/LIMITATIONS.md) | Everyone |
 | [Setup](development/SETUP.md) | Developer |
 | [Testing](TESTING.md) | Developer |

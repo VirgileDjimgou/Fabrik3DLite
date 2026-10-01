@@ -42,7 +42,14 @@ test.describe('industrial HMI visual hierarchy', () => {
       // a developer explicitly opts in; other platforms still validate that
       // the HMI renders the expected navigation.
       test.skip(process.platform !== 'win32' && process.env.E2E_VISUAL !== '1', 'visual baselines are win32-only')
-      await expect(page).toHaveScreenshot(`hmi-home-${viewport.name}.png`, { fullPage: true, animations: 'disabled' })
+      // The machine-status sidebar is driven by live orchestration data (tempo, robot/CNC state,
+      // phase) which differs between a clean and a used database. Mask it so the baseline captures
+      // the deterministic navigation hierarchy instead of ambient machine state.
+      await expect(page).toHaveScreenshot(`hmi-home-${viewport.name}.png`, {
+        fullPage: true,
+        animations: 'disabled',
+        mask: [page.getByTestId('hmi-machine-status')],
+      })
     })
   }
 })

@@ -8,8 +8,9 @@
 
 Fabrik3DLite is an educational industrial-software demonstrator for designing, simulating, supervising, and understanding a robotic cell. It brings together a 3D robotic-cell simulator, an orchestration backend, and a dedicated operator HMI around an explicit digital-twin model.
 
-**This repository is at the Fabrik3D 1.0 training/virtual-commissioning baseline (S50).** That baseline
-is a validation and documentation milestone, not a safety certification. Start with the
+**This repository is at the Fabrik3D 1.0 training/virtual-commissioning baseline plus completed
+post-1.0 hardening (S51-S57, tagged [`v1.1.0`](https://github.com/VirgileDjimgou/Fabrik3DLite/releases/tag/v1.1.0)).** The 1.0 baseline is a validation and
+documentation milestone, not a safety certification. Start with the
 [documentation index](./docs/DOCUMENTATION_INDEX.md), the
 [architecture overview](./docs/architecture/OVERVIEW.md), the
 [1.0 release notes](./docs/releases/RELEASE_NOTES_1.0.md), the
@@ -19,7 +20,9 @@ is a validation and documentation milestone, not a safety certification. Start w
 **Roadmap Revision 2 is complete through S57.** It preserves the completed S50 baseline and adds
 authoritative operator execution, Job lifecycle, role-aware HMI, a shared 3D asset runtime, one
 flagship cell, sustained reliability, and deployment/security hardening. Real PLC/PLCSIM proof is
-deliberately deferred until suitable licensed software or physical hardware is available.
+deliberately deferred until suitable licensed software or physical hardware is available, so
+real-device interoperability is explicitly unvalidated. See the
+[delivery roadmap](./docs/roadmap/README.md) and the [post-1.0 validation record](./docs/operations/VALIDATION_POST_1.0.md); these are post-1.0, not 1.0, capabilities.
 
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
 
@@ -139,10 +142,13 @@ runtime. See [HERO_REFERENCE_CELL.md](./docs/architecture/HERO_REFERENCE_CELL.md
 The HMI is the operator-facing surface of Fabrik3D. It provides a touch-oriented command area, a live machine-status sidebar, job preparation and supervision views, and a persistent action bar. The same orchestration state is shared with the simulator through the ASP.NET Core backend and SignalR.
 
 <p align="center">
-  <img src="./media/HMI_Home.png" alt="Fabrik3D HMI home screen with operator commands and live machine status" width="31%" />
-  <img src="./media/HMI_Jobs.png" alt="Fabrik3D HMI job list with execution state and actions" width="31%" />
-  <img src="./media/HMI_CurrentJob.png" alt="Fabrik3D HMI current job view with session and machine state" width="31%" />
+  <img src="./artifacts/demo/hmi/shots/02-hmi-home-connected.png" alt="Fabrik3D HMI home screen with role-aware tiles and connection state" width="42%" />
+  <img src="./artifacts/demo/hmi/shots/01b-hmi-workspace.png" alt="Fabrik3D HMI workspace with control-authority commands and live machine state" width="42%" />
 </p>
+
+_Current captures (2026-09-27) show the authenticated, role-aware HMI with control authority; the
+March 2026 `media/HMI_*.png` screenshots predate identity, job composer and authority features and are
+no longer used in this README._
 
 | View            | Purpose                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -170,7 +176,7 @@ Deployment profiles select secure defaults without changing the ASP.NET Core env
 **`Production`** (customer install), **`OnPrem`** (training centre behind a local IdP) and **`Demo`**
 (public, read-only, connectors disabled). See [DEPLOYMENT.md](./docs/operations/DEPLOYMENT.md).
 
-**What you can simulate today with the 1.0 feature set:** external-controller closed loops through a
+**What you can simulate today with the current feature set:** external-controller closed loops through a
 SoftPLC (Modbus TCP) or a Siemens PLCSIM-style OPC UA profile and the audited control-authority gate;
 mapping internal signals to OPC UA / MQTT / Modbus targets from the studio; deterministic physical and
 signal fault injection; historian-backed, read-only industrial time travel; multi-organization training
@@ -192,7 +198,7 @@ connectors talk to real endpoints only when explicitly enabled and allow-listed.
 | Time travel (S40–S41)       | Replay reconstructs phases, alarms and fault markers read-only and jumps deterministically to a marker.                                                                                                                                                         |
 | Roles and tenancy (S42–S45) | An Administrator session shows the server-resolved organization; instructor aggregates are tenant-scoped.                                                                                                                                                       |
 
-### Feature evidence captured on 2026-09-27 (S33–S50)
+### Feature evidence captured on 2026-09-27 (S33–S57)
 
 <p align="center">
   <img src="./artifacts/demo/client/shots/04-mapping-studio.png" alt="Signal mapping studio with live monitor" width="31%" />
@@ -205,7 +211,7 @@ connectors talk to real endpoints only when explicitly enabled and allow-listed.
   <img src="./artifacts/demo/hmi/shots/03-instructor-dashboard.png" alt="Instructor dashboard with tenant-scoped aggregate metrics" width="31%" />
 </p>
 
-Short WebM captures: [scenario](./artifacts/demo/client/videos/02-scenario-lab.webm) · [mapping studio](./artifacts/demo/client/videos/04-mapping-studio.webm) · [fault lab](./artifacts/demo/client/videos/05-fault-lab.webm) · [time travel](./artifacts/demo/client/videos/06-time-travel.webm) · [HMI login](./artifacts/demo/hmi/videos/01-hmi-login.webm). The complete interactive gallery (28 screenshots, 11 videos, captured against the live stack) is [artifacts/demo/index.html](./artifacts/demo/index.html); it is reproducible with the `e2e-demo` Playwright suites (`playwright.demo.config.ts` in both frontends).
+Short WebM captures: [scenario](./artifacts/demo/client/videos/02-scenario-lab.webm) · [mapping studio](./artifacts/demo/client/videos/04-mapping-studio.webm) · [fault lab](./artifacts/demo/client/videos/05-fault-lab.webm) · [time travel](./artifacts/demo/client/videos/06-time-travel.webm) · [HMI login](./artifacts/demo/hmi/videos/01-hmi-login.webm). The complete interactive gallery (all screenshots and videos, captured against the live stack) is [artifacts/demo/index.html](./artifacts/demo/index.html); it is reproducible with the `e2e-demo` Playwright suites (`playwright.demo.config.ts` in both frontends).
 
 <p align="center">
   <img src="./docs/evidence/simulation-2026-09-18/01-scenario-basic-completed.png" alt="Completed Robot axes scenario" width="420" />
@@ -444,6 +450,7 @@ The full contract, stop conditions and human-gate procedure are documented in [t
 - [Documentation index](./docs/DOCUMENTATION_INDEX.md)
 - [Architecture overview](./docs/architecture/OVERVIEW.md)
 - [Release notes 1.0](./docs/releases/RELEASE_NOTES_1.0.md)
+- [Release notes 1.1](./docs/releases/RELEASE_NOTES_1.1.md)
 - [Limitations and non-claims](./docs/operations/LIMITATIONS.md)
 - [Security model](./docs/operations/SECURITY_MODEL.md)
 - [Data and privacy](./docs/operations/DATA_AND_PRIVACY.md)
@@ -473,3 +480,9 @@ The full contract, stop conditions and human-gate procedure are documented in [t
 - [Predefined industrial scenes](./docs/architecture/PREDEFINED_INDUSTRIAL_SCENES.md)
 - [HMI design system](./docs/architecture/HMI_DESIGN_SYSTEM.md)
 - [Roadmap](./docs/roadmap/README.md)
+
+## License
+
+Released under the [MIT License](./LICENSE). The license covers the Fabrik3D source code; it does not
+grant rights to vendor software (TIA Portal, PLCSIM Advanced, CODESYS), and it does not turn any
+simulated or educational safety function into a certified one.

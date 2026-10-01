@@ -4,7 +4,7 @@ export type SimulatorLocale = 'en' | 'fr' | 'de'
 
 type Dictionary = Record<string, string>
 
-const messages: Record<SimulatorLocale, Dictionary> = {
+export const messages: Record<SimulatorLocale, Dictionary> = {
   en: {
     'app.run': 'Run', 'app.edit': 'Edit cell', 'app.resetPanels': 'Reset panels', 'app.language': 'Language', 'app.mappingStudio': 'Mapping studio',
     'dock.tools': 'Simulation tools', 'dock.operations': 'Operations', 'dock.learning': 'Learning & diagnostics',
@@ -51,6 +51,7 @@ const messages: Record<SimulatorLocale, Dictionary> = {
     'learning.authority': 'Assessment authority', 'learning.local': 'LOCAL (OFFLINE)', 'learning.server': 'SERVER-ASSESSED', 'learning.sync': 'Sync to server', 'learning.syncing': 'Syncing…', 'learning.syncFailed': 'Sync failed — the local report is kept.', 'learning.syncRetry': 'Retry sync', 'learning.serverScore': 'Server score', 'learning.disclaimer': 'Educational scope',
     'auth.signIn': 'Sign in', 'auth.signOut': 'Sign out', 'auth.cancel': 'Cancel', 'auth.subject': 'Subject', 'auth.role': 'Role',
     'auth.localDemo': 'OFFLINE LOCAL DEMO - NOT AUTHENTICATED', 'auth.expired': 'SESSION EXPIRED - SIGN IN AGAIN', 'auth.failed': 'Sign-in failed.',
+    'browser.title': 'Equipment & scenes', 'browser.search': 'Search catalog', 'browser.simulationReady': 'simulation-ready', 'browser.visualLayout': 'visual/layout',
   },
   fr: {
     'app.run': 'Exécuter', 'app.edit': 'Éditer la cellule', 'app.resetPanels': 'Réinitialiser les panneaux', 'app.language': 'Langue', 'app.mappingStudio': 'Studio de mappage',
@@ -96,8 +97,9 @@ const messages: Record<SimulatorLocale, Dictionary> = {
     'tt.gaps': 'Lacunes de preuve', 'tt.noGaps': 'Aucune lacune dans cette fenêtre.', 'tt.gap': 'lacune',
     'tt.marker.alarm': 'alarme', 'tt.marker.fault': 'panne', 'tt.marker.command': 'commande', 'tt.marker.phase': 'phase',
     'learning.authority': 'Autorité d’évaluation', 'learning.local': 'LOCAL (HORS LIGNE)', 'learning.server': 'ÉVALUÉ PAR LE SERVEUR', 'learning.sync': 'Synchroniser avec le serveur', 'learning.syncing': 'Synchronisation…', 'learning.syncFailed': 'Échec de synchronisation — le rapport local est conservé.', 'learning.syncRetry': 'Réessayer la synchronisation', 'learning.serverScore': 'Score serveur', 'learning.disclaimer': 'Portée pédagogique',
-    'auth.signIn': 'Se connecter', 'auth.signOut': 'Deconnexion', 'auth.cancel': 'Annuler', 'auth.subject': 'Identifiant', 'auth.role': 'Role',
-    'auth.localDemo': 'DEMO LOCALE HORS LIGNE - NON AUTHENTIFIE', 'auth.expired': 'SESSION EXPIREE - RECONNECTEZ-VOUS', 'auth.failed': 'Echec de connexion.',
+    'auth.signIn': 'Se connecter', 'auth.signOut': 'Déconnexion', 'auth.cancel': 'Annuler', 'auth.subject': 'Identifiant', 'auth.role': 'Rôle',
+    'auth.localDemo': 'DÉMO LOCALE HORS LIGNE - NON AUTHENTIFIÉ', 'auth.expired': 'SESSION EXPIRÉE - RECONNECTEZ-VOUS', 'auth.failed': 'Échec de connexion.',
+    'browser.title': 'Équipements et scènes', 'browser.search': 'Rechercher dans le catalogue', 'browser.simulationReady': 'prêt à simuler', 'browser.visualLayout': 'visuel/disposition',
   },
   de: {
     'app.run': 'Ausführen', 'app.edit': 'Zelle bearbeiten', 'app.resetPanels': 'Bereiche zurücksetzen', 'app.language': 'Sprache', 'app.mappingStudio': 'Mapping-Studio',
@@ -145,6 +147,7 @@ const messages: Record<SimulatorLocale, Dictionary> = {
     'learning.authority': 'Bewertungsautorität', 'learning.local': 'LOKAL (OFFLINE)', 'learning.server': 'SERVER-BEWERTET', 'learning.sync': 'Mit Server synchronisieren', 'learning.syncing': 'Synchronisiere…', 'learning.syncFailed': 'Synchronisierung fehlgeschlagen — lokaler Bericht bleibt erhalten.', 'learning.syncRetry': 'Synchronisierung wiederholen', 'learning.serverScore': 'Server-Punktzahl', 'learning.disclaimer': 'Bildungsumfang',
     'auth.signIn': 'Anmelden', 'auth.signOut': 'Abmelden', 'auth.cancel': 'Abbrechen', 'auth.subject': 'Kennung', 'auth.role': 'Rolle',
     'auth.localDemo': 'OFFLINE-LOKALDEMO - NICHT ANGEMELDET', 'auth.expired': 'SITZUNG ABGELAUFEN - NEU ANMELDEN', 'auth.failed': 'Anmeldung fehlgeschlagen.',
+    'browser.title': 'Ausrüstung & Szenen', 'browser.search': 'Katalog durchsuchen', 'browser.simulationReady': 'simulationsbereit', 'browser.visualLayout': 'visuell/Layout',
   },
 }
 

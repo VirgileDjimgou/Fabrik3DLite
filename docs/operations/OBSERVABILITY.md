@@ -82,14 +82,19 @@ Correlation ids are accepted from, and echoed back in, the `X-Correlation-Id` he
 - `Enabled` — master switch for traces, metrics and log enrichment. Set to `false` for a hard no-op.
 - `MetricsEndpointEnabled` — exposes `GET /api/diagnostics/metrics`. Set to `false` to remove it.
 - `Exporter` — `None` (default), `Console` (periodic local snapshot through the logger) or `Otlp`
-  (documented deployment-time wiring; not required on-prem). Unknown values resolve to `None`.
+  (standard OpenTelemetry OTLP gRPC export of the Fabrik3D activity source and meter). Unknown values
+  resolve to `None`.
+- `OtlpEndpoint` — absolute gRPC endpoint (for example `http://localhost:4317`). Required when
+  `Exporter` is `Otlp`; if it is missing or invalid, the server logs a warning and OTLP export stays
+  disabled instead of failing startup.
 - `MaxSeries` — bounded cardinality. Beyond it, new series are dropped and counted
   (`fabrik3d.metrics.dropped_series`) instead of growing without limit.
 - `SimulatorMetricsRateLimitPerMinute` — per-client bound on the simulator report endpoint.
 
-External export is **disabled by default**. To export with the standard OpenTelemetry SDK, subscribe
-to the source `Fabrik3D.Server` and meter `Fabrik3D.Server` and point the OTLP exporter at your
-collector; set `Observability:OtlpEndpoint` so the value is visible on the status endpoint.
+External export is **disabled by default**. To export, set `Observability:Exporter` to `Otlp` and
+`Observability:OtlpEndpoint` to your collector's absolute gRPC URI; the server then wires the standard
+OpenTelemetry SDK to the source `Fabrik3D.Server` and meter `Fabrik3D.Server`. The same values are
+visible on the status endpoint.
 
 ## Endpoints
 
@@ -152,8 +157,9 @@ performance measurements are recorded in [PERFORMANCE.md](./PERFORMANCE.md).
 
 ## Limitations
 
-- No OpenTelemetry exporter package is shipped, by design (no external dependency on-prem). OTLP
-  wiring is documented but is a deployment responsibility.
-- Traces are not exported to a backend in this repository; the spans exist for any OTel listener.
+- The OTLP exporter package is referenced but never activated unless `Exporter=Otlp` with a valid
+  endpoint, so on-prem installs have no external collector dependency by default.
+- Traces and metrics are only exported when OTLP is explicitly enabled; otherwise the spans and
+  instruments remain available to any in-process OTel listener but are not sent anywhere.
 - The in-process aggregate is a diagnostic convenience, not a durable metrics store; use an external
   Prometheus/OTLP backend for retention and alerting.

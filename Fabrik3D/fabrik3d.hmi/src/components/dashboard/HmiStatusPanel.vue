@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div data-testid="hmi-machine-status">
     <!-- Tempo gauge -->
     <div class="text-center mb-3">
       <HmiGauge :value="tempoPercent" :label="t('status.tempo')" :size="140" />
       <div class="d-flex justify-content-center gap-3 mt-2">
-        <span class="badge bg-light text-primary border">{{ t('status.slow') }}</span>
-        <span class="badge bg-light text-primary border">{{ t('status.fast') }}</span>
+        <span class="badge bg-light text-primary-emphasis border">{{ t('status.slow') }}</span>
+        <span class="badge bg-light text-primary-emphasis border">{{ t('status.fast') }}</span>
       </div>
     </div>
 

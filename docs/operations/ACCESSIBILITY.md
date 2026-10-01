@@ -108,7 +108,10 @@ beyond A1–A7.
 - Automated checks cover Chromium, Google Chrome, Microsoft Edge, Firefox and WebKit (Safari engine);
   see [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md). Assistive-technology (screen-reader) validation with
   NVDA/JAWS/VoiceOver was **not** performed and remains a gap.
-- No third-party axe-core/WAVE scan was executed in this environment.
+- An automated axe-core scan (`@axe-core/playwright`, WCAG 2.0/2.1/2.2 A+AA tags) runs in
+  `hmi-accessibility.spec.ts` and blocks on any critical or serious violation; it found and drove the
+  fix of insufficient muted-text and badge contrast. It is not a substitute for the screen-reader gap
+  above and does not cover the simulator workspace.
 - The simulator's WebGL canvas is visual-only and is not exposed as an accessible control surface;
   the engineering inspector panels provide the textual equivalents.
 - WCAG "AAA" contrast targets are not claimed; only AA-level status semantics were reviewed.
