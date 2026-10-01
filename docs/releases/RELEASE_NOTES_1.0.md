@@ -113,7 +113,7 @@ Performance and load numbers for the 1.0 build are recorded with their reference
 
 See [LIMITATIONS.md](../operations/LIMITATIONS.md) for the complete list. In short: no safety,
 compliance or competence certification; no OEM emulation; connectors disabled by default; the public
-demo is shared and best-effort; some HMI surfaces (robot positions) are placeholders; accessibility
+demo is shared and best-effort; post-1.0 HMI robot-position/jog improvements are not part of the original S50 release evidence; accessibility
 targets WCAG 2.2 AA but screen-reader validation is outstanding.
 
 ## Documentation
@@ -127,5 +127,6 @@ routes into the product.
 ## Roadmap
 
 S50 is the final sprint of the original 50-sprint roadmap and remains the immutable 1.0 baseline.
-Roadmap Revision 2 was subsequently approved for planned post-1.0 product hardening in S51-S58; it
-does not retroactively change this release or its evidence.
+Roadmap Revision 2 was subsequently completed as post-1.0 product hardening in S51-S57; it does not
+retroactively change this release or its evidence. Real PLC/PLCSIM proof is deferred until suitable
+licensed software or physical hardware is available.
