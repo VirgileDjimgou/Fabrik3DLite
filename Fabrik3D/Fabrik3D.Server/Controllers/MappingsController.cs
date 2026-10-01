@@ -1,4 +1,5 @@
 using Fabrik3D.Contracts.DTOs;
+using Fabrik3D.Domain.Organizations;
 using Fabrik3D.Server.Authentication;
 using Fabrik3D.Server.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -20,29 +21,35 @@ public class MappingsController : ControllerBase
     private readonly SignalMappingStore _store;
     private readonly SignalMappingApplyService _apply;
     private readonly ICurrentIdentity _identity;
+    private readonly ITenantContext? _tenant;
 
     public MappingsController(
         SignalMappingStore store,
         SignalMappingApplyService apply,
-        ICurrentIdentity identity)
+        ICurrentIdentity identity,
+        ITenantContext? tenant = null)
     {
         _store = store;
         _apply = apply;
         _identity = identity;
+        _tenant = tenant;
     }
 
-    /// <summary>List mapping document summaries (metadata only).</summary>
+    /// <summary>Organization partition for the current request; default organization outside a tenant.</summary>
+    private string OrganizationId => _tenant?.OrganizationId ?? TenantSchema.DefaultOrganizationId;
+
+    /// <summary>List mapping document summaries (metadata only, scoped to the caller's organization).</summary>
     [HttpGet]
     [ProducesResponseType(typeof(List<SignalMappingSummaryDto>), 200)]
-    public IActionResult GetAll() => Ok(_store.List());
+    public IActionResult GetAll() => Ok(_store.List(OrganizationId));
 
-    /// <summary>Get a mapping document by id.</summary>
+    /// <summary>Get a mapping document by id (not-found for another organization's document).</summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(SignalMappingDocumentDto), 200)]
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     public IActionResult Get(string id)
     {
-        var stored = _store.Get(id);
+        var stored = _store.Get(id, OrganizationId);
         return stored is null ? NotFound() : Ok(stored.Document);
     }
 
@@ -71,9 +78,9 @@ public class MappingsController : ControllerBase
             return BadRequest(new ApiErrorDto("id_mismatch", "The route id must match the document id.", StatusCodes.Status400BadRequest));
         }
 
-        var existing = _store.Get(id);
+        var existing = _store.Get(id, OrganizationId);
         var validation = _apply.Validate(document);
-        if (!_store.TryUpsert(document, expectedVersion, validation.Valid, _identity.AuditId, out var stored, out var error))
+        if (!_store.TryUpsert(document, expectedVersion, validation.Valid, _identity.AuditId, out var stored, out var error, OrganizationId))
         {
             var status = error switch
             {
@@ -98,7 +105,7 @@ public class MappingsController : ControllerBase
     [ProducesResponseType(typeof(ApiErrorDto), 409)]
     public IActionResult Delete(string id, [FromQuery] int expectedVersion = 0)
     {
-        if (!_store.TryDelete(id, expectedVersion, _identity.AuditId, out var error))
+        if (!_store.TryDelete(id, expectedVersion, _identity.AuditId, out var error, OrganizationId))
         {
             var status = error == "not-found" ? StatusCodes.Status404NotFound : StatusCodes.Status409Conflict;
             return StatusCode(status, new ApiErrorDto(error ?? "conflict", "The mapping document could not be deleted.", status));
@@ -114,16 +121,16 @@ public class MappingsController : ControllerBase
     [ProducesResponseType(typeof(ApiErrorDto), 404)]
     public IActionResult Apply(string id)
     {
-        var stored = _store.Get(id);
+        var stored = _store.Get(id, OrganizationId);
         if (stored is null)
         {
             return NotFound(new ApiErrorDto("not_found", $"Mapping '{id}' does not exist.", StatusCodes.Status404NotFound));
         }
-        return Ok(_apply.Apply(stored.Document, _identity.AuditId));
+        return Ok(_apply.Apply(stored.Document, _identity.AuditId, OrganizationId));
     }
 
     /// <summary>Recent mapping audit trail (most recent first).</summary>
     [HttpGet("audit")]
     [ProducesResponseType(typeof(List<SignalMappingAuditDto>), 200)]
-    public IActionResult Audit() => Ok(_store.Audit());
+    public IActionResult Audit() => Ok(_store.Audit(OrganizationId));
 }

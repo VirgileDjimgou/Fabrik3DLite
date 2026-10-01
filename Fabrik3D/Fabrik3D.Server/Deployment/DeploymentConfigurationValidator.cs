@@ -18,7 +18,8 @@ public static class DeploymentConfigurationValidator
         DeploymentOptions deployment,
         Fabrik3DAuthenticationOptions authentication,
         CorsOptions cors,
-        OrchestrationOptions orchestration)
+        OrchestrationOptions orchestration,
+        SecurityHeadersOptions? securityHeaders = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(environment);
@@ -98,6 +99,9 @@ public static class DeploymentConfigurationValidator
                 errors.Add("Historian:RetentionMaxSamplesPerSignal must be greater than zero when the historian is enabled.");
             }
         }
+
+        // ── Response-hardening headers (S57) ───────────────────────────
+        errors.AddRange(SecurityHeaderPolicy.Validate(securityHeaders ?? new SecurityHeadersOptions()));
 
         return errors;
     }

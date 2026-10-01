@@ -5,6 +5,17 @@ export * from './signalr'
 
 type CompletedResponse<T> = { [Key in keyof T]-?: T[Key] }
 
+/**
+ * Recursively removes optionality from a generated schema. Server DTO constructors always populate
+ * every declared field, so the transport shape is complete even though OpenAPI marks reference
+ * types nullable. Used for the nested robot-position payloads (S53).
+ */
+type DeepComplete<T> = T extends (infer U)[]
+  ? DeepComplete<U>[]
+  : T extends object
+    ? { [Key in keyof T]-?: DeepComplete<T[Key]> }
+    : T
+
 // REST response types are complete because server DTO constructors populate every field.
 export type JobDto = CompletedResponse<components['schemas']['JobDto']>
 export type TaskDto = CompletedResponse<components['schemas']['TaskDto']>
@@ -24,6 +35,8 @@ export type UpdateSimulationStateRequest = components['schemas']['UpdateSimulati
 export type ClaimJobRequest = components['schemas']['ClaimJobRequest']
 export type UpdateTaskStatusRequest = components['schemas']['UpdateTaskStatusRequest']
 export type HeartbeatRequest = components['schemas']['HeartbeatRequest']
+export type StartJobDispatchRequest = components['schemas']['StartJobDispatchRequest']
+export type DispatchAckRequest = components['schemas']['DispatchAckRequest']
 export type SaveCellTemplateRequest = components['schemas']['SaveCellTemplateRequest']
 export type AcquireControlAuthorityRequest = components['schemas']['AcquireControlAuthorityRequest']
 export type TakeoverControlAuthorityRequest = components['schemas']['TakeoverControlAuthorityRequest']
@@ -62,6 +75,40 @@ export type ClaimResultDto = {
   session: SimulationSessionDto
   tasks: TaskDto[]
 }
+
+// The server always populates the full dispatch payload (S51).
+export type DispatchResultDto = {
+  job: JobDto
+  session: SimulationSessionDto
+  tasks: TaskDto[]
+  dispatchState: string
+  targetCellId?: string | null
+  assignedSimulatorId?: string | null
+  dispatchCorrelationId?: string | null
+  dispatchTimeoutAtUtc?: string | null
+  failureReason?: string | null
+}
+
+// The server always populates the full composer read models (S52).
+export type ComposerCellOptionDto = CompletedResponse<components['schemas']['ComposerCellOptionDto']>
+export type ComposerScenarioOptionDto = CompletedResponse<components['schemas']['ComposerScenarioOptionDto']>
+export type ComposerCellTemplateOptionDto = CompletedResponse<components['schemas']['ComposerCellTemplateOptionDto']>
+export type JobComposerOptionsDto = CompletedResponse<components['schemas']['JobComposerOptionsDto']>
+export type ComposerValidationIssueDto = CompletedResponse<components['schemas']['ComposerValidationIssueDto']>
+export type GeneratedTaskPreviewDto = CompletedResponse<components['schemas']['GeneratedTaskPreviewDto']>
+export type JobComposerPreviewDto = CompletedResponse<components['schemas']['JobComposerPreviewDto']>
+export type PalletLayoutRequest = components['schemas']['PalletLayoutRequest']
+export type PalletSlotRequest = components['schemas']['PalletSlotRequest']
+
+// Authoritative robot positions and operator jog (S53).
+export type RobotJointDto = DeepComplete<components['schemas']['RobotJointDto']>
+export type RobotPoseDto = DeepComplete<components['schemas']['RobotPoseDto']>
+export type RobotFramesDto = DeepComplete<components['schemas']['RobotFramesDto']>
+export type RobotPositionsDto = DeepComplete<components['schemas']['RobotPositionsDto']>
+export type PublishRobotPositionsRequest = DeepComplete<components['schemas']['PublishRobotPositionsRequest']>
+export type JogCommandRequest = components['schemas']['JogCommandRequest']
+export type JogCommandResultDto = CompletedResponse<components['schemas']['JogCommandResultDto']>
+export type JogAuditDto = CompletedResponse<components['schemas']['JogAuditDto']>
 
 export class OrchestratorApiError extends Error {
   readonly code: string

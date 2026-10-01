@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "id": "hero-cnc-machine-v1",
+  "equipmentDefinitionId": "educational-cnc",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 2.25,
+    "y": 2.5,
+    "z": 1.95
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "0a3abcfdd7c6cda5e7d377953464e0e9a47e1d7b67715afc9fc2897ef1339af3"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "fb614d2453d8ec6985b692a4a40ecefa36aed6bbef1a27aefe94f20ca373fbe1"
+        },
+        "triangleBudget": 6000
+      }
+    ]
+  },
+  "collision": {
+    "id": "cnc-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 2,
+      "y": 2.2,
+      "z": 1.6
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "door:loading",
+      "kind": "door"
+    },
+    {
+      "id": "fixture:chuck",
+      "kind": "fixture"
+    },
+    {
+      "id": "fixture:jaw-left",
+      "kind": "fixture"
+    },
+    {
+      "id": "fixture:jaw-right",
+      "kind": "fixture"
+    },
+    {
+      "id": "signal:panel-screen",
+      "kind": "signal"
+    },
+    {
+      "id": "signal:stack-light",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:load-door",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 0,
+          "y": 1,
+          "z": 0.82
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "machine-body",
+    "machine-trim",
+    "stainless",
+    "safety-hazard",
+    "chamber-dark",
+    "glass"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "42d8bf4aa6f84f39e7fc135e74f28c4d0e369fad0f59682a6a28689a2537943c"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "0a3abcfdd7c6cda5e7d377953464e0e9a47e1d7b67715afc9fc2897ef1339af3"
+  }
+}

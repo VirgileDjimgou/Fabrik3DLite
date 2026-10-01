@@ -12,15 +12,18 @@ public class SimulationSessionService
 {
     private readonly SimulationSessionRepository _sessions;
     private readonly IHubNotificationService _hub;
+    private readonly JobLifecycleCoordinator _lifecycle;
     private readonly ILogger<SimulationSessionService> _log;
 
     public SimulationSessionService(
         SimulationSessionRepository sessions,
         IHubNotificationService hub,
+        JobLifecycleCoordinator lifecycle,
         ILogger<SimulationSessionService> log)
     {
         _sessions = sessions;
         _hub = hub;
+        _lifecycle = lifecycle;
         _log = log;
     }
 
@@ -49,7 +52,22 @@ public class SimulationSessionService
         EnsureOwned(session, request.SimulatorId);
 
         if (Enum.TryParse<SimulationStatus>(request.Status, true, out var status))
+        {
+            // Idempotent duplicate terminal report: keep the stored terminal fact and timestamp.
+            if (status == session.Status && IsTerminal(status))
+            {
+                _log.LogDebug(
+                    "[Server][Simulation] Duplicate {Status} ignored → session={SessionId}",
+                    status, session.Id);
+                return session.ToDto();
+            }
+
             session.Status = status;
+            if (IsTerminal(status))
+            {
+                session.EndedAtUtc ??= DateTime.UtcNow;
+            }
+        }
 
         session.CurrentPhase = request.CurrentPhase;
         session.CurrentPalletId = request.CurrentPalletId;
@@ -81,8 +99,14 @@ public class SimulationSessionService
             session.RemainingCount, session.TotalCount, DateTime.UtcNow, eventCorrelation,
             session.ScenarioId, session.ScenarioActivityId, session.ScenarioProgress));
 
+        // The server derives progress and terminal job state from the persisted session facts.
+        await _lifecycle.RecalculateAsync(session.JobId, eventCorrelation);
+
         return session.ToDto();
     }
+
+    private static bool IsTerminal(SimulationStatus status) =>
+        status is SimulationStatus.Stopped or SimulationStatus.Completed or SimulationStatus.Faulted;
 
     /// <summary>
     /// Simulator sends periodic heartbeat to prove it is still alive.

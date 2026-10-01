@@ -108,6 +108,14 @@ and reports only when `VITE_OBSERVABILITY_ENABLED=true`; otherwise it records lo
 silent. A reporter failure is always a silent no-op (`Observability disabled: the simulator must not
 treat this as a failure`).
 
+S56 extends the sampler with p99 frame time and an honest acceleration classification
+(`fabrik3d.client/src/observability/acceleration.ts`): the observed WebGL renderer identity is recorded
+and labelled `hardware`, `software` or `unknown`, never upgraded above the evidence. The same
+diagnostics surface (`__fabrik3dDiagnostics`, enabled only in dev or with `?diagnostics=1`) feeds the
+performance, soak and leak-detection harnesses; it exposes no secrets and is removed on unmount. Regression
+budgets and the soak procedure are in [PERFORMANCE.md](./PERFORMANCE.md), and the failure/recovery
+contract is in [RECOVERY_MATRIX.md](./RECOVERY_MATRIX.md).
+
 ## Degraded modes
 
 - Collector/exporter unavailable — the application continues; no request path depends on it.

@@ -1,0 +1,113 @@
+# Hero reference cell (S55)
+
+S55 deepens the canonical `cnc-machine-tending` preset into one coherent,
+professionally legible flagship cell. It adds generated, license-safe visual
+assets and binds them to the existing authoritative runtime; it does **not**
+change kinematics, collision, safety, workflow or telemetry semantics.
+
+The cell remains render-only where it should be: `CncCycleMachine`,
+`RobotController`, the analytic collision models and the signal registry stay
+authoritative, and every visual is a projection of that state.
+
+## Composition
+
+| Element | Source | Authority |
+| --- | --- | --- |
+| Six-axis robot | `generic-6axis-{compact,medium,heavy}-v1` GLB (S23) | `RobotController` + shared kinematics |
+| CNC machining centre | `hero-cnc-machine-v1` GLB (S55) | `CncCycleMachine` |
+| Conveyor | `generic-conveyor-v1` GLB (S22) | pallet flow runtime |
+| Pallet / workpiece | `generic-pallet-station-v1` GLB (S22) | pallet flow runtime |
+| Cell dressing (chip conveyor, buffers, work lights, cable drops, bollards) | `hero-cell-dressing-v1` GLB (S55) | render-only |
+| Guarding, cabinets, pedestal, E-stop, scanner, stack lights | procedural `SafetyGuardSystem` / `IndustrialInfrastructureSystem` | simulated safety interlocks |
+| Industrial floor and markings | procedural `SingleConveyorFloor` | render-only |
+
+All assets are loaded through the S54 shared `EquipmentAssetRuntime`
+(`ASSET_RUNTIME_KEY`); no component constructs its own loader. Missing or
+corrupt assets fall back to the procedural representation and never stop the
+simulation.
+
+## Semantic-node contract
+
+The generated GLB preserves the stable node names the runtime binds to. GLTF
+export/import sanitizes `:` in node names, so the binding contract is
+`userData.semanticId`, which survives cloning.
+
+Robot (unchanged since S23): `joint:j1`…`joint:j6`, `tool:flange`, `tool:tcp`.
+
+CNC (`hero-cnc-machine-v1`):
+
+- `door:loading` — sliding loading door; Y travel `CNC_DOOR_REST_Y` + `doorPosition × CNC_DOOR_TRAVEL_Y`.
+- `spindle:main` — spindle group; rotation follows the ramped simulated speed.
+- `fixture:chuck`, `fixture:jaw-left`, `fixture:jaw-right` — clamp/unclamp travel.
+- `axis:feed` — feed table advance while `feedActive`.
+- `coolant:nozzle`, `signal:panel-screen`, `signal:stack-light` (+ amber/red).
+
+Dressing (`hero-cell-dressing-v1`): `motor:chip-conveyor`, `fixture:buffer:1`,
+`fixture:buffer:2`, `signal:worklight:1`, `signal:worklight:2`,
+`anchor:buffer.access`.
+
+The map from visual node to runtime state and canonical signal is declared in
+`equipment/visuals/referenceCellVisualMap.ts` and enforced by
+`signals/referenceCellConsistency.test.ts`.
+
+## Pipeline
+
+`npm run assets:generate` (`scripts/generate-industrial-glb-assets.mjs`) is the
+single reproducible generator. It builds every GLB with Three.js geometry,
+exports GLB + LOD1 + thumbnail + `equipment.asset.json`, and validates before
+writing:
+
+- every declared semantic node exists in the exported scene;
+- the primary and LOD triangle counts stay inside their declared budgets;
+- measured bounds do not exceed the declared `boundsMeters` (hero assets);
+- license metadata is present.
+
+The generator is deterministic: re-running it reproduces byte-identical files
+and hashes. The TypeScript manifests in `equipment/assets/heroAssets.ts` mirror
+the generated `equipment.asset.json`; `assetPipeline.test.ts` re-computes every
+referenced SHA-256 and fails on any drift.
+
+## Materials and lighting
+
+The hero assets use a conservative, reusable PBR palette (documented in the
+generator): painted machine body `#e8e9ea`, dark trim `#333a3e`, stainless
+`#aeb6bc`, safety hazard `#d6a400`, chamber `#181b1d`, glass `#2a3a44`, rack
+blue `#27557a`, work light `#f6f3e6`. No 4K/8K texture set is used; the assets
+are texture-free and rely on the shared renderer's sRGB output, ACES tone
+mapping, PBR environment lighting and shadows.
+
+## Measured budgets
+
+Recorded on this development machine (2026-10-01) from the generated files.
+These are static, renderer-independent counts, not GPU frame times.
+
+| Asset | Level | Meshes | Triangles | Draw calls | Bytes |
+| --- | --- | --- | --- | --- | --- |
+| `hero-cnc-machine-v1` | primary | 37 | 1 004 | 37 | 102 676 |
+| `hero-cnc-machine-v1` | lod1 | 25 | 656 | 25 | 69 200 |
+| `hero-cell-dressing-v1` | primary | 38 | 676 | 38 | 85 160 |
+| `hero-cell-dressing-v1` | lod1 | 30 | 460 | 30 | 63 752 |
+
+Declared budgets: hero CNC primary ≤ 16 000 triangles, LOD1 ≤ 6 000; dressing
+primary ≤ 12 000 triangles, LOD1 ≤ 6 000. Textures: 0 (procedural materials).
+
+The S49 reference-scene frame-time probe recorded, under headless Chromium
+software rendering, `frames=11 mean=289.38ms p50=283.40ms p95=316.60ms`. This is
+an upper bound for a software backend, not reference-hardware GPU numbers;
+sustained hardware performance and resilience validation are S56.
+
+## Provenance and licensing
+
+Every asset is generated in-repository from original Three.js geometry. No
+proprietary OEM model, scan or texture is included. Each manifest records
+`license.name = "Fabrik3D generated generic asset; educational use"`. The
+generated files pass the existing path, hash and manifest validation.
+
+## Limitations and non-claims
+
+- Visual meshes are not FK/IK, collision, safety or telemetry authorities.
+- The dressing is decorative; the analytic cell collision models are unchanged.
+- No photorealism, cinematic renderer or OEM replica is claimed.
+- No safety certification, OEM emulation or standards compliance is claimed.
+- GPU frame time and renderer memory on the documented reference machine remain
+  an open measurement (S56).

@@ -16,6 +16,12 @@ is a validation and documentation milestone, not a safety certification. Start w
 [limitations/non-claims](./docs/operations/LIMITATIONS.md), and the
 [1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md).
 
+**Roadmap Revision 2 plans post-1.0 product hardening in S51-S58.** It preserves the completed S50
+baseline and focuses on authoritative operator execution, Job lifecycle, role-aware HMI, a shared 3D
+asset runtime, one flagship cell, sustained reliability, deployment/security hardening and honest
+real-PLC validation. See the [delivery roadmap](./docs/roadmap/README.md); these are planned, not 1.0,
+capabilities.
+
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
 
 ## Live demo
@@ -81,6 +87,14 @@ Every state-bearing CNC visual maps to a runtime state/signal
 cycle determinism budgets are covered by tests. Measured geometry budgets and
 the reference-cell performance notes are in
 [3D_ASSETS.md](./docs/architecture/3D_ASSETS.md).
+
+Since S55 the flagship cell is deepened with generated, license-safe hero assets:
+a `hero-cnc-machine-v1` GLB (with the procedural S39 visual as fallback) and a
+render-only `hero-cell-dressing-v1` GLB (chip conveyor, work-in-process buffers,
+work lights, cable drops, bollards). Both are produced by the reproducible
+`npm run assets:generate` pipeline, validated for semantic nodes, triangle
+budgets, bounds, hashes and license, and loaded through the shared S54 asset
+runtime. See [HERO_REFERENCE_CELL.md](./docs/architecture/HERO_REFERENCE_CELL.md).
 
 ### Industrial signal foundation
 

@@ -651,17 +651,7 @@ public sealed class ModbusConnector : IAsyncDisposable
     }
 
     private TimeSpan ComputeBackoff(int attempt)
-    {
-        var baseSeconds = Math.Max(0, _options.ReconnectDelaySeconds);
-        var maxSeconds = Math.Max(baseSeconds, _options.MaxReconnectDelaySeconds);
-        if (baseSeconds == 0)
-        {
-            return TimeSpan.Zero;
-        }
-
-        var exponent = Math.Min(attempt - 1, 10);
-        return TimeSpan.FromSeconds(Math.Min(maxSeconds, baseSeconds * Math.Pow(2, exponent)));
-    }
+        => Connectors.ConnectorBackoff.Compute(attempt, _options.ReconnectDelaySeconds, _options.MaxReconnectDelaySeconds);
 
     private string DescribePoint(string signalId)
     {

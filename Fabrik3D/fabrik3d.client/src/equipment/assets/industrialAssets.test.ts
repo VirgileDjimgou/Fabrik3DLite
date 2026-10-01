@@ -2,6 +2,9 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  HERO_CELL_DRESSING_ASSET_ID,
+  HERO_CNC_MACHINE_ASSET_ID,
+  HERO_CNC_MACHINE_MANIFEST,
   INDUSTRIAL_CONVEYOR_ASSET_ID,
   INDUSTRIAL_CONVEYOR_MANIFEST,
   INDUSTRIAL_PALLET_STATION_ASSET_ID,
@@ -67,6 +70,15 @@ describe('generated industrial equipment assets', () => {
     const registry = createIndustrialAssetRegistry()
     expect(registry.get(INDUSTRIAL_CONVEYOR_ASSET_ID)).toMatchObject({ source: 'glb', fallbackAssetId: 'procedural-belt-conveyor' })
     expect(registry.get(INDUSTRIAL_PALLET_STATION_ASSET_ID)).toMatchObject({ source: 'glb', fallbackAssetId: 'procedural-pallet-station' })
+  })
+
+  it('registers the S55 hero CNC and dressing assets with procedural fallbacks', () => {
+    const registry = createIndustrialAssetRegistry()
+    expect(registry.get(HERO_CNC_MACHINE_ASSET_ID)).toMatchObject({ source: 'glb', fallbackAssetId: 'procedural-cnc-machine' })
+    expect(registry.get(HERO_CELL_DRESSING_ASSET_ID)).toMatchObject({ source: 'glb', fallbackAssetId: 'procedural-cell-dressing' })
+    // The hero CNC keeps the existing analytic collision identifier.
+    expect(HERO_CNC_MACHINE_MANIFEST.collision.id).toBe('cnc-1')
+    expect(HERO_CNC_MACHINE_MANIFEST.collision.kind).toBe('box')
   })
 
   it('ships six semantic pivots for every professional robot profile', async () => {

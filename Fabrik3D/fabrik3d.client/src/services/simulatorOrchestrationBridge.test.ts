@@ -1,9 +1,17 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import type { ClaimResultDto, JobDto, MachineStateDto, SimulationSessionDto, TaskDto } from '@fabrik3d/contracts'
+import type {
+  DispatchResultDto,
+  ExecutionDispatchRequestedEvent,
+  JobDto,
+  MachineStateDto,
+  SimulationSessionDto,
+  TaskDto,
+} from '@fabrik3d/contracts'
 import type { PalletData } from '../simulation/PalletModels'
 import type { PalletMachiningWorkflow } from '../simulation/PalletMachiningWorkflow'
 import { SimulatorOrchestrationBridge } from './simulatorOrchestrationBridge'
 import * as api from './orchestratorApi'
+import * as hub from './orchestratorSignalR'
 
 vi.mock('./orchestratorApi', () => ({
   SIMULATOR_ID: 'test-simulator',
@@ -15,16 +23,25 @@ vi.mock('./orchestratorApi', () => ({
   resumeJob: vi.fn(),
   stopJob: vi.fn(),
   claimJob: vi.fn(),
+  dispatchJob: vi.fn(),
+  acknowledgeDispatch: vi.fn(),
+  getJobDispatch: vi.fn(),
+  getSessionById: vi.fn(),
+  getJobTasks: vi.fn(),
   updateSimulationSessionState: vi.fn(),
   heartbeatSimulationSession: vi.fn(),
   updateCurrentMachineState: vi.fn(),
   updateTaskStatus: vi.fn(),
+  getControlAuthority: vi.fn(),
+  publishRobotPositions: vi.fn(),
 }))
 
 vi.mock('./orchestratorSignalR', () => ({
   connect: vi.fn().mockResolvedValue(undefined),
   disconnect: vi.fn().mockResolvedValue(undefined),
   on: vi.fn(),
+  registerSimulator: vi.fn().mockResolvedValue(undefined),
+  isConnected: vi.fn(() => true),
 }))
 
 const mockApi = vi.mocked(api)
@@ -47,6 +64,25 @@ function jobDto(overrides: Partial<JobDto> = {}): JobDto {
     simulationSessionId: null,
     metadata: {},
     version: 0,
+    targetCellId: null,
+    assignedSimulatorId: null,
+    dispatchState: 'None',
+    dispatchCorrelationId: null,
+    dispatchedAtUtc: null,
+    dispatchAcknowledgedAtUtc: null,
+    dispatchTimeoutAtUtc: null,
+    dispatchFailureReason: null,
+    priority: 0,
+    scenarioId: null,
+    cellTemplateId: null,
+    palletId: null,
+    palletRows: 0,
+    palletColumns: 0,
+    taskCount: 0,
+    completedTaskCount: 0,
+    schemaVersion: 1,
+    failedAtUtc: null,
+    cancelledAtUtc: null,
     ...overrides,
   }
 }
@@ -73,6 +109,7 @@ function sessionDto(overrides: Partial<SimulationSessionDto> = {}): SimulationSe
     scenarioId: null,
     scenarioActivityId: null,
     scenarioProgress: 0,
+    targetCellId: null,
     ...overrides,
   }
 }
@@ -95,6 +132,8 @@ function taskDto(overrides: Partial<TaskDto> = {}): TaskDto {
     completedAtUtc: null,
     errorMessage: null,
     version: 0,
+    slotKey: null,
+    isRequired: true,
     ...overrides,
   }
 }
@@ -157,8 +196,47 @@ async function connectBridge(bridge: SimulatorOrchestrationBridge): Promise<void
   mockApi.updateCurrentMachineState.mockResolvedValue(machineStateDto())
   mockApi.heartbeatSimulationSession.mockResolvedValue(sessionDto())
   mockApi.updateTaskStatus.mockResolvedValue(taskDto())
+  mockApi.getSessionById.mockResolvedValue(sessionDto({ id: 'session-7', jobId: 'job-42' }))
+  mockApi.getJobTasks.mockResolvedValue([])
+  mockApi.acknowledgeDispatch.mockResolvedValue(dispatchResult())
   await bridge.init()
   bridge.connectionState = 'connected'
+}
+
+function dispatchResult(overrides: Partial<DispatchResultDto> = {}): DispatchResultDto {
+  return {
+    job: jobDto({ id: 'job-42', status: 'Running', simulationSessionId: 'session-7' }),
+    session: sessionDto({ id: 'session-7', jobId: 'job-42' }),
+    tasks: [],
+    dispatchState: 'Pending',
+    targetCellId: 'reference-cell',
+    assignedSimulatorId: 'test-simulator',
+    dispatchCorrelationId: 'corr-dispatch',
+    dispatchTimeoutAtUtc: '2026-01-01T00:00:20Z',
+    failureReason: null,
+    ...overrides,
+  }
+}
+
+function dispatchEvent(overrides: Partial<ExecutionDispatchRequestedEvent> = {}): ExecutionDispatchRequestedEvent {
+  return {
+    jobId: 'job-42',
+    sessionId: 'session-7',
+    targetCellId: 'reference-cell',
+    assignedSimulatorId: 'test-simulator',
+    correlationId: 'corr-dispatch',
+    dispatchedAtUtc: '2026-01-01T00:00:00Z',
+    timeoutAtUtc: '2026-01-01T00:00:20Z',
+    taskIds: ['task-a'],
+    ...overrides,
+  }
+}
+
+/** Captures the SignalR callbacks registered by the bridge so tests can drive events. */
+function captureHubCallbacks(): hub.OrchestrationCallbacks {
+  const onMock = vi.mocked(hub.on)
+  const lastCall = onMock.mock.calls[onMock.mock.calls.length - 1]
+  return (lastCall?.[0] ?? {}) as hub.OrchestrationCallbacks
 }
 
 beforeEach(() => {
@@ -170,49 +248,26 @@ afterEach(() => {
 })
 
 describe('SimulatorOrchestrationBridge', () => {
-  it('claims an existing runnable job instead of creating an implicit job', async () => {
+  it('registers its cell capability with the server on connect', async () => {
     const bridge = new SimulatorOrchestrationBridge()
     await connectBridge(bridge)
 
-    mockApi.getJobs.mockResolvedValue([jobDto({ id: 'job-42', status: 'Created' })])
-    mockApi.claimJob.mockResolvedValue({
-      job: jobDto({ id: 'job-42', status: 'Running', simulationSessionId: 'session-7' }),
-      session: sessionDto({ id: 'session-7', jobId: 'job-42' }),
-      tasks: [],
-    } satisfies ClaimResultDto)
+    expect(hub.registerSimulator).toHaveBeenCalledWith('test-simulator', 'reference-cell')
+    bridge.dispose()
+  })
+
+  it('refuses a local production start while orchestrated', async () => {
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
 
     const localStart = vi.fn()
     await bridge.start(pallet('pallet-1'), localStart)
 
-    expect(mockApi.createJob).not.toHaveBeenCalled()
-    expect(mockApi.claimJob).toHaveBeenCalledWith('job-42', {
-      simulatorId: 'test-simulator',
-      correlationId: 'corr-test',
-    })
-    expect(bridge.mode).toBe('online')
-    expect(bridge.ctx.jobId).toBe('job-42')
-    expect(bridge.ctx.sessionId).toBe('session-7')
-    expect(bridge.ctx.palletId).toBe('pallet-1')
-    expect(localStart).toHaveBeenCalledTimes(1)
-
-    bridge.dispose()
-  })
-
-  it('falls back to a local-only offline demo when no runnable job exists', async () => {
-    const bridge = new SimulatorOrchestrationBridge()
-    await connectBridge(bridge)
-
-    mockApi.getJobs.mockResolvedValue([jobDto({ status: 'Completed' })])
-
-    const localStart = vi.fn()
-    await bridge.start(pallet(), localStart)
-
+    // No implicit job creation or claim; the server dispatch owns the start.
     expect(mockApi.createJob).not.toHaveBeenCalled()
     expect(mockApi.claimJob).not.toHaveBeenCalled()
-    expect(bridge.mode).toBe('offline')
-    expect(bridge.ctx.jobId).toBeNull()
-    expect(bridge.ctx.sessionId).toBeNull()
-    expect(localStart).toHaveBeenCalledTimes(1)
+    expect(localStart).not.toHaveBeenCalled()
+    expect(bridge.mode).toBe('online')
 
     bridge.dispose()
   })
@@ -230,26 +285,95 @@ describe('SimulatorOrchestrationBridge', () => {
     expect(localStart).toHaveBeenCalledTimes(1)
   })
 
-  it('reports task status transitions for mapped pallet slots', async () => {
+  it('adopts a targeted dispatch, starts automatically and acknowledges with the same correlation id', async () => {
     const bridge = new SimulatorOrchestrationBridge()
     await connectBridge(bridge)
 
-    mockApi.getJobs.mockResolvedValue([jobDto({ id: 'job-42', status: 'Created' })])
-    mockApi.claimJob.mockResolvedValue({
-      job: jobDto({ id: 'job-42', status: 'Running', simulationSessionId: 'session-7' }),
-      session: sessionDto({ id: 'session-7', jobId: 'job-42' }),
-      tasks: [
-        taskDto({ id: 'task-a', palletId: 'pallet-1', slotRow: 0, slotColumn: 1 }),
-        taskDto({ id: 'task-b', palletId: 'pallet-2', slotRow: 0, slotColumn: 0 }),
-      ],
-    } satisfies ClaimResultDto)
+    mockApi.getJobTasks.mockResolvedValue([
+      taskDto({ id: 'task-a', palletId: 'pallet-1', slotRow: 0, slotColumn: 1 }),
+    ])
+    const externalStart = vi.fn()
+    bridge.onExternalStart = externalStart
+    bridge.palletResolver = () => pallet('pallet-1')
+
+    const callbacks = captureHubCallbacks()
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent())
+
+    expect(bridge.mode).toBe('online')
+    expect(bridge.ctx.jobId).toBe('job-42')
+    expect(bridge.ctx.sessionId).toBe('session-7')
+    expect(bridge.ctx.targetCellId).toBe('reference-cell')
+    expect(externalStart).toHaveBeenCalledTimes(1)
+    expect(externalStart).toHaveBeenCalledWith(expect.objectContaining({ id: 'pallet-1' }), 'job-42', 'session-7')
+
+    // Acknowledged then Running, both with the dispatch correlation id.
+    expect(mockApi.acknowledgeDispatch).toHaveBeenCalledWith('job-42', expect.objectContaining({
+      simulatorId: 'test-simulator',
+      correlationId: 'corr-dispatch',
+      targetCellId: 'reference-cell',
+      simulationSessionId: 'session-7',
+      state: 'Acknowledged',
+    }))
+    expect(mockApi.acknowledgeDispatch).toHaveBeenCalledWith('job-42', expect.objectContaining({
+      state: 'Running',
+    }))
+    expect(bridge.dispatchPhase).toBe('running')
+
+    bridge.dispose()
+  })
+
+  it('ignores a dispatch targeted at another simulator or cell', async () => {
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
+
+    const externalStart = vi.fn()
+    bridge.onExternalStart = externalStart
+    const callbacks = captureHubCallbacks()
+
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent({ assignedSimulatorId: 'other-sim' }))
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent({ targetCellId: 'other-cell' }))
+
+    expect(externalStart).not.toHaveBeenCalled()
+    expect(mockApi.acknowledgeDispatch).not.toHaveBeenCalled()
+
+    bridge.dispose()
+  })
+
+  it('is idempotent for a duplicate dispatch of the same session', async () => {
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
+
+    const externalStart = vi.fn()
+    bridge.onExternalStart = externalStart
+    bridge.palletResolver = () => pallet('pallet-1')
+    const callbacks = captureHubCallbacks()
+
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent())
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent())
+
+    // The workflow starts once; the duplicate only re-acknowledges.
+    expect(externalStart).toHaveBeenCalledTimes(1)
+
+    bridge.dispose()
+  })
+
+  it('reports task status transitions for mapped pallet slots after a dispatch', async () => {
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
+
+    mockApi.getJobTasks.mockResolvedValue([
+      taskDto({ id: 'task-a', palletId: 'pallet-1', slotRow: 0, slotColumn: 1 }),
+      taskDto({ id: 'task-b', palletId: 'pallet-2', slotRow: 0, slotColumn: 0 }),
+    ])
 
     const wf = fakeWorkflow()
     bridge.bindWorkflow(wf)
+    bridge.onExternalStart = () => {}
+    bridge.palletResolver = () => pallet('pallet-1')
 
-    await bridge.start(pallet('pallet-1'), () => {})
+    const callbacks = captureHubCallbacks()
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent())
 
-    // Slot selection starts the mapped task
     ;(wf as { currentRow: number; currentCol: number }).currentRow = 0
     ;(wf as { currentRow: number; currentCol: number }).currentCol = 1
     wf.onPhaseChanged?.('MOVE_ABOVE_PALLET_SLOT')
@@ -262,7 +386,6 @@ describe('SimulatorOrchestrationBridge', () => {
     })
     expect(bridge.ctx.taskId).toBe('task-a')
 
-    // Slot completion completes the mapped task
     wf.onSlotComplete?.(0, 1)
     await vi.waitFor(() => {
       expect(mockApi.updateTaskStatus).toHaveBeenCalledWith('task-a', expect.objectContaining({
@@ -277,17 +400,13 @@ describe('SimulatorOrchestrationBridge', () => {
     const bridge = new SimulatorOrchestrationBridge()
     await connectBridge(bridge)
 
-    mockApi.getJobs.mockResolvedValue([jobDto({ id: 'job-42', status: 'Created' })])
-    mockApi.claimJob.mockResolvedValue({
-      job: jobDto({ id: 'job-42', status: 'Running', simulationSessionId: 'session-7' }),
-      session: sessionDto({ id: 'session-7', jobId: 'job-42' }),
-      tasks: [],
-    } satisfies ClaimResultDto)
-
     const wf = fakeWorkflow()
     bridge.bindWorkflow(wf)
+    bridge.onExternalStart = () => {}
+    bridge.palletResolver = () => pallet('pallet-1')
 
-    await bridge.start(pallet(), () => {})
+    const callbacks = captureHubCallbacks()
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent())
 
     wf.onRunStateChanged?.('running')
     await vi.waitFor(() => {
@@ -300,19 +419,15 @@ describe('SimulatorOrchestrationBridge', () => {
     bridge.dispose()
   })
 
-  it('sends heartbeats for the claimed session while online', async () => {
+  it('sends heartbeats for the adopted session while online', async () => {
     vi.useFakeTimers()
     const bridge = new SimulatorOrchestrationBridge()
     await connectBridge(bridge)
 
-    mockApi.getJobs.mockResolvedValue([jobDto({ id: 'job-42', status: 'Created' })])
-    mockApi.claimJob.mockResolvedValue({
-      job: jobDto({ id: 'job-42', status: 'Running', simulationSessionId: 'session-7' }),
-      session: sessionDto({ id: 'session-7', jobId: 'job-42' }),
-      tasks: [],
-    } satisfies ClaimResultDto)
-
-    await bridge.start(pallet(), () => {})
+    bridge.onExternalStart = () => {}
+    bridge.palletResolver = () => pallet('pallet-1')
+    const callbacks = captureHubCallbacks()
+    await callbacks.onExecutionDispatchRequested?.(dispatchEvent())
     expect(bridge.mode).toBe('online')
 
     await vi.advanceTimersByTimeAsync(5_000)
@@ -337,5 +452,91 @@ describe('SimulatorOrchestrationBridge', () => {
     expect(mockApi.updateCurrentMachineState).not.toHaveBeenCalled()
     expect(mockApi.updateSimulationSessionState).not.toHaveBeenCalled()
     expect(mockApi.heartbeatSimulationSession).not.toHaveBeenCalled()
+  })
+
+  // ── Authoritative robot state and jog (S53) ────────────────────────
+
+  it('publishes the provided robot report on its own 2 Hz timer', async () => {
+    vi.useFakeTimers()
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
+    mockApi.publishRobotPositions.mockResolvedValue({} as never)
+    bridge.robotPositionsProvider = () => ({
+      robotId: 'robot-1',
+      robotModel: 'medium-6axis',
+      joints: [],
+      tcp: { x: 0, y: 0, z: 0, rx: 0, ry: 0, rz: 0 },
+      frames: { baseFrame: 'world', toolFrame: 'flange', workObjectFrame: 'wo', currentToolId: 'tool-1' },
+      motionStatus: 'IDLE',
+      operatingMode: 'manual-training',
+    })
+
+    await vi.advanceTimersByTimeAsync(500)
+
+    expect(mockApi.publishRobotPositions).toHaveBeenCalledWith('reference-cell', 'robot-1', expect.objectContaining({
+      simulatorId: 'test-simulator',
+      operatingMode: 'manual-training',
+    }))
+    bridge.dispose()
+  })
+
+  it('routes a jog command for its own cell and simulator to the gateway', async () => {
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
+
+    const onJogCommand = vi.fn()
+    bridge.onJogCommand = onJogCommand
+    const callbacks = captureHubCallbacks()
+
+    callbacks.onJogCommandIssued?.({
+      cellId: 'reference-cell', robotId: 'robot-1', simulatorId: 'test-simulator',
+      action: 'press', joint: 'J1', direction: 1, deadManToken: 'dm', correlationId: 'c1', issuedAtUtc: '2026-01-01T00:00:00Z',
+    })
+    callbacks.onJogCommandIssued?.({
+      cellId: 'reference-cell', robotId: 'robot-1', simulatorId: 'other-sim',
+      action: 'press', joint: 'J1', direction: 1, deadManToken: 'dm', correlationId: 'c2', issuedAtUtc: '2026-01-01T00:00:00Z',
+    })
+
+    expect(onJogCommand).toHaveBeenCalledTimes(1)
+    bridge.dispose()
+  })
+
+  it('stops jog when the authority is lost or degraded', async () => {
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
+
+    const onJogStop = vi.fn()
+    bridge.onJogStop = onJogStop
+    const callbacks = captureHubCallbacks()
+
+    callbacks.onControlAuthorityChanged?.({
+      scope: 'reference-cell', mode: 'external-controller', state: 'held', ownerId: 'op',
+      eventType: 'authority_acquired', timestampUtc: '2026-01-01T00:00:00Z',
+    })
+    expect(bridge.authorityAllowsCommanding()).toBe(true)
+    expect(onJogStop).not.toHaveBeenCalled()
+
+    callbacks.onControlAuthorityChanged?.({
+      scope: 'reference-cell', mode: 'external-controller', state: 'degraded', ownerId: 'op',
+      degradedReason: 'controller-heartbeat-lost', eventType: 'authority_degraded', timestampUtc: '2026-01-01T00:00:01Z',
+    })
+    expect(bridge.authorityAllowsCommanding()).toBe(false)
+    expect(onJogStop).toHaveBeenCalledWith('authority-loss')
+
+    bridge.dispose()
+  })
+
+  it('stops jog when the connection drops', async () => {
+    const bridge = new SimulatorOrchestrationBridge()
+    await connectBridge(bridge)
+
+    const onJogStop = vi.fn()
+    bridge.onJogStop = onJogStop
+    const callbacks = captureHubCallbacks()
+
+    callbacks.onConnectionStateChanged?.('disconnected')
+
+    expect(onJogStop).toHaveBeenCalledWith('disconnect')
+    bridge.dispose()
   })
 })

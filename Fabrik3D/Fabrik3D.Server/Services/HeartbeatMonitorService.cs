@@ -22,6 +22,7 @@ public class HeartbeatMonitorService : BackgroundService
     private readonly IHubNotificationService _hub;
     private readonly ILogger<HeartbeatMonitorService> _log;
     private readonly ControlAuthorityService? _authority;
+    private readonly DispatchService? _dispatch;
     private readonly TimeSpan _timeout;
     private readonly TimeSpan _checkInterval;
 
@@ -30,12 +31,14 @@ public class HeartbeatMonitorService : BackgroundService
         IHubNotificationService hub,
         ILogger<HeartbeatMonitorService> log,
         IOptions<OrchestrationOptions> options,
-        ControlAuthorityService? authority = null)
+        ControlAuthorityService? authority = null,
+        DispatchService? dispatch = null)
     {
         _sessions = sessions;
         _hub = hub;
         _log = log;
         _authority = authority;
+        _dispatch = dispatch;
         _timeout = TimeSpan.FromSeconds(Math.Max(1, options.Value.HeartbeatTimeoutSeconds));
         _checkInterval = TimeSpan.FromSeconds(Math.Max(1, options.Value.HeartbeatCheckIntervalSeconds));
     }
@@ -82,6 +85,13 @@ public class HeartbeatMonitorService : BackgroundService
         if (_authority is not null)
         {
             await _authority.ExpireLeasesAsync(now, cancellationToken);
+        }
+
+        // And dispatch acknowledgement timeouts (S51): an unacknowledged dispatch becomes TimedOut
+        // and never silently assigns another simulator.
+        if (_dispatch is not null)
+        {
+            await _dispatch.ExpirePendingDispatchesAsync(now, cancellationToken);
         }
     }
 }

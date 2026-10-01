@@ -54,6 +54,17 @@ elsewhere in the documentation are consistent with this list.
 - Performance numbers are recorded on a documented reference workstation/browser; they are not a
   guarantee for other hardware.
 
+## Operator HMI and robot jog (S53)
+
+- `/robot-positions` shows and jogs the **reference cell's simulated** robot. The authoritative
+  report is what the simulator executed; the HMI does not derive or fabricate pose values.
+- Manual jog is simulated control arbitration only. It is not a safety function, carries no
+  certification, and must never be described as one. Motion safety is enforced by the simulator's
+  `MotionSafetyEngine` (collision/interlock primitives), not by a certified safety PLC.
+- Engineering and training authoring surfaces remain in the separate simulation workspace; the HMI
+  only links to them when `VITE_SIMULATOR_URL` is configured.
+- The robot-position store is in memory and single-cell scoped; multi-cell/multi-robot routing and
+  persistence are follow-up work.
 ## Security residual risk
 
 - Dependency audits reflect the public vulnerability databases at execution time and must be rerun on
@@ -66,12 +77,12 @@ elsewhere in the documentation are consistent with this list.
 - See [SECURITY_MODEL.md](SECURITY_MODEL.md) and [SECURITY_HARDENING.md](SECURITY_HARDENING.md) for
   controls and residual risk.
 
-## Roadmap ceiling
+## Roadmap revision boundary
 
-The roadmap contains exactly 50 sprints (S01-S50); there is no S51. Any work beyond the 1.0 baseline
-is a candidate for a separate, explicitly approved roadmap revision that preserves history. New
-features, scenes, protocols, billing, marketplace and certification work are explicitly out of scope
-for the 1.0 baseline.
+S50 remains the completed Fabrik3D 1.0 baseline. Explicitly approved Roadmap Revision 2 adds planned
+post-1.0 product-hardening work in S51-S58 without modifying S01-S50 history or making those planned
+capabilities part of the 1.0 release. There is no S59 in this revision. New features, scenes,
+protocols, billing, marketplace and certification work remain out of scope for the 1.0 baseline.
 
 ## Related documents
 

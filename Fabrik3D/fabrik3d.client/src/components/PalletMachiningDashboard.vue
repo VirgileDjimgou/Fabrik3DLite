@@ -84,6 +84,12 @@
       {{ modeLabel }}
     </div>
 
+    <!-- ── Dispatch lifecycle (S51) ─────────────────── -->
+    <div class="section" v-if="dispatchPhase !== 'idle'">
+      <label>{{ t('dashboard.dispatch') }}</label>
+      <span class="value" :class="dispatchClass" data-dispatch-phase>{{ dispatchLabel }}</span>
+    </div>
+
     <!-- ── Orchestration context ─────────────────────── -->
     <div class="section" v-if="jobId">
       <label>{{ t('dashboard.job') }}</label>
@@ -108,7 +114,7 @@
 import { computed } from 'vue'
 import { useDraggableOverlay } from '../composables/useDraggableOverlay'
 import type { PalletWorkflowPhase, WorkflowRunState } from '../simulation/PalletMachiningWorkflow'
-import type { BridgeMode } from '../services/simulatorOrchestrationBridge'
+import type { BridgeMode, DispatchPhase } from '../services/simulatorOrchestrationBridge'
 import type { ConnectionState } from '../services/orchestratorSignalR'
 import { useSimulatorI18n } from '../i18n/simulator'
 
@@ -130,6 +136,7 @@ const props = withDefaults(defineProps<{
   mode?: BridgeMode
   connectionState?: ConnectionState
   sessionStatus?: string | null
+  dispatchPhase?: DispatchPhase
   commandError?: string
 }>(), {
   runState: 'idle',
@@ -149,6 +156,7 @@ const props = withDefaults(defineProps<{
   mode: 'offline',
   connectionState: 'disconnected',
   sessionStatus: null,
+  dispatchPhase: 'idle',
   commandError: '',
 })
 
@@ -167,6 +175,24 @@ const modeLabel = computed(() => {
   if (props.connectionState === 'disconnected') return t('mode.disconnected')
   return t('mode.online')
 })
+
+const dispatchLabel = computed(() => ({
+  idle: t('dispatch.idle'),
+  pending: t('dispatch.pending'),
+  acknowledged: t('dispatch.acknowledged'),
+  running: t('dispatch.running'),
+  failed: t('dispatch.failed'),
+  timedout: t('dispatch.timedout'),
+})[props.dispatchPhase])
+
+const dispatchClass = computed(() => ({
+  idle: '',
+  pending: 'state-pending',
+  acknowledged: 'state-acknowledged',
+  running: 'state-done',
+  failed: 'state-faulted',
+  timedout: 'state-faulted',
+})[props.dispatchPhase])
 const { panelStyle, beginDrag } = useDraggableOverlay('fabrik3d:panel:pallet-machining', { x: Math.max(16, window.innerWidth - 290), y: 16 })
 
 const stateLabel = computed(() => ({ idle: `⏹ ${t('state.idle')}`, running: `▶ ${t('state.running')}`, paused: `⏸ ${t('state.paused')}`, stopped: `⏹ ${t('state.stopped')}`, complete: `✓ ${t('state.complete')}` })[props.runState])
@@ -332,6 +358,8 @@ const partStateClass = computed(() => {
 .state-cnc    { color: #ff6644; }
 .state-done   { color: #44dd88; }
 .state-faulted { color: #ff5566; }
+.state-pending { color: #ffcc44; }
+.state-acknowledged { color: #66ccff; }
 .orchestration-id { font-family: monospace; font-size: 0.72rem; color: #8899aa; }
 
 /* ── Metrics ──────────────────────────────── */

@@ -3,6 +3,7 @@ import type { Ref, ShallowRef } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { readRendererIdentity, type RendererIdentity } from '../observability/acceleration'
 
 export type SceneQuality = 'low' | 'medium' | 'high'
 
@@ -30,6 +31,8 @@ export interface ThreeSceneContext {
   renderer: THREE.WebGLRenderer
   controls: OrbitControls
   quality: SceneQuality
+  /** Observed WebGL renderer identity, used to classify acceleration honestly (S56). */
+  rendererIdentity: RendererIdentity
 
   /** Add any Object3D to the scene. */
   addObject(obj: THREE.Object3D): void
@@ -143,6 +146,7 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
         renderer,
         controls,
         quality,
+        rendererIdentity: readRendererIdentity(renderer.getContext()),
         addObject: (obj) => scene.add(obj),
         removeObject: (obj) => scene.remove(obj),
         dispose: () => {

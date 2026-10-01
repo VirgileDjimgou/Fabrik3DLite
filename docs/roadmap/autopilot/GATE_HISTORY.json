@@ -75,6 +75,31 @@
       "createdAt": "2026-09-25T17:18:07.927Z",
       "resolutionNote": "Reviewed and committed the independently verified S34-S42 sprint work as commit d197480 on explicit user approval; worktree is clean except allowed autopilot runtime files and the security-scan false positives were repaired and verified with synthetic positive/negative fixtures.",
       "resolvedAt": "2026-09-25T19:01:35.496Z"
+    },
+    {
+      "schemaVersion": "1.0",
+      "batchId": "2026-10-01-030259",
+      "sprintId": null,
+      "reasonCode": "UNRELATED_DIRTY_WORKTREE",
+      "summary": "Uncommitted changes exist in the worktree and no sprint is active; the batch cannot safely tell sprint work from unrelated user work.",
+      "requiredHumanActions": [
+        "Review the listed paths and either commit, stash or discard them yourself. Never let the automation delete them.",
+        " M .github/copilot-instructions.md",
+        " M .opencode/agents/sprint-worker.md",
+        " M AGENTS.md",
+        " M README.md",
+        " M docs/operations/LIMITATIONS.md",
+        " M docs/releases/RELEASE_NOTES_1.0.md",
+        " M docs/roadmap/README.md",
+        " M docs/roadmap/roadmap.json",
+        " M scripts/tests/autopilot-wiring.test.mjs",
+        "?? docs/roadmap/sprints/S51-authoritative-job-dispatch.md",
+        "Then run npm run sprint:batch:resume."
+      ],
+      "safeToResume": true,
+      "createdAt": "2026-10-01T03:03:00.083Z",
+      "resolutionNote": "Reviewed the dirty worktree: committed Roadmap Revision 2 preparation (S51-S58 briefs, roadmap.json/state.json, AGENTS.md and docs updates, autopilot wiring test) as 3c521c1. Only autopilot-owned runtime files (state.json, HUMAN_REQUIRED.json) remain dirty.",
+      "resolvedAt": "2026-10-01T03:07:54.463Z"
     }
   ]
 }

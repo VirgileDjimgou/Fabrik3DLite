@@ -28,4 +28,28 @@ public class OrchestrationOptions
     /// is committed; when set it must be supplied by the operator performing the takeover.
     /// </summary>
     public string? AuthorityConfirmationToken { get; set; }
+
+    /// <summary>
+    /// Seconds an assigned simulator has to claim/acknowledge a targeted dispatch before the job's
+    /// dispatch state becomes <c>TimedOut</c> (S51). Bounds retained correlation state.
+    /// </summary>
+    public int DispatchAckTimeoutSeconds { get; set; } = 20;
+
+    /// <summary>
+    /// Default cell id used when a job has no explicit target and the deployment has a single
+    /// compatible cell (S51). Keeps single-cell installs and the reference cell working unchanged.
+    /// </summary>
+    public string DefaultCellId { get; set; } = "reference-cell";
+
+    /// <summary>
+    /// When true, the server-authoritative dispatch path is enabled. When false the legacy
+    /// HMI-start + simulator-claim path remains available (compatibility switch, S51).
+    /// </summary>
+    public bool AuthoritativeDispatchEnabled { get; set; } = true;
+
+    /// <summary>
+    /// How long an authoritative robot-position report stays fresh (S53). Older reports are shown
+    /// as stale and disable jog commands; the value is never silently refreshed.
+    /// </summary>
+    public int RobotTelemetryStaleAfterSeconds { get; set; } = 3;
 }

@@ -72,8 +72,11 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 - [Support bundle](operations/SUPPORT_BUNDLE.md)
 - [Observability](operations/OBSERVABILITY.md)
 - [Performance](operations/PERFORMANCE.md)
+- [Failure and recovery matrix](operations/RECOVERY_MATRIX.md)
 - [Security model](operations/SECURITY_MODEL.md)
+- [Threat model](operations/THREAT_MODEL.md)
 - [Security hardening](operations/SECURITY_HARDENING.md)
+- [Repository and binary policy](operations/REPOSITORY_POLICY.md)
 - [Accessibility](operations/ACCESSIBILITY.md)
 - [Browser support](operations/BROWSER_SUPPORT.md)
 - [Release-candidate checklist](operations/RELEASE_CANDIDATE_CHECKLIST.md)
@@ -110,6 +113,8 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 | [Training sessions](architecture/TRAINING_SESSIONS.md) | Server assessment |
 | [Instructor dashboard](architecture/INSTRUCTOR_DASHBOARD.md) | Instructor surface |
 | [3D assets](architecture/3D_ASSETS.md) | GLB asset SDK and budgets |
+| [Shared asset runtime](architecture/ASSET_RUNTIME.md) | Cache, refcounting and adaptive LOD |
+| [Hero reference cell](architecture/HERO_REFERENCE_CELL.md) | Flagship cell, pipeline and budgets |
 | [CNC and safety visuals](architecture/CNC_AND_SAFETY_VISUALS.md) | State-driven visuals |
 | [Industrial scene](architecture/INDUSTRIAL_SCENE.md) | Scene composition |
 | [Predefined scenes](architecture/PREDEFINED_INDUSTRIAL_SCENES.md) | Built-in cells |
@@ -122,6 +127,7 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 
 - [Validation](operations/VALIDATION.md) — recorded S48 lifecycle transcript
 - [Validation 1.0](operations/VALIDATION_1.0.md) — recorded S50 1.0 gate and lifecycle transcript
+- [Validation post-1.0](operations/VALIDATION_POST_1.0.md) — S58 automated/fixture evidence, the unresolved real-PLC human gate and unvalidated claims
 - [TESTING.md](TESTING.md) — test layers and commands
 - [Dependency audit](development/DEPENDENCY_AUDIT.md)
 - [Troubleshooting](development/TROUBLESHOOTING.md)

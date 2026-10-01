@@ -149,6 +149,25 @@ pallet → robot → CNC → completion → stop/fault → reset sequence, refus
 run, and demonstrates degraded mode on controller loss. See
 [`../showcases/codesys-softplc/sequence.md`](../showcases/codesys-softplc/sequence.md).
 
+## Operator jog authority (S53)
+
+A manual jog press starts at the HMI and crosses three independent gates before an actuator can move:
+
+1. **Server policy and authority** — `POST /api/robots/{cellId}/{robotId}/jog` requires the Operate
+   policy (Python source of truth: `RobotsController`), a known and fresh robot report, the
+   `manual-training` operating mode, a non-empty dead-man token and a held authority accepted by
+   `IControlAuthorityGate.AuthorizeCommandAsync` for the authenticated subject. Release bypasses the
+   authority/mode checks so a stop is never blocked.
+2. **Targeted delivery** — an accepted intent is published as `JogCommandIssued` to the assigned
+   simulator's SignalR group only; the simulator re-validates the cell, simulator and robot id.
+3. **Simulator motion safety** — `OperatorJogGateway` re-uses `ManualJogController` (held input,
+   timeout, declared limits) and `MotionSafetyEngine` (collision/interlock checks) before it applies a
+   step. Authority loss, disconnect, mode change, focus loss and view teardown all release the hold.
+
+Jog is impossible in replay (the server refuses it and the gateway checks its own replay flag), and
+the server audit trail records the actor, action, joint, outcome and correlation id without tokens or
+secrets. This is simulated control arbitration; it is not a functional-safety function.
+
 ## Limitations
 
 - This is **not** a safety authority and carries no certification. It is a training/VC arbitration

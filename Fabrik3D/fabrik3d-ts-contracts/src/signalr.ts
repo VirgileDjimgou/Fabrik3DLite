@@ -68,6 +68,44 @@ export interface MachineStateChangedEvent {
   timestampUtc: string
 }
 
+/** Targeted execution request delivered only to the assigned simulator's group (S51). */
+export interface ExecutionDispatchRequestedEvent {
+  jobId: string
+  sessionId: string
+  targetCellId: string
+  assignedSimulatorId: string
+  correlationId: string
+  dispatchedAtUtc: string
+  timeoutAtUtc: string
+  taskIds: string[]
+}
+
+/** Dispatch lifecycle change observed by the HMI (S51). */
+export interface DispatchStateChangedEvent {
+  jobId: string
+  sessionId: string
+  dispatchState: string
+  targetCellId?: string | null
+  assignedSimulatorId?: string | null
+  correlationId?: string | null
+  failureReason?: string | null
+  timestampUtc: string
+}
+
+/** Targeted jog command delivered only to the assigned simulator's group (S53). */
+export interface JogCommandIssuedEvent {
+  cellId: string
+  robotId: string
+  simulatorId: string
+  action: string
+  joint: string
+  direction: number
+  deadManToken?: string | null
+  reason?: string | null
+  correlationId: string
+  issuedAtUtc: string
+}
+
 export interface ControlAuthorityChangedEvent {
   scope: string
   mode: string
@@ -92,6 +130,9 @@ export const orchestrationHubEvents = [
   'OperatorMessage',
   'MachineStateChanged',
   'ControlAuthorityChanged',
+  'ExecutionDispatchRequested',
+  'DispatchStateChanged',
+  'JogCommandIssued',
 ] as const
 
 export type OrchestrationHubEventName = (typeof orchestrationHubEvents)[number]

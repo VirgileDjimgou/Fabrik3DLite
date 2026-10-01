@@ -10,7 +10,10 @@ import type {
   AlarmAcknowledgedEvent,
   AlarmRaisedEvent,
   ControlAuthorityChangedEvent,
+  DispatchStateChangedEvent,
+  ExecutionDispatchRequestedEvent,
   JobStateChangedEvent,
+  JogCommandIssuedEvent,
   MachineStateChangedEvent,
   OperatorMessageEvent,
   SimulationStateChangedEvent,
@@ -22,7 +25,10 @@ export type {
   AlarmAcknowledgedEvent,
   AlarmRaisedEvent,
   ControlAuthorityChangedEvent,
+  DispatchStateChangedEvent,
+  ExecutionDispatchRequestedEvent,
   JobStateChangedEvent,
+  JogCommandIssuedEvent,
   MachineStateChangedEvent,
   OperatorMessageEvent,
   SimulationStateChangedEvent,
@@ -42,6 +48,9 @@ export type OrchestrationCallbacks = {
   onOperatorMessage?: (evt: OperatorMessageEvent) => void
   onMachineStateChanged?: (evt: MachineStateChangedEvent) => void
   onControlAuthorityChanged?: (evt: ControlAuthorityChangedEvent) => void
+  onExecutionDispatchRequested?: (evt: ExecutionDispatchRequestedEvent) => void
+  onDispatchStateChanged?: (evt: DispatchStateChangedEvent) => void
+  onJogCommandIssued?: (evt: JogCommandIssuedEvent) => void
   onConnectionStateChanged?: (state: ConnectionState) => void
 }
 
@@ -116,13 +125,27 @@ export async function connect(hubUrl?: string): Promise<void> {
     logSignalR('ControlAuthorityChanged', evt)
     callbacks.onControlAuthorityChanged?.(evt)
   })
+  connection.on('ExecutionDispatchRequested', (evt: ExecutionDispatchRequestedEvent) => {
+    logSignalR('ExecutionDispatchRequested', evt)
+    callbacks.onExecutionDispatchRequested?.(evt)
+  })
+  connection.on('DispatchStateChanged', (evt: DispatchStateChangedEvent) => {
+    logSignalR('DispatchStateChanged', evt)
+    callbacks.onDispatchStateChanged?.(evt)
+  })
+  connection.on('JogCommandIssued', (evt: JogCommandIssuedEvent) => {
+    logSignalR('JogCommandIssued', evt)
+    callbacks.onJogCommandIssued?.(evt)
+  })
 
   connection.onreconnecting(() => {
     console.warn('[SignalR] Reconnecting to orchestration hub')
     callbacks.onConnectionStateChanged?.('reconnecting')
   })
-  connection.onreconnected(() => {
+  connection.onreconnected(async () => {
     console.log('[SignalR] Reconnected to orchestration hub')
+    // Re-register the simulator group after a reconnect so targeted dispatch still reaches us.
+    await reRegisterSimulator()
     callbacks.onConnectionStateChanged?.('connected')
   })
   connection.onclose(() => {
@@ -136,11 +159,35 @@ export async function connect(hubUrl?: string): Promise<void> {
   try {
     await connection.start()
     console.log('[SignalR] Connected to orchestration hub')
+    await reRegisterSimulator()
     callbacks.onConnectionStateChanged?.('connected')
   } catch (err) {
     console.warn(`[SignalR] Failed to connect to ${url} — running offline`, err)
     connection = null
     callbacks.onConnectionStateChanged?.('disconnected')
+  }
+}
+
+// ── Simulator registration (S51) ───────────────────────────────────
+
+let registeredSimulator: { simulatorId: string; cellId: string } | null = null
+
+/**
+ * Registers this simulator's identity and cell capability with the server so targeted dispatch
+ * requests reach it. Safe to call before connect; the registration is replayed on reconnect.
+ */
+export async function registerSimulator(simulatorId: string, cellId: string): Promise<void> {
+  registeredSimulator = { simulatorId, cellId }
+  await reRegisterSimulator()
+}
+
+async function reRegisterSimulator(): Promise<void> {
+  if (!connection || connection.state !== 'Connected' || !registeredSimulator) return
+  try {
+    await connection.invoke('RegisterSimulator', registeredSimulator.simulatorId, registeredSimulator.cellId)
+    console.log(`[SignalR] Registered simulator ${registeredSimulator.simulatorId} for cell ${registeredSimulator.cellId}`)
+  } catch (err) {
+    console.warn('[SignalR] Simulator registration failed', err)
   }
 }
 

@@ -108,13 +108,21 @@ public class TaskStatusIntegrationTests
             Status = "Completed", SimulationSessionId = sessionId, SimulatorId = "sim-owner",
         }, null);
 
-        // Completed -> Completed must fail: duplicate command is rejected.
+        // S52: a duplicate terminal report is idempotent and returns the stored fact unchanged.
+        var duplicate = await _fx.TaskService.UpdateStatusAsync(taskId, new UpdateTaskStatusRequest
+        {
+            Status = "Completed", SimulationSessionId = sessionId, SimulatorId = "sim-owner",
+        }, null);
+        Assert.NotNull(duplicate);
+        Assert.Equal(TaskStatusEnum.Completed.ToString(), duplicate.Status);
+
+        // A genuine regression (Completed -> Running) is still rejected.
         var invalid = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             _fx.TaskService.UpdateStatusAsync(taskId, new UpdateTaskStatusRequest
             {
-                Status = "Completed", SimulationSessionId = sessionId, SimulatorId = "sim-owner",
+                Status = "Running", SimulationSessionId = sessionId, SimulatorId = "sim-owner",
             }, null));
 
-        Assert.Contains("Cannot complete task in 'Completed' state", invalid.Message);
+        Assert.Contains("Cannot run task in 'Completed' state", invalid.Message);
     }
 }

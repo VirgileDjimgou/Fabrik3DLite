@@ -131,7 +131,10 @@ every problem at once:
 - Swagger enabled for a production-like profile without `Deployment:AllowSwaggerInProduction=true`;
 - `Authentication:Mode=None` in a production-like profile;
 - a non-positive historian retention value when the historian is enabled;
-- an unknown `Deployment:Profile`.
+- an unknown `Deployment:Profile`;
+- a malformed or unsafe response-header policy (empty frame/referrer/permissions value, malformed or
+  below-minimum HSTS `max-age`, or a CSP that would break the REST/SignalR `connect-src` surfaces);
+- `SecurityHeaders:ExternalTls=true` without an explicit HSTS value and Content-Security-Policy.
 
 Independent of the deployment validator, `AuthenticationStartupGuard` refuses
 `Mode=Development/Test/None`, a missing OIDC authority, `RequireHttpsMetadata=false`, or a
@@ -152,6 +155,27 @@ Unhandled exception. System.InvalidOperationException: Invalid deployment config
 - Configure `Cors:AllowedOrigins` with the exact HTTPS origins of the simulator and HMI. Wildcards
   are rejected.
 - Do not expose the MongoDB port. It is intentionally unpublished.
+
+### Response hardening at the proxy (S57)
+
+The application sends the OWASP-aligned headers it can guarantee itself
+(`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`,
+cross-origin policies). TLS termination and the headers that depend on public TLS are the operator's
+responsibility, and S57 makes that explicit:
+
+- Terminate TLS at the proxy and set HSTS there, for example
+  `Strict-Transport-Security: max-age=31536000; includeSubDomains`.
+- To make a missing HSTS/CSP a **startup error** instead of a silent gap, set
+  `SecurityHeaders:ExternalTls=true` together with:
+  - `SecurityHeaders:StrictTransportSecurity=max-age=31536000; includeSubDomains`
+  - `SecurityHeaders:ContentSecurityPolicy=` the reviewed policy
+    (`SecurityHeaderPolicy.RecommendedContentSecurityPolicy`), which keeps `connect-src 'self' ws: wss:`
+    so the SignalR hub and the WebGL simulator keep working. Add your front-end origin to `connect-src`
+    only when the HMI/simulator are served from a different origin.
+- Migration guidance for existing deployments: the defaults are unchanged, so leaving `ExternalTls`
+  unset is backward compatible. Enable it together with the two values above in one configuration
+  change and restart; the host validates them before serving traffic. A deliberately misconfigured CSP
+  (for example a `connect-src` without `ws:`/`wss:` or `'self'`) is refused rather than shipped.
 
 ### Hetzner behind Cloudflare Tunnel
 
@@ -195,6 +219,9 @@ ports or volume names the demo relies on.
 ## Related documents
 
 - [REQUIREMENTS.md](REQUIREMENTS.md) — measured hardware/browser requirements.
+- [THREAT_MODEL.md](THREAT_MODEL.md) — surfaces, mitigations and residual risk.
+- [SECURITY_HARDENING.md](SECURITY_HARDENING.md) — controls and executed evidence.
+- [REPOSITORY_POLICY.md](REPOSITORY_POLICY.md) — binary/repository lifecycle policy.
 - [ADMINISTRATOR_GUIDE.md](ADMINISTRATOR_GUIDE.md) — users, backup, upgrade and monitoring.
 - [BACKUP_RESTORE.md](BACKUP_RESTORE.md) — backup and restore procedures.
 - [UPGRADE_ROLLBACK.md](UPGRADE_ROLLBACK.md) — upgrade and rollback procedures.

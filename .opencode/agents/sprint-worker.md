@@ -23,4 +23,4 @@ Core rules:
 - Stop and report HUMAN_REQUIRED instead of guessing when a real secret, credential, certificate trust decision, license acceptance, physical hardware or an unresolved product decision is required.
 - Record completion only through `npm run sprint:complete -- --summary "..." --evidence "..."` with the real executed commands and results, and only when all mandatory gates pass.
 - After completion, write the structured result JSON to the exact resultFile path given in the orchestrator parameters (schema in `docs/roadmap/autopilot/WORKER_PROMPT.md`), also print one final `FABRIK3D_WORKER_RESULT:{...}` line, then stop.
-- Do not modify `docs/roadmap/roadmap.json`, historical completion records for S01-S30, or any other sprint's state. `docs/roadmap/autopilot/` belongs to the parent orchestrator; only write the result file there.
+- Do not modify `docs/roadmap/roadmap.json`, historical completion records for S01-S50, or any other sprint's state. `docs/roadmap/autopilot/` belongs to the parent orchestrator; only write the result file there.

@@ -17,6 +17,7 @@ public class TaskService
     private readonly JobRepository _jobs;
     private readonly SimulationSessionRepository _sessions;
     private readonly IHubNotificationService _hub;
+    private readonly JobLifecycleCoordinator _lifecycle;
     private readonly ILogger<TaskService> _log;
 
     public TaskService(
@@ -24,12 +25,14 @@ public class TaskService
         JobRepository jobs,
         SimulationSessionRepository sessions,
         IHubNotificationService hub,
+        JobLifecycleCoordinator lifecycle,
         ILogger<TaskService> log)
     {
         _tasks = tasks;
         _jobs = jobs;
         _sessions = sessions;
         _hub = hub;
+        _lifecycle = lifecycle;
         _log = log;
     }
 
@@ -58,6 +61,17 @@ public class TaskService
 
         if (!Enum.TryParse<TaskStatusEnum>(request.Status, true, out var newStatus))
             throw new InvalidOperationException($"Unknown task status '{request.Status}'.");
+
+        // Idempotent duplicate terminal report: a simulator may retry after a lost response.
+        // The stored fact is authoritative and is returned unchanged.
+        if (newStatus == task.Status
+            && newStatus is TaskStatusEnum.Completed or TaskStatusEnum.Failed or TaskStatusEnum.Cancelled)
+        {
+            _log.LogDebug(
+                "[Server][Tasks] Duplicate {Status} ignored → task={TaskId} job={JobId} correlation={CorrelationId}",
+                newStatus, task.Id, task.JobId, correlationId);
+            return task.ToDto();
+        }
 
         var oldStatus = task.Status;
         switch (newStatus)
@@ -96,6 +110,9 @@ public class TaskService
         await _hub.TaskStateChangedAsync(new TaskStateChangedEvent(
             task.Id, task.JobId, oldStatus.ToString(), newStatus.ToString(),
             DateTime.UtcNow, correlationId));
+
+        // The server derives progress and terminal job state from the persisted task facts.
+        await _lifecycle.RecalculateAsync(task.JobId, correlationId);
 
         return task.ToDto();
     }

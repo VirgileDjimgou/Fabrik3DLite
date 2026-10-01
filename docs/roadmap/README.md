@@ -2,7 +2,7 @@
 
 Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts. This roadmap evolves the existing repository incrementally toward that platform without restarting or replacing working modules.
 
-It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S30 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted.
+It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S50 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 adds planned post-1.0 hardening work in S51-S58.
 
 ## One-command workflow
 
@@ -64,8 +64,9 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 | 10. Deep simulation, faults & historian | S38-S41 | Signal/equipment fault injection, high-fidelity reference cell, telemetry historian, deterministic time travel |
 | 11. Commercial training foundation | S42-S45 | Authentication/RBAC, organizations and tenancy, server-side training assessment, instructor dashboard |
 | 12. Interoperability, deployment & 1.0 | S46-S50 | PLC showcases, on-premise lifecycle, observability/hardening, 1.0 commercialization baseline |
+| 13. Product coherence, visual fidelity & field validation | S51-S58 | Authoritative operator workflow, shared 3D runtime, flagship cell, resilience, security and real interoperability proof |
 
-## Product modes targeted by S31-S50
+## Product modes targeted by S31-S58
 
 - **Training:** scenario → abnormal condition → diagnosis → recovery → assessment, with instructor-led sessions and reports.
 - **Virtual commissioning:** real PLC/SoftPLC ↔ Fabrik3D I/O ↔ virtual machine, with explicit control authority.
@@ -86,10 +87,11 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 11. Signal/equipment faults, historian, and time travel: S38-S41.
 12. Identity, tenancy, training assessment, instructor workflows: S42-S45.
 13. PLC showcases, on-prem lifecycle, hardening, and the 1.0 baseline: S46-S50.
+14. Post-1.0 product coherence, visual fidelity, sustained reliability and real interoperability proof: S51-S58.
 
 ## Sprint count and ceiling
 
-This roadmap contains exactly 50 sprints. There is no S51. New work after S50 must be proposed as a separate, explicitly approved roadmap revision that preserves history.
+Roadmap Revision 2 contains exactly 58 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; the explicitly approved S51-S58 sequence is planned post-1.0 product-hardening work. There is no S59 in this revision. Future work beyond S58 requires another explicitly approved revision that preserves S01-S58 history.
 
 ## 1.0 baseline
 
@@ -100,6 +102,19 @@ re-validation of the S01-S49 feature set plus the complete documentation set. Se
 [documentation index](../DOCUMENTATION_INDEX.md) and the
 [limitations/non-claims](../operations/LIMITATIONS.md). The 1.0 baseline is **not** a safety,
 compliance or competence certification.
+
+## Post-1.0 product hardening
+
+**Phase 13 — Product coherence, visual fidelity and field validation (S51-S58).** Its outcome is to
+close the remaining orchestration and operator-workflow gaps, deepen the HMI, industrialize the 3D
+asset runtime, create one visually convincing reference cell, validate real performance and
+resilience, harden security/deployment/repository lifecycle, and prove one real PLC interoperability
+workflow end-to-end.
+
+Phase 13 (S51-S58) closes remaining orchestration/operator-flow gaps, deepens the HMI, shares and
+measures the 3D asset runtime, develops one flagship visual cell, hardens sustained operation and
+deployment, and seeks one honest real-PLC proof. These sprints are planned work, not part of the
+completed 1.0 release and not safety, standards-compliance or OEM-emulation claims.
 
 ## Quality policy
 

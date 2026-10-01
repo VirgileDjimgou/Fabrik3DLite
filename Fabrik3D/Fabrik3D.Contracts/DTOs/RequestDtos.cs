@@ -15,6 +15,57 @@ public record CreateJobRequest
     public List<CreateTaskRequest> Tasks { get; init; } = new();
 
     public Dictionary<string, string> Metadata { get; init; } = new();
+
+    /// <summary>
+    /// Server-authoritative target cell (S52). When omitted the composer resolves the default cell.
+    /// </summary>
+    [MaxLength(100)]
+    public string? TargetCellId { get; init; }
+
+    /// <summary>Optional named cell template the operator selected (S52).</summary>
+    [MaxLength(100)]
+    public string? CellTemplateId { get; init; }
+
+    /// <summary>Educational scenario/recipe driving the job (S52).</summary>
+    [MaxLength(100)]
+    public string? ScenarioId { get; init; }
+
+    /// <summary>Operator priority 0 (normal) to 9 (highest). Informational; no scheduling optimizer (S52).</summary>
+    [Range(0, 9)]
+    public int Priority { get; init; }
+
+    /// <summary>Pallet layout used to generate deterministic tasks from occupied slots (S52).</summary>
+    public PalletLayoutRequest? PalletLayout { get; init; }
+
+    /// <summary>Occupied row/column slots; the server generates one task per slot in stable order (S52).</summary>
+    public List<PalletSlotRequest> OccupiedSlots { get; init; } = new();
+
+    /// <summary>Part type applied to generated tasks (S52).</summary>
+    [MaxLength(100)]
+    public string PartType { get; init; } = "part";
+}
+
+/// <summary>Pallet layout declared by the job composer (S52). Rows/columns are 1-based counts.</summary>
+public record PalletLayoutRequest
+{
+    [Required, MinLength(1), MaxLength(100)]
+    public string PalletId { get; init; } = "pallet-1";
+
+    [Range(1, 32)]
+    public int Rows { get; init; } = 1;
+
+    [Range(1, 32)]
+    public int Columns { get; init; } = 1;
+}
+
+/// <summary>Zero-based occupied pallet slot (S52).</summary>
+public record PalletSlotRequest
+{
+    [Range(0, 31)]
+    public int Row { get; init; }
+
+    [Range(0, 31)]
+    public int Column { get; init; }
 }
 
 public record CreateTaskRequest
@@ -120,6 +171,52 @@ public record HeartbeatRequest
 {
     [Required, MinLength(1), MaxLength(100)]
     public string SimulatorId { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Operator intent to start a job through the server-authoritative dispatch path (S51).
+/// The server resolves the target cell/simulator; the client never selects a production target.
+/// </summary>
+public record StartJobDispatchRequest
+{
+    /// <summary>
+    /// Optional preferred cell. When omitted the server resolves the single compatible target.
+    /// A requested cell that is not compatible is rejected deterministically.
+    /// </summary>
+    [MaxLength(100)]
+    public string? TargetCellId { get; init; }
+
+    /// <summary>Optional explicit simulator id (used by tests and targeted deployments).</summary>
+    [MaxLength(100)]
+    public string? SimulatorId { get; init; }
+}
+
+/// <summary>
+/// Simulator claim/acknowledgement of a targeted execution request (S51). The server accepts it
+/// only from the assigned simulator with a matching tenant, correlation id and session.
+/// </summary>
+public record DispatchAckRequest
+{
+    [Required, MinLength(1), MaxLength(100)]
+    public string SimulatorId { get; init; } = string.Empty;
+
+    [Required, MinLength(1), MaxLength(100)]
+    public string CorrelationId { get; init; } = string.Empty;
+
+    /// <summary>Cell the simulator believes it is executing on; must match the assigned target.</summary>
+    [MaxLength(100)]
+    public string? TargetCellId { get; init; }
+
+    /// <summary>Session the simulator adopted; must match the job's session.</summary>
+    [MaxLength(64)]
+    public string? SimulationSessionId { get; init; }
+
+    /// <summary>Reported dispatch state: Acknowledged or Running.</summary>
+    [MaxLength(32)]
+    public string State { get; init; } = "Acknowledged";
+
+    [MaxLength(500)]
+    public string? FailureReason { get; init; }
 }
 
 /// <summary>

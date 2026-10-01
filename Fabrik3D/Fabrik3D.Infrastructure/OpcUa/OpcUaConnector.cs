@@ -600,18 +600,7 @@ public sealed class OpcUaConnector : IAsyncDisposable
     }
 
     private TimeSpan ComputeBackoff(int attempt)
-    {
-        var baseSeconds = Math.Max(0, _options.ReconnectDelaySeconds);
-        var maxSeconds = Math.Max(baseSeconds, _options.MaxReconnectDelaySeconds);
-        if (baseSeconds == 0)
-        {
-            return TimeSpan.Zero;
-        }
-
-        var exponent = Math.Min(attempt - 1, 10);
-        var seconds = Math.Min(maxSeconds, baseSeconds * Math.Pow(2, exponent));
-        return TimeSpan.FromSeconds(seconds);
-    }
+        => Connectors.ConnectorBackoff.Compute(attempt, _options.ReconnectDelaySeconds, _options.MaxReconnectDelaySeconds);
 
     private async Task CleanupSessionAsync()
     {

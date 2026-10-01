@@ -1,6 +1,6 @@
 # Security hardening
 
-Status: **implemented and tested (S42-S49)**. This document records the security controls, how they
+Status: **implemented and tested (S42-S57)**. This document records the security controls, how they
 fail closed, and the executed evidence. Fabrik3D is **aligned with selected OWASP secure ASP.NET Core
 practices** and **inspired by IEC 62443 zone/conduit concepts** applied to connector boundaries. It is
 **not certified** against OWASP ASVS, IEC 62443 or any other standard, and no penetration test has
@@ -88,6 +88,31 @@ been performed.
   serialized bundle.
 - Environment overlays read external secrets from env files/Docker secrets; `*.env.example` files
   contain no real values.
+- S57 extends `SecretRedactor` to also mask `.env`/config-style assignments
+  (`TUNNEL_TOKEN=…`, `PASSWORD=…`) and every PEM private-key header (RSA/EC/DSA/OPENSSH/PKCS#8) in
+  addition to the key-name policy; the tracked-file secret scan detects the same shapes.
+
+### Response-hardening policy validation (S57)
+
+- `SecurityHeaderPolicy` validates the configured `SecurityHeaders` policy at startup through
+  `DeploymentConfigurationValidator`: empty frame/referrer/permissions values, a malformed or
+  below-minimum HSTS `max-age`, and a CSP that would break the REST/SignalR (`connect-src`) surfaces
+  are rejected before the host starts.
+- `SecurityHeaders:ExternalTls=true` declares that the API is reached over public TLS and makes a
+  missing HSTS value and CSP a startup error. The recommended CSP keeps `connect-src 'self' ws: wss:`,
+  `worker-src 'self' blob:`, `'wasm-unsafe-eval'` and `img-src 'self' data: blob:` so the SignalR hub,
+  the WebGL simulator and static assets keep working. It is opt-in so loopback development and the
+  labelled public demo are unchanged. Covered by `SecurityHeaderPolicyTests`.
+
+### Cross-tenant negatives (S57)
+
+- Repository-level tenant filters are exercised end-to-end for Jobs, simulation sessions, cell
+  templates, signal mappings, training sessions and the historian: another organization receives a
+  non-leaking `404`/empty result and cannot mutate the object. Covered by
+  `CrossTenantNegativeMatrixTests` (HTTP, multi-organization mode) and `CrossTenantHistorianTests`
+  (persistence). The SignalR dispatch/jog targeting contract is covered by `HubTargetingTests`.
+- Signal mappings are partitioned by organization in the in-memory `SignalMappingStore`, so a mapping,
+  its active protocol binding and its audit trail are only visible to the organization that owns them.
 
 ## Executed evidence
 
@@ -117,8 +142,9 @@ dotnet test ... --filter "FullyQualifiedName~SecurityHardeningTests|FullyQualifi
 
 ## Known limitations / residual risk
 
-- No formal threat model review, penetration test or standards certification has been performed. The
-  statements above describe implemented controls and their tests, not compliance.
+- No independent review, penetration test or standards certification has been performed. The
+  lightweight [threat model](THREAT_MODEL.md) records surfaces, mitigations and accepted residual
+  risk; the statements above describe implemented controls and their tests, not compliance.
 - The Development/Test authentication mode is intentionally permissive and is for local/CI/demo use
   only; Production refuses it, but operators must still configure OIDC correctly.
 - `Strict-Transport-Security` and the Content-Security-Policy are deployment decisions and are not

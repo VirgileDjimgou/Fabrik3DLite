@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "description": "Frozen baseline of repository-policy offenders that were already tracked before S57. They are grandfathered with recorded provenance; removing them from history is a separate, explicit HUMAN_REQUIRED migration and never happens automatically. New files are always checked.",
+  "entries": [
+    {
+      "path": "artifacts/demo/client/raw/demo-01-simulator-scene-si-3e609-ith-live-orchestrator-state/video.webm",
+      "sizeBytes": 2279247,
+      "reason": "binary-requires-git-lfs"
+    },
+    {
+      "path": "artifacts/demo/client/raw/demo-08-simulator-auth-sim-0f212-henticates-an-administrator/video.webm",
+      "sizeBytes": 2642587,
+      "reason": "binary-requires-git-lfs"
+    },
+    {
+      "path": "artifacts/demo/client/videos/01-simulator-3d-scene.webm",
+      "sizeBytes": 2279247,
+      "reason": "binary-requires-git-lfs"
+    },
+    {
+      "path": "artifacts/demo/client/videos/08-simulator-auth.webm",
+      "sizeBytes": 2642587,
+      "reason": "binary-requires-git-lfs"
+    },
+    {
+      "path": "Fabrik3D/artifacts/demo/video/fabrik3d-demo-hmi-simulateur-court-4min.webm",
+      "sizeBytes": 30361272,
+      "reason": "exceeds-hard-size-limit"
+    },
+    {
+      "path": "Fabrik3D/artifacts/demo/video/fabrik3d-demo-hmi-simulateur.webm",
+      "sizeBytes": 41968007,
+      "reason": "exceeds-hard-size-limit"
+    },
+    {
+      "path": "Fabrik3D/artifacts/demo/video/preview/v2-t200.png",
+      "sizeBytes": 1210860,
+      "reason": "binary-requires-git-lfs"
+    },
+    {
+      "path": "Fabrik3D/artifacts/demo/video/preview/v2-t300.png",
+      "sizeBytes": 1156281,
+      "reason": "binary-requires-git-lfs"
+    },
+    {
+      "path": "media/Fabrik3D-current-demo-web.gif",
+      "sizeBytes": 34305150,
+      "reason": "exceeds-hard-size-limit"
+    },
+    {
+      "path": "media/Simulator.gif",
+      "sizeBytes": 6502657,
+      "reason": "binary-requires-git-lfs"
+    }
+  ]
+}

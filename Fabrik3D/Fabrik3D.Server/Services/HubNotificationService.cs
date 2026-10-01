@@ -81,6 +81,33 @@ public class HubNotificationService : IHubNotificationService
         return SendAsync("ControlAuthorityChanged", evt, evt.CorrelationId);
     }
 
+    public Task ExecutionDispatchRequestedAsync(ExecutionDispatchRequestedEvent evt)
+    {
+        _log.LogInformation("[Server][SignalR] ExecutionDispatchRequested → job={JobId} session={SessionId} cell={Cell} simulator={SimulatorId} correlation={CorrelationId}",
+            evt.JobId, evt.SessionId, evt.TargetCellId, evt.AssignedSimulatorId, evt.CorrelationId);
+        // Targeted: only the assigned simulator's group receives the execution request.
+        return SendToGroupAsync(
+            OrchestrationGroups.Simulator(evt.AssignedSimulatorId),
+            "ExecutionDispatchRequested", evt, evt.CorrelationId);
+    }
+
+    public Task DispatchStateChangedAsync(DispatchStateChangedEvent evt)
+    {
+        _log.LogInformation("[Server][SignalR] DispatchStateChanged → job={JobId} state={State} cell={Cell} simulator={SimulatorId} correlation={CorrelationId}",
+            evt.JobId, evt.DispatchState, evt.TargetCellId, evt.AssignedSimulatorId, evt.CorrelationId);
+        return SendAsync("DispatchStateChanged", evt, evt.CorrelationId);
+    }
+
+    public Task JogCommandIssuedAsync(JogCommandIssuedEvent evt)
+    {
+        _log.LogInformation("[Server][SignalR] JogCommandIssued → cell={Cell} robot={Robot} action={Action} joint={Joint} simulator={SimulatorId} correlation={CorrelationId}",
+            evt.CellId, evt.RobotId, evt.Action, evt.Joint, evt.SimulatorId, evt.CorrelationId);
+        // Targeted: only the assigned simulator's group may receive a jog command.
+        return SendToGroupAsync(
+            OrchestrationGroups.Simulator(evt.SimulatorId),
+            "JogCommandIssued", evt, evt.CorrelationId);
+    }
+
     /// <summary>
     /// Pushes one event with an OTel-compatible span and message counter. The measurement is
     /// best-effort: it never changes delivery semantics and a missing listener is a no-op.
@@ -97,5 +124,24 @@ public class HubNotificationService : IHubNotificationService
             });
         _metrics?.RecordSignalRMessage(eventName);
         return _hub.Clients.All.SendAsync(eventName, payload);
+    }
+
+    /// <summary>
+    /// Pushes one event to a single SignalR group. Used for targeted dispatch so a tenant/cell
+    /// request never reaches unrelated simulators.
+    /// </summary>
+    private Task SendToGroupAsync(string group, string eventName, object payload, string? correlationId)
+    {
+        using var activity = Fabrik3DTelemetry.StartActivity(
+            Fabrik3DTelemetry.SignalRSendSpan,
+            ActivityKind.Producer,
+            new Dictionary<string, object?>
+            {
+                ["signalr.event"] = eventName,
+                ["signalr.group"] = group,
+                ["fabrik3d.correlation_id"] = correlationId,
+            });
+        _metrics?.RecordSignalRMessage(eventName);
+        return _hub.Clients.Group(group).SendAsync(eventName, payload);
     }
 }

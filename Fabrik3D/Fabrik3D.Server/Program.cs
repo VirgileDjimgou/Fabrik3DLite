@@ -75,13 +75,20 @@ builder.Services.AddSingleton<TrainingService>();
 // ── Services ───────────────────────────────────────────────────────
 builder.Services.AddSingleton<HubNotificationService>();
 builder.Services.AddSingleton<IHubNotificationService>(sp => sp.GetRequiredService<HubNotificationService>());
+builder.Services.AddSingleton<SimulatorRegistry>();
+builder.Services.AddSingleton<JobLifecycleCoordinator>();
 builder.Services.AddSingleton<JobService>();
+builder.Services.AddSingleton<DispatchService>();
 builder.Services.AddSingleton<SimulationSessionService>();
 builder.Services.AddSingleton<TaskService>();
+builder.Services.AddSingleton<JobComposerService>();
 builder.Services.AddSingleton<AlarmService>();
 builder.Services.AddSingleton<OperatorMessageService>();
 builder.Services.AddSingleton<MachineStateService>();
 builder.Services.AddSingleton<CellTemplateService>();
+
+// ── Authoritative robot positions and operator jog (S53) ───────────
+builder.Services.AddSingleton<RobotStateService>();
 
 // ── Signal mapping studio (S37) ────────────────────────────────────
 builder.Services.AddSingleton<IInternalSignalCatalog, SignalMirrorCatalog>();
@@ -108,6 +115,7 @@ builder.Services.AddControllers(options =>
 {
     options.Filters.Add<ApiErrorResultFilter>();
     options.Filters.Add<OrchestrationConflictExceptionFilter>();
+    options.Filters.Add<JobComposerValidationExceptionFilter>();
 });
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
@@ -151,13 +159,15 @@ AuthenticationStartupGuard.ValidateOrThrow(authenticationOptions, app.Environmen
 var deploymentOptions = app.Services.GetRequiredService<IOptions<DeploymentOptions>>().Value;
 var corsOptions = app.Services.GetRequiredService<IOptions<CorsOptions>>().Value;
 var orchestrationOptions = app.Services.GetRequiredService<IOptions<OrchestrationOptions>>().Value;
+var securityHeadersOptions = app.Services.GetRequiredService<IOptions<SecurityHeadersOptions>>().Value;
 var configurationErrors = DeploymentConfigurationValidator.Validate(
     app.Configuration,
     app.Environment,
     deploymentOptions,
     authenticationOptions,
     corsOptions,
-    orchestrationOptions);
+    orchestrationOptions,
+    securityHeadersOptions);
 if (configurationErrors.Count > 0)
 {
     throw new InvalidOperationException(

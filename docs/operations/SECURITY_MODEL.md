@@ -95,9 +95,13 @@ flowchart TB
 - Oversized/malformed input → rejected before expensive parsing; nothing persisted.
 - Observability exporter unavailable → application continues; the request path never depends on it.
 
+A surface-by-surface threat model with mitigations and an accepted residual-risk register is in
+[THREAT_MODEL.md](THREAT_MODEL.md).
+
 ## Out of scope / residual risk
 
-- No formal threat model, penetration test or compliance certification.
+- No independent security review, penetration test or compliance certification. The
+  [threat model](THREAT_MODEL.md) is a lightweight internal review, not a certification.
 - No certificate pinning of external endpoints.
 - Browsers reach the API over TLS terminated at the deployment proxy/tunnel; HSTS is a deployment
   decision.

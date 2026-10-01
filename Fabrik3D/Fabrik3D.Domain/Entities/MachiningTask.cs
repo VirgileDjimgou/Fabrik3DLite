@@ -33,6 +33,17 @@ public class MachiningTask
 
     public int SlotColumn { get; set; }
 
+    /// <summary>
+    /// Stable slot key (<c>palletId:R{row}:C{col}</c>) used for deterministic generation and
+    /// duplicate detection (S52). Null on legacy records.
+    /// </summary>
+    public string? SlotKey { get; set; }
+
+    /// <summary>
+    /// Whether this task is required for job completion (S52). Legacy records default to required.
+    /// </summary>
+    public bool IsRequired { get; set; } = true;
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;

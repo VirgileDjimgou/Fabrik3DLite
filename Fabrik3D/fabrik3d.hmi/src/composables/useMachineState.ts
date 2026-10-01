@@ -80,6 +80,7 @@ function applySimulationEvent(e: SimulationStateChangedEvent): void {
     scenarioId: e.scenarioId ?? prev?.scenarioId ?? null,
     scenarioActivityId: e.scenarioActivityId ?? prev?.scenarioActivityId ?? null,
     scenarioProgress: e.scenarioProgress ?? prev?.scenarioProgress ?? 0,
+    targetCellId: prev?.targetCellId ?? null,
   }
 }
 

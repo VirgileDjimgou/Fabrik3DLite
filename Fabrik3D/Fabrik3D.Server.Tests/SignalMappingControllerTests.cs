@@ -1,5 +1,6 @@
 using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Domain.Mapping;
+using Fabrik3D.Domain.Organizations;
 using Fabrik3D.Infrastructure.Modbus;
 using Fabrik3D.Infrastructure.Mqtt;
 using Fabrik3D.Infrastructure.OpcUa;
@@ -33,7 +34,13 @@ public class SignalMappingControllerTests
         public string AuditId => Subject;
     }
 
-    private static (MappingsController Controller, SignalMappingStore Store) CreateController(string subject = "engineer-1")
+    private sealed class StubTenant(string organizationId) : ITenantContext
+    {
+        public TenantScope Scope { get; } = TenantScope.ForOrganization(organizationId);
+    }
+
+    private static (MappingsController Controller, SignalMappingStore Store) CreateController(
+        string subject = "engineer-1", string? organizationId = null)
     {
         var store = new SignalMappingStore(TimeProvider.System);
         var apply = new SignalMappingApplyService(
@@ -43,7 +50,11 @@ public class SignalMappingControllerTests
             Options.Create(new OpcUaOptions { Enabled = true }),
             Options.Create(new MqttOptions { Enabled = true }),
             Options.Create(new ModbusOptions { Enabled = true }));
-        var controller = new MappingsController(store, apply, new StubIdentity(subject, Fabrik3DRoles.Engineer))
+        var controller = new MappingsController(
+            store,
+            apply,
+            new StubIdentity(subject, Fabrik3DRoles.Engineer),
+            organizationId is null ? null : new StubTenant(organizationId))
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };
@@ -101,5 +112,30 @@ public class SignalMappingControllerTests
     {
         var (controller, _) = CreateController();
         Assert.IsType<NotFoundObjectResult>(controller.Apply("does-not-exist"));
+    }
+
+    [Fact]
+    public void Mappings_are_partitioned_by_organization()
+    {
+        var (controllerA, _) = CreateController("engineer-a", "org-a");
+        var (controllerB, _) = CreateController("engineer-b", "org-b");
+        var document = SignalMappingTestData.SampleDocument();
+
+        Assert.IsType<CreatedAtActionResult>(controllerA.Upsert(document.Id, document));
+
+        // Organization A sees and mutates its own mapping.
+        Assert.IsType<OkObjectResult>(controllerA.Get(document.Id));
+        Assert.IsType<OkObjectResult>(controllerA.Apply(document.Id));
+
+        // Organization B can neither observe nor delete it (non-leaking not-found).
+        Assert.IsType<NotFoundResult>(controllerB.Get(document.Id));
+        Assert.IsType<NotFoundObjectResult>(controllerB.Apply(document.Id));
+        Assert.Equal(StatusCodes.Status404NotFound,
+            Assert.IsAssignableFrom<ObjectResult>(controllerB.Delete(document.Id)).StatusCode);
+
+        var listB = Assert.IsType<OkObjectResult>(controllerB.GetAll());
+        Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<SignalMappingSummaryDto>>(listB.Value));
+        var auditB = Assert.IsType<OkObjectResult>(controllerB.Audit());
+        Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<SignalMappingAuditDto>>(auditB.Value));
     }
 }

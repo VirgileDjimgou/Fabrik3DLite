@@ -3,12 +3,16 @@ import * as api from '@/services/api'
 import * as hub from '@/services/hub'
 import type { ControlAuthorityDto } from '@/services/api'
 import { authorityFromEvent, type HandoverFeedback } from './authorityView'
+import { DEFAULT_CELL_ID } from '@/config/cell'
 
 /**
  * Continuously visible control authority for the operator surface (S36). REST is the initial
  * load; the hub event is the live source. Handover actions report pending/success/failure.
+ *
+ * The scope is the reference cell id so it matches the robot positions and jog scope (S53); a
+ * mismatched scope would silently leave the robot read-only.
  */
-const scope = ref('cell-1')
+const scope = ref(DEFAULT_CELL_ID)
 const authority = ref<ControlAuthorityDto | null>(null)
 const feedback = ref<HandoverFeedback>('idle')
 const feedbackMessage = ref<string | null>(null)

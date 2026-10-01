@@ -11,8 +11,8 @@ import { RobotController } from '../simulation/RobotController'
 import { MEDIUM_6AXIS, type RobotDefinition } from '../robot/catalog'
 import { toJointLimits } from '../robot/catalog'
 import { createRobotKinematics } from '../kinematics'
-import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY } from '../composables/injectionKeys'
-import { createIndustrialAssetRegistry, EquipmentVisualProvider, ThreeGlbAssetLoader, type EquipmentVisualLoadResult } from '../equipment/assets'
+import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY, ASSET_RUNTIME_KEY } from '../composables/injectionKeys'
+import { type AssetRuntimeInstance } from '../equipment/assets'
 
 const props = withDefaults(defineProps<{
   position?: [number, number, number]
@@ -28,14 +28,15 @@ const emit = defineEmits<{
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
 const animLoop = inject(ANIMATION_LOOP_KEY)!
+const assetRuntime = inject(ASSET_RUNTIME_KEY)!
 
 let robot: IndustrialRobot | null = null
 let controller: RobotController | null = null
-let loadedVisual: EquipmentVisualLoadResult | null = null
+let loadedVisual: AssetRuntimeInstance | null = null
 let visualBinding: RobotVisualBinding | null = null
 let disposed = false
 
-async function buildRobot(ctx: { addObject: (o: THREE.Object3D) => void }): Promise<void> {
+async function buildRobot(ctx: { addObject: (o: THREE.Object3D) => void, camera?: THREE.Camera }): Promise<void> {
   const profile = props.profile
   const materials: RobotMaterials = {
     body: new THREE.MeshStandardMaterial({ color: 0xff6600, metalness: 0.4, roughness: 0.35 }),
@@ -43,13 +44,16 @@ async function buildRobot(ctx: { addObject: (o: THREE.Object3D) => void }): Prom
     gripper: new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.5, roughness: 0.4 }),
   }
 
-  const registry = createIndustrialAssetRegistry()
-  const provider = new EquipmentVisualProvider(registry, new ThreeGlbAssetLoader())
+  const registry = assetRuntime.getRegistry()
   const registeredVisual = registry.get(profile.visualAsset)
   const visualRig = registeredVisual.source === 'glb' ? registeredVisual.manifest.robotRig : undefined
-  loadedVisual = await provider.load(profile.visualAsset, () => {
-    robot = new IndustrialRobot(materials, profile.dimensions, toJointLimits(profile.joints))
-    return robot.root
+  const distanceMeters = ctx.camera ? ctx.camera.position.distanceTo(new THREE.Vector3(...props.position)) : 0
+  loadedVisual = await assetRuntime.acquire(profile.visualAsset, {
+    distanceMeters,
+    proceduralFallback: () => {
+      robot = new IndustrialRobot(materials, profile.dimensions, toJointLimits(profile.joints))
+      return robot.root
+    },
   })
   if (disposed) {
     loadedVisual.dispose()

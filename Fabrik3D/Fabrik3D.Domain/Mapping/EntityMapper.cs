@@ -12,14 +12,22 @@ public static class EntityMapper
         e.CreatedAtUtc, e.UpdatedAtUtc,
         e.StartedAtUtc, e.CompletedAtUtc, e.PausedAtUtc, e.StoppedAtUtc,
         e.CurrentTaskIndex, e.ProgressPercent,
-        e.SimulationSessionId, e.Metadata, e.Version);
+        e.SimulationSessionId, e.Metadata, e.Version,
+        e.TargetCellId, e.AssignedSimulatorId, e.DispatchState.ToString(),
+        e.DispatchCorrelationId, e.DispatchedAtUtc, e.DispatchAcknowledgedAtUtc,
+        e.DispatchTimeoutAtUtc, e.DispatchFailureReason,
+        e.Priority, e.ScenarioId, e.CellTemplateId,
+        e.PalletId, e.PalletRows, e.PalletColumns,
+        e.TaskCount, e.CompletedTaskCount, e.SchemaVersion,
+        e.FailedAtUtc, e.CancelledAtUtc);
 
     public static TaskDto ToDto(this MachiningTask e) => new(
         e.Id, e.JobId, e.Name, e.Description,
         e.Status.ToString(), e.SequenceOrder,
         e.PartType, e.PalletId, e.SlotRow, e.SlotColumn,
         e.CreatedAtUtc, e.UpdatedAtUtc,
-        e.StartedAtUtc, e.CompletedAtUtc, e.ErrorMessage, e.Version);
+        e.StartedAtUtc, e.CompletedAtUtc, e.ErrorMessage, e.Version,
+        e.SlotKey, e.IsRequired);
 
     public static SimulationSessionDto ToDto(this SimulationSession e) => new(
         e.Id, e.JobId, e.Status.ToString(),
@@ -27,7 +35,7 @@ public static class EntityMapper
         e.CurrentPhase, e.CurrentPalletId, e.CurrentTaskId, e.CurrentPartId,
         e.MachinedCount, e.RemainingCount, e.TotalCount,
         e.LastHeartbeatUtc, e.SimulatorId, e.CorrelationId, e.Version,
-        e.ScenarioId, e.ScenarioActivityId, e.ScenarioProgress);
+        e.ScenarioId, e.ScenarioActivityId, e.ScenarioProgress, e.TargetCellId);
 
     public static AlarmDto ToDto(this Alarm e) => new(
         e.Id, e.Code, e.Title, e.Message,

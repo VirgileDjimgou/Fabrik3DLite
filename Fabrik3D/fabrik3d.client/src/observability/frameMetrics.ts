@@ -1,11 +1,18 @@
 /**
- * Client-side simulator performance instrumentation (S49).
+ * Client-side simulator performance instrumentation (S49, extended in S56 with p99 and an honest
+ * acceleration classification of the renderer that produced the samples).
  *
  * This module is deliberately framework- and renderer-free: it samples frame durations, draw calls
  * and triangle counts, keeps a bounded window and computes deterministic percentiles. Reporting to
  * the optional local metrics endpoint is disabled by default, throttled, best-effort and never
  * changes simulation semantics. Measurements are recorded for diagnosis, not asserted as budgets.
  */
+
+import {
+  classifyAcceleration,
+  type AccelerationClass,
+  type RendererIdentity,
+} from './acceleration'
 
 export interface FrameSample {
   /** Frame duration in milliseconds. */
@@ -28,6 +35,7 @@ export interface SimulatorFrameSummary {
   meanFrameMs: number
   p50FrameMs: number
   p95FrameMs: number
+  p99FrameMs: number
   maxFrameMs: number
   estimatedFps: number
   lastDrawCalls: number
@@ -35,6 +43,8 @@ export interface SimulatorFrameSummary {
   textureBytes: number
   textureCount: number
   heapUsedBytes: number
+  /** Honest acceleration classification of the renderer that produced the samples. */
+  acceleration: AccelerationClass
 }
 
 /** Bounded window (about 10 seconds at 60 fps) so a long-running scene never grows without limit. */
@@ -64,9 +74,16 @@ export class FrameMetricsSampler {
   private readonly samples: FrameSample[] = []
   private readonly capacity: number
   private lastResources: ResourceSnapshot = { textureBytes: 0, textureCount: 0 }
+  private acceleration: AccelerationClass = 'unknown'
 
   constructor(capacity: number = FRAME_SAMPLE_CAPACITY) {
     this.capacity = capacity > 0 ? capacity : FRAME_SAMPLE_CAPACITY
+  }
+
+  /** Records the renderer identity so the summary can classify acceleration honestly. */
+  setRendererIdentity(identity: RendererIdentity | null | undefined): AccelerationClass {
+    this.acceleration = classifyAcceleration(identity)
+    return this.acceleration
   }
 
   /** Records one frame sample; values are normalised so a malformed frame never corrupts the window. */
@@ -93,6 +110,7 @@ export class FrameMetricsSampler {
   reset(): void {
     this.samples.length = 0
     this.lastResources = { textureBytes: 0, textureCount: 0 }
+    this.acceleration = 'unknown'
   }
 
   summary(): SimulatorFrameSummary | null {
@@ -108,6 +126,7 @@ export class FrameMetricsSampler {
       meanFrameMs,
       p50FrameMs: percentile(durations, 0.5),
       p95FrameMs: percentile(durations, 0.95),
+      p99FrameMs: percentile(durations, 0.99),
       maxFrameMs: durations[durations.length - 1]!,
       estimatedFps: meanFrameMs > 0 ? 1000 / meanFrameMs : 0,
       lastDrawCalls: last.drawCalls,
@@ -115,6 +134,7 @@ export class FrameMetricsSampler {
       textureBytes: this.lastResources.textureBytes,
       textureCount: this.lastResources.textureCount,
       heapUsedBytes: readHeapUsedBytes(),
+      acceleration: this.acceleration,
     }
   }
 }

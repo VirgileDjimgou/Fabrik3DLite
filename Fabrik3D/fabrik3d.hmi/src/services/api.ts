@@ -6,12 +6,21 @@ import type {
   ControlAuthorityDto,
   ControlAuthorityEventDto,
   CreateJobRequest,
+  DispatchResultDto,
   HeartbeatControlAuthorityRequest,
+  JobComposerOptionsDto,
+  JobComposerPreviewDto,
   JobDto,
   MachineStateDto,
   OperatorMessageDto,
+  RobotPositionsDto,
+  JogCommandRequest,
+  JogCommandResultDto,
+  PalletLayoutRequest,
+  PalletSlotRequest,
   ReleaseControlAuthorityRequest,
   SimulationSessionDto,
+  StartJobDispatchRequest,
   TakeoverControlAuthorityRequest,
   TaskDto,
   VersionDto,
@@ -23,12 +32,21 @@ export type {
   ControlAuthorityDto,
   ControlAuthorityEventDto,
   CreateJobRequest,
+  DispatchResultDto,
   HeartbeatControlAuthorityRequest,
+  JobComposerOptionsDto,
+  JobComposerPreviewDto,
   JobDto,
   MachineStateDto,
   OperatorMessageDto,
+  RobotPositionsDto,
+  JogCommandRequest,
+  JogCommandResultDto,
+  PalletLayoutRequest,
+  PalletSlotRequest,
   ReleaseControlAuthorityRequest,
   SimulationSessionDto,
+  StartJobDispatchRequest,
   TakeoverControlAuthorityRequest,
   TaskDto,
   VersionDto,
@@ -67,6 +85,25 @@ export const getJobById = (id: string) => request<JobDto>('GET', `/jobs/${id}`)
 export const createJob = (req: CreateJobRequest) => request<JobDto>('POST', '/jobs', req)
 export const deleteJob = (id: string) => request<void>('DELETE', `/jobs/${id}`)
 export const startJob = (id: string) => request<JobDto>('POST', `/jobs/${id}/start`)
+
+// ── Authoritative job composer (S52) ──
+/** Selectable cells, scenarios, cell templates and composer bounds. */
+export const getJobComposerOptions = () =>
+  request<JobComposerOptionsDto>('GET', '/jobs/composer/options')
+/** Validates a composer definition server-side and returns the generated task preview. */
+export const previewJobDefinition = (req: CreateJobRequest) =>
+  request<JobComposerPreviewDto>('POST', '/jobs/composer/preview', req)
+/** Creates a validated job from a composer definition (server owns lifecycle/tasks). */
+export const createComposerJob = (req: CreateJobRequest) =>
+  request<JobDto>('POST', '/jobs/composer', req)
+
+// ── Authoritative dispatch (S51) ──
+/** Operator intent: start a job through the server-authoritative dispatch path. */
+export const dispatchJob = (id: string, req: StartJobDispatchRequest = {}) =>
+  request<DispatchResultDto>('POST', `/jobs/${id}/dispatch`, req)
+/** Current dispatch state for a job. */
+export const getJobDispatch = (id: string) =>
+  request<DispatchResultDto>('GET', `/jobs/${id}/dispatch`)
 export const pauseJob = (id: string) => request<JobDto>('POST', `/jobs/${id}/pause`)
 export const resumeJob = (id: string) => request<JobDto>('POST', `/jobs/${id}/resume`)
 export const stopJob = (id: string) => request<JobDto>('POST', `/jobs/${id}/stop`)
@@ -93,6 +130,14 @@ export const transitionAlarm = (id: string, state: string, by = 'operator') =>
 // ── Messages ──
 export const getMessages = (limit = 100) =>
   request<OperatorMessageDto[]>('GET', `/messages?limit=${limit}`)
+
+// ── Authoritative robot positions and jog (S53) ──
+export const getRobotPositions = (cellId: string, robotId: string) =>
+  request<RobotPositionsDto>(
+    'GET', `/robots/${encodeURIComponent(cellId)}/${encodeURIComponent(robotId)}/positions`)
+export const issueJog = (cellId: string, robotId: string, req: JogCommandRequest) =>
+  request<JogCommandResultDto>(
+    'POST', `/robots/${encodeURIComponent(cellId)}/${encodeURIComponent(robotId)}/jog`, req)
 
 // ── Control authority (S36) ──
 export const getControlAuthority = (scope: string) =>

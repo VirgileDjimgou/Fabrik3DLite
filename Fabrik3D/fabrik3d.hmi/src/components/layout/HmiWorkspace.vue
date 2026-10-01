@@ -5,15 +5,8 @@
       <span>Fabrik3D HMI v1.0.0</span>
       <span class="hmi-mode" aria-label="Active operating mode">{{ mode }}</span>
       <div class="d-flex align-items-center gap-2">
-        <!-- Separate instructor surface (S45); operators keep their existing workflow unchanged. -->
-        <router-link
-          v-if="canInstruct()"
-          to="/instructor"
-          class="btn btn-outline-secondary btn-sm py-0"
-          data-testid="hmi-instructor-link"
-        >
-          <i class="bi bi-mortarboard me-1"></i>{{ t('instructor.open') }}
-        </router-link>
+        <!-- Role-aware grouped navigation (S53). The instructor surface is one entry in it. -->
+        <HmiNavMenu />
         <span class="hmi-user small" data-testid="hmi-user">
           <i class="bi bi-person-circle me-1"></i>{{ userLabel }}
         </span>
@@ -61,12 +54,13 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HmiBottomNav from './HmiBottomNav.vue'
 import HmiConnectionBadge from './HmiConnectionBadge.vue'
+import HmiNavMenu from './HmiNavMenu.vue'
 import HmiStatusPanel from '@/components/dashboard/HmiStatusPanel.vue'
 import HmiAuthorityIndicator from '@/components/controls/HmiAuthorityIndicator.vue'
 import { useMachineState } from '@/composables/useMachineState'
 import { useOperatingMode } from '@/composables/useOperatingMode'
 import { useControlAuthority } from '@/composables/useControlAuthority'
-import { canEngineer, canInstruct, identity } from '@/auth/authStore'
+import { canEngineer, identity } from '@/auth/authStore'
 import { logout } from '@/auth/authService'
 
 const { t } = useI18n()

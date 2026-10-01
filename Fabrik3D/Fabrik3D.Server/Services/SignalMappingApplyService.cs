@@ -46,7 +46,7 @@ public sealed class SignalMappingApplyService
         return new SignalMappingValidationResultDto(validation.Valid, validation.Diagnostics);
     }
 
-    public SignalMappingApplyResultDto Apply(SignalMappingDocumentDto document, string appliedBy)
+    public SignalMappingApplyResultDto Apply(SignalMappingDocumentDto document, string appliedBy, string? organizationId = null)
     {
         ArgumentNullException.ThrowIfNull(document);
         var validation = SignalMappingValidator.Validate(document, _catalog.Describe());
@@ -76,7 +76,7 @@ public sealed class SignalMappingApplyService
 
         if (applied)
         {
-            _store.Activate(document, appliedBy);
+            _store.Activate(document, appliedBy, organizationId);
         }
 
         return new SignalMappingApplyResultDto(

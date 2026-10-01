@@ -53,11 +53,15 @@ curl -fsS -H "Authorization: Bearer <admin-token>" \
 or returned:
 
 - **Sensitive keys** (case/separator-insensitive) are replaced with `[REDACTED]`: anything containing
-  `password`, `passwd`, `pwd`, `secret`, `signingkey`, `privatekey`, `token`, `credential`, `apikey`,
-  `api_key`, `connectionstring`, `authorityconfirmationtoken`, `clientsecret` or `accesskey`.
+  `password`, `passwd`, `pwd`, `passphrase`, `secret`, `signingkey`, `privatekey`, `token`,
+  `credential`, `apikey`, `api_key`, `connectionstring`, `bearer`, `authorityconfirmationtoken`,
+  `clientsecret`, `accesskey`, `tunneltoken` or `cloudflaretoken`.
 - **Secret-shaped values** are redacted even under an innocuous key: credential URIs
-  (`scheme://user:pass@host`), JWT-shaped strings, and PEM private-key blocks.
-- **Log messages** have embedded credential URIs and tokens masked in place.
+  (`scheme://user:pass@host`), JWT-shaped strings, `.env`/config-style sensitive assignments
+  (`TUNNEL_TOKEN=…`, `PASSWORD=…`) and private-key material with any PEM header
+  (RSA/EC/DSA/OPENSSH/PKCS#8).
+- **Log messages** have embedded credential URIs, sensitive assignments and complete PEM private-key
+  blocks masked in place.
 
 Additionally, the bundle only includes the owned configuration sections (`Deployment`, `MongoDb`,
 `Orchestration`, `Authentication`, `Cors`, `Tenancy`, `Training`, `SecurityHeaders`, `OpcUa`, `Mqtt`,

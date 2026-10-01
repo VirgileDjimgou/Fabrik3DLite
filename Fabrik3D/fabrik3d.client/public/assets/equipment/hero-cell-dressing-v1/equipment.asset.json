@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "1.0",
+  "id": "hero-cell-dressing-v1",
+  "equipmentDefinitionId": "cell-environment",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 8.4,
+    "y": 3.3,
+    "z": 9
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "bab161f9160fb383c458dead4016635f59c78514b7a38f9167bb0d8385fe4662"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "c9508fe87bfb3bada1504f2ee9265a64ef2383427edf5eb768edd9a52fd53426"
+        },
+        "triangleBudget": 6000
+      }
+    ]
+  },
+  "collision": {
+    "id": "cell-dressing-proxy",
+    "kind": "mesh"
+  },
+  "semanticNodes": [
+    {
+      "id": "motor:chip-conveyor",
+      "kind": "motor"
+    },
+    {
+      "id": "fixture:buffer:1",
+      "kind": "fixture"
+    },
+    {
+      "id": "fixture:buffer:2",
+      "kind": "fixture"
+    },
+    {
+      "id": "signal:worklight:1",
+      "kind": "signal"
+    },
+    {
+      "id": "signal:worklight:2",
+      "kind": "signal"
+    },
+    {
+      "id": "anchor:buffer.access",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:buffer.access",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 3,
+          "y": 0.9,
+          "z": 0.15
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "machine-trim",
+    "stainless",
+    "safety-hazard",
+    "rack-blue",
+    "work-light",
+    "concrete"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "0c99b4d2228d708cdd1f6c0ccf68da333e39a89d7a75bfcb1febdabf00af5a01"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "bab161f9160fb383c458dead4016635f59c78514b7a38f9167bb0d8385fe4662"
+  }
+}

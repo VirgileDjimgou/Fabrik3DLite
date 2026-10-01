@@ -5,13 +5,10 @@
 <script setup lang="ts">
 import { inject, watch, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
-import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY } from '../composables/injectionKeys'
+import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY, ASSET_RUNTIME_KEY } from '../composables/injectionKeys'
 import {
-  createIndustrialAssetRegistry,
-  EquipmentVisualProvider,
   INDUSTRIAL_CONVEYOR_ASSET_ID,
-  ThreeGlbAssetLoader,
-  type LoadedEquipmentVisual,
+  type AssetRuntimeInstance,
 } from '../equipment'
 
 const props = withDefaults(defineProps<{
@@ -32,13 +29,14 @@ const props = withDefaults(defineProps<{
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
 const animLoop = inject(ANIMATION_LOOP_KEY)!
+const assetRuntime = inject(ASSET_RUNTIME_KEY)!
 
 let conveyorGroup: THREE.Group | null = null
 let rollers: THREE.Mesh[] = []
 let beltSegments: THREE.Mesh[] = []
 let beltOffset = 0
 let sensorLenses: THREE.Mesh[] = []
-let loadedVisual: LoadedEquipmentVisual | null = null
+let loadedVisual: AssetRuntimeInstance | null = null
 let usesProceduralFallback = false
 
 watch(
@@ -50,15 +48,17 @@ watch(
   { immediate: true },
 )
 
-async function mountConveyor(ctx: { addObject: (object: THREE.Object3D) => void }): Promise<void> {
-  const provider = new EquipmentVisualProvider(createIndustrialAssetRegistry(), new ThreeGlbAssetLoader())
-  const visual = await provider.load(INDUSTRIAL_CONVEYOR_ASSET_ID, buildConveyor)
+async function mountConveyor(ctx: { addObject: (object: THREE.Object3D) => void, camera?: THREE.Camera }): Promise<void> {
+  const visual = await assetRuntime.acquire(INDUSTRIAL_CONVEYOR_ASSET_ID, {
+    proceduralFallback: buildConveyor,
+    distanceMeters: cameraDistance(ctx.camera),
+  })
   if (conveyorGroup) {
     visual.dispose()
     return
   }
   loadedVisual = visual
-  usesProceduralFallback = visual.source === 'procedural-fallback'
+  usesProceduralFallback = visual.source === 'procedural'
   conveyorGroup = visual.root as THREE.Group
   conveyorGroup.name = 'ConveyorBelt'
   conveyorGroup.position.set(...props.position)
@@ -70,6 +70,11 @@ async function mountConveyor(ctx: { addObject: (object: THREE.Object3D) => void 
 }
 
 watch(() => props.sensorActive, () => updateSensorState())
+
+function cameraDistance(camera?: THREE.Camera): number {
+  if (!camera) return 0
+  return camera.position.distanceTo(new THREE.Vector3(...props.position))
+}
 
 function buildConveyor(): THREE.Group {
   const group = new THREE.Group()

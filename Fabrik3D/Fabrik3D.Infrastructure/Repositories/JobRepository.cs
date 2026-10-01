@@ -52,4 +52,15 @@ public class JobRepository
 
     public async Task DeleteAsync(string id) =>
         await _ctx.Jobs.DeleteOneAsync(Scope() & Builders<Job>.Filter.Eq(j => j.Id, id));
+
+    /// <summary>
+    /// Pending dispatches whose acknowledgement deadline has elapsed, across every organization.
+    /// This is a background-maintenance query invoked by the heartbeat monitor, which is not
+    /// tenant-scoped by design (it reconciles all dispatches).
+    /// </summary>
+    public async Task<List<Job>> GetPendingDispatchesAsync(DateTime nowUtc)
+        => await _ctx.Jobs
+            .Find(Builders<Job>.Filter.Eq(j => j.DispatchState, Contracts.Enums.DispatchState.Pending)
+                  & Builders<Job>.Filter.Lte(j => j.DispatchTimeoutAtUtc, nowUtc))
+            .ToListAsync();
 }

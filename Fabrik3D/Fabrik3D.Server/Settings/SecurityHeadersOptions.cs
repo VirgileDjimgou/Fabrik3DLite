@@ -14,6 +14,14 @@ public sealed class SecurityHeadersOptions
     /// <summary>Applies the configured headers. Disable only for emergency local diagnosis.</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// Opt-in marker that the API is reached over public TLS (terminated at the deployment proxy or
+    /// tunnel). When true, startup requires an explicit HSTS value and a reviewed CSP so an external
+    /// deployment cannot silently run without transport hardening. Default false so loopback
+    /// development, tests and the clearly-labelled public demo keep working unchanged.
+    /// </summary>
+    public bool ExternalTls { get; set; }
+
     public string ContentTypeOptions { get; set; } = "nosniff";
 
     public string FrameOptions { get; set; } = "DENY";

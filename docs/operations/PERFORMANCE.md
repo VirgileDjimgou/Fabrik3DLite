@@ -1,8 +1,19 @@
 # Performance and load validation
 
-Status: **measurements recorded (S49)**. This document records measured numbers, the reference
-hardware/browser and the methodology. Numbers from earlier sprints are cited with their source; they
-were not re-measured in S49. Nothing here is a certification or a capacity guarantee.
+Status: **measurements recorded (S49), extended with honestly-classified acceleration, larger load
+and soak tooling (S56)**. This document records measured numbers, the reference hardware/browser and
+the methodology. Numbers from earlier sprints are cited with their source; they were not re-measured
+in S56. Nothing here is a certification or a capacity guarantee.
+
+S56 adds three things this document now describes:
+
+1. a machine-readable run result that records the **observed renderer identity** and labels every run
+   `hardware`, `software` or `unknown` — software/headless numbers are never presented as GPU results;
+2. 50-client (and conditional 100-client) SignalR load measurement plus a bounded reconnect storm;
+3. a CI short soak that detects resource growth, and a documented 4–8 hour manual reference soak.
+
+The failure/recovery behavior that these measurements exercise is specified in
+[RECOVERY_MATRIX.md](./RECOVERY_MATRIX.md).
 
 ## Reference environment
 
@@ -59,6 +70,98 @@ documented reference scene and will be far faster on hardware-accelerated browse
 requires the scene to keep rendering; it is not a latency budget. The per-engine accessibility matrix
 and versions are in [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md).
 
+## S56 harnesses, acceleration classification and budgets
+
+### Honest acceleration classification
+
+The simulator reads the WebGL renderer identity (`gl.VENDOR`/`gl.RENDERER` and, when the browser
+exposes it, `WEBGL_debug_renderer_info`) and classifies it in
+`fabrik3d.client/src/observability/acceleration.ts`:
+
+| Class | Meaning | Examples of markers |
+| --- | --- | --- |
+| `hardware` | A known GPU vendor or hardware graphics API string | `NVIDIA`, `GeForce`, `Radeon`, `Intel UHD`, `Apple M`, `Direct3D11`, `Metal`, `Vulkan` |
+| `software` | A software rasterizer, even when wrapped in ANGLE | `SwiftShader`, `llvmpipe`, `Microsoft Basic Render`, `software rasterizer` |
+| `unknown` | No identity, an empty identity or an unrecognised string | anything else — **never** upgraded to `hardware` |
+
+Every run result (`fabrik3d.client/src/observability/performanceBudget.ts`, schema `1.0`) stores
+`recordedAt`, runtime, browser, renderer string, raw renderer identity, acceleration class, resolution,
+quality profile, hardware class, scene id and deterministic seed. `validatePerformanceRunResult`
+rejects a forged `hardware` label that has no renderer identity.
+
+### Load harness at 50 and 100 clients
+
+`Fabrik3D/fabrik3d.client/scripts/signalr-load.mjs` is deterministic (mulberry32 seed) and records
+connection latency, delivery-latency percentiles (p50/p95/p99), message loss, a bounded reconnect
+storm and process CPU/RSS/heap. It is an evidence script, not an assertion; it writes a JSON result
+and exits non-zero on a connection failure.
+
+```powershell
+# Start a disposable Development-mode orchestrator + MongoDB first. The harness opens one
+# dev-token per client, and the auth rate limiter allows 30/minute/IP by default, so a 50 or
+# 100-client run needs the test-only override below (production keeps the default 30):
+$env:Authentication__AuthRateLimitPermitLimit = '2000'
+# Then, from Fabrik3D/fabrik3d.client:
+$env:LOAD_CLIENTS = '50'; node scripts/signalr-load.mjs
+$env:LOAD_CLIENTS = '100'; $env:LOAD_JOBS = '50'; $env:LOAD_RECONNECT_CLIENTS = '50'; node scripts/signalr-load.mjs
+```
+
+| Run | Clients | Messages received / expected | Loss | mean connect | delivery p95 | delivery p99 | reconnect |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| S49 | 25 | 5000 / 5000 | 0 | 82.2 ms | — | — | — |
+| S56 | 50 | 5000 / 5000 | 0 | 33.9 ms | 25.0 ms | 41.7 ms | 50 attempted, 0 failed |
+| S56 | 100 | 20000 / 20000 | 0 | 29.8 ms | 23.9 ms | 52.5 ms | 50 attempted, 0 failed |
+
+The 100-client run delivered 20,000 of 20,000 messages (seed 1337, 50 jobs, 4 broadcasts each,
+~4,595 delivered messages/s) on the recorded reference host. Process CPU stayed below 20 % of one
+core for the client harness. This is a single-host measurement; multi-host network effects are out of
+scope and the 100-client result is not a capacity guarantee.
+
+### CI short soak
+
+`Fabrik3D/fabrik3d.client/e2e/soak.spec.ts` repeatedly loads scene presets in the reference cell,
+forces GC before each sample and asserts that `textureBytes` and `drawCalls` do not grow
+(`ResourceLeakDetector`, `fabrik3d.client/src/observability/resourceLeak.ts`). It writes
+`test-results/perf/soak.json` (bounded CI artifact) and fails on a `leak` verdict or a JS heap above
+300 MB. It is a seconds-long CI guard, not the hours-long reference soak.
+
+### Manual reference soak (4–8 hours)
+
+Prerequisites: a hardware-accelerated browser (verified with
+`__fabrik3dDiagnostics.getRendererIdentity()` showing a `hardware` classification), the server and
+MongoDB running, and a machine that can stay awake for the run.
+
+1. Start the simulator with diagnostics enabled (`/?diagnostics=1`) and leave the reference cell
+   rendering.
+2. Sample `__fabrik3dDiagnostics.getSummary()` (heap, texture bytes, draw calls, p95/p99 frame time)
+   every 30–60 s for at least 4 hours; force GC before each heap sample.
+3. Simultaneously run `npm --prefix Fabrik3D/fabrik3d.client run load:signalr` with
+   `LOAD_RECONNECT=true` for the same window.
+4. Feed the counter series to `ResourceLeakDetector` and record the verdict.
+
+Acceptance: no `leak` verdict for texture bytes or draw calls; heap stable within the recorded JVM/JS
+budget; no unbounded growth in server connections or MongoDB documents. A soak that cannot be
+performed on hardware is an explicit HUMAN_REQUIRED evidence item, not a pass.
+
+### Derived regression budgets
+
+The CI budgets are deliberately coarse because CI is software-rendered (headless SwiftShader) and can
+run in parallel with other visual tests. Recorded headless means range from 227 ms (S55) to ~1140 ms
+(S56, loaded runner); the budget therefore guards against a catastrophic regression (a near-hang), not
+against GPU variance:
+
+| Budget | Bound | Rationale |
+| --- | --- | --- |
+| `meanFrameMs` | ≤ 5000 ms | ~4× the worst recorded software-rendered mean |
+| `p95FrameMs` | ≤ 5000 ms | Same order as the mean on a loaded software rasterizer |
+| `p99FrameMs` | ≤ 6000 ms | Covers tail jitter in a loaded CI runner |
+| soak `textureBytes` / `drawCalls` | no growth verdict | Scene disposal must return to steady state |
+| soak JS heap | < 300 MB | Bounded CI runner ceiling |
+
+Hardware-class budgets are only adopted after repeat runs on the documented developer/reference and
+mid-range-laptop classes; no untested hardware class is promised. `HARDWARE_CLASSES` in
+`performanceBudget.ts` keeps `unknown` as the safe default.
+
 ## Measurements recorded by earlier sprints
 
 | Dimension | Measured result | Source sprint |
@@ -71,6 +174,10 @@ and versions are in [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md).
 | Mapping validation/serialization | 500 mappings validated + serialized in **8.9 ms** | S37 (re-run S49) |
 | Instructor metrics query | mean **219.2 ms**, p95 **344.8 ms**, max 471.4 ms (100 sessions × 5 actions) | S45 |
 | CNC visual geometry budget | meshes **28**, triangles **764**, draw calls **28**, textures **0** | S39 |
+| Hero CNC GLB (primary) | meshes **37**, triangles **1 004**, draw calls **37**, textures **0**, **102 676 B** | S55 |
+| Hero CNC GLB (lod1) | meshes **25**, triangles **656**, draw calls **25**, **69 200 B** | S55 |
+| Hero cell dressing GLB (primary) | meshes **38**, triangles **676**, draw calls **38**, textures **0**, **85 160 B** | S55 |
+| Hero cell dressing GLB (lod1) | meshes **30**, triangles **460**, draw calls **30**, **63 752 B** | S55 |
 | Repeated scene load | 25 build/dispose cycles produced identical resource counts | S39 |
 | Closed loop — Modbus showcase | end-to-end latency **468.52 ms** | S46 |
 | Closed loop — OPC UA showcase | end-to-end latency **36.68 ms** | S47 |
@@ -94,9 +201,12 @@ dotnet test Fabrik3D/Fabrik3D.Server.Tests/Fabrik3D.Server.Tests.csproj --filter
 # Client micro-benchmarks
 npm --prefix Fabrik3D/fabrik3d.client run test -- src/observability/performance --reporter=verbose --disable-console-intercept
 
-# Browser frame time (headless Chromium)
+# Browser frame time + machine-readable result (headless Chromium)
 npm --prefix Fabrik3D/fabrik3d.client run build
 npm --prefix Fabrik3D/fabrik3d.client exec -- playwright test e2e/perf.spec.ts
+
+# CI short soak (resource-growth guard; writes test-results/perf/soak.json)
+npm --prefix Fabrik3D/fabrik3d.client exec -- playwright test e2e/soak.spec.ts
 
 # Concurrent SignalR clients (start a Testing-mode orchestrator + MongoDB first)
 npm --prefix Fabrik3D/fabrik3d.client run load:signalr
@@ -104,8 +214,11 @@ npm --prefix Fabrik3D/fabrik3d.client run load:signalr
 
 ## Limitations
 
-- No long-duration soak (>1 hour) was run in this environment; the client sampler is bounded and the
-  collector cardinality is bounded, so sustained runs cannot grow memory without limit, but a
-  dedicated soak is recommended before any production claim.
-- Browser frame time was measured headless (software rendering); GPU vendor numbers are not recorded.
-- The SignalR harness runs on a single host; multi-host network effects are not measured.
+- No 4–8 hour soak was executed in this repository environment; the CI short soak is only a
+  seconds-long guard. The long soak is a documented manual procedure (above) and its result is a
+  human-required evidence item until performed.
+- Browser frame time in CI is measured headless (software rendering). It is labelled `software` or
+  `unknown`, never `hardware`; GPU vendor numbers are not recorded here and must not be inferred.
+- The SignalR harness runs on a single host; multi-host network effects are not measured, and the
+  100-client point is conditional on the host.
+- Budgets are soft regression guards for CI, not an SLA or a capacity-planning input.

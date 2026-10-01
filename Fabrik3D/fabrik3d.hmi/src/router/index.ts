@@ -1,6 +1,30 @@
 import type { RouteRecordRaw } from 'vue-router'
 import HmiShell from '@/components/layout/HmiShell.vue'
-import { canInstruct, isAuthenticated, restoreSession } from '@/auth/authStore'
+import { canAdmin, canEngineer, canInstruct, canOperate, canRead, isAuthenticated, restoreSession } from '@/auth/authStore'
+import { canAccessRoute, type NavPermission } from '@/navigation/navCatalog'
+
+export function permissionCheck(permission: NavPermission): boolean {
+  switch (permission) {
+    case 'operate': return canOperate()
+    case 'engineer': return canEngineer()
+    case 'instruct': return canInstruct()
+    case 'admin': return canAdmin()
+    default: return canRead()
+  }
+}
+
+/**
+ * Route guard (S53): hidden UI is not authorization, but a persona must not land on a surface it
+ * cannot use. Every request is still authorized server-side.
+ */
+export function navigationGuard(to: { path: string }): true | { name: string } {
+  if (!isAuthenticated()) restoreSession()
+  // HmiShell owns the unauthenticated login surface. Redirecting an anonymous user to `home`
+  // would guard `home` again and trap Vue Router in an infinite redirect before HmiLogin mounts.
+  if (!isAuthenticated()) return true
+  if (!canAccessRoute(to.path, permissionCheck)) return { name: 'home' }
+  return true
+}
 
 export const routes: RouteRecordRaw[] = [
   {

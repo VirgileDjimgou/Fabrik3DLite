@@ -21,13 +21,18 @@ import type {
   ControlAuthorityEventDto,
   CreateJobRequest,
   CreateTaskRequest,
+  DispatchAckRequest,
+  DispatchResultDto,
   HeartbeatControlAuthorityRequest,
   HeartbeatRequest,
   JobDto,
   MachineStateDto,
+  PublishRobotPositionsRequest,
   ReleaseControlAuthorityRequest,
+  RobotPositionsDto,
   SaveCellTemplateRequest,
   SimulationSessionDto,
+  StartJobDispatchRequest,
   TakeoverControlAuthorityRequest,
   TaskDto,
   UpdateMachineStateRequest,
@@ -45,13 +50,18 @@ export type {
   ControlAuthorityEventDto,
   CreateJobRequest,
   CreateTaskRequest,
+  DispatchAckRequest,
+  DispatchResultDto,
   HeartbeatControlAuthorityRequest,
   HeartbeatRequest,
   JobDto,
   MachineStateDto,
+  PublishRobotPositionsRequest,
   ReleaseControlAuthorityRequest,
+  RobotPositionsDto,
   SaveCellTemplateRequest,
   SimulationSessionDto,
+  StartJobDispatchRequest,
   TakeoverControlAuthorityRequest,
   TaskDto,
   UpdateMachineStateRequest,
@@ -135,6 +145,20 @@ export const getJobTasks = (id: string) => request<TaskDto[]>('GET', `/jobs/${id
 export const claimJob = (id: string, req: ClaimJobRequest) =>
   request<ClaimResultDto>('POST', `/jobs/${id}/claim`, req, req.correlationId ?? undefined)
 
+// ── Authoritative dispatch (S51) ───────────────────────────────────
+
+/** Operator intent: start a job through the server-authoritative dispatch path. */
+export const dispatchJob = (id: string, req: StartJobDispatchRequest = {}) =>
+  request<DispatchResultDto>('POST', `/jobs/${id}/dispatch`, req)
+
+/** Simulator claim/acknowledgement of a targeted dispatch. */
+export const acknowledgeDispatch = (id: string, req: DispatchAckRequest) =>
+  request<DispatchResultDto>('POST', `/jobs/${id}/dispatch/ack`, req, req.correlationId)
+
+/** Current dispatch state for a job. */
+export const getJobDispatch = (id: string) =>
+  request<DispatchResultDto>('GET', `/jobs/${id}/dispatch`)
+
 // ── Simulation sessions ────────────────────────────────────────────
 
 export const getSessionById = (id: string) =>
@@ -163,6 +187,17 @@ export const getCurrentMachineState = () =>
 
 export const updateCurrentMachineState = (payload: UpdateMachineStateRequest) =>
   request<MachineStateDto>('PUT', '/machine-state/current', payload)
+
+// ── Authoritative robot positions (S53) ────────────────────────────
+
+/** Publishes the robot state this simulator actually executed to the authoritative store. */
+export const publishRobotPositions = (
+  cellId: string, robotId: string, payload: PublishRobotPositionsRequest,
+) => request<RobotPositionsDto>(
+  'PUT',
+  `/robots/${encodeURIComponent(cellId)}/${encodeURIComponent(robotId)}/positions`,
+  payload,
+)
 
 // ── Cell templates ─────────────────────────────────────────────────
 

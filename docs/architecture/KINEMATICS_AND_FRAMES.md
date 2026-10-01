@@ -18,6 +18,24 @@ The single-conveyor cell declares `world`, `cell`, `robot-base`, `flange`, `tool
 
 This remains a demonstrative simulation model, not an OEM calibration or a certified collision/safety calculation. Existing calibrated joint-angle helpers in `PalletWorkspaceTargets.ts` are retained only as migration fallbacks for the current visual arm. The workflow now announces the corresponding frame-aware target before that legacy pose is applied.
 
+## Published robot report (S53)
+
+The simulator publishes the executed robot state to the orchestration server at 2 Hz. The payload is
+explicit about its units and frame convention:
+
+- `joints[]` — `index` (0-based), `name` (`J1`…`J6`), `angleRadians` plus the declared
+  `minRadians`/`maxRadians` limits.
+- `tcp` — `x`/`y`/`z` in meters and `rx`/`ry`/`rz` as intrinsic X-Y-Z (roll-pitch-yaw) radians,
+  converted from the active profile's quaternion pose with Three.js `Euler('XYZ')`.
+- `frames` — `baseFrame`, `toolFrame`, `workObjectFrame` and `currentToolId`.
+- `units` — the literal `radians, meters`; `motionStatus` and `operatingMode` are derived from the
+  controller/workflow state.
+
+The report is the executed state, never an inverse-kinematics re-derivation or a fabricated pose. The
+server validates structure (six distinct joints, a TCP pose and frames) and rejects malformed or
+synthetic reports; it does not clamp the executed joint values — the simulator's
+`ManualJogController` and `MotionSafetyEngine` own limits and collision checks.
+
 ## Developer overlay
 
 `KinematicsDeveloperOverlay` shows the active profile, current tool pose, current work-object target, named frame tree and joint values. It is developer information rather than an HMI operator control.

@@ -61,6 +61,17 @@ npm --prefix Fabrik3D/fabrik3d.hmi run test:a11y
 S49 result: **15/15 passed** (3 checks × 5 engines). Browser versions and the full matrix are recorded
 in [BROWSER_SUPPORT.md](./BROWSER_SUPPORT.md).
 
+### S53 additions (nav grouping and robot jog)
+
+- `HmiNavMenu` exposes a `role="navigation"` landmark with a translated accessible name, an
+  `aria-expanded` toggle and 44 px rows; external workspace links are marked with an icon and
+  `rel="noopener noreferrer"`.
+- `RobotPositionsView` jog buttons carry explicit `aria-label`s (`J1 +` / `J1 -`), are keyboard
+  operable (Enter/Space press-and-hold), meet the 44 px target token, and the availability reason and
+  command lifecycle feedback are exposed through a polite `aria-live` region.
+- The position table renders text (axis, radians, degrees, limits) rather than color-only state, and
+  a stale report is announced with `role="alert"`.
+
 ## Findings and fixes
 
 | # | Finding | Severity | Fix | Verified by |

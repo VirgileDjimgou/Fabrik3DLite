@@ -126,5 +126,6 @@ routes into the product.
 
 ## Roadmap
 
-This is the final sprint of the 50-sprint roadmap. There is no S51; further work requires a separate,
-explicitly approved roadmap revision that preserves history.
+S50 is the final sprint of the original 50-sprint roadmap and remains the immutable 1.0 baseline.
+Roadmap Revision 2 was subsequently approved for planned post-1.0 product hardening in S51-S58; it
+does not retroactively change this release or its evidence.

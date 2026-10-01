@@ -1,6 +1,14 @@
 import { EquipmentAssetRegistry } from './registry'
 import type { EquipmentAssetManifest } from './types'
 import { PROFESSIONAL_ROBOT_ASSET_IDS, PROFESSIONAL_ROBOT_MANIFESTS } from './robotAssets'
+import {
+  HERO_CELL_DRESSING_ASSET_ID,
+  HERO_CELL_DRESSING_MANIFEST,
+  HERO_CNC_MACHINE_ASSET_ID,
+  HERO_CNC_MACHINE_MANIFEST,
+  PROCEDURAL_CELL_DRESSING_ASSET_ID,
+  PROCEDURAL_HERO_CNC_ASSET_ID,
+} from './heroAssets'
 
 const conveyorHash = 'b5e6a80e6bf44158c5deb6bb7cd0a026dff20a12684fbdf5fbffd10a5ed2aab6'
 const conveyorLodHash = '4b4a369926133beda36933dd15697ffd0ee9f005084d409cc2d05c4b526706b9'
@@ -56,5 +64,9 @@ export function createIndustrialAssetRegistry(): EquipmentAssetRegistry {
     const id = PROFESSIONAL_ROBOT_ASSET_IDS[size]
     registry.register({ id, source: 'glb', description: `Generated professional generic ${size} six-axis robot.`, manifest: PROFESSIONAL_ROBOT_MANIFESTS[size], url: `/assets/equipment/${id}/model.glb`, fallbackAssetId: PROCEDURAL_ROBOT_ASSET_ID })
   }
+  registry.register({ id: PROCEDURAL_HERO_CNC_ASSET_ID, source: 'procedural', description: 'S39 procedural CNC machining-centre fallback.' })
+  registry.register({ id: PROCEDURAL_CELL_DRESSING_ASSET_ID, source: 'procedural', description: 'Procedural hero-cell dressing fallback.' })
+  registry.register({ id: HERO_CNC_MACHINE_ASSET_ID, source: 'glb', description: 'Generated flagship CNC machining centre (S55).', manifest: HERO_CNC_MACHINE_MANIFEST, url: `/assets/equipment/${HERO_CNC_MACHINE_ASSET_ID}/model.glb`, fallbackAssetId: PROCEDURAL_HERO_CNC_ASSET_ID })
+  registry.register({ id: HERO_CELL_DRESSING_ASSET_ID, source: 'glb', description: 'Generated render-only hero-cell dressing (S55).', manifest: HERO_CELL_DRESSING_MANIFEST, url: `/assets/equipment/${HERO_CELL_DRESSING_ASSET_ID}/model.glb`, fallbackAssetId: PROCEDURAL_CELL_DRESSING_ASSET_ID })
   return registry
 }

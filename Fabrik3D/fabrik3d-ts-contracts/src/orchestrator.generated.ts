@@ -1573,6 +1573,158 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Jobs/{id}/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DispatchResultDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["StartJobDispatchRequest"];
+                    "text/json": components["schemas"]["StartJobDispatchRequest"];
+                    "application/*+json": components["schemas"]["StartJobDispatchRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DispatchResultDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Jobs/{id}/dispatch/ack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DispatchAckRequest"];
+                    "text/json": components["schemas"]["DispatchAckRequest"];
+                    "application/*+json": components["schemas"]["DispatchAckRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DispatchResultDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Jobs/{id}/claim": {
         parameters: {
             query?: never;
@@ -1830,6 +1982,141 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Jobs/composer/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobComposerOptionsDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Jobs/composer/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateJobRequest"];
+                    "text/json": components["schemas"]["CreateJobRequest"];
+                    "application/*+json": components["schemas"]["CreateJobRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobComposerPreviewDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Jobs/composer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateJobRequest"];
+                    "text/json": components["schemas"]["CreateJobRequest"];
+                    "application/*+json": components["schemas"]["CreateJobRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2789,6 +3076,165 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/robots/{cellId}/{robotId}/positions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cellId: string;
+                    robotId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RobotPositionsDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cellId: string;
+                    robotId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PublishRobotPositionsRequest"];
+                    "text/json": components["schemas"]["PublishRobotPositionsRequest"];
+                    "application/*+json": components["schemas"]["PublishRobotPositionsRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["RobotPositionsDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/robots/{cellId}/{robotId}/jog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cellId: string;
+                    robotId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["JogCommandRequest"];
+                    "text/json": components["schemas"]["JogCommandRequest"];
+                    "application/*+json": components["schemas"]["JogCommandRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JogCommandResultDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/robots/{cellId}/{robotId}/jog/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    cellId: string;
+                    robotId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JogAuditDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4000,6 +4446,30 @@ export interface components {
             /** Format: date-time */
             endedAtUtc?: string | null;
         };
+        ComposerCellOptionDto: {
+            id?: string;
+            name?: string;
+            available?: boolean;
+            /** Format: int32 */
+            simulatorCount?: number;
+            compatibleScenarioIds?: string[];
+            defaultScenarioId?: string;
+        };
+        ComposerCellTemplateOptionDto: {
+            id?: string;
+            name?: string;
+            schemaVersion?: string;
+        };
+        ComposerScenarioOptionDto: {
+            id?: string;
+            name?: string;
+            level?: string;
+        };
+        ComposerValidationIssueDto: {
+            code?: string;
+            field?: string;
+            message?: string;
+        };
         ConnectorStatusDto: {
             connector?: string;
             state?: string;
@@ -4071,6 +4541,14 @@ export interface components {
             metadata?: {
                 [key: string]: string;
             };
+            targetCellId?: string | null;
+            cellTemplateId?: string | null;
+            scenarioId?: string | null;
+            /** Format: int32 */
+            priority?: number;
+            palletLayout?: components["schemas"]["PalletLayoutRequest"];
+            occupiedSlots?: components["schemas"]["PalletSlotRequest"][];
+            partType?: string;
         };
         CreateOrganizationRequest: {
             name: string;
@@ -4093,6 +4571,38 @@ export interface components {
             role: string;
             subject?: string | null;
             name?: string | null;
+        };
+        DispatchAckRequest: {
+            simulatorId: string;
+            correlationId: string;
+            targetCellId?: string | null;
+            simulationSessionId?: string | null;
+            state?: string;
+            failureReason?: string | null;
+        };
+        DispatchResultDto: {
+            job?: components["schemas"]["JobDto"];
+            session?: components["schemas"]["SimulationSessionDto"];
+            tasks?: components["schemas"]["TaskDto"][];
+            dispatchState?: string;
+            targetCellId?: string | null;
+            assignedSimulatorId?: string | null;
+            dispatchCorrelationId?: string | null;
+            /** Format: date-time */
+            dispatchTimeoutAtUtc?: string | null;
+            failureReason?: string | null;
+        };
+        GeneratedTaskPreviewDto: {
+            /** Format: int32 */
+            sequenceOrder?: number;
+            name?: string;
+            partType?: string;
+            palletId?: string;
+            /** Format: int32 */
+            slotRow?: number;
+            /** Format: int32 */
+            slotColumn?: number;
+            stableKey?: string;
         };
         HealthCheckDto: {
             name?: string;
@@ -4306,6 +4816,27 @@ export interface components {
             truncated?: boolean;
             educationalNote?: string;
         };
+        JobComposerOptionsDto: {
+            cells?: components["schemas"]["ComposerCellOptionDto"][];
+            scenarios?: components["schemas"]["ComposerScenarioOptionDto"][];
+            cellTemplates?: components["schemas"]["ComposerCellTemplateOptionDto"][];
+            /** Format: int32 */
+            maxRows?: number;
+            /** Format: int32 */
+            maxColumns?: number;
+            /** Format: int32 */
+            maxTasks?: number;
+        };
+        JobComposerPreviewDto: {
+            valid?: boolean;
+            resolvedTargetCellId?: string | null;
+            scenarioId?: string | null;
+            /** Format: int32 */
+            taskCount?: number;
+            tasks?: components["schemas"]["GeneratedTaskPreviewDto"][];
+            errors?: components["schemas"]["ComposerValidationIssueDto"][];
+            warnings?: components["schemas"]["ComposerValidationIssueDto"][];
+        };
         JobDto: {
             id?: string;
             name?: string;
@@ -4330,10 +4861,77 @@ export interface components {
             progressPercent?: number;
             simulationSessionId?: string | null;
             metadata?: {
-                [key: string]: string;
+                [key: string]: string | null;
             };
             /** Format: int32 */
             version?: number;
+            targetCellId?: string | null;
+            assignedSimulatorId?: string | null;
+            dispatchState?: string;
+            dispatchCorrelationId?: string | null;
+            /** Format: date-time */
+            dispatchedAtUtc?: string | null;
+            /** Format: date-time */
+            dispatchAcknowledgedAtUtc?: string | null;
+            /** Format: date-time */
+            dispatchTimeoutAtUtc?: string | null;
+            dispatchFailureReason?: string | null;
+            /** Format: int32 */
+            priority?: number;
+            scenarioId?: string | null;
+            cellTemplateId?: string | null;
+            palletId?: string | null;
+            /** Format: int32 */
+            palletRows?: number;
+            /** Format: int32 */
+            palletColumns?: number;
+            /** Format: int32 */
+            taskCount?: number;
+            /** Format: int32 */
+            completedTaskCount?: number;
+            /** Format: int32 */
+            schemaVersion?: number;
+            /** Format: date-time */
+            failedAtUtc?: string | null;
+            /** Format: date-time */
+            cancelledAtUtc?: string | null;
+        };
+        JogAuditDto: {
+            cellId?: string;
+            robotId?: string;
+            action?: string;
+            joint?: string;
+            /** Format: int32 */
+            direction?: number;
+            outcome?: string;
+            reason?: string | null;
+            actorId?: string;
+            correlationId?: string | null;
+            /** Format: date-time */
+            timestampUtc?: string;
+        };
+        JogCommandRequest: {
+            robotId?: string;
+            joint?: string;
+            /** Format: int32 */
+            direction?: number;
+            action?: string;
+            deadManToken?: string | null;
+            mode?: string;
+            correlationId?: string | null;
+        };
+        JogCommandResultDto: {
+            cellId?: string;
+            robotId?: string;
+            action?: string;
+            joint?: string;
+            /** Format: int32 */
+            direction?: number;
+            state?: string;
+            reason?: string | null;
+            correlationId?: string | null;
+            /** Format: date-time */
+            issuedAtUtc?: string;
         };
         MachineStateDto: {
             id?: string;
@@ -4412,6 +5010,29 @@ export interface components {
             name?: string;
             slug?: string;
         };
+        PalletLayoutRequest: {
+            palletId: string;
+            /** Format: int32 */
+            rows?: number;
+            /** Format: int32 */
+            columns?: number;
+        };
+        PalletSlotRequest: {
+            /** Format: int32 */
+            row?: number;
+            /** Format: int32 */
+            column?: number;
+        };
+        PublishRobotPositionsRequest: {
+            robotId?: string;
+            robotModel?: string;
+            joints?: components["schemas"]["RobotJointDto"][];
+            tcp?: components["schemas"]["RobotPoseDto"];
+            frames?: components["schemas"]["RobotFramesDto"];
+            motionStatus?: string;
+            operatingMode?: string;
+            simulatorId?: string;
+        };
         ReleaseControlAuthorityRequest: {
             ownerId: string;
             correlationId?: string | null;
@@ -4465,6 +5086,56 @@ export interface components {
             session?: components["schemas"]["TrainingSessionDto"];
             restartedFromSessionId?: string;
             reason?: string | null;
+        };
+        RobotFramesDto: {
+            baseFrame?: string;
+            toolFrame?: string;
+            workObjectFrame?: string;
+            currentToolId?: string;
+        };
+        RobotJointDto: {
+            /** Format: int32 */
+            index?: number;
+            name?: string;
+            /** Format: double */
+            angleRadians?: number;
+            /** Format: double */
+            minRadians?: number;
+            /** Format: double */
+            maxRadians?: number;
+        };
+        RobotPoseDto: {
+            /** Format: double */
+            x?: number;
+            /** Format: double */
+            y?: number;
+            /** Format: double */
+            z?: number;
+            /** Format: double */
+            rx?: number;
+            /** Format: double */
+            ry?: number;
+            /** Format: double */
+            rz?: number;
+        };
+        RobotPositionsDto: {
+            cellId?: string;
+            robotId?: string;
+            robotModel?: string;
+            joints?: components["schemas"]["RobotJointDto"][];
+            tcp?: components["schemas"]["RobotPoseDto"];
+            frames?: components["schemas"]["RobotFramesDto"];
+            motionStatus?: string;
+            operatingMode?: string;
+            controlAuthorityMode?: string;
+            controlAuthorityState?: string;
+            controlAuthorityOwnerId?: string | null;
+            isStale?: boolean;
+            /** Format: date-time */
+            publishedAtUtc?: string;
+            units?: string;
+            /** Format: int32 */
+            schemaVersion?: number;
         };
         SaveCellTemplateRequest: {
             name: string;
@@ -4595,6 +5266,7 @@ export interface components {
             scenarioActivityId?: string | null;
             /** Format: int32 */
             scenarioProgress?: number;
+            targetCellId?: string | null;
         };
         SimulatorMetricsDto: {
             sourceId?: string;
@@ -4610,6 +5282,10 @@ export interface components {
             heapUsedBytes?: number;
             /** Format: date-time */
             timestamp?: string;
+        };
+        StartJobDispatchRequest: {
+            targetCellId?: string | null;
+            simulatorId?: string | null;
         };
         StartTrainingSessionRequest: {
             scenarioId: string;
@@ -4681,6 +5357,8 @@ export interface components {
             errorMessage?: string | null;
             /** Format: int32 */
             version?: number;
+            slotKey?: string | null;
+            isRequired?: boolean;
         };
         TelemetrySampleDto: {
             id?: string;

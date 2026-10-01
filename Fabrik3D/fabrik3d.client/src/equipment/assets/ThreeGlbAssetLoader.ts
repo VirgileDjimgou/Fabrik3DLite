@@ -20,6 +20,15 @@ interface CachedTemplate {
   activeInstances: number
 }
 
+export interface GlbLoadOptions {
+  /**
+   * Clones per-instance materials so runtime material mutations (for example a
+   * status colour) cannot leak to other instances. Geometry and textures remain
+   * shared immutable templates and are disposed only with the cached template.
+   */
+  isolateMaterials?: boolean
+}
+
 /**
  * Centralized GLB loader. The template is cached per id/version/path while
  * each caller receives an independent scene graph suitable for transforms or
@@ -31,7 +40,7 @@ export class ThreeGlbAssetLoader {
 
   constructor(private readonly loader: GlbLoaderLike = new GLTFLoader()) {}
 
-  async load(manifest: EquipmentAssetManifest, url = manifest.visual.glb.path): Promise<LoadedEquipmentVisual> {
+  private ensureEntry(manifest: EquipmentAssetManifest, url: string): { key: string, entry: CachedTemplate } {
     const key = `${manifest.id}@${manifest.version}:${url}`
     let entry = this.cached.get(key)
     if (!entry) {
@@ -50,8 +59,27 @@ export class ThreeGlbAssetLoader {
       entry = created
       this.cached.set(key, entry)
     }
+    return { key, entry }
+  }
+
+  /**
+   * Physically loads and caches a template once. Concurrent callers coalesce on
+   * the same promise; the returned template is never handed out directly.
+   */
+  async preload(manifest: EquipmentAssetManifest, url = manifest.visual.glb.path): Promise<void> {
+    const { entry } = this.ensureEntry(manifest, url)
+    await entry.promise
+  }
+
+  async load(
+    manifest: EquipmentAssetManifest,
+    url = manifest.visual.glb.path,
+    options: GlbLoadOptions = {},
+  ): Promise<LoadedEquipmentVisual> {
+    const { entry } = this.ensureEntry(manifest, url)
     const template = await entry.promise
     const root = clone(template)
+    const clonedMaterials = options.isolateMaterials ? isolateInstanceMaterials(root) : []
     entry.activeInstances += 1
     let disposed = false
     return {
@@ -60,6 +88,7 @@ export class ThreeGlbAssetLoader {
         if (disposed) return
         disposed = true
         root.removeFromParent()
+        for (const material of clonedMaterials) material.dispose()
         entry!.activeInstances = Math.max(0, entry!.activeInstances - 1)
       },
     }
@@ -104,6 +133,30 @@ export function disposeObject3DResources(root: THREE.Object3D): void {
     const childMaterials = Array.isArray(child.material) ? child.material : [child.material]
     for (const material of childMaterials) disposeMaterial(material, materials, textures)
   })
+}
+
+/**
+ * Gives one cloned instance its own Material objects (shared within the instance)
+ * so runtime material edits stay local. Textures and geometry remain shared
+ * immutable templates. Returns the cloned materials for instance-scoped disposal.
+ */
+export function isolateInstanceMaterials(root: THREE.Object3D): THREE.Material[] {
+  const clones = new Map<THREE.Material, THREE.Material>()
+  const cloneMaterial = (material: THREE.Material): THREE.Material => {
+    let existing = clones.get(material)
+    if (!existing) {
+      existing = material.clone()
+      clones.set(material, existing)
+    }
+    return existing
+  }
+  root.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return
+    child.material = Array.isArray(child.material)
+      ? child.material.map(cloneMaterial)
+      : cloneMaterial(child.material)
+  })
+  return [...clones.values()]
 }
 
 /** Parses a GLB buffer without a WebGL renderer; used by package smoke tests. */

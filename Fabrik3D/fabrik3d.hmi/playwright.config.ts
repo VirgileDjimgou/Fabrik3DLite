@@ -19,7 +19,7 @@ export default defineConfig({
     {
       // API-level orchestration flows — run against the live orchestrator.
       name: 'orchestrator-api',
-      testMatch: /(orchestration-smoke|orchestration-claim|cell-templates|tenancy-isolation|training-session|instructor-dashboard)\.spec\.ts/,
+      testMatch: /(orchestration-smoke|orchestration-claim|orchestration-dispatch|job-composer|cell-templates|tenancy-isolation|training-session|instructor-dashboard)\.spec\.ts/,
       use: { baseURL: API_BASE_URL },
     },
     {

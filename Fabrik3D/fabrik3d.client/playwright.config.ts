@@ -6,6 +6,9 @@ export default defineConfig({
   expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
   use: {
     baseURL: 'http://127.0.0.1:4173',
+    // S56 soak/performance harnesses benefit from precise heap numbers and a forced-GC hook so
+    // garbage is not mistaken for a retained leak.
+    launchOptions: { args: ['--enable-precise-memory-info', '--js-flags=--expose-gc'] },
   },
   webServer: {
     command: 'npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',

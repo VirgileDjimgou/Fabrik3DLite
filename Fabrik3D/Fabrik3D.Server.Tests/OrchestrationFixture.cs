@@ -25,11 +25,17 @@ public sealed class OrchestrationFixture : IAsyncLifetime
     public TaskRepository Tasks { get; private set; } = null!;
     public SimulationSessionRepository Sessions { get; private set; } = null!;
     public ControlAuthorityRepository Authorities { get; private set; } = null!;
+    public CellTemplateRepository CellTemplates { get; private set; } = null!;
     public JobService JobService { get; private set; } = null!;
     public TaskService TaskService { get; private set; } = null!;
     public SimulationSessionService SessionService { get; private set; } = null!;
     public ControlAuthorityService AuthorityService { get; private set; } = null!;
     public HeartbeatMonitorService Monitor { get; private set; } = null!;
+    public SimulatorRegistry Registry { get; private set; } = null!;
+    public DispatchService DispatchService { get; private set; } = null!;
+    public JobLifecycleCoordinator Lifecycle { get; private set; } = null!;
+    public JobComposerService Composer { get; private set; } = null!;
+    public RobotStateService Robots { get; private set; } = null!;
 
     public async Task InitializeAsync()
     {
@@ -45,6 +51,7 @@ public sealed class OrchestrationFixture : IAsyncLifetime
         Tasks = new TaskRepository(Context);
         Sessions = new SimulationSessionRepository(Context);
         Authorities = new ControlAuthorityRepository(Context);
+        CellTemplates = new CellTemplateRepository(Context);
 
         var options = Options.Create(new OrchestrationOptions
         {
@@ -52,19 +59,31 @@ public sealed class OrchestrationFixture : IAsyncLifetime
             HeartbeatCheckIntervalSeconds = 1,
             AuthorityLeaseSeconds = 30,
             RequireAuthorityConfirmation = true,
+            DispatchAckTimeoutSeconds = 5,
+            DefaultCellId = "reference-cell",
+            AuthoritativeDispatchEnabled = true,
         });
 
+        Registry = new SimulatorRegistry(TimeSpan.FromSeconds(60));
+        Lifecycle = new JobLifecycleCoordinator(
+            Jobs, Tasks, Sessions, Hub, NullLogger<JobLifecycleCoordinator>.Instance);
         JobService = new JobService(
             Jobs, Tasks, Sessions, Hub, NullLogger<JobService>.Instance, options);
         TaskService = new TaskService(
-            Tasks, Jobs, Sessions, Hub, NullLogger<TaskService>.Instance);
+            Tasks, Jobs, Sessions, Hub, Lifecycle, NullLogger<TaskService>.Instance);
         SessionService = new SimulationSessionService(
-            Sessions, Hub, NullLogger<SimulationSessionService>.Instance);
+            Sessions, Hub, Lifecycle, NullLogger<SimulationSessionService>.Instance);
+        DispatchService = new DispatchService(
+            Jobs, Tasks, Sessions, Hub, Registry, NullLogger<DispatchService>.Instance, options);
+        Composer = new JobComposerService(
+            Jobs, Tasks, CellTemplates, Registry, NullLogger<JobComposerService>.Instance, options);
         AuthorityService = new ControlAuthorityService(
             Authorities, Hub, new AlwaysReadyOwnerProbe(), options, TimeProvider.System,
             NullLogger<ControlAuthorityService>.Instance);
         Monitor = new HeartbeatMonitorService(
-            Sessions, Hub, NullLogger<HeartbeatMonitorService>.Instance, options, AuthorityService);
+            Sessions, Hub, NullLogger<HeartbeatMonitorService>.Instance, options, AuthorityService, DispatchService);
+        Robots = new RobotStateService(
+            AuthorityService, Hub, Registry, options, TimeProvider.System, NullLogger<RobotStateService>.Instance);
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
@@ -109,6 +128,24 @@ public sealed class RecordingHub : IHubNotificationService
     public Task MachineStateChangedAsync(MachineStateChangedEvent evt) => Task.CompletedTask;
 
     public Task ControlAuthorityChangedAsync(ControlAuthorityChangedEvent evt)
+    {
+        lock (_events) _events.Add(evt);
+        return Task.CompletedTask;
+    }
+
+    public Task ExecutionDispatchRequestedAsync(ExecutionDispatchRequestedEvent evt)
+    {
+        lock (_events) _events.Add(evt);
+        return Task.CompletedTask;
+    }
+
+    public Task DispatchStateChangedAsync(DispatchStateChangedEvent evt)
+    {
+        lock (_events) _events.Add(evt);
+        return Task.CompletedTask;
+    }
+
+    public Task JogCommandIssuedAsync(JogCommandIssuedEvent evt)
     {
         lock (_events) _events.Add(evt);
         return Task.CompletedTask;

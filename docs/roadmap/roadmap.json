@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "sprintCeiling": 50,
+  "version": 2,
+  "sprintCeiling": 58,
   "name": "Fabrik3D educational digital twin roadmap",
   "vision": "Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts.",
   "sprints": [
@@ -53,6 +53,14 @@
     { "id": "S47", "phase": 12, "title": "Siemens / PLCSIM interoperability profile", "file": "docs/roadmap/sprints/S47-siemens-plcsim-profile.md", "dependsOn": ["S46"] },
     { "id": "S48", "phase": 12, "title": "On-premise product packaging and lifecycle", "file": "docs/roadmap/sprints/S48-onpremise-packaging-lifecycle.md", "dependsOn": ["S47"] },
     { "id": "S49", "phase": 12, "title": "Observability, performance, security and release-candidate validation", "file": "docs/roadmap/sprints/S49-observability-hardening.md", "dependsOn": ["S48"] },
-    { "id": "S50", "phase": 12, "title": "Fabrik3D 1.0 commercialization baseline", "file": "docs/roadmap/sprints/S50-commercialization-baseline.md", "dependsOn": ["S49"] }
+    { "id": "S50", "phase": 12, "title": "Fabrik3D 1.0 commercialization baseline", "file": "docs/roadmap/sprints/S50-commercialization-baseline.md", "dependsOn": ["S49"] },
+    { "id": "S51", "phase": 13, "title": "Authoritative job dispatch and remote cell execution", "file": "docs/roadmap/sprints/S51-authoritative-job-dispatch.md", "dependsOn": ["S50"] },
+    { "id": "S52", "phase": 13, "title": "Authoritative job lifecycle and production job composer", "file": "docs/roadmap/sprints/S52-job-lifecycle-composer.md", "dependsOn": ["S51"] },
+    { "id": "S53", "phase": 13, "title": "Complete operator HMI and role-aware product surfaces", "file": "docs/roadmap/sprints/S53-operator-hmi-role-surfaces.md", "dependsOn": ["S52"] },
+    { "id": "S54", "phase": 13, "title": "Shared 3D asset runtime, cache and adaptive LOD", "file": "docs/roadmap/sprints/S54-shared-asset-runtime-lod.md", "dependsOn": ["S53"] },
+    { "id": "S55", "phase": 13, "title": "High-fidelity hero reference cell", "file": "docs/roadmap/sprints/S55-hero-reference-cell.md", "dependsOn": ["S54"] },
+    { "id": "S56", "phase": 13, "title": "Performance, resilience, recovery and soak hardening", "file": "docs/roadmap/sprints/S56-performance-resilience-soak.md", "dependsOn": ["S55"] },
+    { "id": "S57", "phase": 13, "title": "Security, deployment and repository lifecycle hardening", "file": "docs/roadmap/sprints/S57-security-deployment-repository-hardening.md", "dependsOn": ["S56"] },
+    { "id": "S58", "phase": 13, "title": "Real PLC interoperability proof and post-1.0 validation", "file": "docs/roadmap/sprints/S58-real-plc-proof-and-product-validation.md", "dependsOn": ["S57"] }
   ]
 }

@@ -16,6 +16,10 @@ public class SecretRedactorTests
     [InlineData("Some:ApiKey")]
     [InlineData("Orchestration:AuthorityConfirmationToken")]
     [InlineData("nested:accesstoken")]
+    [InlineData("Cloudflare:TunnelToken")]
+    [InlineData("TUNNEL_TOKEN")]
+    [InlineData("Mqtt:Passphrase")]
+    [InlineData("OpcUa:PrivateKeyPath")]
     public void Sensitive_keys_are_detected(string key)
     {
         Assert.True(SecretRedactor.IsSensitiveKey(key));
@@ -81,5 +85,48 @@ public class SecretRedactorTests
         var entry = Assert.Single(buffer.Snapshot());
         Assert.DoesNotContain("secret@", entry);
         Assert.Contains(SecretRedactor.Placeholder, entry);
+    }
+
+    [Theory]
+    [InlineData("MQTT_PASSWORD=sup3rsecret-value")]
+    [InlineData("api_key: abcdef123456")]
+    [InlineData("client_secret=abcdef123456")]
+    public void Env_style_sensitive_assignments_are_detected(string value)
+    {
+        Assert.True(SecretRedactor.LooksLikeSecret(value));
+    }
+
+    [Fact]
+    public void Private_key_headers_are_detected()
+    {
+        Assert.True(SecretRedactor.LooksLikeSecret("-----BEGIN EC PRIVATE " + "KEY-----"));
+        Assert.True(SecretRedactor.LooksLikeSecret("-----BEGIN OPENSSH PRIVATE " + "KEY-----"));
+    }
+
+    [Fact]
+    public void Redact_message_masks_env_style_assignments()
+    {
+        var redacted = SecretRedactor.RedactMessage("cloudflared TUNNEL_TOKEN=" + "abcdef1234567890 starting");
+
+        Assert.DoesNotContain("abcdef1234567890", redacted);
+        Assert.Contains(SecretRedactor.Placeholder, redacted);
+    }
+
+    [Fact]
+    public void Redact_message_masks_an_entire_private_key_block()
+    {
+        var message = "key -----BEGIN PRIVATE " + "KEY-----\nMIIEvQIBADANBg\n-----END PRIVATE " + "KEY----- end";
+
+        var redacted = SecretRedactor.RedactMessage(message);
+
+        Assert.DoesNotContain("MIIEvQIBADANBg", redacted);
+        Assert.Contains(SecretRedactor.Placeholder, redacted);
+    }
+
+    [Fact]
+    public void Redact_value_hides_a_tunnel_token_even_under_a_neutral_key()
+    {
+        Assert.Equal(SecretRedactor.Placeholder,
+            SecretRedactor.RedactValue("Cloudflare:Token", "abcdef123456"));
     }
 }

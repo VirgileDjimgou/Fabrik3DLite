@@ -15,4 +15,18 @@ public interface IHubNotificationService
     Task OperatorMessageAsync(OperatorMessageEvent evt);
     Task MachineStateChangedAsync(MachineStateChangedEvent evt);
     Task ControlAuthorityChangedAsync(ControlAuthorityChangedEvent evt);
+
+    /// <summary>
+    /// Publishes a targeted execution request to the assigned simulator's group only (S51).
+    /// </summary>
+    Task ExecutionDispatchRequestedAsync(ExecutionDispatchRequestedEvent evt);
+
+    /// <summary>Broadcasts a dispatch lifecycle change to HMI observers (S51).</summary>
+    Task DispatchStateChangedAsync(DispatchStateChangedEvent evt);
+
+    /// <summary>
+    /// Publishes an authorized jog command to the assigned simulator's group only (S53). Never
+    /// broadcast to unrelated simulators or tenants.
+    /// </summary>
+    Task JogCommandIssuedAsync(JogCommandIssuedEvent evt);
 }

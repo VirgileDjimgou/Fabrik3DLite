@@ -32,12 +32,31 @@ describe('frame metrics sampler', () => {
     expect(summary!.sampleCount).toBe(6)
     expect(summary!.meanFrameMs).toBeCloseTo(15, 6)
     expect(summary!.p50FrameMs).toBeCloseTo(15, 6)
+    expect(summary!.p95FrameMs).toBeCloseTo(19.5, 6)
+    expect(summary!.p99FrameMs).toBeCloseTo(19.9, 6)
     expect(summary!.maxFrameMs).toBe(20)
     expect(summary!.estimatedFps).toBeCloseTo(1000 / 15, 6)
     expect(summary!.lastDrawCalls).toBe(40)
     expect(summary!.lastTriangles).toBe(1200)
     expect(summary!.textureBytes).toBe(4096)
     expect(summary!.textureCount).toBe(3)
+    expect(summary!.acceleration).toBe('unknown')
+  })
+
+  it('classifies acceleration from the renderer identity, never above the evidence', () => {
+    const sampler = new FrameMetricsSampler()
+    expect(sampler.setRendererIdentity(null)).toBe('unknown')
+    expect(sampler.setRendererIdentity({ vendor: '', renderer: '', unmaskedVendor: '', unmaskedRenderer: '' })).toBe('unknown')
+    expect(
+      sampler.setRendererIdentity({
+        vendor: '',
+        renderer: '',
+        unmaskedVendor: 'NVIDIA',
+        unmaskedRenderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Direct3D11)',
+      }),
+    ).toBe('hardware')
+    sampler.record({ frameMs: 16, drawCalls: 1, triangles: 1 })
+    expect(sampler.summary()!.acceleration).toBe('hardware')
   })
 
   it('normalises malformed samples instead of corrupting the window', () => {

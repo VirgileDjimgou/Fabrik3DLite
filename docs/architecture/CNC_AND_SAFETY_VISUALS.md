@@ -33,13 +33,21 @@ IDLE → LOAD_OPENING → LOAD_READY → DOOR_CLOSING → CLAMPING
 
 ## Visual nodes
 
-`equipment/visuals/cncMachineVisual.ts` builds one instance-owned CNC visual and
-exposes semantic nodes (`door:loading`, `spindle:main`, `fixture:chuck`,
-`fixture:jaw-left`, `fixture:jaw-right`, `axis:feed`, `coolant:nozzle`,
-`signal:panel-screen`, `signal:stack-light`, …). `LargeCNCMachine.vue` is a thin
-renderless wrapper: it steps the cycle machine with the animation-loop delta and
-applies the snapshot to the visual. Detailed meshes are deliberately not
-collision authorities; the analytic cell collision models are unchanged.
+`equipment/visuals/cncMachineVisual.ts` builds one instance-owned procedural CNC
+visual and exposes semantic nodes (`door:loading`, `spindle:main`,
+`fixture:chuck`, `fixture:jaw-left`, `fixture:jaw-right`, `axis:feed`,
+`coolant:nozzle`, `signal:panel-screen`, `signal:stack-light`, …).
+`LargeCNCMachine.vue` is a thin renderless wrapper: it steps the cycle machine
+with the animation-loop delta and applies the snapshot to the visual.
+
+Since S55 the wrapper first acquires the generated `hero-cnc-machine-v1` GLB
+through the shared S54 asset runtime and binds it with
+`equipment/visuals/cncGlbBinding.ts`. The binder maps the same
+`CncMachineVisualState` onto the GLB's semantic nodes and reports any missing
+node; when the GLB is absent, corrupt or incomplete the wrapper keeps the
+procedural visual, so the simulation is never interrupted. Detailed meshes are
+deliberately not collision authorities; the analytic cell collision models are
+unchanged. See [Hero reference cell](HERO_REFERENCE_CELL.md).
 
 ## Safety visuals
 

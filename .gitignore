@@ -16,6 +16,20 @@ coverage/
 playwright-report/
 test-results/
 
+# Generated recordings and large video deliverables stay local or use release hosting.
+# The curated assets already kept under media/ remain eligible for Git/LFS.
+Fabrik3D/artifacts/demo/tour/
+*.webm
+*.mp4
+*.mov
+*.mkv
+*.avi
+!media/**/*.webm
+!media/**/*.mp4
+!media/**/*.mov
+!media/**/*.mkv
+!media/**/*.avi
+
 # Local configuration and secrets
 .env
 .env.local

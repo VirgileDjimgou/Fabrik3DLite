@@ -21,6 +21,21 @@
             <div class="col-6 mt-1"><strong>{{ t('currentJob.session') }}:</strong>
               <span class="font-monospace">{{ job.simulationSessionId ? job.simulationSessionId.slice(-6) : '-' }}</span>
             </div>
+            <div v-if="job.dispatchState && job.dispatchState !== 'None'" class="col-6 mt-1">
+              <strong>{{ t('currentJob.dispatch') }}:</strong>
+              <span class="badge ms-1" :class="dispatchBadge(job.dispatchState)" data-dispatch-state>{{ job.dispatchState }}</span>
+            </div>
+            <div v-if="job.targetCellId" class="col-6 mt-1">
+              <strong>{{ t('currentJob.targetCell') }}:</strong>
+              <span class="font-monospace">{{ job.targetCellId }}</span>
+            </div>
+            <div v-if="job.assignedSimulatorId" class="col-6 mt-1">
+              <strong>{{ t('currentJob.assignedSimulator') }}:</strong>
+              <span class="font-monospace">{{ job.assignedSimulatorId.slice(-6) }}</span>
+            </div>
+            <div v-if="job.dispatchFailureReason" class="col-12 mt-1 text-danger">
+              <strong>{{ t('currentJob.dispatchFailure') }}:</strong> {{ job.dispatchFailureReason }}
+            </div>
           </div>
           <div class="progress mt-2" style="height: 6px">
             <div class="progress-bar" role="progressbar"
@@ -119,6 +134,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import * as api from '@/services/api'
 import * as hub from '@/services/hub'
 import type { JobDto, TaskDto } from '@/services/api'
@@ -128,6 +144,7 @@ import HmiEmptyState from '@/components/controls/HmiEmptyState.vue'
 import HmiErrorState from '@/components/controls/HmiErrorState.vue'
 
 const { t } = useI18n()
+const route = useRoute()
 const { machine, session } = useMachineState()
 const job = ref<JobDto | null>(null)
 const tasks = ref<TaskDto[]>([])
@@ -146,6 +163,12 @@ function sessionStatusBadge(s: string) {
     : s === 'Faulted' ? 'bg-danger' : 'bg-secondary'
 }
 
+function dispatchBadge(s: string) {
+  return s === 'Running' ? 'bg-success' : s === 'Acknowledged' ? 'bg-info'
+    : s === 'Pending' ? 'bg-warning text-dark'
+    : s === 'Failed' || s === 'TimedOut' ? 'bg-danger' : 'bg-secondary'
+}
+
 function formatTime(iso: string) {
   const d = new Date(iso)
   return isNaN(d.getTime()) ? '-' : d.toLocaleTimeString()
@@ -159,6 +182,14 @@ const sessionProgress = computed(() => {
 
 async function loadJob() {
   try {
+    // A composer submission can deep-link to the created job with ?job=<id> (S52).
+    const requestedId = typeof route.query.job === 'string' ? route.query.job : ''
+    if (requestedId) {
+      const requested = await api.getJobById(requestedId)
+      job.value = requested
+      try { tasks.value = await api.getJobTasks(requested.id) } catch { tasks.value = [] }
+      return
+    }
     const jobs = await api.getJobs()
     const active = jobs.find(j => j.status === 'Running' || j.status === 'Paused') ?? jobs[0] ?? null
     job.value = active
@@ -192,7 +223,15 @@ function confirmCommand() {
   const action = pendingAction.value
   pendingAction.value = null
   if (!action) return
-  const commands = { start: () => api.startJob(job.value!.id), pause: () => api.pauseJob(job.value!.id), resume: () => api.resumeJob(job.value!.id), stop: () => api.stopJob(job.value!.id) }
+  // Start goes through the server-authoritative dispatch path (S51): the server assigns one
+  // compatible target and the simulator starts automatically. Pause/resume/stop stay coherent
+  // with the assigned target through the same ownership model.
+  const commands = {
+    start: () => api.dispatchJob(job.value!.id),
+    pause: () => api.pauseJob(job.value!.id),
+    resume: () => api.resumeJob(job.value!.id),
+    stop: () => api.stopJob(job.value!.id),
+  }
   void runCommand(commands[action])
 }
 

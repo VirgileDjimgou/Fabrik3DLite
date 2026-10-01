@@ -16,7 +16,26 @@ public record JobDto(
     int ProgressPercent,
     string? SimulationSessionId,
     Dictionary<string, string> Metadata,
-    int Version);
+    int Version,
+    string? TargetCellId = null,
+    string? AssignedSimulatorId = null,
+    string DispatchState = "None",
+    string? DispatchCorrelationId = null,
+    DateTime? DispatchedAtUtc = null,
+    DateTime? DispatchAcknowledgedAtUtc = null,
+    DateTime? DispatchTimeoutAtUtc = null,
+    string? DispatchFailureReason = null,
+    int Priority = 0,
+    string? ScenarioId = null,
+    string? CellTemplateId = null,
+    string? PalletId = null,
+    int PalletRows = 0,
+    int PalletColumns = 0,
+    int TaskCount = 0,
+    int CompletedTaskCount = 0,
+    int SchemaVersion = 1,
+    DateTime? FailedAtUtc = null,
+    DateTime? CancelledAtUtc = null);
 
 public record TaskDto(
     string Id,
@@ -34,7 +53,9 @@ public record TaskDto(
     DateTime? StartedAtUtc,
     DateTime? CompletedAtUtc,
     string? ErrorMessage,
-    int Version);
+    int Version,
+    string? SlotKey = null,
+    bool IsRequired = true);
 
 public record SimulationSessionDto(
     string Id,
@@ -56,12 +77,28 @@ public record SimulationSessionDto(
     int Version,
     string? ScenarioId,
     string? ScenarioActivityId,
-    int ScenarioProgress);
+    int ScenarioProgress,
+    string? TargetCellId = null);
 
 public record ClaimResultDto(
     JobDto Job,
     SimulationSessionDto Session,
     List<TaskDto> Tasks);
+
+/// <summary>
+/// Result of a server-authoritative dispatch request (S51). The HMI observes the dispatch state
+/// through this payload and the targeted <c>ExecutionDispatchRequested</c> SignalR event.
+/// </summary>
+public record DispatchResultDto(
+    JobDto Job,
+    SimulationSessionDto Session,
+    List<TaskDto> Tasks,
+    string DispatchState,
+    string? TargetCellId,
+    string? AssignedSimulatorId,
+    string? DispatchCorrelationId,
+    DateTime? DispatchTimeoutAtUtc,
+    string? FailureReason);
 
 public record AlarmDto(
     string Id,
@@ -130,3 +167,61 @@ public record CellTemplateDto(
     int Version,
     string? CreatedBy = null,
     string? UpdatedBy = null);
+
+// ── Job composer read models (S52) ─────────────────────────────────
+
+/// <summary>A selectable target cell with its compatibility metadata and live availability.</summary>
+public record ComposerCellOptionDto(
+    string Id,
+    string Name,
+    bool Available,
+    int SimulatorCount,
+    List<string> CompatibleScenarioIds,
+    string DefaultScenarioId);
+
+/// <summary>A selectable scenario/recipe.</summary>
+public record ComposerScenarioOptionDto(
+    string Id,
+    string Name,
+    string Level);
+
+/// <summary>A selectable persisted cell template.</summary>
+public record ComposerCellTemplateOptionDto(
+    string Id,
+    string Name,
+    string SchemaVersion);
+
+/// <summary>Everything the HMI composer needs to build a valid definition.</summary>
+public record JobComposerOptionsDto(
+    List<ComposerCellOptionDto> Cells,
+    List<ComposerScenarioOptionDto> Scenarios,
+    List<ComposerCellTemplateOptionDto> CellTemplates,
+    int MaxRows,
+    int MaxColumns,
+    int MaxTasks);
+
+/// <summary>Actionable validation issue returned by the composer preview.</summary>
+public record ComposerValidationIssueDto(
+    string Code,
+    string Field,
+    string Message);
+
+/// <summary>A deterministically generated task preview (no id assigned yet).</summary>
+public record GeneratedTaskPreviewDto(
+    int SequenceOrder,
+    string Name,
+    string PartType,
+    string PalletId,
+    int SlotRow,
+    int SlotColumn,
+    string StableKey);
+
+/// <summary>Result of validating a composer definition before submission.</summary>
+public record JobComposerPreviewDto(
+    bool Valid,
+    string? ResolvedTargetCellId,
+    string? ScenarioId,
+    int TaskCount,
+    List<GeneratedTaskPreviewDto> Tasks,
+    List<ComposerValidationIssueDto> Errors,
+    List<ComposerValidationIssueDto> Warnings);

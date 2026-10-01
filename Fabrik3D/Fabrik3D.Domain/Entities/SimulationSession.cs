@@ -44,6 +44,11 @@ public class SimulationSession
     /// <summary>Identifier of the simulator that owns (claimed) this session.</summary>
     public string? SimulatorId { get; set; }
 
+    /// <summary>
+    /// Cell the server assigned this session to (S51). Null on legacy/local sessions.
+    /// </summary>
+    public string? TargetCellId { get; set; }
+
     /// <summary>Correlation id of the command that created/claimed this session.</summary>
     public string? CorrelationId { get; set; }
 

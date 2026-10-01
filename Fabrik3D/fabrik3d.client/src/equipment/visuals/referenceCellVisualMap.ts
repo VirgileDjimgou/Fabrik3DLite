@@ -9,7 +9,7 @@
  * absent from the map.
  */
 
-export type VisualOwner = 'cnc' | 'robot' | 'safety' | 'conveyor' | 'infrastructure'
+export type VisualOwner = 'cnc' | 'robot' | 'safety' | 'conveyor' | 'infrastructure' | 'dressing'
 
 export interface VisualSignalBinding {
   /** Three.js semantic node name (`userData.semanticId`). */
@@ -34,6 +34,14 @@ export const REFERENCE_CELL_VISUAL_BINDINGS: readonly VisualSignalBinding[] = [
   { node: 'signal:stack-light', owner: 'safety', stateSource: 'safety.visualState', signalId: 'safety-zone-1.SafetyHealthy', description: 'Green stack lamp reflects the simulated healthy/idle state.' },
   { node: 'signal:stack-light-amber', owner: 'safety', stateSource: 'safety.visualState', signalId: 'cnc-1.Ready', description: 'Amber lamp reflects transitional loading/unloading states.' },
   { node: 'signal:stack-light-red', owner: 'safety', stateSource: 'safety.visualState', signalId: 'cnc-1.CycleRunning', description: 'Red lamp reflects the running machining cycle.' },
+  // S55 hero-cell dressing. These nodes are render-only environment detail;
+  // they are bound to the same authoritative runtime state as the CNC/robot
+  // visuals and never introduce visual-only server truth.
+  { node: 'motor:chip-conveyor', owner: 'dressing', stateSource: 'cnc.coarseState', signalId: 'cnc-1.CycleRunning', description: 'Chip conveyor is active while the machining cycle runs.' },
+  { node: 'fixture:buffer:1', owner: 'dressing', stateSource: 'conveyor.rawSlotsRemaining', signalId: 'conveyor-1.RawSlotsRemaining', description: 'Work-in-process buffer reflects remaining raw slots.' },
+  { node: 'fixture:buffer:2', owner: 'dressing', stateSource: 'conveyor.machinedSlots', signalId: 'conveyor-1.MachinedSlots', description: 'Work-in-process buffer reflects completed machined slots.' },
+  { node: 'signal:worklight:1', owner: 'dressing', stateSource: 'safety.visualState', signalId: 'safety-zone-1.SafetyHealthy', description: 'Work lighting follows the simulated healthy state.' },
+  { node: 'signal:worklight:2', owner: 'dressing', stateSource: 'safety.visualState', signalId: 'safety-zone-1.SafetyHealthy', description: 'Work lighting follows the simulated healthy state.' },
 ]
 
 /** Semantic nodes covered by the map, excluding the container id itself. */

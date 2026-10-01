@@ -38,6 +38,8 @@
       :emergency-stop="safetyEmergencyStop"
       :gate-open="!safetyGateClosed"
     />
+    <!-- S55 hero-cell dressing: chip handling, buffers, work lights, cable drops. -->
+    <HeroCellDressing />
 
     <!-- Floor & scene setup -->
     <SingleConveyorFloor />
@@ -92,6 +94,7 @@
         :mode="dashMode"
         :connection-state="dashConnection"
         :session-status="dashSessionStatus"
+        :dispatch-phase="dashDispatchPhase"
         :command-error="commandError"
         @start="handleStart"
         @pause="handlePause"
@@ -154,6 +157,7 @@ import PalletConveyorFeed from './PalletConveyorFeed.vue'
 import LargeCNCMachine from './LargeCNCMachine.vue'
 import SafetyGuardSystem from './SafetyGuardSystem.vue'
 import IndustrialInfrastructureSystem from './IndustrialInfrastructureSystem.vue'
+import HeroCellDressing from './HeroCellDressing.vue'
 import SingleConveyorFloor from './SingleConveyorFloor.vue'
 import SingleConveyorSceneSetup from './SingleConveyorSceneSetup.vue'
 import PalletMachiningDashboard from './PalletMachiningDashboard.vue'
@@ -165,8 +169,12 @@ import FaultTimelinePanel from './FaultTimelinePanel.vue'
 import LearningReportPanel from './LearningReportPanel.vue'
 import SignalInspectorPanel from './SignalInspectorPanel.vue'
 import SimulationDock from './SimulationDock.vue'
+import { Euler, Quaternion } from 'three'
+import type { PublishRobotPositionsRequest } from '@fabrik3d/contracts'
 import { useSimulatorI18n } from '../i18n/simulator'
 import type { RobotController } from '../simulation/RobotController'
+import { DEFAULT_JOINT_LIMITS } from '../simulation/AxisLimits'
+import { OperatorJogGateway } from '../operations/OperatorJogGateway'
 import {
   PalletMachiningWorkflow,
   type PalletWorkflowCallbacks,
@@ -178,7 +186,7 @@ import {
   SINGLE_CELL_CONVEYOR,
   SINGLE_CELL_FLOW,
 } from '../simulation/SingleConveyorCellLayout'
-import { SimulatorOrchestrationBridge, type BridgeMode } from '../services/simulatorOrchestrationBridge'
+import { SimulatorOrchestrationBridge, type BridgeMode, type DispatchPhase } from '../services/simulatorOrchestrationBridge'
 import type { ConnectionState } from '../services/orchestratorSignalR'
 import { logDashboardSnapshot } from '../services/devLogger'
 import {
@@ -307,6 +315,7 @@ const dashCncState = ref('IDLE')
 const dashMode = ref<BridgeMode>('offline')
 const dashConnection = ref<ConnectionState>('disconnected')
 const dashSessionStatus = ref<string | null>(null)
+const dashDispatchPhase = ref<DispatchPhase>('idle')
 
 // ── Controller & workflow ──────────────────────────────────────────
 const robotController = shallowRef<RobotController | null>(null)
@@ -315,6 +324,12 @@ let workflowUpdateHooked = false
 let robotRuntime: RobotMotionRuntime | null = null
 let cncRuntime: CncRuntime | null = null
 let palletStationRuntime: PalletStationRuntime | null = null
+
+// ── Operator jog gateway (S53) ─────────────────────────────────────
+// Reuses the existing dead-man/limit/collision path; remote HMI intents are only applied when the
+// server authority is held, the mode allows manual training and the twin is not replaying.
+let jogGateway: OperatorJogGateway | null = null
+let jogTimer: ReturnType<typeof setInterval> | null = null
 
 function getCncRuntime(): CncRuntime | null {
   cncRuntime ??= cncRef.value ? new LegacyCncAdapter('cnc-1', cncRef.value) : null
@@ -433,13 +448,44 @@ onMounted(() => {
   bridge.onModeChanged = (mode) => { dashMode.value = mode }
   bridge.onConnectionStateChanged = (state) => { dashConnection.value = state }
   bridge.onSessionStatusChanged = (status) => { dashSessionStatus.value = status }
+  bridge.onDispatchPhaseChanged = (phase) => { dashDispatchPhase.value = phase }
+  // The server-authoritative dispatch resolves the real stopped pallet at the work station.
+  bridge.palletResolver = () => getPalletStationRuntime()?.getFirstStoppedPallet() ?? null
+  // Robot state and operator jog (S53).
+  bridge.robotPositionsProvider = () => buildRobotReport()
+  bridge.onJogCommand = (evt) => {
+    const outcome = jogGateway?.apply({
+      action: evt.action,
+      joint: evt.joint,
+      direction: evt.direction,
+      deadManToken: evt.deadManToken,
+      correlationId: evt.correlationId,
+    })
+    if (outcome && !outcome.accepted) console.warn('[Jog] refused by simulator:', outcome.reason)
+  }
+  bridge.onJogStop = (reason) => jogGateway?.stop(reason)
+  jogTimer = setInterval(() => { jogGateway?.tick(0.02) }, 30)
   bridge.init()
   // React to external (server-driven) state changes
   bridge.onExternalPause = () => workflow?.pause()
   bridge.onExternalResume = () => workflow?.resume()
   bridge.onExternalStop = () => workflow?.stop()
+  // Server-authoritative start (S51): adopt the assigned session and start the workflow locally
+  // without a local Start action.
+  bridge.onExternalStart = (pallet, jobId, sessionId) => {
+    const wf = ensureWorkflow()
+    if (!wf) return
+    timeline.record('command', 'info', timelineContext(), { command: 'external-start', jobId, sessionId })
+    refreshFaultPanel()
+    safetyEngine.value.updatePalletObstacle(pallet.worldX)
+    wf.start(pallet)
+    syncDashboard()
+  }
 })
 onBeforeUnmount(() => {
+  if (jogTimer) { clearInterval(jogTimer); jogTimer = null }
+  jogGateway?.stop('unmount')
+  jogGateway = null
   bridge.dispose()
   historian.stop()
   signalBinding.value?.dispose()
@@ -451,6 +497,61 @@ function onControllerReady(controller: RobotController) {
   robotRuntime = new LegacyRobotAdapter('robot-1', controller)
   signalBinding.value ??= buildSignalBinding()
   ensureWorkflow()
+  createJogGateway(controller)
+}
+
+/** Builds the authoritative robot report the bridge publishes at 2 Hz. */
+function buildRobotReport(): Omit<PublishRobotPositionsRequest, 'simulatorId'> | null {
+  const controller = robotController.value
+  if (!controller) return null
+
+  const joints = controller.jointAngles.map((angle, i) => ({
+    index: i,
+    name: `J${i + 1}`,
+    angleRadians: angle,
+    minRadians: DEFAULT_JOINT_LIMITS[i]!.min,
+    maxRadians: DEFAULT_JOINT_LIMITS[i]!.max,
+  }))
+
+  // Pose from the profile-aware kinematics when available, otherwise the legacy DH forward model.
+  // Orientation is reported as intrinsic X-Y-Z radians (see docs/architecture/KINEMATICS_AND_FRAMES.md).
+  const pose = controller.getKinematicPose()
+  let tcp: PublishRobotPositionsRequest['tcp']
+  if (pose) {
+    const euler = new Euler().setFromQuaternion(
+      new Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w), 'XYZ')
+    tcp = { x: pose.position.x, y: pose.position.y, z: pose.position.z, rx: euler.x, ry: euler.y, rz: euler.z }
+  } else {
+    const fk = controller.getFK()
+    const euler = new Euler().setFromQuaternion(fk.orientation, 'XYZ')
+    tcp = { x: fk.position.x, y: fk.position.y, z: fk.position.z, rx: euler.x, ry: euler.y, rz: euler.z }
+  }
+
+  const tool = catalogTools.value[0]
+  return {
+    robotId: 'robot-1',
+    robotModel: selectedRobot.value.id,
+    joints,
+    tcp,
+    frames: {
+      baseFrame: 'world',
+      toolFrame: 'flange',
+      workObjectFrame: 'workobject-1',
+      currentToolId: tool?.id ?? 'tool-1',
+    },
+    motionStatus: controller.state === 'MOVING' || controller.isMoving ? 'MOVING' : 'IDLE',
+    // Manual jog is only compatible while no orchestrated job owns the cell.
+    operatingMode: bridge.mode === 'online' ? 'automatic' : 'manual-training',
+  }
+}
+
+function createJogGateway(controller: RobotController): void {
+  jogGateway?.stop('replaced')
+  jogGateway = new OperatorJogGateway(controller, safetyEngine.value, {
+    isAuthorityOwned: () => bridge.authorityAllowsCommanding(),
+    isModeCompatible: () => bridge.mode !== 'online',
+    isReplay: () => false,
+  })
 }
 
 // ── Workflow creation (lazy, once) ─────────────────────────────────

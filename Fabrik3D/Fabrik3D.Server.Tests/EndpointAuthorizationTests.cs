@@ -57,6 +57,8 @@ public class EndpointAuthorizationTests
         var requests = new[]
         {
             Post("/api/jobs", new CreateJobRequest { Name = "anon" }),
+            Post("/api/jobs/composer/preview", new CreateJobRequest { Name = "anon" }),
+            Post("/api/jobs/composer", new CreateJobRequest { Name = "anon" }),
             Post("/api/cell-templates", new SaveCellTemplateRequest { Name = "anon", Content = ValidCellContent }),
             Post("/api/control-authority/anon-scope/acquire", new AcquireControlAuthorityRequest { Mode = "ExternalController", OwnerId = "anon", OwnerKind = "simulator" }),
             Post("/api/historian/telemetry", new { samples = Array.Empty<object>() }),
@@ -86,6 +88,11 @@ public class EndpointAuthorizationTests
 
         var template = await client.SendAsync(Post("/api/cell-templates", new SaveCellTemplateRequest { Name = "learner", Content = ValidCellContent }));
         Assert.Equal(HttpStatusCode.Forbidden, template.StatusCode);
+
+        // Composer option discovery is a read; submission requires Operate.
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/jobs/composer/options")).StatusCode);
+        var compose = await client.SendAsync(Post("/api/jobs/composer", new CreateJobRequest { Name = "learner-compose" }));
+        Assert.Equal(HttpStatusCode.Forbidden, compose.StatusCode);
     }
 
     [Fact]
@@ -172,6 +179,50 @@ public class EndpointAuthorizationTests
         var operatorIngest = await operatorClient.SendAsync(Post("/api/historian/telemetry", body));
         Assert.NotEqual(HttpStatusCode.Forbidden, operatorIngest.StatusCode);
         Assert.NotEqual(HttpStatusCode.Unauthorized, operatorIngest.StatusCode);
+    }
+
+    [Fact]
+    public async Task Robot_positions_read_is_guarded_and_jog_requires_operate()
+    {
+        var anonymous = await _fx.CreateAnonymousClientAsync();
+        var learner = await _fx.CreateClientAsync(Fabrik3DRoles.Learner, "learner-robot");
+        var operatorClient = await _fx.CreateClientAsync(Fabrik3DRoles.Operator, "operator-robot");
+        const string positions = "/api/robots/reference-cell/robot-1/positions";
+
+        // Hidden UI is not a control: anonymous reads and mutations are rejected.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync(positions)).StatusCode);
+        using (var anonymousJog = Post("/api/robots/reference-cell/robot-1/jog", new JogCommandRequest("robot-1", "J1", 1, "press", "dm", "manual-training")))
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.SendAsync(anonymousJog)).StatusCode);
+        }
+
+        // A learner may read (404 because nothing is published yet) but may never publish or jog.
+        Assert.Equal(HttpStatusCode.NotFound, (await learner.GetAsync(positions)).StatusCode);
+        using (var learnerPublish = learner.SendAsync(new HttpRequestMessage(HttpMethod.Put, positions)
+        {
+            Content = JsonContent.Create(new PublishRobotPositionsRequest(
+                "robot-1", "medium", new List<RobotJointDto>(),
+                new RobotPoseDto(0, 0, 0, 0, 0, 0), new RobotFramesDto("world", "tool0", "wo", "tool"),
+                "IDLE", "manual-training", "sim")),
+        }))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, (await learnerPublish).StatusCode);
+        }
+        using (var learnerJog = learner.SendAsync(Post("/api/robots/reference-cell/robot-1/jog",
+            new JogCommandRequest("robot-1", "J1", 1, "press", "dm", "manual-training"))))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, (await learnerJog).StatusCode);
+        }
+
+        // An operator is authorized; with no published state the server fails closed with 409.
+        using (var operatorJog = operatorClient.SendAsync(Post("/api/robots/reference-cell/robot-1/jog",
+            new JogCommandRequest("robot-1", "J1", 1, "press", "dm", "manual-training"))))
+        {
+            var response = await operatorJog;
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+            var error = await response.Content.ReadFromJsonAsync<ApiErrorDto>();
+            Assert.Equal("robot_unavailable", error!.Code);
+        }
     }
 
     // ── Hub ────────────────────────────────────────────────────────────

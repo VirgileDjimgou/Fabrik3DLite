@@ -5,14 +5,11 @@
 <script setup lang="ts">
 import { inject, watch, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
-import { SCENE_CONTEXT_KEY } from '../composables/injectionKeys'
+import { SCENE_CONTEXT_KEY, ASSET_RUNTIME_KEY } from '../composables/injectionKeys'
 import type { PalletCavityShape, RawMaterialType } from '../simulation/PalletModels'
 import {
-  createIndustrialAssetRegistry,
-  EquipmentVisualProvider,
   INDUSTRIAL_PALLET_STATION_ASSET_ID,
-  ThreeGlbAssetLoader,
-  type LoadedEquipmentVisual,
+  type AssetRuntimeInstance,
 } from '../equipment'
 
 const props = withDefaults(defineProps<{
@@ -34,8 +31,9 @@ const props = withDefaults(defineProps<{
 })
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
+const assetRuntime = inject(ASSET_RUNTIME_KEY)!
 let palletGroup: THREE.Group | null = null
-let loadedVisual: LoadedEquipmentVisual | null = null
+let loadedVisual: AssetRuntimeInstance | null = null
 let usesProceduralFallback = false
 
 // ── Dimensions ─────────────────────────────────────────────────────
@@ -55,21 +53,28 @@ watch(
   { immediate: true },
 )
 
-async function mountPallet(ctx: { addObject: (object: THREE.Object3D) => void }): Promise<void> {
-  const provider = new EquipmentVisualProvider(createIndustrialAssetRegistry(), new ThreeGlbAssetLoader())
-  const visual = await provider.load(INDUSTRIAL_PALLET_STATION_ASSET_ID, () => buildPallet(true))
+async function mountPallet(ctx: { addObject: (object: THREE.Object3D) => void, camera?: THREE.Camera }): Promise<void> {
+  const visual = await assetRuntime.acquire(INDUSTRIAL_PALLET_STATION_ASSET_ID, {
+    proceduralFallback: () => buildPallet(true),
+    distanceMeters: cameraDistance(ctx.camera),
+  })
   if (palletGroup) {
     visual.dispose()
     return
   }
   loadedVisual = visual
-  usesProceduralFallback = visual.source === 'procedural-fallback'
+  usesProceduralFallback = visual.source === 'procedural'
   palletGroup = visual.root as THREE.Group
   palletGroup.name = `Pallet_${props.palletId}`
   if (!usesProceduralFallback) addDynamicPalletGrid(palletGroup)
   palletGroup.position.set(...props.initialPosition)
   setPresenceSensor(palletGroup, true)
   ctx.addObject(palletGroup)
+}
+
+function cameraDistance(camera?: THREE.Camera): number {
+  if (!camera) return 0
+  return camera.position.distanceTo(new THREE.Vector3(...props.initialPosition))
 }
 
 // ── Materials ──────────────────────────────────────────────────────
