@@ -137,7 +137,7 @@ test('OpenCode commands and the sprint-worker agent exist', () => {
   assert.match(agent, /mode: primary/)
 })
 
-test('autopilot state retains the completed S50 batch audit and worker prompt', () => {
+test('autopilot state records the completed Roadmap Revision 2 batch and worker prompt', () => {
   const sample = readJson(path.join('docs', 'roadmap', 'autopilot', 'state.json'))
   const expected = defaultBatchState()
   assert.equal(sample.schemaVersion, '1.0')
@@ -145,7 +145,7 @@ test('autopilot state retains the completed S50 batch audit and worker prompt', 
   assert.equal(sample.status, 'roadmap_complete')
   assert.ok(sample.batchId)
   assert.equal(sample.requestedMaxSprints, 10)
-  assert.equal(sample.lastCompletedSprint, 'S50')
+  assert.equal(sample.lastCompletedSprint, 'S57')
   assert.equal(sample.stopReason, 'ROADMAP_COMPLETE')
   assert.equal(sample.completedSprints.at(-1)?.sprintId, 'S50')
   for (const key of Object.keys(expected)) assert.ok(key in sample, `missing batch-state key ${key}`)
@@ -154,28 +154,23 @@ test('autopilot state retains the completed S50 batch audit and worker prompt', 
   assert.equal(fs.existsSync(path.join(REPO_ROOT, 'docs', 'roadmap', 'autopilot', 'HUMAN_REQUIRED.json')), false)
 })
 
-test('the real roadmap preserves completed history and selects Roadmap Revision 2', () => {
+test('the real roadmap preserves completed history and Roadmap Revision 2 is complete', () => {
   const roadmap = readJson(path.join('docs', 'roadmap', 'roadmap.json'))
   const state = readJson(path.join('docs', 'roadmap', 'state.json'))
   assert.equal(roadmap.version, 2)
-  assert.equal(roadmap.sprintCeiling, 58)
-  assert.equal(roadmap.sprints.length, 58)
+  assert.equal(roadmap.sprintCeiling, 57)
+  assert.equal(roadmap.sprints.length, 57)
   assert.equal(state.activeSprint, null)
-  for (let index = 1; index <= 50; index += 1) {
+  for (let index = 1; index <= 57; index += 1) {
     const id = `S${String(index).padStart(2, '0')}`
     assert.equal(state.sprints[id].status, 'completed', `${id} historical record changed`)
     assert.ok(state.sprints[id].summary, `${id} lost its summary`)
     assert.ok(state.sprints[id].evidence, `${id} lost its evidence`)
   }
-  for (let index = 51; index <= 58; index += 1) {
-    const id = `S${index}`
-    assert.equal(state.sprints[id].status, 'planned', `${id} must remain planned`)
-    assert.deepEqual(roadmap.sprints.find((sprint) => sprint.id === id).dependsOn, [`S${index - 1}`])
-  }
-  assert.equal(completedIds(state).length, 50)
+  assert.equal(completedIds(state).length, 57)
   const selection = selectSprintSequence(roadmap, state, MAX_BATCH_SPRINTS)
-  assert.deepEqual(selection, ['S51', 'S52', 'S53', 'S54', 'S55', 'S56', 'S57', 'S58'])
-  assert.equal(selection.length, 8)
+  assert.deepEqual(selection, [])
+  assert.equal(selection.length, 0)
 })
 
 test('the existing roadmap validator still passes unchanged', { timeout: 60_000 }, () => {
