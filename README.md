@@ -16,11 +16,10 @@ is a validation and documentation milestone, not a safety certification. Start w
 [limitations/non-claims](./docs/operations/LIMITATIONS.md), and the
 [1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md).
 
-**Roadmap Revision 2 plans post-1.0 product hardening in S51-S58.** It preserves the completed S50
-baseline and focuses on authoritative operator execution, Job lifecycle, role-aware HMI, a shared 3D
-asset runtime, one flagship cell, sustained reliability, deployment/security hardening and honest
-real-PLC validation. See the [delivery roadmap](./docs/roadmap/README.md); these are planned, not 1.0,
-capabilities.
+**Roadmap Revision 2 is complete through S57.** It preserves the completed S50 baseline and adds
+authoritative operator execution, Job lifecycle, role-aware HMI, a shared 3D asset runtime, one
+flagship cell, sustained reliability, and deployment/security hardening. Real PLC/PLCSIM proof is
+deliberately deferred until suitable licensed software or physical hardware is available.
 
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
 
@@ -233,7 +232,7 @@ flowchart LR
     Modbus["Modbus TCP (optional)"] -. telemetry .-> Server
 ```
 
-The server is the orchestration source of truth. In connected mode, a simulator claims a server-side job and reports its state through the shared contracts. If no job is claimed, the simulator explicitly identifies the run as local and never writes simulated execution state to the server.
+The server is the orchestration source of truth. In connected mode, the HMI starts a prepared Job, the orchestrator resolves a target simulator/cell, emits a targeted dispatch request, and the assigned simulator acknowledges and executes that Job. The simulator no longer chooses an arbitrary runnable Job. Local demo mode remains explicitly separate and never writes simulated execution state to the server.
 
 ## Core workflow
 
@@ -248,8 +247,8 @@ sequenceDiagram
     Operator->>HMI: Create and prepare job
     HMI->>API: REST: create/start job
     API->>Mongo: Persist job and tasks
-    Simulator->>API: Claim runnable job
-    API->>Simulator: Job, session, task assignment
+    API-->>Simulator: Targeted dispatch request
+    Simulator->>API: Dispatch ACK / session adoption
     loop Each pallet slot
         Simulator->>API: Task, machine, session and heartbeat updates
         API-->>HMI: SignalR state changes
@@ -260,7 +259,7 @@ sequenceDiagram
 ```
 
 1. The operator prepares a job through the HMI or API; jobs may carry pallet-slot tasks.
-2. The simulator claims the runnable job, processes the physical-cell model, and reports progress through the backend.
+2. The orchestrator dispatches the Job to the selected compatible simulator, which acknowledges the assigned session, processes the physical-cell model, and reports progress through the backend.
 3. The HMI remains the operator interface and receives the resulting state changes in real time.
 
 The backend enforces ownership: a foreign or offline simulator cannot overwrite an active session.
