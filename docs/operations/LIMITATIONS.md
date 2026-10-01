@@ -10,8 +10,8 @@ elsewhere in the documentation are consistent with this list.
   are simulated teaching aids. Motion guards and collision checks are engineering/teaching aids.
 - No functional-safety certification (IEC 61508/61511/62061, ISO 13849, IEC 62443, IEC 62541,
   OWASP ASVS or any other) is claimed. Security language is "aligned with selected OWASP practices"
-  and "inspired by IEC 62443 zone/conduit concepts"; no penetration test or formal threat model
-  review has been performed.
+  and "inspired by IEC 62443 zone/conduit concepts"; S57 adds an internal threat model and automated
+  cross-tenant/security checks, but no independent penetration test or formal certification review has been performed.
 - No safety, compliance or competence certification is issued to learners. Training reports describe
   simulated exercises and explicitly do not certify professional competence, safety qualification or
   industrial readiness.
@@ -36,8 +36,6 @@ elsewhere in the documentation are consistent with this list.
 
 ## Functional limitations
 
-- The operator HMI `/robot-positions` view is a placeholder; it states that it will be available in a
-  future update. Robot positions are shown in the simulator and the current-job view.
 - A Fabrik3D-side Modbus **server/slave** endpoint is deliberately out of scope; Fabrik3D is a
   client only.
 - Historian retention and sampling are bounded by documented policies; stored history is sampled,
@@ -80,8 +78,9 @@ elsewhere in the documentation are consistent with this list.
 ## Roadmap revision boundary
 
 S50 remains the completed Fabrik3D 1.0 baseline. Explicitly approved Roadmap Revision 2 adds planned
-post-1.0 product-hardening work in S51-S58 without modifying S01-S50 history or making those planned
-capabilities part of the 1.0 release. There is no S59 in this revision. New features, scenes,
+post-1.0 product-hardening work in S51-S57 without modifying S01-S50 history or making those capabilities
+part of the 1.0 release. Roadmap Revision 2 is complete at S57; real PLC/PLCSIM proof is deferred until
+the required licensed environment or physical controller is available. New features, scenes,
 protocols, billing, marketplace and certification work remain out of scope for the 1.0 baseline.
 
 ## Related documents
