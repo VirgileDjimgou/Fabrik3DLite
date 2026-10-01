@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 namespace Fabrik3D.Server.Tests;
 
 /// <summary>
-/// S58 post-1.0 flagship workflow proof, entirely automated and deterministic:
+/// Post-1.0 flagship workflow proof, entirely automated and deterministic:
 ///   operator job composition (S52) → server-authoritative Start/dispatch (S51) → targeted execution
 ///   request → simulator acknowledge/running with no local Start → external control authority (S36)
 ///   acquired by the fixture controller → deterministic virtual cell sequence (robot → CNC → complete)
@@ -39,7 +39,7 @@ public class FlagshipWorkflowIntegrationTests
         => await _fx.Composer.CreateAsync(new CreateJobRequest
         {
             Name = $"Flagship workflow {Guid.NewGuid():N}",
-            Description = "S58 automated flagship workflow proof",
+            Description = "Post-1.0 automated flagship workflow proof",
             MachineMode = "Automatic",
             TargetCellId = "reference-cell",
             ScenarioId = "pallet-processing",
