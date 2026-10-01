@@ -147,7 +147,7 @@ test('autopilot state records the completed Roadmap Revision 2 batch and worker 
   assert.equal(sample.requestedMaxSprints, 10)
   assert.equal(sample.lastCompletedSprint, 'S57')
   assert.equal(sample.stopReason, 'ROADMAP_COMPLETE')
-  assert.equal(sample.completedSprints.at(-1)?.sprintId, 'S50')
+  assert.equal(sample.completedSprints.at(-1)?.sprintId, sample.lastCompletedSprint)
   for (const key of Object.keys(expected)) assert.ok(key in sample, `missing batch-state key ${key}`)
   assert.equal(fs.existsSync(path.join(REPO_ROOT, 'docs', 'roadmap', 'autopilot', 'WORKER_PROMPT.md')), true)
   assert.equal(fs.existsSync(path.join(REPO_ROOT, 'docs', 'roadmap', 'AUTOPILOT.md')), true)
