@@ -1,8 +1,9 @@
-# Fabrik3D post-1.0 (S58) validation evidence
+# Fabrik3D post-1.0 validation evidence
 
-This document is the **post-1.0** validation record produced by roadmap sprint **S58 - Real PLC
-interoperability proof and post-1.0 validation**. It is deliberately separate from, and does not
-modify, the immutable Fabrik3D 1.0 (S50) record:
+This document is the **post-1.0** automated and fixture validation record accumulated after S57.
+It is deliberately separate from, and does not modify, the immutable Fabrik3D 1.0 (S50) record.
+Real Siemens/PLCSIM validation is deferred outside the current roadmap until suitable licensed
+software or physical hardware is available:
 
 - 1.0 baseline gates and lifecycle: [VALIDATION_1.0.md](VALIDATION_1.0.md)
 - S48 lifecycle transcript: [VALIDATION.md](VALIDATION.md)
@@ -69,10 +70,9 @@ npm run docs:check   -> passed: 23 required documents present, 358 links resolve
 npm run sprint:validate -> see "Roadmap" below
 ```
 
-## Automated flagship workflow proof (S58)
+## Automated flagship workflow proof
 
-Sprint S58 adds one deterministic integration test that binds the S51–S53 building blocks into a
-single coherent workflow. It is **automated** for the server/authority/cell chain and uses the S46
+A deterministic integration test binds the S51–S53 building blocks into a single coherent workflow. It is **automated** for the server/authority/cell chain and uses the S46
 **fixture** as the external controller; it is not a real PLC run.
 
 ```text
@@ -138,31 +138,12 @@ latency remain in the profile packages:
 The preferred real target is a Siemens S7-1500 (or PLCSIM Advanced) exposing its OPC UA server, per
 the S47 profile. Executing it requires a licensed TIA Portal / PLCSIM Advanced installation, an
 explicit certificate-trust decision, and (for a real CPU) physical hardware — none of which can be
-automated safely and none of which is present in this environment. Acceptance criterion 2 therefore
-requires an unresolved `HUMAN_REQUIRED` gate rather than a completed sprint:
+automated safely and none of which is present in this environment. This gap therefore remains an explicitly deferred external validation target rather than an active roadmap sprint:
 
-- **Gate reason:** real TIA Portal / PLCSIM Advanced access, license acceptance and certificate trust
-  are required to perform the real interoperability proof. The batch records
-  `docs/roadmap/autopilot/HUMAN_REQUIRED.json` with `reasonCode`
-  `EXTERNAL_SOFTWARE_INTERACTION` and the exact human actions below.
-- **Do not mark S58 complete** while the gate is unresolved. This document deliberately does not
-  claim a live Siemens integration.
-
-Required human actions (also in the gate file):
-
-1. Install/confirm a licensed TIA Portal + PLCSIM Advanced (or connect a real S7-1500) on an isolated
-   training network and record the exact TIA Portal, PLCSIM Advanced and CPU firmware versions.
-2. Export the CPU/PLCSIM OPC UA server certificate and make the explicit trust decision to place it in
-   the Fabrik3D trust store; never enable `AutoAcceptUntrustedCertificates` outside development.
-3. Run the [manual real-run checklist](../showcases/siemens-plcsim/evidence.md#manual-real-run-validation-checklist-not-executed-blocker-documented)
-   (M1–M12) and capture the required artefacts (redacted): connector status with
-   `monitoredItemCount = 14`, authority audit, the state-sequence transcript, fault/reset log, and
-   measured round-trip/cycle latency with the reference machine noted.
-4. Store the redacted artefacts under a dated `docs/evidence/` folder, then resolve the gate with
-   `npm run sprint:batch:resolve-gate -- --reason "..."` so the real validation can be appended here
-   as **real external software**.
-
-No credential, token, private certificate, tenant datum or machine identifier may be committed.
+If that validation is resumed later, it must still require explicit human interaction for licensed TIA
+Portal / PLCSIM Advanced access, certificate trust and any physical controller. The existing manual
+checklist remains the authoritative procedure. No credential, token, private certificate, tenant datum
+or machine identifier may be committed.
 
 ## Manual real-run checklists (not executed)
 
@@ -216,18 +197,16 @@ S50 1.0 document set.
 
 ## Roadmap
 
-```text
-npm run sprint:validate
-  -> Roadmap validation passed: 58 sprints, 57 completed, active=S58
-```
-
-There is no S59 in Roadmap Revision 2. S01–S58 history is preserved; S50 history is untouched.
+Roadmap Revision 2 is complete at **S57**. The former real-PLC proof sprint was removed because the
+required licensed external environment or physical controller is not currently available. Automated
+and fixture evidence produced during the attempted validation is retained here because it remains
+useful and reproducible; it is not presented as real PLC evidence.
 
 ## Evidence index
 
 | Artefact | Location | Class |
 | --- | --- | --- |
-| S58 flagship workflow test | `Fabrik3D/Fabrik3D.Server.Tests/FlagshipWorkflowIntegrationTests.cs` | Automated |
+| Post-1.0 flagship workflow test | `Fabrik3D/Fabrik3D.Server.Tests/FlagshipWorkflowIntegrationTests.cs` | Automated |
 | S46 CODESYS/SoftPLC substitute | `Fabrik3D/Fabrik3D.Server.Tests/Showcase/ReferenceCellShowcaseTests.cs` | Fixture |
 | S47 Siemens/PLCSIM substitute | `Fabrik3D/Fabrik3D.Server.Tests/Showcase/SiemensPlcsimProfileTests.cs` | Fixture |
 | S47 captured substitute + manual checklist | [showcases/siemens-plcsim/evidence.md](../showcases/siemens-plcsim/evidence.md) | Fixture / Manual |
