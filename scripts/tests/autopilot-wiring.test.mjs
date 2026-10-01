@@ -154,12 +154,12 @@ test('autopilot state records the completed Roadmap Revision 2 batch and worker 
   assert.equal(fs.existsSync(path.join(REPO_ROOT, 'docs', 'roadmap', 'autopilot', 'HUMAN_REQUIRED.json')), false)
 })
 
-test('the real roadmap preserves completed history and Roadmap Revision 2 is complete', () => {
+test('the real roadmap preserves completed history and Roadmap Revision 3 is planned', () => {
   const roadmap = readJson(path.join('docs', 'roadmap', 'roadmap.json'))
   const state = readJson(path.join('docs', 'roadmap', 'state.json'))
-  assert.equal(roadmap.version, 2)
-  assert.equal(roadmap.sprintCeiling, 57)
-  assert.equal(roadmap.sprints.length, 57)
+  assert.equal(roadmap.version, 3)
+  assert.equal(roadmap.sprintCeiling, 64)
+  assert.equal(roadmap.sprints.length, 64)
   assert.equal(state.activeSprint, null)
   for (let index = 1; index <= 57; index += 1) {
     const id = `S${String(index).padStart(2, '0')}`
@@ -167,10 +167,20 @@ test('the real roadmap preserves completed history and Roadmap Revision 2 is com
     assert.ok(state.sprints[id].summary, `${id} lost its summary`)
     assert.ok(state.sprints[id].evidence, `${id} lost its evidence`)
   }
+  for (let index = 58; index <= 64; index += 1) {
+    const id = `S${String(index).padStart(2, '0')}`
+    assert.equal(state.sprints[id].status, 'planned', `${id} must start planned`)
+  }
   assert.equal(completedIds(state).length, 57)
+  for (let index = 58; index <= 64; index += 1) {
+    const id = `S${String(index).padStart(2, '0')}`
+    const sprint = roadmap.sprints.find((item) => item.id === id)
+    const previous = `S${String(index - 1).padStart(2, '0')}`
+    assert.deepEqual(sprint.dependsOn, [previous], `${id} dependencies must stay strictly sequential`)
+  }
   const selection = selectSprintSequence(roadmap, state, MAX_BATCH_SPRINTS)
-  assert.deepEqual(selection, [])
-  assert.equal(selection.length, 0)
+  assert.deepEqual(selection, ['S58', 'S59', 'S60', 'S61', 'S62', 'S63', 'S64'])
+  assert.equal(selection.length, 7)
 })
 
 test('the existing roadmap validator still passes unchanged', { timeout: 60_000 }, () => {

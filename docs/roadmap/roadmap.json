@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "sprintCeiling": 57,
+  "version": 3,
+  "sprintCeiling": 64,
   "name": "Fabrik3D educational digital twin roadmap",
   "vision": "Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts.",
   "sprints": [
@@ -513,6 +513,69 @@
       "file": "docs/roadmap/sprints/S57-security-deployment-repository-hardening.md",
       "dependsOn": [
         "S56"
+      ]
+    },
+    {
+      "id": "S58",
+      "phase": 14,
+      "title": "Real 3D scenario runtime foundation",
+      "file": "docs/roadmap/sprints/S58-scenario-3d-runtime.md",
+      "dependsOn": [
+        "S57"
+      ]
+    },
+    {
+      "id": "S59",
+      "phase": 14,
+      "title": "Scenario-specific industrial 3D cells",
+      "file": "docs/roadmap/sprints/S59-industrial-scenario-cells.md",
+      "dependsOn": [
+        "S58"
+      ]
+    },
+    {
+      "id": "S60",
+      "phase": 14,
+      "title": "Robot and industrial cell visual fidelity",
+      "file": "docs/roadmap/sprints/S60-robot-cell-visual-fidelity.md",
+      "dependsOn": [
+        "S59"
+      ]
+    },
+    {
+      "id": "S61",
+      "phase": 14,
+      "title": "HMI visual and operator-experience polish",
+      "file": "docs/roadmap/sprints/S61-hmi-visual-polish.md",
+      "dependsOn": [
+        "S60"
+      ]
+    },
+    {
+      "id": "S62",
+      "phase": 14,
+      "title": "Deterministic visual QA and real GPU validation",
+      "file": "docs/roadmap/sprints/S62-visual-determinism-gpu-validation.md",
+      "dependsOn": [
+        "S61"
+      ]
+    },
+    {
+      "id": "S63",
+      "phase": 14,
+      "title": "Frontend OIDC and public demo isolation",
+      "file": "docs/roadmap/sprints/S63-oidc-demo-isolation.md",
+      "dependsOn": [
+        "S62"
+      ]
+    },
+    {
+      "id": "S64",
+      "phase": 14,
+      "title": "Flagship demo, documentation and release polish",
+      "file": "docs/roadmap/sprints/S64-flagship-demo-release-polish.md",
+      "dependsOn": [
+        "S63"
       ]
     }
   ]

@@ -2,7 +2,7 @@
 
 Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts. This roadmap evolves the existing repository incrementally toward that platform without restarting or replacing working modules.
 
-It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S50 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 adds completed post-1.0 hardening work in S51-S57.
+It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S50 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 adds completed post-1.0 hardening work in S51-S57. Roadmap Revision 3 adds planned visual-fidelity, real-3D-scenario and product-polish work in S58-S64.
 
 ## One-command workflow
 
@@ -65,8 +65,9 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 | 11. Commercial training foundation | S42-S45 | Authentication/RBAC, organizations and tenancy, server-side training assessment, instructor dashboard |
 | 12. Interoperability, deployment & 1.0 | S46-S50 | PLC showcases, on-premise lifecycle, observability/hardening, 1.0 commercialization baseline |
 | 13. Product coherence, visual fidelity & hardening | S51-S57 | Authoritative operator workflow, shared 3D runtime, flagship cell, resilience and security/deployment hardening |
+| 14. Visual fidelity, 3D scenarios & product polish | S58-S64 | Real 3D scenario runtime, scenario-specific cells, robot/cell fidelity, HMI polish, deterministic visual QA and GPU evidence, browser OIDC/demo isolation, flagship demo |
 
-## Product modes targeted by S31-S57
+## Product modes targeted by S31-S64
 
 - **Training:** scenario → abnormal condition → diagnosis → recovery → assessment, with instructor-led sessions and reports.
 - **Virtual commissioning:** real PLC/SoftPLC ↔ Fabrik3D I/O ↔ virtual machine, with explicit control authority.
@@ -88,10 +89,11 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 12. Identity, tenancy, training assessment, instructor workflows: S42-S45.
 13. PLC showcases, on-prem lifecycle, hardening, and the 1.0 baseline: S46-S50.
 14. Post-1.0 product coherence, visual fidelity, sustained reliability and deployment/security hardening: S51-S57.
+15. Real 3D scenarios, industrial visual fidelity and product polish: S58-S64.
 
 ## Sprint count and ceiling
 
-Roadmap Revision 2 contains exactly 57 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed post-1.0 product-hardening work. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. Future roadmap work requires another explicitly approved revision that preserves S01-S57 history.
+Roadmap Revision 3 contains exactly 64 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed post-1.0 product-hardening work; S58-S64 are the planned Revision 3 visual-fidelity, real-3D-scenario and product-polish work. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. `MAX_BATCH_SPRINTS = 10` is unchanged, so the bounded autopilot can execute S58-S64 sequentially in a single invocation. Future roadmap work requires another explicitly approved revision that preserves S01-S64 history.
 
 ## 1.0 baseline
 
@@ -114,6 +116,12 @@ Real PLC/PLCSIM validation remains a documented future validation target rather 
 sprint because the required licensed external environment or physical controller is not currently
 available. This does not weaken the implemented OPC UA/MQTT/Modbus fixture evidence or the S51-S57
 product-hardening results.
+
+**Phase 14 — Visual fidelity, real 3D scenarios and product polish (S58-S64, planned).** It makes every
+`simulation-ready` scenario execute inside a credible 3D industrial cell, raises robot and cell visual
+quality, polishes the operator HMI, makes visual validation deterministic with honest hardware-rendered
+performance evidence, completes browser OIDC and public-demo isolation, and produces a polished flagship
+demonstration. It adds no new protocol, database, framework, MES/ERP/SCADA capability or AI feature.
 
 ## Quality policy
 
