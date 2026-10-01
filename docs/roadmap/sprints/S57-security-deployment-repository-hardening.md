@@ -102,4 +102,4 @@ Header policies use reviewed configuration with compatibility tests. Binary enfo
 
 ## Follow-up items
 
-- Real external PLC proof and holistic post-1.0 validation are S58.
+- Real external PLC/PLCSIM proof is deferred outside the current roadmap until suitable licensed software or physical hardware is available. Automated/fixture post-1.0 validation remains documented separately.
