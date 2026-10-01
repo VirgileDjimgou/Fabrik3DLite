@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "activeSprint": "S58",
-  "updatedAt": "2026-10-01T12:22:56.020Z",
+  "activeSprint": null,
+  "updatedAt": "2026-10-01T19:41:00.000Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -401,10 +401,6 @@
       "completedAt": "2026-10-01T12:21:49.690Z",
       "summary": "S57 security, deployment and repository lifecycle hardening: a reviewed threat model covers HMI, simulator, orchestrator, OIDC, MongoDB, SignalR, OPC UA, MQTT, Modbus, asset/cell/mapping import, historian, tenancy, support bundle and the Cloudflare/reverse proxy with a residual-risk register; cross-tenant negative tests over the real pipeline now prove jobs, sessions, tasks, cell templates, signal mappings, training, historian, diagnostics/support and targeted SignalR dispatch/jog groups cannot be observed or mutated across organizations; a fail-fast SecurityHeaderPolicy validates HSTS/CSP/ExternalTls and is wired into the deployment validator and middleware so external TLS cannot silently run without reviewed headers while keeping SignalR WebSocket, wasm and blob workers working; SecretRedactor additionally catches tunnel/bearer/passphrase keys, env-style assignments and complete PEM blocks; and a non-destructive binary/repository policy with a frozen provenance baseline enforces tracked/changed/staged modes. Documentation updated: THREAT_MODEL.md, REPOSITORY_POLICY.md, SECURITY_HARDENING.md, SECURITY_MODEL.md, DEPLOYMENT.md, SUPPORT_BUNDLE.md and DOCUMENTATION_INDEX.md.",
       "evidence": "dotnet build Fabrik3D/Fabrik3D.slnx -> 0 warnings, 0 errors. dotnet test Fabrik3D/Fabrik3D.slnx --no-build -> Contracts 5, Infrastructure.IntegrationTests 16, Server 564 passed (0 failed); focused S57 filter SecurityHeaderPolicyTests|CrossTenantNegativeMatrixTests|CrossTenantHistorianTests|HubTargetingTests|SecretRedactorTests -> 56 passed. npm run contracts:check -> verified from http://127.0.0.1:7249/swagger/v1/swagger.json. npm run docs:check -> 22 required documents present, 337 links resolved. npm run security:scan -> passed (1295 files). npm run repo:policy -> passed 1295 file(s) mode=tracked; npm run repo:policy:changed -> passed 177 file(s). node --test scripts/tests/repository-policy.test.mjs scripts/tests/security-scan.test.mjs -> 11 passed. npm --prefix Fabrik3D/fabrik3d.client run type-check -> passed; test -> 115 files 601 tests passed; build -> passed; test:visual -> 27 passed. npm --prefix Fabrik3D/fabrik3d.hmi run type-check -> passed; test -> 23 files 86 tests passed; build -> passed; test:e2e -> 16 passed with VITE_ORCHESTRATOR_URL=http://127.0.0.1:7249 build and a Development API server on port 7249. npm run audit -> npm simulator/hmi 0 vulnerabilities and dotnet no vulnerable packages. docker compose -f Fabrik3D/compose.production.yaml config --quiet -> exit 0. npm run sprint:validate -> passed (58 sprints, 56 completed, active=S57)."
-    },
-    "S58": {
-      "status": "active",
-      "startedAt": "2026-10-01T12:22:56.020Z"
     }
   }
 }
