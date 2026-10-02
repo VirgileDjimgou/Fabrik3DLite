@@ -1,7 +1,7 @@
 {
   "version": 1,
   "activeSprint": null,
-  "updatedAt": "2026-10-02T09:17:09.095Z",
+  "updatedAt": "2026-10-02T12:09:29.455Z",
   "sprints": {
     "S01": {
       "status": "completed",
@@ -450,6 +450,27 @@
       "completedAt": "2026-10-02T09:17:09.095Z",
       "summary": "S64 flagship demo, documentation and release polish: added a deterministic flagship demonstration (HMI composer Create -> server targeted dispatch -> mandatory simulator ACK -> automatic 3D execution -> fault/recovery -> Job 100% Completed -> historian read-back) with no simulator-local Start, proven by new FlagshipDemoHistorianTests (real MongoDB historian read-back of the completed run), a new HMI flagship-demo.spec.ts HTTP flow (2 tests) and the existing S51 bridge no-local-start test; captured a curated Revision 3 media set (hero CNC cell, four scenario cells, HMI, Job Composer, robot pendant, fault lab, time travel) via a new demo-10-scenario-showcase.spec.ts plus the S62 deterministic baselines; rewrote the README opening as product-oriented (what it is, architecture, main workflow, 5 capabilities, live demo, flagship video); added docs/operations/FLAGSHIP_DEMO.md, docs/operations/VALIDATION_REVISION_3.md and docs/releases/RELEASE_NOTES_REVISION_3.md, registered them in the docs gate and index, and updated the roadmap/artifacts gallery. No runtime, contract or safety behavior changed; real PLC/PLCSIM remains explicitly deferred.",
       "evidence": "npm run sprint:validate -> passed: 64 sprints, 63 completed, active=S64. dotnet build Fabrik3D/Fabrik3D.slnx -> 0 warnings, 0 errors. dotnet test Fabrik3D/Fabrik3D.slnx --no-build -> Contracts 5, Infrastructure.Integration 16, Server 576 passed, 0 failed (597 total; includes new FlagshipDemoHistorianTests). dotnet test --filter FlagshipWorkflowIntegrationTests|FlagshipDemoHistorianTests -> 2 passed. npm run contracts:check against a local Development server on 127.0.0.1:7249 (disposable Mongo db Fabrik3D_S64_validation, swagger polled, server stopped, port released) -> verified, exit 0. npm run docs:check -> 26 required documents present, 396 links resolved. npm --prefix Fabrik3D/fabrik3d.client run type-check -> exit 0; run test -> 129 files / 693 passed; run build -> exit 0; run test:visual -> 35 passed. npm --prefix Fabrik3D/fabrik3d.hmi run type-check -> exit 0; run test -> 28 files / 120 passed; run build -> exit 0; run test:e2e with a live Testing orchestrator on 127.0.0.1:7249 -> 24 passed, 0 failed (incl. 2 new flagship-demo flows). npm run audit -> 0 npm vulnerabilities, no vulnerable NuGet packages. npm run security:scan -> passed (1182 files). npm run repo:policy -> passed (1174 files); repo:policy:changed -> passed (173 files). docker compose -f Fabrik3D/compose.production.yaml config --quiet -> exit 0. Demo capture: npx playwright test --config=playwright.demo.config.ts demo-10-scenario-showcase.spec.ts --workers=1 -> 5 passed (hero CNC cell + vision sorting + palletizing + assembly/inspection + safety training, software rendering, committed under artifacts/demo/flagship/shots)."
+    },
+    "S65": {
+      "status": "planned"
+    },
+    "S66": {
+      "status": "planned"
+    },
+    "S67": {
+      "status": "planned"
+    },
+    "S68": {
+      "status": "planned"
+    },
+    "S69": {
+      "status": "planned"
+    },
+    "S70": {
+      "status": "planned"
+    },
+    "S71": {
+      "status": "planned"
     }
   }
 }

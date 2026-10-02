@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "sprintCeiling": 64,
+  "version": 4,
+  "sprintCeiling": 71,
   "name": "Fabrik3D educational digital twin roadmap",
   "vision": "Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts.",
   "sprints": [
@@ -576,6 +576,69 @@
       "file": "docs/roadmap/sprints/S64-flagship-demo-release-polish.md",
       "dependsOn": [
         "S63"
+      ]
+    },
+    {
+      "id": "S65",
+      "phase": 15,
+      "title": "Scenario-specific industrial 3D assets",
+      "file": "docs/roadmap/sprints/S65-scenario-industrial-assets.md",
+      "dependsOn": [
+        "S64"
+      ]
+    },
+    {
+      "id": "S66",
+      "phase": 15,
+      "title": "Real robot motion in scenario cells",
+      "file": "docs/roadmap/sprints/S66-scenario-robot-motion.md",
+      "dependsOn": [
+        "S65"
+      ]
+    },
+    {
+      "id": "S67",
+      "phase": 15,
+      "title": "Deeper deterministic scenario process flows",
+      "file": "docs/roadmap/sprints/S67-scenario-process-depth.md",
+      "dependsOn": [
+        "S66"
+      ]
+    },
+    {
+      "id": "S68",
+      "phase": 15,
+      "title": "PBR materials and industrial environment fidelity",
+      "file": "docs/roadmap/sprints/S68-materials-environment-fidelity.md",
+      "dependsOn": [
+        "S67"
+      ]
+    },
+    {
+      "id": "S69",
+      "phase": 15,
+      "title": "Cell composition, scale and camera polish",
+      "file": "docs/roadmap/sprints/S69-cell-composition-camera-polish.md",
+      "dependsOn": [
+        "S68"
+      ]
+    },
+    {
+      "id": "S70",
+      "phase": 15,
+      "title": "Product coherence and release preparation",
+      "file": "docs/roadmap/sprints/S70-product-coherence-release-prep.md",
+      "dependsOn": [
+        "S69"
+      ]
+    },
+    {
+      "id": "S71",
+      "phase": 15,
+      "title": "Revision 4 validation and flagship demonstration",
+      "file": "docs/roadmap/sprints/S71-revision4-validation-demo.md",
+      "dependsOn": [
+        "S70"
       ]
     }
   ]

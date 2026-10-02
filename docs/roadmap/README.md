@@ -2,7 +2,7 @@
 
 Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts. This roadmap evolves the existing repository incrementally toward that platform without restarting or replacing working modules.
 
-It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S50 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 adds completed post-1.0 hardening work in S51-S57. Roadmap Revision 3 adds planned visual-fidelity, real-3D-scenario and product-polish work in S58-S64.
+It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S64 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 added post-1.0 hardening in S51-S57, Roadmap Revision 3 added visual-fidelity and product-polish work in S58-S64, and Roadmap Revision 4 plans industrial visual fidelity and scenario motion in S65-S71.
 
 ## One-command workflow
 
@@ -66,8 +66,9 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 | 12. Interoperability, deployment & 1.0 | S46-S50 | PLC showcases, on-premise lifecycle, observability/hardening, 1.0 commercialization baseline |
 | 13. Product coherence, visual fidelity & hardening | S51-S57 | Authoritative operator workflow, shared 3D runtime, flagship cell, resilience and security/deployment hardening |
 | 14. Visual fidelity, 3D scenarios & product polish | S58-S64 | Real 3D scenario runtime, scenario-specific cells, robot/cell fidelity, HMI polish, deterministic visual QA and GPU evidence, browser OIDC/demo isolation, flagship demo |
+| 15. Industrial visual fidelity & scenario motion | S65-S71 | Scenario-specific GLB assets, real six-axis scenario motion, deeper deterministic process flows, PBR/environment fidelity, measured composition/cameras and Revision 4 release validation |
 
-## Product modes targeted by S31-S64
+## Product modes targeted by S31-S71
 
 - **Training:** scenario → abnormal condition → diagnosis → recovery → assessment, with instructor-led sessions and reports.
 - **Virtual commissioning:** real PLC/SoftPLC ↔ Fabrik3D I/O ↔ virtual machine, with explicit control authority.
@@ -90,10 +91,11 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 13. PLC showcases, on-prem lifecycle, hardening, and the 1.0 baseline: S46-S50.
 14. Post-1.0 product coherence, visual fidelity, sustained reliability and deployment/security hardening: S51-S57.
 15. Real 3D scenarios, industrial visual fidelity and product polish: S58-S64.
+16. Industrial assets, real scenario robot motion, deeper process timing and release validation: S65-S71.
 
 ## Sprint count and ceiling
 
-Roadmap Revision 3 contains exactly 64 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed post-1.0 product-hardening work; S58-S64 are the planned Revision 3 visual-fidelity, real-3D-scenario and product-polish work. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. `MAX_BATCH_SPRINTS = 10` is unchanged, so the bounded autopilot can execute S58-S64 sequentially in a single invocation. Future roadmap work requires another explicitly approved revision that preserves S01-S64 history.
+Roadmap Revision 4 contains exactly 71 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed Revision 2 work; S58-S64 are completed Revision 3 work; and S65-S71 are the planned Revision 4 industrial visual-fidelity and scenario-motion work. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. `MAX_BATCH_SPRINTS = 10` is unchanged, so the bounded autopilot can execute S65-S71 sequentially in a single invocation. Future roadmap work requires another explicitly approved revision that preserves S01-S71 history.
 
 ## 1.0 baseline
 
@@ -126,6 +128,14 @@ The Revision 3 evidence is recorded in
 [VALIDATION_REVISION_3.md](../operations/VALIDATION_REVISION_3.md), the flagship flow in
 [FLAGSHIP_DEMO.md](../operations/FLAGSHIP_DEMO.md), and the release summary in
 [RELEASE_NOTES_REVISION_3.md](../releases/RELEASE_NOTES_REVISION_3.md).
+
+**Phase 15 — Industrial visual fidelity and scenario motion (S65-S71, planned).** This revision deepens
+the existing five flagship scenarios without adding product scope: it promotes license-safe industrial GLB
+assets over procedural fallbacks, reuses the existing robot controller and visual binding for visible J1-J6
+work, expands deterministic process stages, improves shared PBR materials and factory dressing, and refines
+measured cell composition and camera framing. It concludes with product-coherence cleanup and a measured,
+reproducible Revision 4 demonstration. Procedural fallback remains supported; scenario state stays authoritative
+over visuals; real PLC/PLCSIM, safety certification and OEM emulation remain explicitly deferred or unclaimed.
 
 ## Quality policy
 

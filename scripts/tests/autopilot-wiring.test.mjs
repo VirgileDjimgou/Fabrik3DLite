@@ -137,7 +137,7 @@ test('OpenCode commands and the sprint-worker agent exist', () => {
   assert.match(agent, /mode: primary/)
 })
 
-test('autopilot state records the completed Roadmap Revision 2 batch and worker prompt', () => {
+test('autopilot state records the completed Roadmap Revision 3 batch and worker prompt', () => {
   const sample = readJson(path.join('docs', 'roadmap', 'autopilot', 'state.json'))
   const expected = defaultBatchState()
   assert.equal(sample.schemaVersion, '1.0')
@@ -145,7 +145,7 @@ test('autopilot state records the completed Roadmap Revision 2 batch and worker 
   assert.equal(sample.status, 'roadmap_complete')
   assert.ok(sample.batchId)
   assert.equal(sample.requestedMaxSprints, 10)
-  assert.equal(sample.lastCompletedSprint, 'S57')
+  assert.equal(sample.lastCompletedSprint, 'S64')
   assert.equal(sample.stopReason, 'ROADMAP_COMPLETE')
   assert.equal(sample.completedSprints.at(-1)?.sprintId, sample.lastCompletedSprint)
   for (const key of Object.keys(expected)) assert.ok(key in sample, `missing batch-state key ${key}`)
@@ -154,32 +154,32 @@ test('autopilot state records the completed Roadmap Revision 2 batch and worker 
   assert.equal(fs.existsSync(path.join(REPO_ROOT, 'docs', 'roadmap', 'autopilot', 'HUMAN_REQUIRED.json')), false)
 })
 
-test('the real roadmap preserves completed history and Roadmap Revision 3 is planned', () => {
+test('the real roadmap preserves completed history and Roadmap Revision 4 is planned', () => {
   const roadmap = readJson(path.join('docs', 'roadmap', 'roadmap.json'))
   const state = readJson(path.join('docs', 'roadmap', 'state.json'))
-  assert.equal(roadmap.version, 3)
-  assert.equal(roadmap.sprintCeiling, 64)
-  assert.equal(roadmap.sprints.length, 64)
+  assert.equal(roadmap.version, 4)
+  assert.equal(roadmap.sprintCeiling, 71)
+  assert.equal(roadmap.sprints.length, 71)
   assert.equal(state.activeSprint, null)
-  for (let index = 1; index <= 57; index += 1) {
+  for (let index = 1; index <= 64; index += 1) {
     const id = `S${String(index).padStart(2, '0')}`
     assert.equal(state.sprints[id].status, 'completed', `${id} historical record changed`)
     assert.ok(state.sprints[id].summary, `${id} lost its summary`)
     assert.ok(state.sprints[id].evidence, `${id} lost its evidence`)
   }
-  for (let index = 58; index <= 64; index += 1) {
+  for (let index = 65; index <= 71; index += 1) {
     const id = `S${String(index).padStart(2, '0')}`
     assert.equal(state.sprints[id].status, 'planned', `${id} must start planned`)
   }
-  assert.equal(completedIds(state).length, 57)
-  for (let index = 58; index <= 64; index += 1) {
+  assert.equal(completedIds(state).length, 64)
+  for (let index = 65; index <= 71; index += 1) {
     const id = `S${String(index).padStart(2, '0')}`
     const sprint = roadmap.sprints.find((item) => item.id === id)
     const previous = `S${String(index - 1).padStart(2, '0')}`
     assert.deepEqual(sprint.dependsOn, [previous], `${id} dependencies must stay strictly sequential`)
   }
   const selection = selectSprintSequence(roadmap, state, MAX_BATCH_SPRINTS)
-  assert.deepEqual(selection, ['S58', 'S59', 'S60', 'S61', 'S62', 'S63', 'S64'])
+  assert.deepEqual(selection, ['S65', 'S66', 'S67', 'S68', 'S69', 'S70', 'S71'])
   assert.equal(selection.length, 7)
 })
 

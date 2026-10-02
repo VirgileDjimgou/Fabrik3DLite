@@ -6,7 +6,7 @@ Fabrik3D is an existing educational, industrial simulation, training, digital-tw
 
 ## Sprint commands
 
-`Start Next Sprint`, `Lancer le prochain sprint`, `Execute roadmap autonomously through S64`, and clearly equivalent requests mean:
+`Start Next Sprint`, `Lancer le prochain sprint`, `Execute roadmap autonomously through S71`, and clearly equivalent requests mean:
 
 > Start or resume the current next Fabrik3D roadmap sprint, implement it completely, validate it completely, and — only when it is successfully completed with all mandatory gates green and no human intervention required — automatically continue with the following sprint, sequentially, for a maximum of **10 successfully completed** sprints in this invocation.
 
@@ -34,7 +34,7 @@ If an active sprint already exists, `npm run sprint:next` resumes it rather than
 
 - One active sprint at a time by default; no silent skipping, no renumbering, no merging.
 - The bounded batch orchestrator (`scripts/sprint-batch-runner.mjs`) is the only layer allowed to decide whether another sprint starts; no agent may bypass independent verification, and `MAX_BATCH_SPRINTS = 10` is a hard limit that must not be raised by prompt text or CLI argument.
-- S01-S50 completion records in `docs/roadmap/state.json` are an immutable audit trail; never reset, rewrite, fabricate evidence for, or reinterpret them. Roadmap Revision 2 explicitly adds S51-S57, which are complete. Roadmap Revision 3 explicitly adds S58-S64, which are planned and strictly sequential. Real external PLC proof is deferred until suitable licensed software or hardware is available.
+- S01-S64 completion records in `docs/roadmap/state.json` are an immutable audit trail; never reset, rewrite, fabricate evidence for, or reinterpret them. Roadmap Revision 2 adds completed S51-S57, Roadmap Revision 3 adds completed S58-S64, and Roadmap Revision 4 adds planned S65-S71 in strict sequence. Real external PLC proof is deferred until suitable licensed software or hardware is available.
 - Never fabricate test output, screenshots, benchmarks, connector evidence or industrial data.
 - Never mark a sprint complete while a mandatory gate fails, and never claim a gate that was not executed.
 - No unrelated mass refactor, destructive rewrite, or downgrade of existing functionality.
