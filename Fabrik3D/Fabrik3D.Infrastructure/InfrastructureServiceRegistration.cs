@@ -39,6 +39,8 @@ public static class InfrastructureServiceRegistration
         // Training sessions and deterministic assessment (S44)
         services.AddSingleton<TrainingSessionRepository>();
         services.AddSingleton<TrainingActionRepository>();
+        // Bounded public-demo reset (S63)
+        services.AddSingleton<DemoResetRepository>();
         services.AddSingleton<Tenancy.TenantMigrationService>();
         services.AddSingleton<Tenancy.TenantIndexInitializer>();
 

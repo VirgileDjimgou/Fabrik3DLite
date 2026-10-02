@@ -11,23 +11,23 @@
     "origin": "equipment-base"
   },
   "boundsMeters": {
-    "x": 1.55,
-    "y": 3.1,
-    "z": 1.55
+    "x": 1.6,
+    "y": 3.85,
+    "z": 1.6
   },
   "visual": {
     "glb": {
       "path": "model.glb",
-      "sha256": "f32f8a523a0a8b344255afad48a8bc45e98d5ae033b600844dd82430b6afe39a"
+      "sha256": "345a7fd902372d1364e2ed8bd27c715f90de58eeb03abc7ec5fd2c1f457e2346"
     },
     "lods": [
       {
         "id": "lod1",
         "glb": {
           "path": "lod/lod1.glb",
-          "sha256": "e63e7cdd15296d00474fff5b4b558d5eb37f9dfbd86248a4e813fe8ffa5ce7b4"
+          "sha256": "a594d55e01af463ea0f310cb592815c34d4032328d24aabcbec4ded9518f5696"
         },
-        "triangleBudget": 1800
+        "triangleBudget": 2500
       }
     ]
   },
@@ -144,6 +144,6 @@
   },
   "integrity": {
     "path": "model.glb",
-    "sha256": "f32f8a523a0a8b344255afad48a8bc45e98d5ae033b600844dd82430b6afe39a"
+    "sha256": "345a7fd902372d1364e2ed8bd27c715f90de58eeb03abc7ec5fd2c1f457e2346"
   }
 }

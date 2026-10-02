@@ -1,8 +1,14 @@
-# Fabrik3D — Démonstration complète (27/09/2026)
+# Fabrik3D — Démonstration complète
 
 Démonstration réelle du système complet (orchestrateur + MongoDB + simulateur + HMI), capturée
 avec Playwright contre les serveurs en fonctionnement. Toutes les captures proviennent de
 l'application réellement exécutée, aucune maquette.
+
+> **Revision 3 (S64) — jeu curaté.** Le dossier [`flagship/`](flagship/README.md) contient un petit
+> ensemble de captures à jour (cellule CNC héro, quatre cellules de scénario, HMI, Job Composer,
+> pendant robot, fault lab, time travel) qui **remplace** ces captures pour la présentation produit.
+> Le reste de ce dossier (galerie du 27/09/2026) reste conservé comme preuve historique ; les
+> captures de scénario antérieures à S58 ne reflètent plus le runtime 3D actuel.
 
 ## Serveurs utilisés (toujours actifs)
 

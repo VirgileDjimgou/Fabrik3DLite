@@ -7,6 +7,7 @@ import type {
   ControlAuthorityEventDto,
   CreateJobRequest,
   DispatchResultDto,
+  DemoResetResultDto,
   HeartbeatControlAuthorityRequest,
   JobComposerOptionsDto,
   JobComposerPreviewDto,
@@ -33,6 +34,7 @@ export type {
   ControlAuthorityEventDto,
   CreateJobRequest,
   DispatchResultDto,
+  DemoResetResultDto,
   HeartbeatControlAuthorityRequest,
   JobComposerOptionsDto,
   JobComposerPreviewDto,
@@ -160,3 +162,10 @@ export const getHealth = () =>
 
 // ── Version / about (S48) ──
 export const getVersion = () => request<VersionDto>('GET', '/version')
+
+// ── Bounded public-demo lifecycle (S63) ──
+/**
+ * Resets only the simulated public-demo state (jobs, tasks, machine state, faults, training). The
+ * server refuses this outside the explicitly enabled demo profile; a failure leaves state unchanged.
+ */
+export const resetDemo = () => request<DemoResetResultDto>('POST', '/demo/reset')

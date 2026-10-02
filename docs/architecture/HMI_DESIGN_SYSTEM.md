@@ -11,6 +11,43 @@ The HMI follows an ISA-101-inspired, vendor-neutral approach: a quiet neutral ba
 
 Controls have a 44px minimum target and visible keyboard focus. Desktop/laptop layouts retain the content/status hierarchy; below the desktop breakpoint the status pane reflows underneath rather than disappearing.
 
+## Information hierarchy (S61)
+
+The five operator surfaces (Overview, Current Job, Job Composer, Robot Positions, Alarms) share one
+token-driven hierarchy language defined in `fabrik3d.hmi/src/assets/main.css`. The rules are
+presentational only: no new capability, route, workflow or backend contract was introduced, and
+colour continues to communicate status rather than decorate.
+
+- **Primary strip** (`.hmi-status-strip`): the first thing an operator reads. It carries the
+  surface's most important state and uses a semantic left border (success/warning/fault/offline)
+  derived from runtime state.
+- **Primary value** (`.hmi-value--primary`): the single most important number or state on a surface
+  (cell state, job progress, robot motion state, critical-alarm count).
+- **Secondary value** (`.hmi-value`) and **label** (`.hmi-label`): supporting metrics and their
+  uppercase labels.
+- **Detail** (`.hmi-detail`) and **truncate** (`.hmi-truncate`): muted secondary text; long job ids,
+  scenario names and messages truncate gracefully without hiding critical state.
+- **Cards** (`.hmi-card`, `.hmi-card__header`, `.hmi-card__body`) and **metrics** (`.hmi-metric`)
+  group related information consistently.
+
+Per-surface ranking:
+
+| Surface | Primary | Secondary |
+|---|---|---|
+| Overview | cell state, operating mode, control authority, current job, progress | robot state, CNC state, parts completed, cycle duration |
+| Current Job | progress, current task, pallet, scenario, elapsed | job identity, dispatch state, target cell/simulator, session timeline, machine state |
+| Robot Positions | motion state, authority, operating mode, model, units | J1–J6 with limits, TCP pose, frames/tool, manual jog |
+| Alarms | critical/warning/unacknowledged counts | timestamp, severity, source, code, message, lifecycle state, ACK |
+| Job Composer | numbered step hierarchy, target cell/scenario/slot summary | identity, pallet, slot grid, generated tasks, server-validated review |
+
+The Robot Positions surface is a compact, teach-pendant-inspired layout (`.hmi-pendant`): joint rows
+pair the angle with its declared limits, and the jog controls are grouped per joint. It is inspired
+by industrial pendants and does not copy any OEM UI.
+
+The Job Composer uses a numbered step list (`.hmi-steps`), a touch-sized slot grid (`.hmi-slot-grid`,
+`.hmi-slot`) and a persistent target-cell strip so the operator always sees which cell the job will
+run on. Validation feedback (valid/invalid/warnings) is rendered in the review step before creation.
+
 ## Persona surfaces and route matrix (S53)
 
 Operator, engineering, training and administration personas use distinct, guarded surfaces. The

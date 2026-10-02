@@ -51,6 +51,8 @@ export const messages: Record<SimulatorLocale, Dictionary> = {
     'learning.authority': 'Assessment authority', 'learning.local': 'LOCAL (OFFLINE)', 'learning.server': 'SERVER-ASSESSED', 'learning.sync': 'Sync to server', 'learning.syncing': 'Syncing…', 'learning.syncFailed': 'Sync failed — the local report is kept.', 'learning.syncRetry': 'Retry sync', 'learning.serverScore': 'Server score', 'learning.disclaimer': 'Educational scope',
     'auth.signIn': 'Sign in', 'auth.signOut': 'Sign out', 'auth.cancel': 'Cancel', 'auth.subject': 'Subject', 'auth.role': 'Role',
     'auth.localDemo': 'OFFLINE LOCAL DEMO - NOT AUTHENTICATED', 'auth.expired': 'SESSION EXPIRED - SIGN IN AGAIN', 'auth.failed': 'Sign-in failed.',
+    'auth.signingIn': 'Signing in...', 'auth.oidcSignIn': 'Sign in with identity provider',
+    'auth.oidcFailed': 'Could not start the identity provider sign-in.', 'auth.oidcCallbackFailed': 'Identity provider sign-in failed. Please try again.',
     'browser.title': 'Equipment & scenes', 'browser.search': 'Search catalog', 'browser.simulationReady': 'simulation-ready', 'browser.visualLayout': 'visual/layout',
   },
   fr: {
@@ -99,6 +101,8 @@ export const messages: Record<SimulatorLocale, Dictionary> = {
     'learning.authority': 'Autorité d’évaluation', 'learning.local': 'LOCAL (HORS LIGNE)', 'learning.server': 'ÉVALUÉ PAR LE SERVEUR', 'learning.sync': 'Synchroniser avec le serveur', 'learning.syncing': 'Synchronisation…', 'learning.syncFailed': 'Échec de synchronisation — le rapport local est conservé.', 'learning.syncRetry': 'Réessayer la synchronisation', 'learning.serverScore': 'Score serveur', 'learning.disclaimer': 'Portée pédagogique',
     'auth.signIn': 'Se connecter', 'auth.signOut': 'Déconnexion', 'auth.cancel': 'Annuler', 'auth.subject': 'Identifiant', 'auth.role': 'Rôle',
     'auth.localDemo': 'DÉMO LOCALE HORS LIGNE - NON AUTHENTIFIÉ', 'auth.expired': 'SESSION EXPIRÉE - RECONNECTEZ-VOUS', 'auth.failed': 'Échec de connexion.',
+    'auth.signingIn': 'Connexion…', 'auth.oidcSignIn': 'Se connecter via le fournisseur',
+    'auth.oidcFailed': 'Impossible de démarrer la connexion au fournisseur.', 'auth.oidcCallbackFailed': 'Échec de connexion au fournisseur. Réessayez.',
     'browser.title': 'Équipements et scènes', 'browser.search': 'Rechercher dans le catalogue', 'browser.simulationReady': 'prêt à simuler', 'browser.visualLayout': 'visuel/disposition',
   },
   de: {
@@ -147,6 +151,8 @@ export const messages: Record<SimulatorLocale, Dictionary> = {
     'learning.authority': 'Bewertungsautorität', 'learning.local': 'LOKAL (OFFLINE)', 'learning.server': 'SERVER-BEWERTET', 'learning.sync': 'Mit Server synchronisieren', 'learning.syncing': 'Synchronisiere…', 'learning.syncFailed': 'Synchronisierung fehlgeschlagen — lokaler Bericht bleibt erhalten.', 'learning.syncRetry': 'Synchronisierung wiederholen', 'learning.serverScore': 'Server-Punktzahl', 'learning.disclaimer': 'Bildungsumfang',
     'auth.signIn': 'Anmelden', 'auth.signOut': 'Abmelden', 'auth.cancel': 'Abbrechen', 'auth.subject': 'Kennung', 'auth.role': 'Rolle',
     'auth.localDemo': 'OFFLINE-LOKALDEMO - NICHT ANGEMELDET', 'auth.expired': 'SITZUNG ABGELAUFEN - NEU ANMELDEN', 'auth.failed': 'Anmeldung fehlgeschlagen.',
+    'auth.signingIn': 'Anmeldung...', 'auth.oidcSignIn': 'Mit Identitätsanbieter anmelden',
+    'auth.oidcFailed': 'Anmeldung am Anbieter nicht möglich.', 'auth.oidcCallbackFailed': 'Anbieter-Anmeldung fehlgeschlagen. Erneut versuchen.',
     'browser.title': 'Ausrüstung & Szenen', 'browser.search': 'Katalog durchsuchen', 'browser.simulationReady': 'simulationsbereit', 'browser.visualLayout': 'visuell/Layout',
   },
 }

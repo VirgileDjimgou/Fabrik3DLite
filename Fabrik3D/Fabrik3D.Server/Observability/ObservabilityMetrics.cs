@@ -62,6 +62,7 @@ public sealed class ObservabilityMetrics
     private readonly Counter<long> _authorityTransitions;
     private readonly Histogram<double> _simulatorFrameDuration;
     private readonly Histogram<long> _simulatorDrawCalls;
+    private readonly Counter<long> _demoResets;
 
     public ObservabilityMetrics(IOptions<Fabrik3DObservabilityOptions> options, ILogger<ObservabilityMetrics> log)
     {
@@ -94,6 +95,8 @@ public sealed class ObservabilityMetrics
             Fabrik3DTelemetry.SimulatorFrameDuration, "ms", "Simulator reported frame duration.");
         _simulatorDrawCalls = Fabrik3DTelemetry.Meter.CreateHistogram<long>(
             Fabrik3DTelemetry.SimulatorDrawCalls, "drawcalls", "Simulator reported draw calls per frame.");
+        _demoResets = Fabrik3DTelemetry.Meter.CreateCounter<long>(
+            Fabrik3DTelemetry.DemoResets, "resets", "Bounded public-demo resets by outcome (S63).");
     }
 
     public bool Enabled => _options.Enabled;
@@ -207,6 +210,15 @@ public sealed class ObservabilityMetrics
         SetGauge("fabrik3d.simulator.triangles", triangles);
         SetGauge("fabrik3d.simulator.texture.bytes", textureBytes);
         SetGauge("fabrik3d.simulator.heap.bytes", heapBytes);
+    }
+
+    /// <summary>Records a bounded public-demo reset outcome (S63). Outcome is "success" or "failure".</summary>
+    public void RecordDemoReset(string outcome)
+    {
+        if (!_options.Enabled) return;
+        _demoResets.Add(1, new KeyValuePair<string, object?>("outcome", outcome));
+        AddSeries(Fabrik3DTelemetry.DemoResets, MetricKind.Counter,
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["outcome"] = outcome }, 1);
     }
 
     /// <summary>Sets a last-value gauge (for exporter/simulator-reported measurements).</summary>

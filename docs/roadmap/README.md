@@ -117,11 +117,15 @@ sprint because the required licensed external environment or physical controller
 available. This does not weaken the implemented OPC UA/MQTT/Modbus fixture evidence or the S51-S57
 product-hardening results.
 
-**Phase 14 — Visual fidelity, real 3D scenarios and product polish (S58-S64, planned).** It makes every
-`simulation-ready` scenario execute inside a credible 3D industrial cell, raises robot and cell visual
-quality, polishes the operator HMI, makes visual validation deterministic with honest hardware-rendered
-performance evidence, completes browser OIDC and public-demo isolation, and produces a polished flagship
-demonstration. It adds no new protocol, database, framework, MES/ERP/SCADA capability or AI feature.
+**Phase 14 — Visual fidelity, real 3D scenarios and product polish (S58-S64, complete).** It made every
+`simulation-ready` scenario execute inside a credible 3D industrial cell, raised robot and cell visual
+quality, polished the operator HMI, made visual validation deterministic with honest hardware-rendered
+performance evidence, completed browser OIDC and public-demo isolation, and produced a polished flagship
+demonstration. It added no new protocol, database, framework, MES/ERP/SCADA capability or AI feature.
+The Revision 3 evidence is recorded in
+[VALIDATION_REVISION_3.md](../operations/VALIDATION_REVISION_3.md), the flagship flow in
+[FLAGSHIP_DEMO.md](../operations/FLAGSHIP_DEMO.md), and the release summary in
+[RELEASE_NOTES_REVISION_3.md](../releases/RELEASE_NOTES_REVISION_3.md).
 
 ## Quality policy
 

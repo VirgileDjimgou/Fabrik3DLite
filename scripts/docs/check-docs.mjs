@@ -33,8 +33,11 @@ export const REQUIRED_DOCUMENTS = [
   'docs/operations/UPGRADE_ROLLBACK.md',
   'docs/operations/VALIDATION_1.0.md',
   'docs/operations/VALIDATION_POST_1.0.md',
+  'docs/operations/VALIDATION_REVISION_3.md',
+  'docs/operations/FLAGSHIP_DEMO.md',
   'docs/development/TROUBLESHOOTING.md',
   'docs/releases/RELEASE_NOTES_1.0.md',
+  'docs/releases/RELEASE_NOTES_REVISION_3.md',
   `${SAMPLE_PROJECT_DIR}/project.json`,
   `${SAMPLE_PROJECT_DIR}/README.md`,
   `${SAMPLE_PROJECT_DIR}/reference-cell.cell.json`,
@@ -57,8 +60,11 @@ export const LINK_CHECKED_DOCUMENTS = [
   'docs/operations/DATA_AND_PRIVACY.md',
   'docs/operations/VALIDATION_1.0.md',
   'docs/operations/VALIDATION_POST_1.0.md',
+  'docs/operations/VALIDATION_REVISION_3.md',
+  'docs/operations/FLAGSHIP_DEMO.md',
   'docs/development/TROUBLESHOOTING.md',
   'docs/releases/RELEASE_NOTES_1.0.md',
+  'docs/releases/RELEASE_NOTES_REVISION_3.md',
   `${SAMPLE_PROJECT_DIR}/README.md`,
 ]
 

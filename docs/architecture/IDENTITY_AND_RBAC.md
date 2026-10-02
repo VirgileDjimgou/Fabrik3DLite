@@ -63,7 +63,19 @@ environment:
   "ClockSkewSeconds": 30,
   "PublicDemoEnabled": false,
   "ValidateIssuer": true,
-  "ValidateAudience": true
+  "ValidateAudience": true,
+  "Browser": {                       // S63: public Authorization Code + PKCE settings for the SPA
+    "ClientId": null,                // public client id registered with the provider (no secret)
+    "Scopes": [ "openid", "profile" ],
+    "RedirectPath": "/auth/callback",
+    "PostLogoutRedirectPath": "/",
+    "EndSessionEnabled": true
+  }
+},
+"Demo": {                            // S63: bounded public-demo lifecycle, disabled by default
+  "Enabled": false,                  // enabled only by the explicit appsettings.Demo.json profile
+  "ResetEnabled": true,
+  "ResetLabel": "Reset Demo"
 }
 ```
 
@@ -83,6 +95,81 @@ active mode and issuer at startup.
 - a development/test `SigningKey` is configured in Production.
 
 This is the enforcement point for "development authentication can never be mistaken for production".
+
+## Browser OIDC (Authorization Code + PKCE) — S63
+
+The HMI and the simulator both sign in through the **same** server authentication model. In
+`Mode=Oidc` the server advertises only public, non-secret browser settings from
+`GET /api/auth/config` (`oidc` block: authority, public client id, scopes, redirect paths). The
+browser then runs a standard flow, with no provider-specific business logic and no custom identity
+server:
+
+```text
+Browser → OIDC authority (/.well-known/openid-configuration)
+        → authorization code (state + S256 code_challenge)
+        → token endpoint (code + code_verifier, no client secret)
+        → opaque access token
+        → Fabrik3D API (/api/*) and SignalR (/hubs/orchestration)
+```
+
+Implementation: `fabrik3d.hmi/src/auth/oidcPkce.ts` and `fabrik3d.client/src/auth/oidcPkce.ts`
+(portable helpers), driven by each app's `auth/authService.ts`.
+
+Lifecycle handling:
+
+- **Login** — `beginOidcLogin` discovers provider metadata, creates an S256 PKCE verifier/challenge
+  and a CSRF `state`, persists only those two values in `sessionStorage`, then navigates to the
+  authorization endpoint. The callback is completed exactly once by `completeOidcLogin`.
+- **Callback** — the CSRF `state` is validated before the code is exchanged; the one-time
+  verifier/state are removed after use. The code is exchanged with `grant_type=authorization_code`
+  and the `code_verifier`.
+- **Roles** — an OIDC access token may be opaque, so the app never reads roles from it. It
+  materializes a provisional session and immediately re-reads the authoritative principal from
+  `GET /api/auth/me`; if that call fails the session is cleared (fail closed) instead of inventing
+  roles. Role changes observed on refresh bump `roleRevision`.
+- **Expiry / refresh / re-auth** — the provider `expires_in` is tracked explicitly; a token with no
+  known expiry is treated as expired. On a local expiry or a `401`/`403` from REST or the hub, the
+  session is cleared, `sessionExpired` is set and the UI shows explicit re-authentication. OIDC
+  relies on redirect-based re-authentication rather than silent refresh-token rotation.
+- **Logout** — `oidcLogout` clears the local session and, when the provider advertises
+  `end_session_endpoint` and `EndSessionEnabled=true`, performs RP-initiated logout with
+  `post_logout_redirect_uri` and `client_id`. In Test/Demo mode it degrades to a local logout.
+- **SignalR reconnect** — the hub reuses `accessTokenFactory`, so automatic reconnect re-reads the
+  current token; a closed hub with an expired/absent token raises the same explicit re-auth signal.
+- **Unavailable authority** — discovery/token failures surface a clear authentication error
+  (`oidc_*`); the app never falls back to anonymous privileged access.
+
+Never logged: access/refresh/id tokens, authorization codes and PKCE verifiers. Redirect-URI,
+authority, client id and scopes are public and may be shown; no client secret exists for a public
+SPA client.
+
+Test/Demo authentication remains visibly distinct: `isOidcMode` is true only for `mode=oidc` **and**
+a configured `oidc` block, so a Test/Development deployment never renders or advertises the provider
+button. The `Warning` from `/api/auth/config` is shown prominently in Test/Demo mode. The startup
+guard still refuses dev/test modes in Production.
+
+## Bounded public-demo reset — S63
+
+The public demonstration shares mutable simulated state. S63 adds an explicit, audited, bounded
+reset that is **disabled by default** (`Demo:Enabled=false`) and only enabled by the dedicated
+`appsettings.Demo.json` profile:
+
+- `POST /api/demo/reset` requires the `Fabrik3D.Operate` permission; the read-only `PublicDemo` and
+  `Learner` identities are refused with `403`. Anonymous callers get `401`, and outside the enabled
+  demo profile the route returns `404` rather than advertising the lifecycle.
+- It removes **only** simulated demo state: jobs, tasks, simulation sessions, alarms, operator
+  messages, machine state, control-authority records and training sessions/actions. It never touches
+  production/profile data: organizations, memberships, cell templates, connector configuration,
+  mappings or schema migrations survive.
+- Tenant-scoped deletions are filtered through `TenantQuery.For`, so a reset can never remove another
+  organization's data.
+- The result reports the authenticated actor (`AuditId`), the organization and bounded counts, and a
+  structured server log records the same without any token material. The outcome is recorded in the
+  `fabrik3d.demo.resets` metric (`outcome=success|failure`). A failure throws and leaves the HTTP
+  layer to report it; the HMI shows pending/success/failure explicitly.
+- The HMI surface (`HmiDemoReset`) renders only when `/api/auth/config` reports `DemoResetEnabled`
+  **and** the operator holds `Operate`, and confirms the target before acting. Hidden UI is not a
+  control: the server re-checks both.
 
 ## Roles and permission matrix
 
@@ -122,6 +209,7 @@ are protected at the class level with `[Authorize]` and mutating actions overrid
 | `TrainingController` `/api/training/sessions` | `Read` | `Train` (start/report/complete/import), `Instruct` (assessment corrections) |
 | `ConnectorsController` `/api/connectors` | `Read` | – |
 | `AuthController` `/api/auth` | `config` is anonymous | `dev-token` anonymous + rate-limited (404 outside dev/test); `me` authenticated |
+| `DemoController` `/api/demo` | – | `Operate` (`reset`; `404` unless the explicit demo profile is enabled) |
 | `HealthController` `/api/health`, `/api/Health` | anonymous | – |
 | SignalR `/hubs/orchestration` | authenticated | same policies as REST |
 
@@ -198,6 +286,10 @@ The public demo runs in an explicitly documented configuration (`Authentication:
 and is labelled `OFFLINE LOCAL DEMO - NOT AUTHENTICATED`. No configuration silently accepts
 anonymous mutations in Production.
 
+The dedicated demo deployment can additionally enable the bounded, audited reset described in
+[Bounded public-demo reset — S63](#bounded-public-demo-reset--s63). It is disabled by default and
+never exists in a production profile; the flagship public demo is S64.
+
 ## Migration from the placeholder
 
 - `CellTemplateAuthorizationPlaceholder` and the `X-Operator-Id` header path were removed.
@@ -220,10 +312,14 @@ anonymous mutations in Production.
   `SecurityHeadersTests` (headers, CORS origin rules).
 - Integration: `EndpointAuthorizationTests` over the real `Program.cs` pipeline (anonymous/role
   401/403 matrices, token tampering/audience/issuer/expiry, SignalR negotiation, audit identity,
-  public demo).
+  public demo), `OidcBrowserConfigTests` (public browser OIDC discovery, scopes, no secret) and
+  `DemoResetTests` (demo profile gating, `Operate`-only authorization, tenant-scoped scope,
+  profile data preserved).
 - Cell-template matrix: `CellTemplateAuthorizationTests`.
-- Front-end: `fabrik3d.hmi/src/auth/authStore.test.ts`, `HmiLogin.test.ts`,
-  `fabrik3d.client/src/auth/authStore.test.ts`, `orchestratorApiAuth.test.ts`.
+- Front-end: `fabrik3d.hmi/src/auth/authStore.test.ts`, `authService.test.ts`,
+  `oidcPkce.test.ts`, `HmiLogin.test.ts`, `HmiDemoReset.test.ts`,
+  `fabrik3d.client/src/auth/authStore.test.ts`, `authService.test.ts`, `oidcPkce.test.ts`,
+  `orchestratorApiAuth.test.ts`.
 - E2E: `fabrik3d.hmi/e2e/orchestration-smoke.spec.ts`, `orchestration-claim.spec.ts`,
   `cell-templates.spec.ts` (Engineer/Learner roles) and `hmi-design-system.spec.ts` (seeded operator
   session) exercise authenticated workflows against the real server.

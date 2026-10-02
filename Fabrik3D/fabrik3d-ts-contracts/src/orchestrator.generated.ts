@@ -922,6 +922,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/demo/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DemoResetResultDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiErrorDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diagnostics/status": {
         parameters: {
             query?: never;
@@ -4398,6 +4451,8 @@ export interface components {
             publicDemoEnabled?: boolean;
             roles?: string[];
             warning?: string | null;
+            oidc?: components["schemas"]["OidcBrowserConfigDto"];
+            demoResetEnabled?: boolean;
         };
         AuthMeDto: {
             subject?: string;
@@ -4566,6 +4621,35 @@ export interface components {
             slotRow?: number;
             /** Format: int32 */
             slotColumn?: number;
+        };
+        DemoResetCountsDto: {
+            /** Format: int32 */
+            jobs?: number;
+            /** Format: int32 */
+            tasks?: number;
+            /** Format: int32 */
+            simulationSessions?: number;
+            /** Format: int32 */
+            alarms?: number;
+            /** Format: int32 */
+            operatorMessages?: number;
+            /** Format: int32 */
+            machineStates?: number;
+            /** Format: int32 */
+            trainingSessions?: number;
+            /** Format: int32 */
+            trainingActions?: number;
+            /** Format: int32 */
+            controlAuthorities?: number;
+            /** Format: int32 */
+            controlAuthorityEvents?: number;
+        };
+        DemoResetResultDto: {
+            /** Format: date-time */
+            resetAtUtc?: string;
+            actorId?: string;
+            organizationId?: string;
+            counts?: components["schemas"]["DemoResetCountsDto"];
         };
         DevTokenRequest: {
             role: string;
@@ -4976,6 +5060,14 @@ export interface components {
             seriesCount?: number;
             /** Format: int64 */
             droppedSeries?: number;
+        };
+        OidcBrowserConfigDto: {
+            authority?: string;
+            clientId?: string;
+            scopes?: string[];
+            redirectPath?: string;
+            postLogoutRedirectPath?: string | null;
+            endSessionEnabled?: boolean;
         };
         OperatorMessageDto: {
             id?: string;

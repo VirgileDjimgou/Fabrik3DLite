@@ -166,52 +166,95 @@ function palletStation(low = false) {
 // The pivot chain deliberately mirrors IndustrialRobot and the shared
 // kinematics model. Meshes are generic industrial geometry, while the six
 // semantic pivots are the stable contract used by RobotVisualBinding.
+//
+// S60 deepens the manipulator with a realistic base, cast-arm shapes, joint
+// housings, reducers/motors, wrist, flange, cable routing/dress pack, bolts,
+// covers, labels, warning decals and a two-finger gripper. The `low` variant
+// deliberately reduces segment counts and drops small detailing while keeping
+// the silhouette and every semantic node, so LOD1 is a real LOD.
 function professionalRobot(profile, low = false) {
   const rootGroup = new THREE.Group()
   rootGroup.name = 'equipment-root'
   rootGroup.userData.semanticId = 'equipment-root'
   rootGroup.scale.setScalar(profile.scale)
   const d = profile
+  const seg = low ? 10 : 28
+  const fine = low ? 8 : 18
+
   const base = group(rootGroup, 'frame:base')
-  mesh(base, 'base:plate', new THREE.CylinderGeometry(0.55, 0.62, 0.06, 32), darkSteel, [0, 0.03, 0])
-  mesh(base, 'base:pedestal', new THREE.CylinderGeometry(0.46, 0.5, 0.28, 32), robotPaint, [0, 0.17, 0])
+  mesh(base, 'base:plate', new THREE.CylinderGeometry(0.55, 0.62, 0.06, seg), darkSteel, [0, 0.03, 0])
+  mesh(base, 'base:pedestal', new THREE.CylinderGeometry(0.46, 0.5, 0.28, seg), robotPaint, [0, 0.17, 0])
+  mesh(base, 'base:collar', new THREE.CylinderGeometry(0.44, 0.46, 0.05, seg), robotLightPaint, [0, 0.31, 0])
   for (let index = 0; index < 8; index += 1) {
     const angle = (index / 8) * Math.PI * 2
     mesh(base, `base:bolt:${index}`, new THREE.CylinderGeometry(0.025, 0.025, 0.025, 10), steel, [Math.cos(angle) * 0.48, 0.075, Math.sin(angle) * 0.48])
   }
+  if (!low) {
+    mesh(base, 'base:cable-entry', new THREE.BoxGeometry(0.12, 0.16, 0.08), darkSteel, [-0.24, 0.14, -0.4])
+    mesh(base, 'base:cover', new THREE.BoxGeometry(0.3, 0.18, 0.03), robotLightPaint, [0, 0.16, 0.5])
+    mesh(base, 'label:base', new THREE.BoxGeometry(0.16, 0.05, 0.004), labelWhite, [0.24, 0.12, 0.49])
+  }
 
   const j1 = group(rootGroup, 'joint:j1'); j1.position.set(0, d.baseHeight, 0)
-  mesh(j1, 'joint-cover:j1', new THREE.CylinderGeometry(0.38, 0.42, 0.13, 28), robotLightPaint, [0, 0.02, 0])
+  mesh(j1, 'joint-cover:j1', new THREE.CylinderGeometry(0.38, 0.42, 0.13, seg), robotLightPaint, [0, 0.02, 0])
+  mesh(j1, 'joint-housing:j1', new THREE.CylinderGeometry(0.34, 0.36, 0.1, seg), robotPaint, [0, 0.11, 0])
   const j2 = group(j1, 'joint:j2'); j2.position.set(0, d.shoulderHeight, 0)
-  mesh(j1, 'link:shoulder', new THREE.CylinderGeometry(0.3, 0.3, d.shoulderHeight * 0.88, 24), robotPaint, [0, d.shoulderHeight * 0.44, 0])
-  mesh(j1, 'motor:j2', new THREE.CylinderGeometry(0.14, 0.14, 0.2, 16), darkSteel, [0.31, d.shoulderHeight * 0.7, 0], [0, 0, Math.PI / 2])
-  mesh(j2, 'joint-cover:j2', new THREE.SphereGeometry(0.22, 20, 14), darkSteel)
+  mesh(j1, 'link:shoulder', new THREE.CylinderGeometry(0.3, 0.34, d.shoulderHeight * 0.88, seg), robotPaint, [0, d.shoulderHeight * 0.44, 0])
+  mesh(j1, 'link:shoulder-rib', new THREE.BoxGeometry(0.1, d.shoulderHeight * 0.7, 0.42), robotLightPaint, [0, d.shoulderHeight * 0.44, 0])
+  mesh(j1, 'motor:j2', new THREE.CylinderGeometry(0.14, 0.14, 0.2, fine), darkSteel, [0.31, d.shoulderHeight * 0.7, 0], [0, 0, Math.PI / 2])
+  mesh(j1, 'reducer:j2', new THREE.CylinderGeometry(0.11, 0.11, 0.06, fine), steel, [0.43, d.shoulderHeight * 0.7, 0], [0, 0, Math.PI / 2])
+  mesh(j2, 'joint-cover:j2', new THREE.SphereGeometry(0.22, seg, Math.max(8, seg - 6)), darkSteel)
 
   const j3 = group(j2, 'joint:j3'); j3.position.set(0, d.upperArmLength, 0)
   mesh(j2, 'link:upper-arm', new THREE.BoxGeometry(0.26, d.upperArmLength, 0.28), robotPaint, [0, d.upperArmLength / 2, 0])
   mesh(j2, 'link:upper-arm-panel', new THREE.BoxGeometry(0.275, d.upperArmLength * 0.72, 0.025), robotLightPaint, [0, d.upperArmLength * 0.52, 0.153])
-  mesh(j2, 'motor:j3', new THREE.CylinderGeometry(0.125, 0.125, 0.18, 16), darkSteel, [-0.25, d.upperArmLength * 0.84, 0], [0, 0, Math.PI / 2])
-  mesh(j3, 'joint-cover:j3', new THREE.CylinderGeometry(0.19, 0.22, 0.13, 18), darkSteel, [0, 0, 0], [Math.PI / 2, 0, 0])
+  mesh(j2, 'link:upper-arm-rib', new THREE.BoxGeometry(0.08, d.upperArmLength * 0.8, 0.3), robotLightPaint, [0, d.upperArmLength * 0.5, 0])
+  mesh(j2, 'motor:j3', new THREE.CylinderGeometry(0.125, 0.125, 0.18, fine), darkSteel, [-0.25, d.upperArmLength * 0.84, 0], [0, 0, Math.PI / 2])
+  mesh(j2, 'reducer:j3', new THREE.CylinderGeometry(0.1, 0.1, 0.05, fine), steel, [-0.36, d.upperArmLength * 0.84, 0], [0, 0, Math.PI / 2])
+  mesh(j3, 'joint-cover:j3', new THREE.CylinderGeometry(0.19, 0.22, 0.13, seg), darkSteel, [0, 0, 0], [Math.PI / 2, 0, 0])
+  if (!low) {
+    mesh(j2, 'dress:cable-bundle', new THREE.CylinderGeometry(0.03, 0.03, d.upperArmLength * 0.9, 8), darkSteel, [0, d.upperArmLength * 0.5, -0.17])
+    mesh(j2, 'label:warning', new THREE.BoxGeometry(0.1, 0.06, 0.006), safetyYellow, [0, d.upperArmLength * 0.36, 0.165])
+  }
 
   const j4 = group(j3, 'joint:j4'); j4.position.set(0, d.forearmLength, 0)
   mesh(j3, 'link:forearm', new THREE.BoxGeometry(0.21, d.forearmLength, 0.23), robotPaint, [0, d.forearmLength / 2, 0])
+  mesh(j3, 'link:forearm-rib', new THREE.BoxGeometry(0.07, d.forearmLength * 0.8, 0.25), robotLightPaint, [0, d.forearmLength * 0.5, 0])
   mesh(j3, 'cable:external', new THREE.CylinderGeometry(0.025, 0.025, d.forearmLength * 0.82, 10), darkSteel, [0.15, d.forearmLength * 0.47, 0.12])
-  mesh(j4, 'joint-cover:j4', new THREE.CylinderGeometry(0.14, 0.14, 0.23, 18), robotLightPaint, [0, 0, 0], [0, 0, Math.PI / 2])
+  mesh(j3, 'motor:j4', new THREE.CylinderGeometry(0.1, 0.1, 0.14, fine), darkSteel, [-0.2, d.forearmLength * 0.82, 0], [0, 0, Math.PI / 2])
+  mesh(j4, 'joint-cover:j4', new THREE.CylinderGeometry(0.14, 0.14, 0.23, seg), robotLightPaint, [0, 0, 0], [0, 0, Math.PI / 2])
+  if (!low) {
+    mesh(j3, 'cable:loop', new THREE.TorusGeometry(0.06, 0.012, 6, 10), darkSteel, [0.1, d.forearmLength * 0.18, 0.1], [Math.PI / 2, 0, 0])
+    for (let index = 0; index < 4; index += 1) {
+      const angle = (index / 4) * Math.PI * 2
+      mesh(j4, `bolt:j4:${index}`, new THREE.CylinderGeometry(0.012, 0.012, 0.02, 6), steel, [Math.cos(angle) * 0.08, Math.sin(angle) * 0.08, 0.13])
+    }
+  }
 
   const j5 = group(j4, 'joint:j5')
-  mesh(j5, 'joint-cover:j5', new THREE.SphereGeometry(0.13, 16, 12), darkSteel, [0, 0.08, 0])
+  mesh(j5, 'joint-cover:j5', new THREE.SphereGeometry(0.13, fine + 4, fine + 2), darkSteel, [0, 0.08, 0])
+  mesh(j5, 'joint-housing:j5', new THREE.CylinderGeometry(0.1, 0.12, 0.08, seg), robotPaint, [0, 0, 0])
   const j6 = group(j5, 'joint:j6'); j6.position.set(0, d.wristLength, 0)
-  mesh(j6, 'joint-cover:j6', new THREE.CylinderGeometry(0.1, 0.1, 0.14, 16), robotLightPaint, [0, 0.02, 0], [0, 0, Math.PI / 2])
+  mesh(j6, 'joint-cover:j6', new THREE.CylinderGeometry(0.1, 0.1, 0.14, seg), robotLightPaint, [0, 0.02, 0], [0, 0, Math.PI / 2])
   const flange = group(j6, 'tool:flange'); flange.position.set(0, 0.09, 0)
   mesh(flange, 'flange:iso-50', new THREE.CylinderGeometry(0.085, 0.085, 0.035, 20), steel, [0, 0.017, 0])
   for (let index = 0; index < 6; index += 1) {
     const angle = (index / 6) * Math.PI * 2
     mesh(flange, `flange:bolt:${index}`, new THREE.CylinderGeometry(0.008, 0.008, 0.015, 8), darkSteel, [Math.cos(angle) * 0.057, 0.04, Math.sin(angle) * 0.057])
   }
+  // Generic two-finger gripper: render-only geometry, mounted below the flange
+  // so `tool:tcp` stays at the grasp point between the fingers.
+  mesh(flange, 'gripper:body', new THREE.BoxGeometry(0.12, 0.06, 0.08), darkSteel, [0, 0.02, 0])
+  mesh(flange, 'gripper:finger-left', new THREE.BoxGeometry(0.018, 0.07, 0.05), steel, [-0.035, 0.045, 0])
+  mesh(flange, 'gripper:finger-right', new THREE.BoxGeometry(0.018, 0.07, 0.05), steel, [0.035, 0.045, 0])
   const tcp = group(flange, 'tool:tcp'); tcp.position.set(0, 0.06, 0)
   if (!low) {
     mesh(j1, 'label:axis-1', new THREE.BoxGeometry(0.08, 0.045, 0.005), labelWhite, [0.42, 0.02, 0])
     mesh(j2, 'label:warning', new THREE.BoxGeometry(0.1, 0.06, 0.006), safetyYellow, [0, 0.12, 0.225])
+    mesh(j3, 'label:warning-2', new THREE.BoxGeometry(0.08, 0.05, 0.005), safetyYellow, [-0.115, d.forearmLength * 0.4, 0])
+    mesh(j3, 'cover:j4', new THREE.BoxGeometry(0.2, 0.06, 0.24), robotLightPaint, [0, d.forearmLength * 0.9, 0])
+    mesh(j1, 'bolt:shoulder:0', new THREE.CylinderGeometry(0.018, 0.018, 0.03, 8), steel, [0.24, d.shoulderHeight * 0.44, 0.14])
+    mesh(j1, 'bolt:shoulder:1', new THREE.CylinderGeometry(0.018, 0.018, 0.03, 8), steel, [-0.24, d.shoulderHeight * 0.44, 0.14])
   }
   return rootGroup
 }
@@ -220,10 +263,16 @@ function professionalRobot(profile, low = false) {
 // Geometry and semantic-node contract intentionally mirror
 // src/equipment/visuals/cncMachineVisual.ts. A test asserts node-id parity so
 // the generated GLB can never silently drift from the runtime binding.
+//
+// S60 deepens the hero CNC with side panels, bevels, chamber rails, a thicker
+// door, a detailed spindle/collet, stepped jaws, an operator panel with controls,
+// a coolant system, a cable chain, work lighting and safety labelling. Every
+// state-bearing node name from S55 is preserved unchanged.
 function heroCncMachine(low = false) {
   const rootGroup = new THREE.Group()
   rootGroup.name = 'equipment-root'
   rootGroup.userData.semanticId = 'equipment:cnc'
+  const seg = low ? 10 : 18
 
   const bodyW = 2.0, bodyH = 2.2, bodyD = 1.6
   mesh(rootGroup, 'machine:body', new THREE.BoxGeometry(bodyW, bodyH, bodyD), machineBody, [0, bodyH / 2, 0])
@@ -231,42 +280,79 @@ function heroCncMachine(low = false) {
   mesh(rootGroup, 'machine:plinth', new THREE.BoxGeometry(bodyW + 0.1, 0.1, bodyD + 0.1), machineTrim, [0, 0.05, 0])
   mesh(rootGroup, 'marking:warning-stripe', new THREE.BoxGeometry(bodyW + 0.1, 0.05, 0.02), hazard, [0, 0.14, bodyD / 2 + 0.06])
 
+  // Side panels, edge bevels and chamber linear rails.
+  for (const sign of [-1, 1]) {
+    mesh(rootGroup, `machine:panel:${sign}`, new THREE.BoxGeometry(0.02, bodyH * 0.82, bodyD * 0.88), machineTrim, [sign * (bodyW / 2 + 0.01), bodyH * 0.46, 0])
+    mesh(rootGroup, `machine:bevel:${sign}`, new THREE.BoxGeometry(0.05, 0.05, bodyD + 0.04), machineTrim, [sign * (bodyW / 2 - 0.01), bodyH + 0.005, 0])
+    if (!low) {
+      mesh(rootGroup, `machine:rail:${sign}`, new THREE.BoxGeometry(0.05, 0.05, bodyD * 0.7), stainless, [sign * (bodyW / 2 - 0.08), 0.9, bodyD / 2 - 0.5])
+      mesh(rootGroup, `machine:rail-guard:${sign}`, new THREE.BoxGeometry(0.04, 0.22, bodyD * 0.72), machineTrim, [sign * (bodyW / 2 - 0.08), 0.79, bodyD / 2 - 0.5])
+    }
+  }
+
   const doorW = 0.9, doorH = 1.0
   mesh(rootGroup, 'door:frame', new THREE.BoxGeometry(doorW + 0.08, doorH + 0.08, 0.05), machineTrim, [0, 1.0, bodyD / 2 + 0.005])
   const door = mesh(rootGroup, 'door:loading', new THREE.BoxGeometry(doorW, doorH, 0.02), machineGlass, [0, 1.0, bodyD / 2 + 0.02])
+  mesh(rootGroup, 'door:inner', new THREE.BoxGeometry(doorW - 0.06, doorH - 0.06, 0.02), machineGlass, [0, 1.0, bodyD / 2 + 0.04])
   mesh(rootGroup, 'chamber:interior', new THREE.BoxGeometry(doorW - 0.1, doorH - 0.1, 0.4), machineChamber, [0, 1.0, bodyD / 2 - 0.22])
+  mesh(rootGroup, 'chamber:back', new THREE.BoxGeometry(doorW - 0.06, doorH - 0.06, 0.03), machineChamber, [0, 1.0, bodyD / 2 - 0.44])
   if (!low) mesh(rootGroup, 'door:handle', new THREE.BoxGeometry(0.05, 0.28, 0.03), stainless, [0.4, 1.0, bodyD / 2 + 0.045])
 
   const spindle = group(rootGroup, 'spindle:main')
   spindle.position.set(0, 1.45, bodyD / 2 - 0.42)
-  const spindleHousing = mesh(spindle, 'spindle:housing', new THREE.CylinderGeometry(0.13, 0.16, 0.32, low ? 10 : 18), machineTrim)
+  const spindleHousing = mesh(spindle, 'spindle:housing', new THREE.CylinderGeometry(0.13, 0.16, 0.32, seg), machineTrim)
   spindleHousing.rotation.x = Math.PI / 2
+  const spindleCollar = mesh(spindle, 'spindle:collar', new THREE.CylinderGeometry(0.1, 0.13, 0.08, seg), stainless)
+  spindleCollar.rotation.x = Math.PI / 2
+  spindleCollar.position.z = -0.2
   const spindleTool = mesh(spindle, 'spindle:tool', new THREE.CylinderGeometry(0.035, 0.02, 0.22, low ? 8 : 12), stainless)
   spindleTool.rotation.x = Math.PI / 2
   spindleTool.position.z = 0.19
+  if (!low) {
+    const holder = mesh(spindle, 'spindle:holder', new THREE.CylinderGeometry(0.045, 0.055, 0.06, 14), stainless)
+    holder.rotation.x = Math.PI / 2
+    holder.position.z = 0.06
+  }
 
-  const feedTable = mesh(rootGroup, 'axis:feed', new THREE.BoxGeometry(0.46, 0.06, 0.34), stainless, [0, 0.72, bodyD / 2 - 0.39])
+  mesh(rootGroup, 'axis:feed', new THREE.BoxGeometry(0.46, 0.06, 0.34), stainless, [0, 0.72, bodyD / 2 - 0.39])
   const chuck = mesh(rootGroup, 'fixture:chuck', new THREE.CylinderGeometry(0.19, 0.19, 0.1, low ? 10 : 16), machineTrim, [0, 0.72, bodyD / 2 - 0.39])
   chuck.rotation.x = Math.PI / 2
-  const jawLeft = mesh(rootGroup, 'fixture:jaw-left', new THREE.BoxGeometry(0.07, 0.09, 0.16), stainless, [-0.22, 0.72, bodyD / 2 - 0.39])
-  const jawRight = mesh(rootGroup, 'fixture:jaw-right', new THREE.BoxGeometry(0.07, 0.09, 0.16), stainless, [0.22, 0.72, bodyD / 2 - 0.39])
+  mesh(rootGroup, 'fixture:jaw-left', new THREE.BoxGeometry(0.07, 0.09, 0.16), stainless, [-0.22, 0.72, bodyD / 2 - 0.39])
+  mesh(rootGroup, 'fixture:jaw-right', new THREE.BoxGeometry(0.07, 0.09, 0.16), stainless, [0.22, 0.72, bodyD / 2 - 0.39])
+  if (!low) {
+    mesh(rootGroup, 'fixture:jaw-step-left', new THREE.BoxGeometry(0.05, 0.05, 0.16), machineTrim, [-0.22, 0.78, bodyD / 2 - 0.39])
+    mesh(rootGroup, 'fixture:jaw-step-right', new THREE.BoxGeometry(0.05, 0.05, 0.16), machineTrim, [0.22, 0.78, bodyD / 2 - 0.39])
+  }
 
-  const coolant = mesh(rootGroup, 'coolant:nozzle', new THREE.CylinderGeometry(0.012, 0.012, 0.14, 8), coolantBlue, [0.2, 1.28, bodyD / 2 - 0.3])
+  mesh(rootGroup, 'coolant:nozzle', new THREE.CylinderGeometry(0.012, 0.012, 0.14, 8), coolantBlue, [0.2, 1.28, bodyD / 2 - 0.3])
+  if (!low) {
+    mesh(rootGroup, 'coolant:tank', new THREE.BoxGeometry(0.4, 0.3, 0.3), coolantBlue, [-0.6, 0.2, bodyD / 2 - 0.2])
+    mesh(rootGroup, 'coolant:pump', new THREE.CylinderGeometry(0.06, 0.06, 0.1, 12), machineTrim, [-0.6, 0.4, bodyD / 2 - 0.2])
+    mesh(rootGroup, 'coolant:hose', new THREE.CylinderGeometry(0.015, 0.015, 0.6, 8), rubber, [-0.35, 0.55, bodyD / 2 - 0.2], [0, 0, Math.PI / 2])
+  }
 
   const panelGroup = group(rootGroup, 'panel:control')
   panelGroup.position.set(bodyW / 2 + 0.02, 1.5, bodyD / 2 - 0.3)
   panelGroup.rotation.y = -Math.PI / 8
   mesh(panelGroup, 'panel:body', new THREE.BoxGeometry(0.05, 0.5, 0.35), panelDark)
-  const panelScreen = mesh(panelGroup, 'signal:panel-screen', new THREE.BoxGeometry(0.01, 0.28, 0.22), screenGreen, [0.03, 0.05, 0])
-  mesh(panelGroup, 'safety:emergency-stop-base', new THREE.CylinderGeometry(0.045, 0.045, 0.02, 16), hazard, [0.045, -0.16, 0.1], [0, 0, Math.PI / 2])
-  const estop = mesh(panelGroup, 'safety:emergency-stop', new THREE.CylinderGeometry(0.03, 0.03, 0.03, 16), signalRed, [0.06, -0.16, 0.1], [0, 0, Math.PI / 2])
+  if (!low) mesh(panelGroup, 'panel:bezel', new THREE.BoxGeometry(0.02, 0.32, 0.26), machineTrim, [0.02, 0.05, 0])
+  mesh(panelGroup, 'signal:panel-screen', new THREE.BoxGeometry(0.01, 0.28, 0.22), screenGreen, [0.03, 0.05, 0])
+  mesh(panelGroup, 'safety:emergency-stop-base', new THREE.CylinderGeometry(0.045, 0.045, 0.02, low ? 8 : 16), hazard, [0.045, -0.16, 0.1], [0, 0, Math.PI / 2])
+  const estop = mesh(panelGroup, 'safety:emergency-stop', new THREE.CylinderGeometry(0.03, 0.03, 0.03, low ? 8 : 16), signalRed, [0.06, -0.16, 0.1], [0, 0, Math.PI / 2])
   estop.name = 'safety:emergency-stop'
+  if (!low) {
+    for (const [index, z] of [[1, -0.08], [2, 0.02], [3, 0.12]]) {
+      mesh(panelGroup, `panel:button:${index}`, new THREE.CylinderGeometry(0.012, 0.012, 0.015, 8), hazard, [0.03, -0.14, z], [0, 0, Math.PI / 2])
+    }
+  }
 
   mesh(rootGroup, 'label:equipment', new THREE.BoxGeometry(0.5, 0.09, 0.01), labelWhite, [-0.5, 1.9, bodyD / 2 + 0.005])
+  mesh(rootGroup, 'label:safety-1', new THREE.BoxGeometry(0.16, 0.12, 0.008), safetyYellow, [0.5, 1.55, bodyD / 2 + 0.005])
+  if (!low) mesh(rootGroup, 'label:safety-2', new THREE.BoxGeometry(0.16, 0.12, 0.008), safetyYellow, [-0.5, 0.6, bodyD / 2 + 0.005])
 
-  const stackLightGreen = mesh(rootGroup, 'signal:stack-light', new THREE.CylinderGeometry(0.045, 0.045, 0.11, 16), new THREE.MeshStandardMaterial({ color: 0x1fa85a, emissive: 0x1fa85a, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.35 }), [0, bodyH + 0.15, 0])
-  mesh(rootGroup, 'signal:stack-light-amber', new THREE.CylinderGeometry(0.045, 0.045, 0.11, 16), new THREE.MeshStandardMaterial({ color: 0xd6a400, emissive: 0xd6a400, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.35 }), [0.14, bodyH + 0.15, 0])
-  mesh(rootGroup, 'signal:stack-light-red', new THREE.CylinderGeometry(0.045, 0.045, 0.11, 16), new THREE.MeshStandardMaterial({ color: 0xd64040, emissive: 0xd64040, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.35 }), [-0.14, bodyH + 0.15, 0])
+  mesh(rootGroup, 'signal:stack-light', new THREE.CylinderGeometry(0.045, 0.045, 0.11, low ? 8 : 16), new THREE.MeshStandardMaterial({ color: 0x1fa85a, emissive: 0x1fa85a, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.35 }), [0, bodyH + 0.15, 0])
+  mesh(rootGroup, 'signal:stack-light-amber', new THREE.CylinderGeometry(0.045, 0.045, 0.11, low ? 8 : 16), new THREE.MeshStandardMaterial({ color: 0xd6a400, emissive: 0xd6a400, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.35 }), [0.14, bodyH + 0.15, 0])
+  mesh(rootGroup, 'signal:stack-light-red', new THREE.CylinderGeometry(0.045, 0.045, 0.11, low ? 8 : 16), new THREE.MeshStandardMaterial({ color: 0xd64040, emissive: 0xd64040, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.35 }), [-0.14, bodyH + 0.15, 0])
 
   const ventCount = low ? 2 : 5
   for (let index = 0; index < ventCount; index += 1) {
@@ -280,10 +366,22 @@ function heroCncMachine(low = false) {
     mesh(rootGroup, 'machine:way-cover-left', new THREE.BoxGeometry(0.3, 0.08, 0.5), machineTrim, [-0.35, 0.78, bodyD / 2 - 0.05])
     mesh(rootGroup, 'machine:way-cover-right', new THREE.BoxGeometry(0.3, 0.08, 0.5), machineTrim, [0.35, 0.78, bodyD / 2 - 0.05])
     mesh(rootGroup, 'machine:work-light', new THREE.BoxGeometry(0.5, 0.04, 0.16), workLight, [0, bodyH - 0.02, bodyD / 2 - 0.12])
+    mesh(rootGroup, 'machine:work-light-2', new THREE.BoxGeometry(0.36, 0.04, 0.12), workLight, [0, bodyH - 0.02, -bodyD / 2 + 0.12])
     mesh(rootGroup, 'machine:coolant-return', new THREE.CylinderGeometry(0.03, 0.03, 1.1, 8), coolantBlue, [-bodyW / 2 - 0.04, 0.55, 0.3])
     for (const x of [-0.75, 0.75]) for (const z of [-0.6, 0.6]) {
       mesh(rootGroup, `machine:foot:${x}:${z}`, new THREE.CylinderGeometry(0.05, 0.05, 0.06, 10), machineTrim, [x, 0.03, z])
     }
+    // Cable chain running from the cabinet side to the spindle head.
+    for (let index = 0; index < 4; index += 1) {
+      mesh(rootGroup, `cable:chain:${index}`, new THREE.BoxGeometry(0.06, 0.04, 0.16), rubber, [-bodyW / 2 + 0.25 + index * 0.12, bodyH + 0.16, bodyD / 2 - 0.3])
+    }
+    // Painted floor footprint around the machine.
+    for (const [name, x, z, sx, sz] of [
+      ['marking:footprint-front', 0, 0.84, 2.14, 0.03],
+      ['marking:footprint-back', 0, -0.84, 2.14, 0.03],
+      ['marking:footprint-left', -1.06, 0, 0.03, 1.7],
+      ['marking:footprint-right', 1.06, 0, 0.03, 1.7],
+    ]) mesh(rootGroup, name, new THREE.BoxGeometry(sx, 0.01, sz), hazard, [x, 0.006, z])
   }
 
   return rootGroup
@@ -293,6 +391,9 @@ function heroCncMachine(low = false) {
 // Additive industrial environment detail (chip handling, work-in-process
 // buffering, work lighting, cable drops and cell bollards). It is deliberately
 // render-only and never a collision authority.
+//
+// S60 adds electrical cabinets, painted floor markings, extra cable drops and
+// safety labelling to make the cell legible as a real industrial environment.
 function heroCellDressing(low = false) {
   const rootGroup = new THREE.Group()
   rootGroup.name = 'equipment-root'
@@ -306,6 +407,7 @@ function heroCellDressing(low = false) {
   mesh(chip, 'chip:hatch', new THREE.BoxGeometry(0.02, 0.2, 0.3), hazard, [0.31, 0.6, -0.8])
   mesh(rootGroup, 'chip:coolant-tank', new THREE.BoxGeometry(0.72, 0.5, 0.9), coolantBlue, [1.42, 0.28, 2.2])
   mesh(rootGroup, 'chip:bin', new THREE.BoxGeometry(0.6, 0.62, 0.5), rubber, [-1.65, 0.31, 3.4])
+  if (!low) mesh(rootGroup, 'chip:pump', new THREE.CylinderGeometry(0.08, 0.08, 0.14, 10), machineTrim, [1.42, 0.6, 2.2])
 
   // Work-in-process buffer racks on the operator side, outside the robot reach.
   for (const [index, z] of [[1, -0.45], [2, 0.75]]) {
@@ -338,11 +440,38 @@ function heroCellDressing(low = false) {
 
   // Cell bollards protect the operator access corridor without becoming an
   // analytic collision proxy.
-  const bollardCount = low ? 2 : 4
-  const bollards = [[-2.0, 1.4], [2.0, 1.4], [-3.3, -1.5], [3.3, -1.5]].slice(0, bollardCount)
-  for (const [index, [x, z]] of bollards.entries()) {
+  const bollards = [[-2.0, 1.4], [2.0, 1.4], [-3.3, -1.5], [3.3, -1.5], [-1.0, -2.6], [1.0, -2.6]]
+  const bollardCount = low ? 2 : bollards.length
+  for (const [index, [x, z]] of bollards.slice(0, bollardCount).entries()) {
     mesh(rootGroup, `bollard:${index}`, new THREE.CylinderGeometry(0.07, 0.08, 0.62, low ? 8 : 12), hazard, [x, 0.31, z])
     mesh(rootGroup, `bollard:${index}:cap`, new THREE.BoxGeometry(0.03, 0.03, 0.03), darkSteel, [x, 0.63, z])
+  }
+
+  if (!low) {
+    // Electrical cabinets with ventilation and labelling.
+    for (const [index, [x, z]] of ([[1, 3.7, -2.7], [2, 3.7, -1.5]]).entries()) {
+      const cabinet = group(rootGroup, `cabinet:electrical:${index + 1}`)
+      cabinet.position.set(x, 0, z)
+      mesh(cabinet, `cabinet:${index + 1}:body`, new THREE.BoxGeometry(0.7, 1.9, 0.5), cabinetPaint, [0, 0.95, 0])
+      mesh(cabinet, `cabinet:${index + 1}:door`, new THREE.BoxGeometry(0.62, 1.7, 0.02), guardMesh, [0, 0.95, 0.26])
+      mesh(cabinet, `cabinet:${index + 1}:handle`, new THREE.BoxGeometry(0.03, 0.22, 0.03), stainless, [0.24, 0.95, 0.28])
+      for (let vent = 0; vent < 3; vent += 1) {
+        mesh(cabinet, `cabinet:${index + 1}:vent:${vent}`, new THREE.BoxGeometry(0.4, 0.03, 0.02), machineTrim, [0, 1.7 - vent * 0.06, 0.27])
+      }
+      mesh(cabinet, `label:cabinet:${index + 1}`, new THREE.BoxGeometry(0.2, 0.1, 0.005), labelWhite, [0, 1.55, 0.272])
+    }
+
+    // Painted floor markings: pedestrian lane and protected-zone border.
+    const markings = [
+      ['marking:pedestrian:left', 2.35, 0, 0.06, 6.2],
+      ['marking:pedestrian:right', 2.65, 0, 0.06, 6.2],
+      ['marking:zone:front', 0, 2.5, 5.2, 0.06],
+      ['marking:zone:back', 0, -2.5, 5.2, 0.06],
+    ]
+    for (const [name, x, z, sx, sz] of markings) {
+      mesh(rootGroup, name, new THREE.BoxGeometry(sx, 0.012, sz), hazard, [x, 0.007, z])
+    }
+    mesh(rootGroup, 'label:cell', new THREE.BoxGeometry(0.6, 0.12, 0.01), labelWhite, [0, 1.2, 2.0])
   }
 
   return rootGroup
@@ -468,19 +597,19 @@ const results = await Promise.all([
     materials: ['pallet-blue', 'steel', 'locator-yellow'], thumbnail: { path: 'thumbnail.svg', sha256: thumbHash }, license: { name: 'Fabrik3D generated generic asset; educational use' }, integrity: { path: 'model.glb', sha256: hash },
   })),
   ...[
-    ['compact', { scale: 0.8, baseHeight: 0.4, shoulderHeight: 0.4, upperArmLength: 0.7, forearmLength: 0.55, wristLength: 0.1 }, { x: 1.0, y: 1.7, z: 1.0 }],
-    ['medium', { scale: 1.25, baseHeight: 0.4, shoulderHeight: 0.4, upperArmLength: 1.05, forearmLength: 0.88, wristLength: 0.1 }, { x: 1.55, y: 3.1, z: 1.55 }],
-    ['heavy', { scale: 1.6, baseHeight: 0.4, shoulderHeight: 0.4, upperArmLength: 1.4, forearmLength: 1.2, wristLength: 0.1 }, { x: 2.0, y: 4.0, z: 2.0 }],
+    ['compact', { scale: 0.8, baseHeight: 0.4, shoulderHeight: 0.4, upperArmLength: 0.7, forearmLength: 0.55, wristLength: 0.1 }, { x: 1.05, y: 1.95, z: 1.05 }],
+    ['medium', { scale: 1.25, baseHeight: 0.4, shoulderHeight: 0.4, upperArmLength: 1.05, forearmLength: 0.88, wristLength: 0.1 }, { x: 1.6, y: 3.85, z: 1.6 }],
+    ['heavy', { scale: 1.6, baseHeight: 0.4, shoulderHeight: 0.4, upperArmLength: 1.4, forearmLength: 1.2, wristLength: 0.1 }, { x: 2.05, y: 6.05, z: 2.05 }],
   ].map(([size, dimensions, bounds]) => writeAsset(`generic-6axis-${size}-v1`, professionalRobot(dimensions), professionalRobot(dimensions, true), ({ hash, lodHash, thumbHash }) => ({
     schemaVersion: '1.0', id: `generic-6axis-${size}-v1`, equipmentDefinitionId: `${size}-6axis`, category: 'robot', version: '1.0.0',
     coordinateSystem: { units: 'meters', upAxis: 'Y', handedness: 'right', origin: 'equipment-base' }, boundsMeters: bounds,
-    visual: { glb: { path: 'model.glb', sha256: hash }, lods: [{ id: 'lod1', glb: { path: 'lod/lod1.glb', sha256: lodHash }, triangleBudget: 1800 }] },
+    visual: { glb: { path: 'model.glb', sha256: hash }, lods: [{ id: 'lod1', glb: { path: 'lod/lod1.glb', sha256: lodHash }, triangleBudget: 2500 }] },
     collision: { id: 'capsule-6axis', kind: 'capsule' },
     semanticNodes: [1, 2, 3, 4, 5, 6].map((index) => ({ id: `joint:j${index}`, kind: 'joint' })).concat([{ id: 'tool:flange', kind: 'tool' }, { id: 'tool:tcp', kind: 'tool' }]),
     anchors: [{ id: 'anchor:base', transform: { frameId: 'equipment-base', position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
     robotRig: { joints: [{ id: 'joint:j1', axis: 'y', direction: 1 }, { id: 'joint:j2', axis: 'z', direction: 1, parentId: 'joint:j1' }, { id: 'joint:j3', axis: 'z', direction: 1, parentId: 'joint:j2' }, { id: 'joint:j4', axis: 'x', direction: 1, parentId: 'joint:j3' }, { id: 'joint:j5', axis: 'z', direction: 1, parentId: 'joint:j4' }, { id: 'joint:j6', axis: 'x', direction: 1, parentId: 'joint:j5' }], baseFrameNode: 'frame:base', flangeNode: 'tool:flange', toolFrameNode: 'tool:tcp' },
     materials: ['robot-orange', 'robot-orange-light', 'dark-steel', 'safety-label'], thumbnail: { path: 'thumbnail.svg', sha256: thumbHash }, license: { name: 'Fabrik3D generated generic asset; educational use' }, integrity: { path: 'model.glb', sha256: hash },
-  }))),
+  }), { enforceBudgets: true, maxPrimaryTriangles: 25000, enforceBounds: true, checkLodSemanticNodes: true })),
   // S55 flagship CNC machine and cell dressing.
   writeAsset('hero-cnc-machine-v1', heroCncMachine(), heroCncMachine(true), ({ hash, lodHash, thumbHash }) => ({
     schemaVersion: '1.0', id: 'hero-cnc-machine-v1', equipmentDefinitionId: 'educational-cnc', category: 'machine', version: '1.0.0',

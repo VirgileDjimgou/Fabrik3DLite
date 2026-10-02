@@ -144,7 +144,7 @@ describe('generated asset pipeline validation', () => {
     expect(pallet.issues).toEqual([])
     for (const id of Object.values(PROFESSIONAL_ROBOT_ASSET_IDS)) {
       const manifest = Object.values(PROFESSIONAL_ROBOT_MANIFESTS).find((candidate) => candidate.id === id)!
-      const result = await validatePackage(id, manifest, { checkBounds: false })
+      const result = await validatePackage(id, manifest, { checkBounds: true, maxPrimaryTriangles: 25_000 })
       expect(result.issues, id).toEqual([])
     }
   })

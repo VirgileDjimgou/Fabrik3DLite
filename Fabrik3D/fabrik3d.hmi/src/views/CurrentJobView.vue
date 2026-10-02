@@ -1,75 +1,97 @@
 <template>
   <div>
     <HmiConfirmationDialog :open="pendingAction !== null" :title="t('currentJob.confirmCommand')" :message="t('currentJob.commandMessage')" :target-label="t('currentJob.commandTarget')" :target="job?.name ?? '-'" :confirm-label="pendingAction ?? ''" :cancel-label="t('currentJob.cancel')" @confirm="confirmCommand" @cancel="pendingAction = null" />
-    <h5 class="mb-3"><i class="bi bi-clipboard-data hmi-icon me-2"></i>{{ t('currentJob.title') }}</h5>
+    <h5 class="hmi-page-title mb-3"><i class="bi bi-clipboard-data hmi-icon me-2"></i>{{ t('currentJob.title') }}</h5>
     <HmiEmptyState v-if="!job" :title="t('currentJob.noActiveJob')" :detail="t('currentJob.selectFromList')"><router-link to="/jobs" class="btn btn-hmi">{{ t('tiles.jobList') }}</router-link></HmiEmptyState>
     <template v-else>
-      <!-- Job info -->
-      <div class="card mb-3">
-        <div class="card-body">
-          <h6 class="card-title">{{ job.name }}</h6>
-          <p class="card-text text-muted mb-2">{{ job.description }}</p>
-          <div class="row small">
-            <div class="col-6"><strong>{{ t('jobs.status') }}:</strong>
-              <span class="badge ms-1" :class="statusBadge(job.status)">{{ job.status }}</span>
+      <!-- Primary hierarchy: progress, current task, pallet, scenario, cell/simulator, dispatch, elapsed. -->
+      <section class="hmi-status-strip mb-3" :class="jobStripClass" data-testid="current-job-status-strip">
+        <div class="hmi-metric">
+          <span class="hmi-label">{{ t('jobs.progressPercent') }}</span>
+          <span class="hmi-value hmi-value--primary" data-testid="current-job-progress">{{ job.progressPercent }}%</span>
+        </div>
+        <div class="hmi-metric flex-grow-1">
+          <span class="hmi-label">{{ t('currentJob.currentTask') }}</span>
+          <span class="hmi-value hmi-truncate" data-testid="current-job-task">{{ currentTaskLabel }}</span>
+        </div>
+        <div class="hmi-metric">
+          <span class="hmi-label">{{ t('status.currentPallet') }}</span>
+          <span class="hmi-value" data-testid="current-job-pallet">{{ session?.currentPalletId ?? '-' }}</span>
+        </div>
+        <div class="hmi-metric">
+          <span class="hmi-label">{{ t('currentJob.scenario') }}</span>
+          <span class="hmi-value hmi-truncate" data-testid="current-job-scenario">{{ session?.scenarioId ?? '-' }}</span>
+        </div>
+        <div class="hmi-metric">
+          <span class="hmi-label">{{ t('currentJob.elapsed') }}</span>
+          <span class="hmi-value" data-testid="current-job-elapsed">{{ elapsed }}</span>
+        </div>
+      </section>
+
+      <!-- Job identity and dispatch state -->
+      <div class="hmi-card mb-3">
+        <div class="hmi-card__body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div class="min-w-0">
+              <h6 class="hmi-section-title hmi-truncate" data-testid="current-job-name">{{ job.name }}</h6>
+              <p class="hmi-detail mb-0 hmi-truncate">{{ job.description }}</p>
             </div>
-            <div class="col-6"><strong>{{ t('jobs.mode') }}:</strong> {{ job.machineMode }}</div>
-            <div class="col-6 mt-1"><strong>{{ t('jobs.progressPercent') }}:</strong> {{ job.progressPercent }}%</div>
-            <div class="col-6 mt-1"><strong>{{ t('currentJob.jobId') }}:</strong>
-              <span class="font-monospace">{{ job.id.slice(-6) }}</span>
+            <span class="badge" :class="statusBadge(job.status)" data-testid="current-job-status">{{ job.status }}</span>
+          </div>
+          <div class="row small mt-3">
+            <div class="col-6 col-md-4 mt-1"><strong>{{ t('jobs.mode') }}:</strong> {{ job.machineMode }}</div>
+            <div class="col-6 col-md-4 mt-1"><strong>{{ t('currentJob.jobId') }}:</strong>
+              <span class="hmi-mono">{{ job.id.slice(-6) }}</span>
             </div>
-            <div class="col-6 mt-1"><strong>{{ t('currentJob.session') }}:</strong>
-              <span class="font-monospace">{{ job.simulationSessionId ? job.simulationSessionId.slice(-6) : '-' }}</span>
+            <div class="col-6 col-md-4 mt-1"><strong>{{ t('currentJob.session') }}:</strong>
+              <span class="hmi-mono">{{ job.simulationSessionId ? job.simulationSessionId.slice(-6) : '-' }}</span>
             </div>
-            <div v-if="job.dispatchState && job.dispatchState !== 'None'" class="col-6 mt-1">
+            <div v-if="job.dispatchState && job.dispatchState !== 'None'" class="col-6 col-md-4 mt-1">
               <strong>{{ t('currentJob.dispatch') }}:</strong>
               <span class="badge ms-1" :class="dispatchBadge(job.dispatchState)" data-dispatch-state>{{ job.dispatchState }}</span>
             </div>
-            <div v-if="job.targetCellId" class="col-6 mt-1">
+            <div v-if="job.targetCellId" class="col-6 col-md-4 mt-1">
               <strong>{{ t('currentJob.targetCell') }}:</strong>
-              <span class="font-monospace">{{ job.targetCellId }}</span>
+              <span class="hmi-mono hmi-truncate">{{ job.targetCellId }}</span>
             </div>
-            <div v-if="job.assignedSimulatorId" class="col-6 mt-1">
+            <div v-if="job.assignedSimulatorId" class="col-6 col-md-4 mt-1">
               <strong>{{ t('currentJob.assignedSimulator') }}:</strong>
-              <span class="font-monospace">{{ job.assignedSimulatorId.slice(-6) }}</span>
+              <span class="hmi-mono">{{ job.assignedSimulatorId.slice(-6) }}</span>
             </div>
             <div v-if="job.dispatchFailureReason" class="col-12 mt-1 text-danger">
               <strong>{{ t('currentJob.dispatchFailure') }}:</strong> {{ job.dispatchFailureReason }}
             </div>
           </div>
-          <div class="progress mt-2" style="height: 6px">
+          <div class="progress mt-3" style="height: 8px">
             <div class="progress-bar" role="progressbar"
               :style="{ width: job.progressPercent + '%', backgroundColor: 'var(--hmi-icon-color)' }"></div>
           </div>
         </div>
       </div>
 
-      <!-- Simulation session -->
-      <div v-if="session" class="card mb-3">
-        <div class="card-body">
-          <h6 class="card-title"><i class="bi bi-activity hmi-icon me-1"></i>{{ t('currentJob.session') }}</h6>
+      <!-- Simulation session timeline -->
+      <div v-if="session" class="hmi-card mb-3">
+        <div class="hmi-card__header">
+          <span><i class="bi bi-activity hmi-icon me-1"></i>{{ t('currentJob.session') }}</span>
+          <span class="badge" :class="sessionStatusBadge(session.status)">{{ session.status }}</span>
+        </div>
+        <div class="hmi-card__body">
           <div class="row small">
-            <div class="col-6"><strong>{{ t('currentJob.sessionStatus') }}:</strong>
-              <span class="badge ms-1" :class="sessionStatusBadge(session.status)">{{ session.status }}</span>
-            </div>
-            <div class="col-6"><strong>{{ t('currentJob.heartbeat') }}:</strong>
-              {{ formatTime(session.lastHeartbeatUtc) }}
-            </div>
-            <div class="col-6 mt-1"><strong>{{ t('status.currentPhase') }}:</strong> {{ session.currentPhase }}</div>
-            <div class="col-6 mt-1"><strong>{{ t('status.currentPallet') }}:</strong> {{ session.currentPalletId ?? '-' }}</div>
-            <div class="col-4 mt-1"><strong>{{ t('status.machined') }}:</strong> {{ session.machinedCount }}</div>
-            <div class="col-4 mt-1"><strong>{{ t('status.remaining') }}:</strong> {{ session.remainingCount }}</div>
-            <div class="col-4 mt-1"><strong>{{ t('status.total') }}:</strong> {{ session.totalCount }}</div>
-            <div v-if="session.currentTaskId" class="col-6 mt-1">
+            <div class="col-6 col-md-3 mt-1"><strong>{{ t('status.currentPhase') }}:</strong> {{ session.currentPhase }}</div>
+            <div class="col-6 col-md-3 mt-1"><strong>{{ t('currentJob.heartbeat') }}:</strong> {{ formatTime(session.lastHeartbeatUtc) }}</div>
+            <div class="col-4 col-md-2 mt-1"><strong>{{ t('status.machined') }}:</strong> {{ session.machinedCount }}</div>
+            <div class="col-4 col-md-2 mt-1"><strong>{{ t('status.remaining') }}:</strong> {{ session.remainingCount }}</div>
+            <div class="col-4 col-md-2 mt-1"><strong>{{ t('status.total') }}:</strong> {{ session.totalCount }}</div>
+            <div v-if="session.currentTaskId" class="col-6 col-md-3 mt-1">
               <strong>{{ t('currentJob.taskId') }}:</strong>
-              <span class="font-monospace">{{ session.currentTaskId.slice(-6) }}</span>
+              <span class="hmi-mono">{{ session.currentTaskId.slice(-6) }}</span>
             </div>
-            <div v-if="session.simulatorId" class="col-6 mt-1">
+            <div v-if="session.simulatorId" class="col-6 col-md-3 mt-1">
               <strong>{{ t('currentJob.simulator') }}:</strong>
-              <span class="font-monospace">{{ session.simulatorId.slice(-6) }}</span>
+              <span class="hmi-mono">{{ session.simulatorId.slice(-6) }}</span>
             </div>
           </div>
-          <div class="progress mt-2" style="height: 6px">
+          <div class="progress mt-3" style="height: 8px">
             <div class="progress-bar" role="progressbar"
               :style="{ width: sessionProgress + '%', backgroundColor: 'var(--hmi-icon-color)' }"></div>
           </div>
@@ -77,14 +99,14 @@
       </div>
 
       <!-- Machine state -->
-      <div v-if="machine" class="card mb-3">
-        <div class="card-body">
-          <h6 class="card-title"><i class="bi bi-gear-wide-connected hmi-icon me-1"></i>{{ t('currentJob.machineState') }}</h6>
+      <div v-if="machine" class="hmi-card mb-3">
+        <div class="hmi-card__header"><span><i class="bi bi-gear-wide-connected hmi-icon me-1"></i>{{ t('currentJob.machineState') }}</span></div>
+        <div class="hmi-card__body">
           <div class="row small">
-            <div class="col-6"><strong>{{ t('status.robotState') }}:</strong> {{ machine.robotState }}</div>
-            <div class="col-6"><strong>{{ t('status.cncState') }}:</strong> {{ machine.cncState }}</div>
-            <div class="col-6 mt-1"><strong>{{ t('status.currentPhase') }}:</strong> {{ machine.currentPhase }}</div>
-            <div class="col-6 mt-1"><strong>{{ t('status.currentSlot') }}:</strong> R{{ machine.currentSlotRow }} C{{ machine.currentSlotColumn }}</div>
+            <div class="col-6 col-md-3"><strong>{{ t('status.robotState') }}:</strong> {{ machine.robotState }}</div>
+            <div class="col-6 col-md-3"><strong>{{ t('status.cncState') }}:</strong> {{ machine.cncState }}</div>
+            <div class="col-6 col-md-3 mt-1"><strong>{{ t('status.currentPhase') }}:</strong> {{ machine.currentPhase }}</div>
+            <div class="col-6 col-md-3 mt-1"><strong>{{ t('status.currentSlot') }}:</strong> R{{ machine.currentSlotRow }} C{{ machine.currentSlotColumn }}</div>
           </div>
         </div>
       </div>
@@ -93,21 +115,21 @@
       <HmiErrorState v-if="commandError" :title="t('currentJob.commandFailed')" :detail="commandError" />
 
       <!-- Control buttons -->
-      <div class="d-flex gap-2 mb-3">
-        <button class="btn btn-hmi btn-sm" @click="requestCommand('start')" :disabled="busy || job.status === 'Running'">
+      <div class="d-flex flex-wrap gap-2 mb-3" data-testid="current-job-actions">
+        <button class="btn btn-hmi" @click="requestCommand('start')" :disabled="busy || job.status === 'Running'">
           <i class="bi bi-play-fill me-1"></i>{{ t('tiles.start') }}</button>
-        <button class="btn btn-warning btn-sm" @click="requestCommand('pause')" :disabled="busy || job.status !== 'Running'">
+        <button class="btn btn-warning" @click="requestCommand('pause')" :disabled="busy || job.status !== 'Running'">
           <i class="bi bi-pause-fill me-1"></i>{{ t('currentJob.pause') }}</button>
-        <button class="btn btn-success btn-sm" @click="requestCommand('resume')" :disabled="busy || job.status !== 'Paused'">
+        <button class="btn btn-success" @click="requestCommand('resume')" :disabled="busy || job.status !== 'Paused'">
           <i class="bi bi-arrow-repeat me-1"></i>{{ t('tiles.resume') }}</button>
-        <button class="btn btn-danger btn-sm" @click="requestCommand('stop')"
+        <button class="btn btn-danger" @click="requestCommand('stop')"
           :disabled="busy || job.status === 'Stopped' || job.status === 'Completed'">
           <i class="bi bi-stop-fill me-1"></i>{{ t('currentJob.stop') }}</button>
       </div>
 
       <!-- Tasks -->
-      <h6>{{ t('currentJob.tasks') }}</h6>
-      <div v-if="tasks.length === 0" class="text-muted small">{{ t('currentJob.noTasks') }}</div>
+      <h6 class="hmi-section-title mb-2">{{ t('currentJob.tasks') }}</h6>
+      <div v-if="tasks.length === 0" class="hmi-detail">{{ t('currentJob.noTasks') }}</div>
       <div class="table-responsive" v-else>
         <table class="table table-sm table-striped align-middle">
           <thead><tr>
@@ -120,9 +142,9 @@
               <td>{{ tk.sequenceOrder }}</td><td>{{ tk.name }}</td>
               <td><span class="badge" :class="statusBadge(tk.status)">{{ tk.status }}</span></td>
               <td>{{ tk.partType }}</td>
-              <td><span class="font-monospace">{{ tk.palletId ?? '-' }}</span></td>
+              <td><span class="hmi-mono">{{ tk.palletId ?? '-' }}</span></td>
               <td>R{{ tk.slotRow }} C{{ tk.slotColumn }}</td>
-              <td><span class="font-monospace">{{ tk.id.slice(-6) }}</span></td>
+              <td><span class="hmi-mono">{{ tk.id.slice(-6) }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -178,6 +200,33 @@ const sessionProgress = computed(() => {
   const s = session.value
   if (!s || s.totalCount === 0) return 0
   return Math.round((s.machinedCount / s.totalCount) * 100)
+})
+
+const currentTaskLabel = computed(() => {
+  const s = session.value
+  if (!s) return t('currentJob.noTasks')
+  const task = tasks.value.find(tk => tk.id === s.currentTaskId)
+  return task?.name ?? s.currentPhase ?? t('currentJob.noTasks')
+})
+
+const jobStripClass = computed(() => {
+  const status = job.value?.status
+  if (status === 'Running') return 'hmi-status-strip--success'
+  if (status === 'Paused') return 'hmi-status-strip--warning'
+  if (status === 'Faulted' || status === 'Stopped') return 'hmi-status-strip--fault'
+  return ''
+})
+
+const elapsed = computed(() => {
+  const s = session.value
+  if (!s?.startedAtUtc) return '-'
+  const start = new Date(s.startedAtUtc).getTime()
+  const end = s.endedAtUtc ? new Date(s.endedAtUtc).getTime() : Date.now()
+  if (isNaN(start) || isNaN(end) || end < start) return '-'
+  const totalSeconds = Math.round((end - start) / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 })
 
 async function loadJob() {

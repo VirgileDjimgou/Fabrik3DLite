@@ -110,6 +110,11 @@ export type JogCommandRequest = components['schemas']['JogCommandRequest']
 export type JogCommandResultDto = CompletedResponse<components['schemas']['JogCommandResultDto']>
 export type JogAuditDto = CompletedResponse<components['schemas']['JogAuditDto']>
 
+// Browser OIDC and bounded public-demo reset (S63).
+export type OidcBrowserConfigDto = CompletedResponse<components['schemas']['OidcBrowserConfigDto']>
+export type DemoResetCountsDto = CompletedResponse<components['schemas']['DemoResetCountsDto']>
+export type DemoResetResultDto = CompletedResponse<components['schemas']['DemoResetResultDto']>
+
 export class OrchestratorApiError extends Error {
   readonly code: string
   readonly status: number

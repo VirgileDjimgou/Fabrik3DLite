@@ -11,12 +11,42 @@ namespace Fabrik3D.Contracts.DTOs;
 /// <param name="PublicDemoEnabled">True when the clearly-labelled public/demo read role is available.</param>
 /// <param name="Roles">Roles the server knows about, in documentation order.</param>
 /// <param name="Warning">Prominent non-production warning; null for production OIDC.</param>
+/// <param name="Oidc">
+/// Browser OIDC Authorization Code + PKCE settings when <see cref="Mode"/> is Oidc and a browser
+/// client is configured; null otherwise. Contains only public values (authority, client id, scopes,
+/// redirect path): no secret and no token.
+/// </param>
+/// <param name="DemoResetEnabled">
+/// True when this deployment is an explicit public-demo profile that offers the bounded,
+/// audited demo reset. False in every production profile.
+/// </param>
 public record AuthConfigDto(
     string Mode,
     bool DevelopmentAuth,
     bool PublicDemoEnabled,
     IReadOnlyList<string> Roles,
-    string? Warning);
+    string? Warning,
+    OidcBrowserConfigDto? Oidc = null,
+    bool DemoResetEnabled = false);
+
+/// <summary>
+/// Public browser OIDC configuration for Authorization Code + PKCE. Standard OIDC only: the browser
+/// discovers endpoints from the authority metadata; no provider-specific behaviour is configured
+/// here. The client id is public by definition for a public (SPA) client and no secret is exposed.
+/// </summary>
+/// <param name="Authority">OIDC authority base URL (metadata is fetched from <c>/.well-known/openid-configuration</c>).</param>
+/// <param name="ClientId">Public OAuth2 client id registered for the browser application.</param>
+/// <param name="Scopes">Requested scopes (always includes <c>openid</c>).</param>
+/// <param name="RedirectPath">Same-origin path that receives the authorization code callback.</param>
+/// <param name="PostLogoutRedirectPath">Optional same-origin path after RP-initiated logout.</param>
+/// <param name="EndSessionEnabled">True when RP-initiated logout should be attempted.</param>
+public record OidcBrowserConfigDto(
+    string Authority,
+    string ClientId,
+    IReadOnlyList<string> Scopes,
+    string RedirectPath,
+    string? PostLogoutRedirectPath,
+    bool EndSessionEnabled);
 
 /// <summary>Request for a short-lived development/test identity token. Refused outside dev/test modes.</summary>
 public record DevTokenRequest

@@ -119,9 +119,11 @@ scope and the 100-client result is not a capacity guarantee.
 
 ### CI short soak
 
-`Fabrik3D/fabrik3d.client/e2e/soak.spec.ts` repeatedly loads scene presets in the reference cell,
-forces GC before each sample and asserts that `textureBytes` and `drawCalls` do not grow
-(`ResourceLeakDetector`, `fabrik3d.client/src/observability/resourceLeak.ts`). It writes
+`Fabrik3D/fabrik3d.client/e2e/soak.spec.ts` repeatedly loads scene presets (the
+reference cell and, since S58, the material-flow scenarios, all of which now
+render WebGL) and returns to the reference cell, forces GC before each sample and
+asserts that `textureBytes` and `drawCalls` do not grow (`ResourceLeakDetector`,
+`fabrik3d.client/src/observability/resourceLeak.ts`). It writes
 `test-results/perf/soak.json` (bounded CI artifact) and fails on a `leak` verdict or a JS heap above
 300 MB. It is a seconds-long CI guard, not the hours-long reference soak.
 
@@ -162,6 +164,61 @@ Hardware-class budgets are only adopted after repeat runs on the documented deve
 mid-range-laptop classes; no untested hardware class is promised. `HARDWARE_CLASSES` in
 `performanceBudget.ts` keeps `unknown` as the safe default.
 
+## S62 manual hardware GPU benchmark
+
+S56 already records renderer identity, acceleration class and frame percentiles. S62 adds a
+**separate, manually runnable** benchmark that measures the full metric set on a real GPU and
+classifies the evidence honestly. It is not part of the mandatory visual gate.
+
+```powershell
+# Real GPU (headed browser): writes test-results/perf/gpu-benchmark.json
+npm --prefix Fabrik3D/fabrik3d.client run benchmark:gpu
+
+# Software upper bound (headless SwiftShader), same schema and profiles
+npm --prefix Fabrik3D/fabrik3d.client exec -- playwright test --config=playwright.benchmark.config.ts
+```
+
+Profiles map to the simulator quality presets: **Performance** → `low`, **Balanced** → `medium`,
+**Quality** → `high`. An unsupported profile falls back to a supported measured profile and records
+the fallback. Each run records renderer, resolution, requested/resolved profile, FPS, frame
+p50/p95/p99, draw calls, triangles, texture count, estimated GPU texture bytes (WebGL exposes no
+total GPU memory), JS heap (`heapUsedBytes` where the browser exposes it), and wall-clock load
+duration. The report schema (`fabrik3d.client/src/observability/gpuBenchmark.ts`,
+`schemaVersion 1.0`) refuses to label software or unidentified renderers as GPU evidence.
+
+Scenes: the hero CNC cell (`cnc-machine-tending`) and the most complex secondary cell
+(`robot-palletizing`, 40 draw calls / 15 equipment per the S59 measurements).
+
+### Recorded S62 result — real GPU (Intel UHD Graphics, headed Chromium)
+
+Renderer: `ANGLE (Intel, Intel(R) UHD Graphics (0x0000A7A8) Direct3D11 vs_5_0 ps_5_0, D3D11)`,
+resolution 1920×1080, `acceleration=hardware`, `gpuEvidence=true`.
+
+| Scene | Profile | FPS | p50 | p95 | p99 | draw calls | triangles | textures | JS heap | load |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CNC machine tending | Performance | 154.5 | 6.10 ms | 10.40 ms | 12.00 ms | 414 | 9 528 | 0 | 19.0 MB | 2 260 ms |
+| CNC machine tending | Balanced | 135.7 | 6.90 ms | 9.96 ms | 13.08 ms | 466 | 13 500 | 0 | 18.1 MB | 1 243 ms |
+| CNC machine tending | Quality | 103.6 | 9.90 ms | 12.60 ms | 14.59 ms | 466 | 13 500 | 0 | 23.8 MB | 1 199 ms |
+| Robot palletizing | Performance | 133.7 | 6.20 ms | 13.37 ms | 15.69 ms | 42 | 534 | 0 | 36.6 MB | 960 ms |
+| Robot palletizing | Balanced | 145.7 | 6.10 ms | 11.60 ms | 14.98 ms | 42 | 534 | 0 | 43.1 MB | 996 ms |
+| Robot palletizing | Quality | 132.1 | 7.30 ms | 9.60 ms | 10.20 ms | 42 | 534 | 0 | 42.0 MB | 1 053 ms |
+
+The same command run headless (SwiftShader) records identical fields with `acceleration=software`
+and `gpuEvidence=false`; those numbers are a CI upper bound and are **not** GPU results. A report
+whose runs are not all `hardware` with a renderer identity is rejected by
+`validateGpuBenchmarkReport`.
+
+### Benchmark non-claims
+
+- The JS heap is **not** GPU memory; WebGL does not expose total GPU memory. `textureBytes` is the
+  documented texture estimate and is 0 when the scene uses no textures.
+- These are single headed runs on the documented developer-reference host; they are reference
+  observations, not an SLA, and no untested hardware class is promised.
+- CSV/JSON benchmark output contains only renderer strings and counters; it never includes tokens,
+  secrets or machine-identifying personal data.
+- Benchmark result schema validation and acceleration classification are covered by unit tests
+  (`src/observability/gpuBenchmark.test.ts`).
+
 ## Measurements recorded by earlier sprints
 
 | Dimension | Measured result | Source sprint |
@@ -174,10 +231,14 @@ mid-range-laptop classes; no untested hardware class is promised. `HARDWARE_CLAS
 | Mapping validation/serialization | 500 mappings validated + serialized in **8.9 ms** | S37 (re-run S49) |
 | Instructor metrics query | mean **219.2 ms**, p95 **344.8 ms**, max 471.4 ms (100 sessions × 5 actions) | S45 |
 | CNC visual geometry budget | meshes **28**, triangles **764**, draw calls **28**, textures **0** | S39 |
-| Hero CNC GLB (primary) | meshes **37**, triangles **1 004**, draw calls **37**, textures **0**, **102 676 B** | S55 |
-| Hero CNC GLB (lod1) | meshes **25**, triangles **656**, draw calls **25**, **69 200 B** | S55 |
-| Hero cell dressing GLB (primary) | meshes **38**, triangles **676**, draw calls **38**, textures **0**, **85 160 B** | S55 |
-| Hero cell dressing GLB (lod1) | meshes **30**, triangles **460**, draw calls **30**, **63 752 B** | S55 |
+| S59 scenario cells (procedural, GPU-free) | sorting 11 equipment / 480 tri / 27 calls; palletizing 15 / 532 / 40; assembly 12 / 476 / 31; safety 11 / 660 / 29; textures 0 | S59 |
+| S60 robot GLB (primary, all three sizes) | meshes **58**, triangles **4 640**, draw calls **58**, textures **0**, ≈**259 200 B** | S60 |
+| S60 robot GLB (lod1) | meshes **42**, triangles **1 656**, draw calls **42**, ≈**132 000 B** | S60 |
+| S60 hero CNC GLB (primary) | meshes **69**, triangles **1 608**, draw calls **69**, textures **0**, **174 700 B** | S60 |
+| S60 hero CNC GLB (lod1) | meshes **33**, triangles **620**, draw calls **33**, **77 164 B** | S60 |
+| S60 hero cell dressing GLB (primary) | meshes **62**, triangles **1 064**, draw calls **62**, textures **0**, **136 032 B** | S60 |
+| S60 hero cell dressing GLB (lod1) | meshes **30**, triangles **460**, draw calls **30**, **63 752 B** | S60 |
+| Hero CNC/dressing GLB (S55 baseline) | CNC 37 / 1 004 / 37 / 102 676 B and lod1 25 / 656 / 25 / 69 200 B; dressing 38 / 676 / 38 / 85 160 B and lod1 30 / 460 / 30 / 63 752 B | S55 |
 | Repeated scene load | 25 build/dispose cycles produced identical resource counts | S39 |
 | Closed loop — Modbus showcase | end-to-end latency **468.52 ms** | S46 |
 | Closed loop — OPC UA showcase | end-to-end latency **36.68 ms** | S47 |

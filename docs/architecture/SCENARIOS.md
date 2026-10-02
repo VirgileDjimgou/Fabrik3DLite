@@ -45,6 +45,21 @@ Scenario progress and runtime state are observable through the orchestrator: the
 
 A WebGL-free harness (`/?view=scenario`, `ScenarioLab.vue`) lists the catalog, runs a selected scenario against a fast machining workflow, and shows live progress/status — used by the e2e flow that selects and completes a basic scenario.
 
+## Real 3D runtime (S58) and scenario cells (S59)
+
+Since S58 every `simulation-ready` scenario runs in a real Three.js cell. The
+scenario-to-scene resolution (`sceneBinding.ts`), the declarative visual profile
+(`visualProfile.ts`), the deterministic event program (`runtimeBinding.ts`) and
+the reusable host (`ScenarioRuntimeHost.ts`) are described in
+[Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md). `SceneLayoutPreview` is kept
+for editor/catalog preview only.
+
+S59 adds `cellComposition.ts` (the required-equipment table shared by profiles and
+composition tests) and the render-only `cellVisualState.ts` +
+`ScenarioCellAnimator.ts`. Visible state (part routing, jam, vacuum loss,
+gate/scanner/E-stop, stack light) is derived from the same expected events the
+runner consumes; the visual layer never defines scenario truth or outcomes.
+
 ## Non-goals
 
 No grading analytics yet; scenarios never load arbitrary code.

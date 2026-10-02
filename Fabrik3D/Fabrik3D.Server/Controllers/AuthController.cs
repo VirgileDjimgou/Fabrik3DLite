@@ -2,6 +2,7 @@ using Fabrik3D.Contracts.DTOs;
 using Fabrik3D.Domain.Organizations;
 using Fabrik3D.Infrastructure.Repositories;
 using Fabrik3D.Server.Authentication;
+using Fabrik3D.Server.Demo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -19,6 +20,7 @@ namespace Fabrik3D.Server.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly Fabrik3DAuthenticationOptions _options;
+    private readonly DemoOptions _demo;
     private readonly DevelopmentTokenIssuer _issuer;
     private readonly ICurrentIdentity _identity;
     private readonly ITenantContext _tenant;
@@ -27,6 +29,7 @@ public class AuthController : ControllerBase
 
     public AuthController(
         IOptions<Fabrik3DAuthenticationOptions> options,
+        IOptions<DemoOptions> demo,
         DevelopmentTokenIssuer issuer,
         ICurrentIdentity identity,
         ITenantContext tenant,
@@ -34,6 +37,7 @@ public class AuthController : ControllerBase
         ILogger<AuthController> log)
     {
         _options = options.Value;
+        _demo = demo.Value;
         _issuer = issuer;
         _identity = identity;
         _tenant = tenant;
@@ -60,12 +64,37 @@ public class AuthController : ControllerBase
             _ => null,
         };
 
+        // Browser OIDC (Authorization Code + PKCE) is advertised only in Oidc mode with a configured
+        // public client. Only public values are returned: authority, client id, scopes, redirect.
+        OidcBrowserConfigDto? oidc = null;
+        if (mode == Fabrik3DAuthenticationOptions.Modes.Oidc && _options.Browser.IsConfigured(_options.Authority))
+        {
+            oidc = new OidcBrowserConfigDto(
+                _options.Authority!.Trim().TrimEnd('/'),
+                _options.Browser.ClientId!.Trim(),
+                _options.Browser.NormalizedScopes(),
+                NormalizePath(_options.Browser.RedirectPath, "/auth/callback"),
+                string.IsNullOrWhiteSpace(_options.Browser.PostLogoutRedirectPath)
+                    ? null
+                    : NormalizePath(_options.Browser.PostLogoutRedirectPath, "/auth/callback"),
+                _options.Browser.EndSessionEnabled);
+        }
+
         return Ok(new AuthConfigDto(
             mode,
             dev,
             _options.PublicDemoEnabled,
             Fabrik3DRoles.All,
-            warning));
+            warning,
+            oidc,
+            _demo.IsResetAvailable));
+    }
+
+    private static string NormalizePath(string? value, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return fallback;
+        var trimmed = value.Trim();
+        return trimmed.StartsWith('/') ? trimmed : "/" + trimmed;
     }
 
     /// <summary>

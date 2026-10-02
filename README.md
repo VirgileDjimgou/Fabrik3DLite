@@ -6,25 +6,38 @@
 [![Node.js 20+](https://img.shields.io/badge/Node.js-20.19%2B-5FA04E)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7%2F8-47A248)](https://www.mongodb.com/)
 
-Fabrik3DLite is an educational industrial-software demonstrator for designing, simulating, supervising, and understanding a robotic cell. It brings together a 3D robotic-cell simulator, an orchestration backend, and a dedicated operator HMI around an explicit digital-twin model.
+**Fabrik3DLite is a lightweight virtual-commissioning and training platform for robotic cells.** It
+lets you design a cell, simulate its robot, CNC and material flow, run real operator jobs against a
+server-authoritative orchestrator, inject and recover from faults, and review what happened — all
+around one explicit digital-twin model.
 
-**This repository is at the Fabrik3D 1.0 training/virtual-commissioning baseline plus completed
-post-1.0 hardening (S51-S57, tagged [`v1.1.0`](https://github.com/VirgileDjimgou/Fabrik3DLite/releases/tag/v1.1.0)).** The 1.0 baseline is a validation and
-documentation milestone, not a safety certification. Start with the
+| In one line | |
+| --- | --- |
+| **What it is** | A 3D robotic-cell simulator, an operator HMI and an ASP.NET Core orchestration backend that run as one system for education, demonstrations and virtual commissioning (VC) prototyping. |
+| **Architecture** | The **server is the orchestration source of truth** (jobs, sessions, tasks, authority, history); the **simulator executes and visualizes** the cell; the **HMI is the operator interface**. Optional OPC UA / MQTT / Modbus TCP adapters sit outside the core domain and are disabled by default. |
+| **Main workflow** | HMI New Job → select scenario/cell/pallet → Create → Start → **server targeted dispatch** → simulator ACK → **3D execution starts automatically** → robot/CNC/conveyor → live HMI → fault/recovery → Job 100 % → Completed → historian/time travel. There is **no simulator-local Start**. |
+| **Strongest capabilities** | 1. Authoritative operator workflow (job composer, targeted dispatch, ownership/heartbeat). 2. Deterministic signal-driven CNC reference cell (54 signals) plus five 3D scenario cells. 3. Deterministic fault injection, control-authority arbitration and read-only time travel. 4. Real OPC UA/MQTT/Modbus adapters with fail-closed writes, verified against automated fixtures. 5. On-prem deployment, OIDC/RBAC/tenancy and server-side training assessment. |
+| **Live demo** | [3D simulator](https://fabrik3d.patrickdjimgou.dev) · [operator HMI](https://fabrik3d-hmi.patrickdjimgou.dev) |
+| **Flagship video** | [Product walkthrough](https://github.com/user-attachments/assets/29b87539-a47f-4b07-9dd0-f6e0fa9c2436) — completed scenario, CNC fault recovery, cell editing and backend orchestration. |
+
+The step-by-step flagship flow and its scenario captures are in
+[FLAGSHIP_DEMO.md](./docs/operations/FLAGSHIP_DEMO.md); the measured gate results are in
+[VALIDATION_REVISION_3.md](./docs/operations/VALIDATION_REVISION_3.md). Start with the
 [documentation index](./docs/DOCUMENTATION_INDEX.md), the
 [architecture overview](./docs/architecture/OVERVIEW.md), the
-[1.0 release notes](./docs/releases/RELEASE_NOTES_1.0.md), the
-[limitations/non-claims](./docs/operations/LIMITATIONS.md), and the
-[1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md).
+[limitations/non-claims](./docs/operations/LIMITATIONS.md) and the
+[1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md) for depth.
 
-**Roadmap Revision 2 is complete through S57.** It preserves the completed S50 baseline and adds
-authoritative operator execution, Job lifecycle, role-aware HMI, a shared 3D asset runtime, one
-flagship cell, sustained reliability, and deployment/security hardening. Real PLC/PLCSIM proof is
-deliberately deferred until suitable licensed software or physical hardware is available, so
-real-device interoperability is explicitly unvalidated. See the
-[delivery roadmap](./docs/roadmap/README.md) and the [post-1.0 validation record](./docs/operations/VALIDATION_POST_1.0.md); these are post-1.0, not 1.0, capabilities.
+**Revision 3 (S58–S64) is complete.** It adds the real 3D scenario runtime, scenario-specific cells,
+robot/cell visual fidelity, HMI operator polish, deterministic visual QA and GPU evidence, browser
+OIDC with public-demo isolation, and this flagship product surface. It builds on the 1.0
+training/VC baseline (tagged [`v1.1.0`](https://github.com/VirgileDjimgou/Fabrik3DLite/releases/tag/v1.1.0))
+and the completed Roadmap Revision 2 (S51–S57): authoritative operator execution, Job lifecycle,
+role-aware HMI, a shared 3D asset runtime, one flagship cell, sustained reliability, and
+deployment/security hardening. See the [delivery roadmap](./docs/roadmap/README.md) and the
+[post-1.0 validation record](./docs/operations/VALIDATION_POST_1.0.md).
 
-It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell.
+It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available, so real-device interoperability is explicitly unvalidated.
 
 ## Live demo
 
@@ -197,6 +210,24 @@ connectors talk to real endpoints only when explicitly enabled and allow-listed.
 | Fault injection (S38)       | An inverted overlay flips `conveyor-1.PhotoeyeStation`, propagates through the signal view and clears without a reload.                                                                                                                                         |
 | Time travel (S40–S41)       | Replay reconstructs phases, alarms and fault markers read-only and jumps deterministically to a marker.                                                                                                                                                         |
 | Roles and tenancy (S42–S45) | An Administrator session shows the server-resolved organization; instructor aggregates are tenant-scoped.                                                                                                                                                       |
+
+### Revision 3 flagship captures (2026-10-02, S58–S64)
+
+<p align="center">
+  <img src="./artifacts/demo/flagship/shots/hero-cnc-cell.png" alt="Hero CNC reference cell" width="31%" />
+  <img src="./artifacts/demo/flagship/shots/scenario-vision-sorting.png" alt="Vision-sorting 3D scenario cell" width="31%" />
+  <img src="./artifacts/demo/flagship/shots/scenario-palletizing.png" alt="Palletizing 3D scenario cell" width="31%" />
+</p>
+<p align="center">
+  <img src="./artifacts/demo/flagship/shots/hmi-job-composer.png" alt="Operator HMI Job Composer" width="31%" />
+  <img src="./artifacts/demo/flagship/shots/fault-lab.png" alt="Simulated fault injection" width="31%" />
+  <img src="./artifacts/demo/flagship/shots/time-travel.png" alt="Deterministic read-only time travel" width="31%" />
+</p>
+
+The curated Revision 3 media set (hero cell, four scenario cells, HMI, Job Composer, robot pendant,
+fault lab, time travel) with provenance and captions is in
+[artifacts/demo/flagship/](./artifacts/demo/flagship/README.md); the flagship flow is in
+[FLAGSHIP_DEMO.md](./docs/operations/FLAGSHIP_DEMO.md).
 
 ### Feature evidence captured on 2026-09-27 (S33–S57)
 

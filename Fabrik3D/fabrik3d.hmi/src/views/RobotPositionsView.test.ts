@@ -72,12 +72,34 @@ describe('RobotPositionsView', () => {
 
     expect(wrapper.get('[data-testid="robot-target"]').text()).toContain('reference-cell')
     expect(wrapper.get('[data-testid="robot-units"]').text()).toBe('radians, meters')
-    expect(wrapper.get('[data-testid="robot-motion"]').text()).toBe('IDLE')
+    expect(wrapper.get('[data-testid="robot-state"]').text()).toBe('IDLE')
     expect(wrapper.get('[data-testid="robot-joint-J1"]').text()).toContain('0.000')
     expect(wrapper.get('[data-testid="robot-tcp"]').text()).toContain('X 0.400')
     expect(wrapper.get('[data-testid="robot-orientation"]').text()).toContain('Rz 0.030')
     expect(wrapper.text()).toContain('tool-1')
     expect(wrapper.get('[data-testid="robot-authority"]').text().length).toBeGreaterThan(0)
+    wrapper.unmount()
+  })
+
+  it('presents the compact teach-pendant hierarchy with state, authority, frames and jog', async () => {
+    mockApi.getRobotPositions.mockResolvedValue(positions())
+    const wrapper = mountView()
+    await flushPromises()
+
+    // Primary strip ranks state, authority, mode, model and units.
+    const strip = wrapper.get('[data-testid="robot-status-strip"]')
+    expect(strip.find('[data-testid="robot-state"]').exists()).toBe(true)
+    expect(strip.find('[data-testid="robot-authority"]').exists()).toBe(true)
+    expect(strip.find('[data-testid="robot-mode"]').exists()).toBe(true)
+    expect(strip.find('[data-testid="robot-model"]').exists()).toBe(true)
+    expect(strip.find('[data-testid="robot-units"]').exists()).toBe(true)
+    // J1-J6, TCP, frames/tool and manual jog remain present.
+    for (const joint of ['J1', 'J2', 'J3', 'J4', 'J5', 'J6']) {
+      expect(wrapper.find(`[data-testid="robot-joint-${joint}"]`).exists()).toBe(true)
+    }
+    expect(wrapper.find('[data-testid="robot-tcp"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="robot-jog"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="robot-jog-J1-plus"]').exists()).toBe(true)
     wrapper.unmount()
   })
 

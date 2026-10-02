@@ -50,6 +50,10 @@ flowchart TB
 - Users authenticate with JWT bearer tokens. Production uses an external OIDC provider; a
   clearly-labelled, rate-limited `Development`/`Test` mode exists for local/CI/demo and is **refused
   in Production** (`AuthenticationStartupGuard`).
+- HMI and simulator obtain those tokens through standard OIDC **Authorization Code + PKCE**
+  (S63): a public SPA client with no secret, CSRF `state`, S256 `code_challenge`, one-time verifier
+  and server-side re-read of roles via `GET /api/auth/me`. Tokens, codes and verifiers are never
+  logged; an unavailable authority fails closed instead of falling back to anonymous access.
 - Roles: Learner, Instructor, Engineer, Operator, Administrator, plus an opt-in read-only PublicDemo.
   Named policies (`Read`, `Operate`, `Train`, `Engineer`, `Instruct`, `Admin`) map to endpoints.
 - External controllers are **not** users. They are constrained by the connector write policy and by
@@ -62,7 +66,9 @@ flowchart TB
 - Tenant context is resolved from a validated membership; a client-supplied `X-Organization-Id` is
   never trusted. Cross-organization object ids behave as `404` without leaking existence.
 - The public demo is read-only for anonymous visitors except where a labelled dev/test identity is
-  provided for demonstration.
+  provided for demonstration. The bounded demo reset (S63) is disabled by default, requires the
+  `Operate` permission, is tenant-scoped and removes only simulated demo state; it is never a
+  production or tenancy-management operation.
 
 ## Data classes and handling
 

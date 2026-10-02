@@ -18,14 +18,14 @@
   "visual": {
     "glb": {
       "path": "model.glb",
-      "sha256": "0a3abcfdd7c6cda5e7d377953464e0e9a47e1d7b67715afc9fc2897ef1339af3"
+      "sha256": "9c9f4ebddff6f340edd5553042a30d660ae06d3108936423b4bdf2ef7c204dbf"
     },
     "lods": [
       {
         "id": "lod1",
         "glb": {
           "path": "lod/lod1.glb",
-          "sha256": "fb614d2453d8ec6985b692a4a40ecefa36aed6bbef1a27aefe94f20ca373fbe1"
+          "sha256": "869d09b7c420c8bb3c6f189eb6a57bcde999a1c7ad8d7d3b4aa97de1eca7481c"
         },
         "triangleBudget": 6000
       }
@@ -101,6 +101,6 @@
   },
   "integrity": {
     "path": "model.glb",
-    "sha256": "0a3abcfdd7c6cda5e7d377953464e0e9a47e1d7b67715afc9fc2897ef1339af3"
+    "sha256": "9c9f4ebddff6f340edd5553042a30d660ae06d3108936423b4bdf2ef7c204dbf"
   }
 }

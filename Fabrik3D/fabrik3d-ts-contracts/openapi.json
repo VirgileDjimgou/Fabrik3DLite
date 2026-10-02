@@ -895,6 +895,45 @@
         }
       }
     },
+    "/api/demo/reset": {
+      "post": {
+        "tags": [
+          "Demo"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoResetResultDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/diagnostics/status": {
       "get": {
         "tags": [
@@ -4649,6 +4688,12 @@
           "warning": {
             "type": "string",
             "nullable": true
+          },
+          "oidc": {
+            "$ref": "#/components/schemas/OidcBrowserConfigDto"
+          },
+          "demoResetEnabled": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -5184,6 +5229,71 @@
           "slotColumn": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DemoResetCountsDto": {
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tasks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "simulationSessions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alarms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "operatorMessages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "machineStates": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "trainingSessions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "trainingActions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "controlAuthorities": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "controlAuthorityEvents": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DemoResetResultDto": {
+        "type": "object",
+        "properties": {
+          "resetAtUtc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorId": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/DemoResetCountsDto"
           }
         },
         "additionalProperties": false
@@ -6402,6 +6512,34 @@
           "droppedSeries": {
             "type": "integer",
             "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OidcBrowserConfigDto": {
+        "type": "object",
+        "properties": {
+          "authority": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "redirectPath": {
+            "type": "string"
+          },
+          "postLogoutRedirectPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "endSessionEnabled": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

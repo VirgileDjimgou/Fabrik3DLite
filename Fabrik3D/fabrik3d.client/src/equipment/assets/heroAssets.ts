@@ -12,10 +12,10 @@ export const HERO_CELL_DRESSING_ASSET_ID = 'hero-cell-dressing-v1' as const
 export const PROCEDURAL_HERO_CNC_ASSET_ID = 'procedural-cnc-machine' as const
 export const PROCEDURAL_CELL_DRESSING_ASSET_ID = 'procedural-cell-dressing' as const
 
-const HERO_CNC_HASH = '0a3abcfdd7c6cda5e7d377953464e0e9a47e1d7b67715afc9fc2897ef1339af3'
-const HERO_CNC_LOD_HASH = 'fb614d2453d8ec6985b692a4a40ecefa36aed6bbef1a27aefe94f20ca373fbe1'
+const HERO_CNC_HASH = '9c9f4ebddff6f340edd5553042a30d660ae06d3108936423b4bdf2ef7c204dbf'
+const HERO_CNC_LOD_HASH = '869d09b7c420c8bb3c6f189eb6a57bcde999a1c7ad8d7d3b4aa97de1eca7481c'
 const HERO_CNC_THUMB_HASH = '42d8bf4aa6f84f39e7fc135e74f28c4d0e369fad0f59682a6a28689a2537943c'
-const HERO_DRESSING_HASH = 'bab161f9160fb383c458dead4016635f59c78514b7a38f9167bb0d8385fe4662'
+const HERO_DRESSING_HASH = '542fe3a69f4c974d62d6c93569697809f653317befae3bc8e2b4a9d9ff56579c'
 const HERO_DRESSING_LOD_HASH = 'c9508fe87bfb3bada1504f2ee9265a64ef2383427edf5eb768edd9a52fd53426'
 const HERO_DRESSING_THUMB_HASH = '0c99b4d2228d708cdd1f6c0ccf68da333e39a89d7a75bfcb1febdabf00af5a01'
 

@@ -13,6 +13,7 @@
     "test:watch": "vitest",
     "load:signalr": "node scripts/signalr-load.mjs",
     "test:visual": "vite build && playwright test",
+    "benchmark:gpu": "vite build && playwright test --config=playwright.benchmark.config.ts --headed",
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache"

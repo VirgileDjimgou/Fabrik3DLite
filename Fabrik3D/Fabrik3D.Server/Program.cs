@@ -64,6 +64,11 @@ builder.Services.AddFabrik3DAuthentication(builder.Configuration, builder.Enviro
 builder.Services.AddFabrik3DCors(builder.Configuration, builder.Environment);
 builder.Services.AddFabrik3DAuthRateLimiting();
 
+// ── Bounded public-demo lifecycle (S63): disabled unless the demo profile enables it ─
+builder.Services.Configure<Fabrik3D.Server.Demo.DemoOptions>(
+    builder.Configuration.GetSection(Fabrik3D.Server.Demo.DemoOptions.SectionName));
+builder.Services.AddSingleton<Fabrik3D.Server.Demo.DemoResetService>();
+
 // ── Orchestration settings ─────────────────────────────────────────
 builder.Services.Configure<OrchestrationOptions>(
     builder.Configuration.GetSection(OrchestrationOptions.SectionName));

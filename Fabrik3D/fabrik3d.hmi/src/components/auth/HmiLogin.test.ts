@@ -6,12 +6,34 @@ import { i18n } from '@/i18n'
 const fetchAuthConfig = vi.fn()
 const devLogin = vi.fn()
 const bootstrap = vi.fn()
+const beginOidcLogin = vi.fn()
 
-vi.mock('@/auth/authService', () => ({
-  fetchAuthConfig: (...args: unknown[]) => fetchAuthConfig(...args),
-  devLogin: (...args: unknown[]) => devLogin(...args),
-  bootstrap: (...args: unknown[]) => bootstrap(...args),
-}))
+vi.mock('@/auth/authService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/auth/authService')>()
+  return {
+    ...actual,
+    fetchAuthConfig: (...args: unknown[]) => fetchAuthConfig(...args),
+    devLogin: (...args: unknown[]) => devLogin(...args),
+    bootstrap: (...args: unknown[]) => bootstrap(...args),
+    beginOidcLogin: (...args: unknown[]) => beginOidcLogin(...args),
+  }
+})
+
+const oidcConfig = {
+  mode: 'Oidc',
+  developmentAuth: false,
+  publicDemoEnabled: false,
+  roles: ['Learner', 'Instructor', 'Engineer', 'Operator', 'Administrator'],
+  warning: null,
+  oidc: {
+    authority: 'https://idp.example.test/realms/demo',
+    clientId: 'fabrik3d-hmi',
+    scopes: ['openid'],
+    redirectPath: '/auth/callback',
+    postLogoutRedirectPath: '/',
+    endSessionEnabled: true,
+  },
+}
 
 describe('HmiLogin', () => {
   beforeEach(() => {
@@ -56,5 +78,26 @@ describe('HmiLogin', () => {
     await flushPromises()
 
     expect(wrapper.get('[data-testid="hmi-login-error"]').text().length).toBeGreaterThan(0)
+  })
+
+  it('offers the OIDC sign-in button only in OIDC mode and starts the PKCE redirect', async () => {
+    fetchAuthConfig.mockResolvedValue(oidcConfig)
+    const wrapper = mount(HmiLogin, { global: { plugins: [i18n] } })
+    await flushPromises()
+
+    // Test/Demo form is not shown; the provider button is.
+    expect(wrapper.find('#hmi-login-subject').exists()).toBe(false)
+    const button = wrapper.get('[data-testid="hmi-login-oidc"]')
+    await button.trigger('click')
+
+    expect(beginOidcLogin).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not offer the OIDC button in Test/Demo mode', async () => {
+    const wrapper = mount(HmiLogin, { global: { plugins: [i18n] } })
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="hmi-login-oidc"]').exists()).toBe(false)
+    expect(wrapper.find('#hmi-login-subject').exists()).toBe(true)
   })
 })

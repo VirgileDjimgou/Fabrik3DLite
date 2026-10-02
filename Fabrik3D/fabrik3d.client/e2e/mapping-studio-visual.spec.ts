@@ -1,8 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './support/visual'
 
 /**
  * Visual regression for the engineering signal mapping studio at the documented
  * desktop and engineering-laptop resolutions.
+ *
+ * S62 deterministic protocol: reset → seed → scenario → ready → freeze → screenshot.
  */
 const TARGET_SIZES = [
   { name: 'desktop', width: 1280, height: 800 },
@@ -10,15 +12,16 @@ const TARGET_SIZES = [
 ] as const
 
 for (const size of TARGET_SIZES) {
-  test(`mapping studio renders at ${size.name}`, async ({ page }) => {
+  test(`mapping studio renders at ${size.name}`, async ({ page, visual }) => {
     await page.setViewportSize({ width: size.width, height: size.height })
-    await page.goto('/?view=mapping-studio')
+    await visual.reset()
+    await visual.seed('/?view=mapping-studio', '[data-mapping-studio]')
 
-    await expect(page.locator('[data-mapping-studio]')).toBeVisible()
     await expect(page.locator('[data-mapping-row]')).toHaveCount(6)
     await expect(page.locator('[data-validation-summary]')).toContainText('0 errors')
     await expect(page.locator('[data-monitor-internal="opcua-cnc-spindle-speed"]')).toHaveText('8000')
 
-    await expect(page).toHaveScreenshot(`mapping-studio-${size.name}.png`)
+    await visual.freeze()
+    await visual.screenshot(`mapping-studio-${size.name}.png`)
   })
 }

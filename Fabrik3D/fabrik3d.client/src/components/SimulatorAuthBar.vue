@@ -9,16 +9,26 @@
     </template>
     <template v-else-if="open">
       <span class="auth-bar__warning" data-auth-warning>{{ config?.warning ?? t('auth.localDemo') }}</span>
-      <input v-model="subject" class="auth-bar__input" :placeholder="t('auth.subject')" data-auth-subject />
-      <select v-model="role" class="auth-bar__input" data-auth-role>
-        <option v-for="option in roleOptions" :key="option" :value="option">{{ option }}</option>
-      </select>
-      <button type="button" class="reset-panels" data-auth-submit :disabled="busy" @click="submit">{{ t('auth.signIn') }}</button>
+      <template v-if="oidcAvailable">
+        <button type="button" class="reset-panels" data-auth-oidc :disabled="busy" @click="signInWithOidc">
+          {{ busy ? t('auth.signingIn') : t('auth.oidcSignIn') }}
+        </button>
+      </template>
+      <template v-else>
+        <input v-model="subject" class="auth-bar__input" :placeholder="t('auth.subject')" data-auth-subject />
+        <select v-model="role" class="auth-bar__input" data-auth-role>
+          <option v-for="option in roleOptions" :key="option" :value="option">{{ option }}</option>
+        </select>
+        <button type="button" class="reset-panels" data-auth-submit :disabled="busy" @click="submit">{{ t('auth.signIn') }}</button>
+      </template>
       <button type="button" class="reset-panels" data-auth-cancel @click="open = false">{{ t('auth.cancel') }}</button>
     </template>
     <template v-else>
       <span class="auth-bar__warning" data-auth-local>{{ expired ? t('auth.expired') : t('auth.localDemo') }}</span>
-      <button type="button" class="reset-panels" data-auth-open @click="open = true">{{ t('auth.signIn') }}</button>
+      <button v-if="oidcAvailable" type="button" class="reset-panels" data-auth-oidc @click="signInWithOidc">
+        {{ t('auth.oidcSignIn') }}
+      </button>
+      <button v-else type="button" class="reset-panels" data-auth-open @click="open = true">{{ t('auth.signIn') }}</button>
     </template>
     <span v-if="error" class="auth-bar__error" data-auth-error>{{ error }}</span>
   </div>
@@ -27,7 +37,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useSimulatorI18n } from '@/i18n/simulator'
-import { bootstrap, devLogin, fetchAuthConfig, logout } from '@/auth/authService'
+import {
+  beginOidcLogin,
+  bootstrap,
+  completeOidcLogin,
+  devLogin,
+  fetchAuthConfig,
+  isOidcCallbackUrl,
+  isOidcMode,
+  oidcLogout,
+} from '@/auth/authService'
 import { identity, isAuthenticated, sessionExpired } from '@/auth/authStore'
 import type { AuthConfig } from '@/auth/authTypes'
 
@@ -42,6 +61,7 @@ const error = ref('')
 const authenticated = computed(() => isAuthenticated())
 const organization = computed(() => identity.value?.organizationName ?? identity.value?.organizationId ?? '')
 const expired = sessionExpired
+const oidcAvailable = computed(() => isOidcMode(config.value))
 const roleOptions = computed(() => {
   const roles = config.value?.roles ?? ['Operator']
   return config.value?.publicDemoEnabled ? [...roles, 'PublicDemo'] : roles
@@ -54,10 +74,38 @@ onMounted(async () => {
     if (config.value.roles.length > 0 && !config.value.roles.includes(role.value)) {
       role.value = config.value.roles[0]!
     }
+    await completeCallbackIfPresent()
   } catch {
     // Offline local demo: stay usable, clearly labelled, without a server identity.
   }
 })
+
+/** Completes the OIDC callback exactly once and cleans the authorization code from the URL. */
+async function completeCallbackIfPresent(): Promise<void> {
+  if (typeof window === 'undefined' || !isOidcCallbackUrl(window.location.href, config.value)) return
+  busy.value = true
+  try {
+    await completeOidcLogin({ config: config.value ?? undefined })
+    const url = new URL(window.location.href)
+    url.search = ''
+    window.history.replaceState({}, document.title, url.toString())
+  } catch {
+    error.value = t('auth.oidcCallbackFailed')
+  } finally {
+    busy.value = false
+  }
+}
+
+async function signInWithOidc(): Promise<void> {
+  busy.value = true
+  error.value = ''
+  try {
+    await beginOidcLogin({ config: config.value ?? undefined })
+  } catch {
+    error.value = t('auth.oidcFailed')
+    busy.value = false
+  }
+}
 
 async function submit(): Promise<void> {
   busy.value = true
@@ -72,8 +120,8 @@ async function submit(): Promise<void> {
   }
 }
 
-function signOut(): void {
-  logout()
+async function signOut(): Promise<void> {
+  await oidcLogout({ config: config.value ?? undefined })
 }
 </script>
 

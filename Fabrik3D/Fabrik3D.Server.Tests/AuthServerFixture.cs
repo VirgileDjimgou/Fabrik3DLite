@@ -87,6 +87,66 @@ public sealed class AuthServerFixture : IAsyncLifetime
             });
         });
 
+    /// <summary>
+    /// Boots a host with the bounded public-demo lifecycle explicitly enabled (S63) against its own
+    /// database on the shared container. The base fixture keeps <c>Demo:Enabled=false</c>, which is
+    /// what production-like deployments use, so the disabled-path tests run against it.
+    /// </summary>
+    public WebApplicationFactory<Program> CreateDemoEnabledFactory() =>
+        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+            builder.ConfigureAppConfiguration((_, configuration) =>
+            {
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["MongoDb:ConnectionString"] = ConnectionString,
+                    ["MongoDb:DatabaseName"] = $"Fabrik3D_demo_tests_{Guid.NewGuid():N}",
+                    ["Authentication:Mode"] = "Test",
+                    ["Authentication:SigningKey"] = SigningKey,
+                    ["Authentication:AccessTokenLifetimeMinutes"] = "15",
+                    ["Authentication:PublicDemoEnabled"] = "true",
+                    ["Authentication:AuthRateLimitPermitLimit"] = "10000",
+                    ["Demo:Enabled"] = "true",
+                    ["Demo:ResetEnabled"] = "true",
+                    ["Historian:Enabled"] = "false",
+                    ["OpcUa:Enabled"] = "false",
+                    ["Mqtt:Enabled"] = "false",
+                    ["Modbus:Enabled"] = "false",
+                });
+            });
+        });
+
+    /// <summary>
+    /// Boots a host configured for OIDC mode with a public browser client so the discovery payload
+    /// (authority/client id/scopes) can be asserted without contacting the provider. No authenticated
+    /// request is made, so no metadata fetch is triggered.
+    /// </summary>
+    public WebApplicationFactory<Program> CreateOidcDiscoveryFactory() =>
+        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Testing");
+            builder.ConfigureAppConfiguration((_, configuration) =>
+            {
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["MongoDb:ConnectionString"] = ConnectionString,
+                    ["MongoDb:DatabaseName"] = $"Fabrik3D_oidc_tests_{Guid.NewGuid():N}",
+                    ["Authentication:Mode"] = "Oidc",
+                    ["Authentication:Authority"] = "https://idp.example.test/realms/demo/",
+                    ["Authentication:Browser:ClientId"] = "fabrik3d-hmi",
+                    ["Authentication:Browser:RedirectPath"] = "auth/callback",
+                    ["Authentication:Browser:Scopes:0"] = "openid",
+                    ["Authentication:Browser:Scopes:1"] = "profile",
+                    ["Authentication:Browser:Scopes:2"] = "roles",
+                    ["Historian:Enabled"] = "false",
+                    ["OpcUa:Enabled"] = "false",
+                    ["Mqtt:Enabled"] = "false",
+                    ["Modbus:Enabled"] = "false",
+                });
+            });
+        });
+
     /// <summary>Creates a client carrying a real test identity token for the given role.</summary>
     public async Task<HttpClient> CreateClientAsync(string role, string? subject = null)
     {

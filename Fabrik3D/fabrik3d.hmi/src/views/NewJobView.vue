@@ -1,9 +1,9 @@
 <template>
   <div data-testid="job-composer">
-    <h5 class="mb-3"><i class="bi bi-plus-square hmi-icon me-2"></i>{{ t('newJob.title') }}</h5>
+    <h5 class="hmi-page-title mb-3"><i class="bi bi-plus-square hmi-icon me-2"></i>{{ t('newJob.title') }}</h5>
 
     <!-- Loading / offline / empty states -->
-    <div v-if="loading" class="text-muted" role="status" data-testid="composer-loading">{{ t('newJob.validating') }}</div>
+    <div v-if="loading" class="hmi-detail" role="status" data-testid="composer-loading">{{ t('newJob.validating') }}</div>
 
     <HmiEmptyState v-else-if="loadError"
       :title="offline ? t('newJob.offline') : t('newJob.loadOptionsFailed')"
@@ -16,15 +16,30 @@
       :title="t('newJob.noCells')" :detail="t('newJob.loadOptionsFailed')" />
 
     <template v-else>
-      <!-- Staged progress -->
-      <ol class="nav nav-pills gap-2 mb-3 small" data-testid="composer-steps">
-        <li v-for="s in steps" :key="s.n" class="nav-item">
-          <span class="nav-link py-1 px-3" :class="step === s.n ? 'active' : 'disabled'"
-            :aria-current="step === s.n ? 'step' : undefined" :data-testid="`composer-step-${s.n}`">
-            {{ t('newJob.stepLabel') }} {{ s.n }} · {{ t(s.label) }}
-          </span>
+      <!-- Staged progress: numbered steps make the current position explicit. -->
+      <ol class="hmi-steps mb-3" data-testid="composer-steps">
+        <li v-for="s in steps" :key="s.n" class="hmi-step" :class="{ 'hmi-step--active': step === s.n }"
+          :aria-current="step === s.n ? 'step' : undefined" :data-testid="`composer-step-${s.n}`">
+          <span class="hmi-step__index">{{ s.n }}</span>
+          <span>{{ t(s.label) }}</span>
         </li>
       </ol>
+
+      <!-- Target-cell visibility: the operator always sees which cell the job will run on. -->
+      <div class="hmi-status-strip mb-3" data-testid="composer-target-strip">
+        <div class="hmi-metric flex-grow-1">
+          <span class="hmi-label">{{ t('newJob.targetCellLabel') }}</span>
+          <span class="hmi-value hmi-truncate" data-testid="composer-target-cell">{{ selectedCell?.name ?? '-' }}</span>
+        </div>
+        <div class="hmi-metric">
+          <span class="hmi-label">{{ t('newJob.scenarioLabel') }}</span>
+          <span class="hmi-value hmi-truncate" data-testid="composer-target-scenario">{{ scenarioName }}</span>
+        </div>
+        <div class="hmi-metric">
+          <span class="hmi-label">{{ t('newJob.occupiedSlots') }}</span>
+          <span class="hmi-value" data-testid="composer-target-slots">{{ occupied.size }}</span>
+        </div>
+      </div>
 
       <!-- Step 1: identity and target -->
       <div v-if="step === 1" class="card" data-testid="composer-identity">
@@ -111,13 +126,11 @@
           </div>
 
           <fieldset class="mb-3">
-            <legend class="form-label fs-6">{{ t('newJob.occupiedSlots') }}</legend>
-            <p class="form-text">{{ t('newJob.slotGridHelp') }}</p>
-            <div class="d-flex flex-wrap gap-2" role="group" :aria-label="t('newJob.occupiedSlots')" data-testid="composer-grid">
+            <legend class="hmi-section-title mb-1">{{ t('newJob.occupiedSlots') }}</legend>
+            <p class="hmi-detail">{{ t('newJob.slotGridHelp') }}</p>
+            <div class="hmi-slot-grid" role="group" :aria-label="t('newJob.occupiedSlots')" data-testid="composer-grid">
               <button v-for="slot in allSlots" :key="slot.key" type="button"
-                class="btn btn-sm"
-                :class="occupied.has(slot.key) ? 'btn-hmi' : 'btn-outline-secondary'"
-                :style="{ minWidth: '56px', minHeight: '44px' }"
+                class="hmi-slot"
                 :aria-pressed="occupied.has(slot.key)"
                 :aria-label="`R${slot.row} C${slot.column}`"
                 :data-testid="`composer-slot-${slot.row}-${slot.column}`"
@@ -130,7 +143,7 @@
           </fieldset>
 
           <div v-if="localTasks.length > 0">
-            <h6>{{ t('newJob.generatedTasks') }}</h6>
+            <h6 class="hmi-section-title mb-2">{{ t('newJob.generatedTasks') }}</h6>
             <div class="table-responsive">
               <table class="table table-sm align-middle" data-testid="composer-local-tasks">
                 <thead><tr>
@@ -150,13 +163,13 @@
       </div>
 
       <!-- Step 3: server-validated review -->
-      <div v-else class="card" data-testid="composer-review">
-        <div class="card-body">
-          <h6>{{ t('newJob.reviewTitle') }}</h6>
-          <div class="row small mb-2">
+      <div v-else class="hmi-card" data-testid="composer-review">
+        <div class="hmi-card__header"><span>{{ t('newJob.reviewTitle') }}</span></div>
+        <div class="hmi-card__body">
+          <div class="row small mb-3">
             <div class="col-md-4"><strong>{{ t('newJob.stepIdentity') }}:</strong> {{ form.name }}</div>
             <div class="col-md-4"><strong>{{ t('newJob.targetConfirm') }}:</strong>
-              <span class="font-monospace" data-testid="composer-review-target">{{ form.targetCellId }}</span></div>
+              <span class="hmi-mono" data-testid="composer-review-target">{{ form.targetCellId }}</span></div>
             <div class="col-md-4"><strong>{{ t('newJob.reviewMode') }}:</strong> {{ form.machineMode }}</div>
             <div class="col-md-4 mt-1"><strong>{{ t('newJob.reviewPriority') }}:</strong> {{ form.priority }}</div>
             <div class="col-md-4 mt-1"><strong>{{ t('newJob.reviewScenario') }}:</strong> {{ form.scenarioId || '-' }}</div>
@@ -164,7 +177,7 @@
               {{ form.palletId }} ({{ form.rows }}x{{ form.columns }})</div>
           </div>
 
-          <div v-if="previewLoading" class="text-muted" role="status" data-testid="composer-preview-loading">
+          <div v-if="previewLoading" class="hmi-detail" role="status" data-testid="composer-preview-loading">
             {{ t('newJob.validating') }}</div>
 
           <HmiErrorState v-else-if="previewError" :title="t('newJob.offline')" :detail="previewError" />
@@ -172,12 +185,12 @@
           <HmiErrorState v-else-if="preview && !preview.valid" :title="t('newJob.invalid')" :detail="errorText" />
 
           <template v-else-if="preview">
-            <p class="text-success small" data-testid="composer-valid">{{ t('newJob.valid') }}</p>
+            <p class="text-success small" data-testid="composer-valid"><i class="bi bi-check-circle me-1"></i>{{ t('newJob.valid') }}</p>
             <div v-if="preview.warnings.length" class="alert alert-warning py-2 small" data-testid="composer-warnings">
               <strong>{{ t('newJob.warnings') }}:</strong>
               <ul class="mb-0"><li v-for="(w, wi) in preview.warnings" :key="wi">{{ w.message }}</li></ul>
             </div>
-            <h6>{{ t('newJob.reviewTasks') }} ({{ preview.taskCount }})</h6>
+            <h6 class="hmi-section-title mb-2">{{ t('newJob.reviewTasks') }} ({{ preview.taskCount }})</h6>
             <div class="table-responsive">
               <table class="table table-sm align-middle" data-testid="composer-tasks">
                 <thead><tr>
@@ -206,8 +219,8 @@
         </div>
       </div>
 
-      <!-- Navigation -->
-      <div class="d-flex gap-2 mt-3">
+      <!-- Navigation: touch-sized targets, primary action last in reading order. -->
+      <div class="d-flex flex-wrap gap-2 mt-3" data-testid="composer-nav">
         <button v-if="step > 1" type="button" class="btn btn-outline-secondary" data-testid="composer-previous"
           :disabled="submitting" @click="goPrevious">
           <i class="bi bi-arrow-left me-1"></i>{{ t('newJob.previous') }}</button>
@@ -270,6 +283,11 @@ const submitError = ref('')
 const createdJob = ref<JobDto | null>(null)
 
 const selectedCell = computed(() => options.value?.cells.find(c => c.id === form.targetCellId) ?? null)
+
+const scenarioName = computed(() => {
+  if (!form.scenarioId) return t('newJob.noTemplate')
+  return options.value?.scenarios.find(s => s.id === form.scenarioId)?.name ?? form.scenarioId
+})
 
 const compatibleScenarios = computed(() => {
   if (!options.value) return []

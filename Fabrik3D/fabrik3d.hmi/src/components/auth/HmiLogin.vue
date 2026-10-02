@@ -47,7 +47,17 @@
 
         <template v-else>
           <p class="small" data-testid="oidc-hint">{{ t('auth.oidcHint') }}</p>
-          <button type="button" class="btn btn-hmi" data-testid="hmi-login-retry" @click="retry">
+          <button
+            v-if="oidcAvailable"
+            type="button"
+            class="btn btn-hmi"
+            :disabled="busy"
+            data-testid="hmi-login-oidc"
+            @click="signInWithOidc"
+          >
+            <i class="bi bi-shield-lock me-1"></i>{{ busy ? t('auth.signingIn') : t('auth.oidcSignIn') }}
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-testid="hmi-login-retry" @click="retry">
             <i class="bi bi-arrow-repeat me-1"></i>{{ t('auth.retry') }}
           </button>
         </template>
@@ -61,7 +71,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { bootstrap, devLogin, fetchAuthConfig } from '@/auth/authService'
+import {
+  beginOidcLogin,
+  bootstrap,
+  completeOidcLogin,
+  devLogin,
+  fetchAuthConfig,
+  isOidcCallbackUrl,
+  isOidcMode,
+} from '@/auth/authService'
 import { identity, sessionExpired } from '@/auth/authStore'
 import type { AuthConfig } from '@/auth/authTypes'
 
@@ -78,16 +96,47 @@ const roleOptions = computed(() => {
   return config.value?.publicDemoEnabled ? [...roles, 'PublicDemo'] : roles
 })
 
+const oidcAvailable = computed(() => isOidcMode(config.value))
+
 onMounted(async () => {
   try {
     config.value = await fetchAuthConfig()
     if (config.value.roles.length > 0 && !config.value.roles.includes(role.value)) {
       role.value = config.value.roles[0]
     }
+    await completeCallbackIfPresent()
   } catch {
     error.value = t('auth.configFailed')
   }
 })
+
+/** Completes the OIDC callback exactly once and cleans the authorization code from the URL. */
+async function completeCallbackIfPresent(): Promise<void> {
+  if (typeof window === 'undefined' || !isOidcCallbackUrl(window.location.href, config.value)) return
+  busy.value = true
+  try {
+    await completeOidcLogin({ config: config.value ?? undefined })
+    const url = new URL(window.location.href)
+    url.search = ''
+    window.history.replaceState({}, document.title, url.toString())
+  } catch {
+    error.value = t('auth.oidcCallbackFailed')
+  } finally {
+    busy.value = false
+  }
+}
+
+/** Starts the standards-based Authorization Code + PKCE redirect. */
+async function signInWithOidc(): Promise<void> {
+  busy.value = true
+  error.value = ''
+  try {
+    await beginOidcLogin({ config: config.value ?? undefined })
+  } catch {
+    error.value = t('auth.oidcFailed')
+    busy.value = false
+  }
+}
 
 async function submit(): Promise<void> {
   busy.value = true

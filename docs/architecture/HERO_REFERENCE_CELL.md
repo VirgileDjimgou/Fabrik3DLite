@@ -42,9 +42,16 @@ CNC (`hero-cnc-machine-v1`):
 - `axis:feed` — feed table advance while `feedActive`.
 - `coolant:nozzle`, `signal:panel-screen`, `signal:stack-light` (+ amber/red).
 
+S60 adds *render-only* detail nodes beside the state-bearing ones (side panels,
+roof/plinth bevels, chamber rails, a thicker door with handle, spindle
+collar/tool/holder, stepped jaws, coolant tank/pump/hose, operator-panel buttons,
+leveling feet, way covers, work lights, a cable chain, `marking:footprint-*` and
+additional safety labels). None of them changes a binding.
+
 Dressing (`hero-cell-dressing-v1`): `motor:chip-conveyor`, `fixture:buffer:1`,
 `fixture:buffer:2`, `signal:worklight:1`, `signal:worklight:2`,
-`anchor:buffer.access`.
+`anchor:buffer.access`. S60 also adds electrical cabinets
+(`cabinet:electrical:*`), painted pedestrian/zone markings and a cell label.
 
 The map from visual node to runtime state and canonical signal is declared in
 `equipment/visuals/referenceCellVisualMap.ts` and enforced by
@@ -78,18 +85,26 @@ mapping, PBR environment lighting and shadows.
 
 ## Measured budgets
 
-Recorded on this development machine (2026-10-01) from the generated files.
-These are static, renderer-independent counts, not GPU frame times.
+Recorded on this development machine from the generated files: the S55 baseline
+was 2026-10-01 and the S60 deepening was re-measured 2026-10-02. These are static,
+renderer-independent counts, not GPU frame times. Draw calls are material
+bindings and are one per mesh here.
 
 | Asset | Level | Meshes | Triangles | Draw calls | Bytes |
 | --- | --- | --- | --- | --- | --- |
-| `hero-cnc-machine-v1` | primary | 37 | 1 004 | 37 | 102 676 |
-| `hero-cnc-machine-v1` | lod1 | 25 | 656 | 25 | 69 200 |
-| `hero-cell-dressing-v1` | primary | 38 | 676 | 38 | 85 160 |
+| `hero-cnc-machine-v1` | primary | 69 | 1 608 | 69 | 174 700 |
+| `hero-cnc-machine-v1` | lod1 | 33 | 620 | 33 | 77 164 |
+| `hero-cell-dressing-v1` | primary | 62 | 1 064 | 62 | 136 032 |
 | `hero-cell-dressing-v1` | lod1 | 30 | 460 | 30 | 63 752 |
 
+For comparison, the S55 baseline was CNC primary 37 / 1 004 / 37 / 102 676 B and
+lod1 25 / 656 / 25 / 69 200 B; dressing primary 38 / 676 / 38 / 85 160 B and lod1
+30 / 460 / 30 / 63 752 B. The dressing LOD1 is intentionally unchanged: it already
+kept only the silhouette, and S60 detail does not belong in the distance level.
+
 Declared budgets: hero CNC primary ≤ 16 000 triangles, LOD1 ≤ 6 000; dressing
-primary ≤ 12 000 triangles, LOD1 ≤ 6 000. Textures: 0 (procedural materials).
+primary ≤ 12 000 triangles, LOD1 ≤ 6 000. Textures: 0 (procedural materials). This
+is a moderate pass within the documented budgets, not 4K/8K asset inflation.
 
 The S49 reference-scene frame-time probe recorded, under headless Chromium
 software rendering, `frames=11 mean=289.38ms p50=283.40ms p95=316.60ms`. This is

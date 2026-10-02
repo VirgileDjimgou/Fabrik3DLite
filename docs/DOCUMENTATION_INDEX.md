@@ -1,6 +1,7 @@
 # Fabrik3D documentation index
 
-Status: 1.0 baseline. This index is the map of the documentation set. Every link below resolves to a
+Status: 1.0 baseline plus completed post-1.0 Roadmap Revisions 2 (S51–S57) and 3 (S58–S64). This
+index is the map of the documentation set. Every link below resolves to a
 file in this repository; broken documentation links fail the `npm run docs:check` gate.
 
 Notation: **implemented** = built and tested; **simulated** = modeled, explicitly training data;
@@ -17,6 +18,9 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 | [1.0 reference sample project](samples/fabrik3d-1.0-reference-project/README.md) | Learner / instructor |
 | [Release notes 1.0](releases/RELEASE_NOTES_1.0.md) | Everyone |
 | [Release notes 1.1](releases/RELEASE_NOTES_1.1.md) | Everyone |
+| [Release notes Revision 3](releases/RELEASE_NOTES_REVISION_3.md) | Everyone |
+| [Flagship demonstration runbook](operations/FLAGSHIP_DEMO.md) | Everyone |
+| [Revision 3 validation evidence](operations/VALIDATION_REVISION_3.md) | Everyone |
 | [Limitations and non-claims](operations/LIMITATIONS.md) | Everyone |
 | [Setup](development/SETUP.md) | Developer |
 | [Testing](TESTING.md) | Developer |
@@ -73,6 +77,7 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 - [Support bundle](operations/SUPPORT_BUNDLE.md)
 - [Observability](operations/OBSERVABILITY.md)
 - [Performance](operations/PERFORMANCE.md)
+- [Deterministic visual testing](operations/VISUAL_TESTING.md)
 - [Failure and recovery matrix](operations/RECOVERY_MATRIX.md)
 - [Security model](operations/SECURITY_MODEL.md)
 - [Threat model](operations/THREAT_MODEL.md)
@@ -99,6 +104,7 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 | [Cell files](architecture/CELL_FILES.md) | Versioned cell schema and migration |
 | [Scenes](architecture/SCENE_PRESETS.md) | Scene preset catalog |
 | [Scenarios](architecture/SCENARIOS.md) | Scenario format and runner |
+| [Real 3D scenario runtime](architecture/SCENARIO_3D_RUNTIME.md) | Scenario→scene binding and host lifecycle |
 | [Step mode](architecture/STEP_MODE.md) | Guided checkpoints |
 | [Faults, timeline, replay](architecture/FAULTS_TIMELINE_REPLAY.md) | Typed faults and replay |
 | [Fault lab](architecture/FAULT_LAB.md) | Overlay fault engine |
@@ -129,6 +135,8 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 - [Validation](operations/VALIDATION.md) — recorded S48 lifecycle transcript
 - [Validation 1.0](operations/VALIDATION_1.0.md) — recorded S50 1.0 gate and lifecycle transcript
 - [Validation post-1.0](operations/VALIDATION_POST_1.0.md) — automated flagship workflow/fixture evidence plus explicitly deferred real-PLC validation
+- [Validation Revision 3](operations/VALIDATION_REVISION_3.md) — S58–S64 automated/visual/hardware/fixture/manual evidence with deferred real PLC
+- [Flagship demonstration runbook](operations/FLAGSHIP_DEMO.md) — deterministic end-to-end product demonstration
 - [TESTING.md](TESTING.md) — test layers and commands
 - [Dependency audit](development/DEPENDENCY_AUDIT.md)
 - [Troubleshooting](development/TROUBLESHOOTING.md)

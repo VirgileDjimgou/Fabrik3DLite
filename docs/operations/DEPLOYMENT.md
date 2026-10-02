@@ -73,8 +73,16 @@ Authentication__Authority=https://idp.example.internal/realms/fabrik3d/
 Authentication__Issuer=https://idp.example.internal/realms/fabrik3d/
 Authentication__Audience=fabrik3d-api
 Authentication__RequireHttpsMetadata=true
+Authentication__Browser__ClientId=fabrik3d-hmi
+Authentication__Browser__RedirectPath=/auth/callback
+Authentication__Browser__PostLogoutRedirectPath=/
 Cors__AllowedOrigins__0=https://fabrik3d.example.internal
 ```
+
+`Authentication__Browser__ClientId` is the **public** SPA client id used by the browser
+Authorization Code + PKCE flow (S63); there is no client secret. The browser discovers the
+authorization/token/end-session endpoints from the authority metadata. See
+[IDENTITY_AND_RBAC.md](../architecture/IDENTITY_AND_RBAC.md#browser-oidc-authorization-code--pkce--s63).
 
 All configuration can also be supplied as environment variables using `Section__Key` (double
 underscore) notation. Secrets (client secrets, signing keys, connection strings) must come from the
@@ -210,11 +218,16 @@ The public demo runs the same images with the `Demo` profile
 
 - the clearly-labelled read-only `PublicDemo` identity is enabled;
 - the support bundle is disabled;
-- the historian is disabled and all connectors stay disabled.
+- the historian is disabled and all connectors stay disabled;
+- browser OIDC (Authorization Code + PKCE) is configured with a public SPA client id (S63);
+- the bounded, audited `Reset Demo` lifecycle is enabled (`Demo__Enabled=true`). It requires the
+  `Operate` permission, is tenant-scoped and removes only simulated demo state (jobs, tasks,
+  simulation sessions, alarms, messages, machine state, control authority and training state). It
+  never removes organizations, memberships, cell templates, mappings or connector configuration.
 
 It is documented here so an operator can see how it differs; do not use the `Demo` profile for
-training-centre production data. Changes in S48 are additive and do not change the service names,
-ports or volume names the demo relies on.
+training-centre production data. Changes in S48 and S63 are additive and do not change the service
+names, ports or volume names the demo relies on.
 
 ## Related documents
 

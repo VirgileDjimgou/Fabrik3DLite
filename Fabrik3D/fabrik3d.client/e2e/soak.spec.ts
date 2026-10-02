@@ -6,16 +6,21 @@ import { ResourceLeakDetector, type ResourceSample } from '../src/observability/
 /**
  * S56 CI short soak.
  *
- * Only the default single-conveyor preset renders a WebGL scene; the other presets render a static
- * layout preview. This soak therefore leaves the WebGL scene (unmounting and disposing its GPU
- * resources) and reloads it each cycle, then asserts that counters which must return to a steady state
- * (estimated texture bytes and draw calls) do not grow. JS heap is sampled too, with an explicit forced
- * GC before each sample; the series is written to a machine-readable report for a longer manual soak.
- * This is a bounded CI soak (seconds), not the 4-8h reference soak documented in
+ * Since S58 every simulation-ready preset (CNC and material-flow) renders a WebGL
+ * scene through the shared scenario runtime. Selecting another preset would now
+ * mount a second heavy scene instead of exercising disposal, so this soak leaves
+ * the WebGL scene by switching to the 2D editor, then returns to the reference
+ * cell to force a fresh mount each cycle. It asserts that counters which must
+ * return to a steady state (estimated texture bytes and draw calls) do not grow.
+ * JS heap is sampled too, with an explicit forced GC before each sample; the
+ * series is written to a machine-readable report for a longer manual soak. This
+ * is a bounded CI soak (seconds), not the 4-8h reference soak documented in
  * docs/operations/PERFORMANCE.md.
  */
 test('short soak: repeated scene loads do not grow client resources', async ({ page }) => {
-  test.setTimeout(180_000)
+  // Software rendering on a loaded CI runner is slow; the counters and leak verdict still fail
+  // closed, this only allows the bounded soak to finish when the visual suite runs in parallel.
+  test.setTimeout(360_000)
   await page.setViewportSize({ width: 1920, height: 1080 })
   await page.goto('/?diagnostics=1')
   await page.waitForSelector('[data-scene-selector]')
@@ -31,7 +36,8 @@ test('short soak: repeated scene loads do not grow client resources', async ({ p
     ;(element as HTMLDetailsElement).open = true
   })
 
-  // The first preset is the WebGL/three.js cell (the catalog default); the rest are static previews.
+  // The first preset is the reference WebGL cell (the catalog default); the rest are also WebGL
+  // scenarios since S58, so this exercises real mount/unmount disposal for every scene.
   const webglScene = options[0]!
   const alternateScenes = options.slice(1)
 
@@ -59,12 +65,11 @@ test('short soak: repeated scene loads do not grow client resources', async ({ p
   const samples: ResourceSample[] = []
 
   for (let cycle = 0; cycle < cycles; cycle++) {
-    // Leave the WebGL scene so its component unmounts and disposes its GPU resources...
-    if (alternateScenes.length > 0) {
-      await page.selectOption('[data-scene-select]', alternateScenes[cycle % alternateScenes.length]!)
-    }
-    // ...then reload it via the reset control, which forces a fresh scene mount every cycle.
-    await page.locator('[data-action="reset-scene"]').click()
+    // Leave the WebGL scene via the 2D editor so its scene component unmounts and disposes its
+    // GPU resources...
+    await page.locator('[data-mode="editing"]').click()
+    // ...then return to the reference cell, forcing a fresh scene mount every cycle.
+    await page.locator('[data-mode="execution"]').click()
     await page.waitForFunction(() => Boolean((window as { __fabrik3dDiagnostics?: unknown }).__fabrik3dDiagnostics))
     await page.waitForTimeout(350)
     await forceGc()

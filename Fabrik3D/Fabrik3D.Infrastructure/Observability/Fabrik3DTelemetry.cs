@@ -44,6 +44,8 @@ public static class Fabrik3DTelemetry
     public const string AuthorityTransitions = "fabrik3d.authority.transitions";
     public const string SimulatorFrameDuration = "fabrik3d.simulator.frame.duration";
     public const string SimulatorDrawCalls = "fabrik3d.simulator.draw.calls";
+    /// <summary>Bounded public-demo resets performed (S63), tagged by outcome.</summary>
+    public const string DemoResets = "fabrik3d.demo.resets";
 
     // ── Span names ──
     public const string ApiRequestSpan = "fabrik3d.http.request";

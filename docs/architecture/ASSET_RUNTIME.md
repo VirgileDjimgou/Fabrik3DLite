@@ -156,10 +156,25 @@ Deterministic, GPU-free evidence is recorded by the S54 tests:
   CNC and dressing packages, asserts the runtime node contract, LOD budgets,
   bounds and license, and proves a tampered hash or missing node is reported
   rather than silently accepted.
+- `s60AssetPipeline.test.ts` (S60) — re-reads the committed, regenerated robot and
+  hero packages and asserts byte-identical TypeScript/generated manifests, the
+  six semantic pivots + `tool:flange`/`tool:tcp` + `gripper:*`, the LOD semantic
+  nodes and triangle reduction, primary/LOD triangle budgets, the declared bounds
+  range and a license that does not copy an OEM name.
 - `cncGlbBinding.test.ts` — binds the generated hero CNC GLB to the authoritative
   `CncMachineVisualState`, reports missing nodes without throwing, and verifies
   the shared runtime acquires the GLB and falls back to the procedural visual on
   load failure.
+- `ScenarioRuntimeHost.test.ts` (S58) — acquires one visual per scenario cell
+  equipment instance from the shared runtime, releases them deterministically on
+  switch/dispose and proves the resource count stays bounded across repeated
+  scenario switches. `materialFlowVisuals.test.ts` registers the procedural
+  scenario assets idempotently and disposes their instance-owned geometry.
+- `ScenarioCellAnimator.test.ts` / `cellComposition.test.ts` (S59) — the animator
+  mutates only instance-local procedural materials (created per
+  `createMaterialFlowVisual` call, so no cross-instance sharing), and the
+  composition tests prove the S59 cells resolve entirely from procedural visuals
+  through the shared runtime.
 
 Visual regression (`npm --prefix Fabrik3D/fabrik3d.client run test:visual`, 26
 tests) passed without snapshot changes after the migration. The S49 reference

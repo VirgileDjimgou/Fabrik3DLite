@@ -27,11 +27,17 @@ Roles in order of capability (see the identity document for the authoritative ma
 Operational rules:
 
 - Create accounts in your OIDC provider, not in Fabrik3D. Fabrik3D validates tokens and maps roles.
+- Register a **public** SPA client for the HMI/simulator and set
+  `Authentication:Browser:ClientId`; the browser uses Authorization Code + PKCE (S63) and no client
+  secret is stored in Fabrik3D. Add the deployment origin to `Cors:AllowedOrigins`.
 - Never share the administrator account for routine operation.
 - The `Developer` and `Test` identity modes are refused in production-like profiles; a development
   signing key in production is refused at startup.
 - Cross-organization access is rejected server-side without leaking object existence. Use distinct
   organizations/classes for distinct cohorts.
+- The bounded `Reset Demo` operation exists only in the explicit `Demo` profile
+  (`Demo:Enabled=true`), requires the `Operate` permission and removes only simulated demo state.
+  It is never available in a production profile.
 
 ## Daily operation
 

@@ -18,7 +18,7 @@
   "visual": {
     "glb": {
       "path": "model.glb",
-      "sha256": "bab161f9160fb383c458dead4016635f59c78514b7a38f9167bb0d8385fe4662"
+      "sha256": "542fe3a69f4c974d62d6c93569697809f653317befae3bc8e2b4a9d9ff56579c"
     },
     "lods": [
       {
@@ -96,6 +96,6 @@
   },
   "integrity": {
     "path": "model.glb",
-    "sha256": "bab161f9160fb383c458dead4016635f59c78514b7a38f9167bb0d8385fe4662"
+    "sha256": "542fe3a69f4c974d62d6c93569697809f653317befae3bc8e2b4a9d9ff56579c"
   }
 }

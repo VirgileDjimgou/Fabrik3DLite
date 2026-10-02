@@ -30,6 +30,18 @@
   --hmi-danger: #b42318;
   --hmi-focus: #005fcc;
   --hmi-touch-target: 2.75rem;
+
+  /* ── Information hierarchy (S61) ──
+     A quiet neutral baseline keeps emphasis for operator-relevant state. The scale is
+     deliberately small: primary state is larger and heavier, secondary detail is muted. */
+  --hmi-font-primary: 1.5rem;
+  --hmi-font-secondary: 1.05rem;
+  --hmi-font-label: 0.72rem;
+  --hmi-font-detail: 0.85rem;
+  --hmi-space-1: 0.25rem;
+  --hmi-space-2: 0.5rem;
+  --hmi-space-3: 0.75rem;
+  --hmi-space-4: 1rem;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -151,6 +163,95 @@ textarea:focus-visible, [tabindex]:focus-visible, .btn:focus-visible {
 .hmi-gauge { text-align: center; }
 .hmi-gauge svg { max-width: 100%; height: auto; }
 
+/* ── Information hierarchy (S61) ──
+   Reusable, token-driven primitives so the five operator surfaces share one hierarchy language
+   instead of ad-hoc font sizes. Colour still communicates status; these classes only rank
+   information. */
+.hmi-page-title { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em; margin: 0; }
+.hmi-section-title { font-size: 0.95rem; font-weight: 700; margin: 0; }
+.hmi-label {
+  font-size: var(--hmi-font-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--hmi-text-muted);
+}
+.hmi-value { font-size: var(--hmi-font-secondary); font-weight: 600; color: var(--hmi-text); }
+.hmi-value--primary { font-size: var(--hmi-font-primary); font-weight: 700; line-height: 1.15; }
+.hmi-detail { font-size: var(--hmi-font-detail); color: var(--hmi-text-muted); }
+.hmi-metric { display: flex; flex-direction: column; gap: var(--hmi-space-1); min-width: 0; }
+.hmi-metric .hmi-value { overflow-wrap: anywhere; }
+/* Long ids, scenario names and messages truncate gracefully without hiding critical state. */
+.hmi-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.hmi-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.hmi-card { background: var(--hmi-surface); border: 1px solid var(--hmi-border); border-radius: var(--hmi-radius); box-shadow: var(--hmi-shadow); }
+.hmi-card__header {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--hmi-space-2);
+  padding: var(--hmi-space-2) var(--hmi-space-3);
+  border-bottom: 1px solid var(--hmi-border);
+  font-weight: 700;
+}
+.hmi-card__body { padding: var(--hmi-space-3); }
+/* Primary status strip: the first thing an operator reads on a surface. */
+.hmi-status-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--hmi-space-3);
+  padding: var(--hmi-space-3);
+  border: 1px solid var(--hmi-border);
+  border-left: 4px solid var(--hmi-icon-color);
+  border-radius: var(--hmi-radius);
+  background: var(--hmi-surface);
+  box-shadow: var(--hmi-shadow);
+}
+.hmi-status-strip--success { border-left-color: var(--hmi-success); }
+.hmi-status-strip--warning { border-left-color: var(--hmi-warning); }
+.hmi-status-strip--fault { border-left-color: var(--hmi-danger); }
+.hmi-status-strip--offline { border-left-color: var(--hmi-text-muted); }
+/* Compact teach-pendant-inspired robot surface (S61). Informative, not decorative. */
+.hmi-pendant { display: grid; gap: var(--hmi-space-3); }
+.hmi-pendant__joints { display: grid; gap: var(--hmi-space-2); }
+.hmi-pendant__joint {
+  display: grid; grid-template-columns: 2.5rem 1fr auto; align-items: center; gap: var(--hmi-space-2);
+  padding: var(--hmi-space-2);
+  border: 1px solid var(--hmi-border);
+  border-radius: var(--hmi-radius);
+  background: var(--hmi-surface);
+}
+.hmi-pendant__joint-name { font-weight: 700; }
+.hmi-pendant__joint-angle { font-variant-numeric: tabular-nums; }
+.hmi-pendant__joint-limits { font-size: var(--hmi-font-label); color: var(--hmi-text-muted); }
+.hmi-pendant__jog { display: flex; gap: var(--hmi-space-2); }
+.hmi-pendant__jog .btn-hmi { min-width: var(--hmi-touch-target); min-height: var(--hmi-touch-target); font-size: 1.1rem; }
+/* Step hierarchy for the Job Composer. */
+.hmi-steps { display: flex; flex-wrap: wrap; gap: var(--hmi-space-2); list-style: none; padding: 0; margin: 0; }
+.hmi-step {
+  display: flex; align-items: center; gap: var(--hmi-space-2);
+  padding: var(--hmi-space-2) var(--hmi-space-3);
+  border: 1px solid var(--hmi-border);
+  border-radius: 999px;
+  background: var(--hmi-surface);
+  color: var(--hmi-text-muted);
+  font-size: var(--hmi-font-detail);
+  font-weight: 600;
+}
+.hmi-step--active { border-color: var(--hmi-icon-color); color: var(--hmi-text); box-shadow: var(--hmi-shadow); }
+.hmi-step__index {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--hmi-bg); color: var(--hmi-text-muted); font-size: var(--hmi-font-label);
+}
+.hmi-step--active .hmi-step__index { background: var(--hmi-icon-color); color: #fff; }
+/* Slot grid: touch-friendly selection with a clear occupied state. */
+.hmi-slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: var(--hmi-space-2); }
+.hmi-slot {
+  min-height: var(--hmi-touch-target);
+  border: 1px solid var(--hmi-border);
+  border-radius: var(--hmi-radius);
+  background: var(--hmi-surface);
+  color: var(--hmi-text);
+  font-weight: 600;
+}
+.hmi-slot[aria-pressed='true'] { background: var(--hmi-icon-color); border-color: var(--hmi-icon-color); color: #fff; }
+
 /* ── Responsive ── */
 @media (max-width: 991.98px) {
   .hmi-status-panel { border-left: none; border-top: 1px solid var(--hmi-border); }
@@ -160,4 +261,7 @@ textarea:focus-visible, [tabindex]:focus-visible, .btn:focus-visible {
   .hmi-tile .bi { font-size: 1.75rem; }
   .hmi-tile span { font-size: 0.8rem; }
   .hmi-bottom-nav { flex-wrap: wrap; }
+  .hmi-value--primary { font-size: 1.25rem; }
+  .hmi-pendant__joint { grid-template-columns: 2.25rem 1fr; }
+  .hmi-pendant__joint-limits { grid-column: 2; }
 }

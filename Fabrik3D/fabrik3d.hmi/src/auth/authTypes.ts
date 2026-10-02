@@ -6,12 +6,26 @@
  * source of truth: every field here is only ever a reflection of a server response.
  */
 
+/** Public browser OIDC settings discovered from the server (S63); never contains a secret. */
+export interface OidcBrowserConfig {
+  authority: string
+  clientId: string
+  scopes: string[]
+  redirectPath: string
+  postLogoutRedirectPath?: string | null
+  endSessionEnabled: boolean
+}
+
 export interface AuthConfig {
   mode: string
   developmentAuth: boolean
   publicDemoEnabled: boolean
   roles: string[]
   warning?: string | null
+  /** Present only when the server is in Oidc mode with a configured public browser client. */
+  oidc?: OidcBrowserConfig | null
+  /** True when this deployment is an explicit public-demo profile offering the bounded reset. */
+  demoResetEnabled?: boolean
 }
 
 export interface AuthIdentity {

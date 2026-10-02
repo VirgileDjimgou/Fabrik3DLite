@@ -49,6 +49,13 @@ public sealed class Fabrik3DAuthenticationOptions
     /// <summary>Enables the clearly-labelled public/demo read-only role.</summary>
     public bool PublicDemoEnabled { get; set; }
 
+    /// <summary>
+    /// Public browser OIDC (Authorization Code + PKCE) settings discovered by the HMI and simulator.
+    /// Only standards-oriented, non-secret values are configured here; the browser fetches provider
+    /// metadata from the authority. No custom identity provider or provider-specific logic exists.
+    /// </summary>
+    public BrowserOidcOptions Browser { get; set; } = new();
+
     /// <summary>Validate the issuer claim. Disabled only for the explicit local emergency mode.</summary>
     public bool ValidateIssuer { get; set; } = true;
 
@@ -94,5 +101,45 @@ public sealed class Fabrik3DAuthenticationOptions
         public const string Development = "Development";
         public const string Test = "Test";
         public const string None = "None";
+    }
+}
+
+/// <summary>
+/// Public browser OIDC settings used by the SPA Authorization Code + PKCE flow. The client id is
+/// public for a registered SPA client; no client secret exists here by design (public clients use
+/// PKCE instead of a secret). These values are safe to return from <c>GET /api/auth/config</c>.
+/// </summary>
+public sealed class BrowserOidcOptions
+{
+    /// <summary>Public client id registered with the OIDC authority for the browser application.</summary>
+    public string? ClientId { get; set; }
+
+    /// <summary>Requested scopes. <c>openid</c> is always added; the default requests profile too.</summary>
+    public string[] Scopes { get; set; } = ["openid", "profile"];
+
+    /// <summary>Same-origin path that receives the authorization-code callback.</summary>
+    public string RedirectPath { get; set; } = "/auth/callback";
+
+    /// <summary>Optional same-origin path used after RP-initiated logout.</summary>
+    public string? PostLogoutRedirectPath { get; set; }
+
+    /// <summary>True (default) when RP-initiated logout should be attempted when the provider supports it.</summary>
+    public bool EndSessionEnabled { get; set; } = true;
+
+    /// <summary>True when a browser client id and an authority are both configured.</summary>
+    public bool IsConfigured(string? authority) =>
+        !string.IsNullOrWhiteSpace(ClientId) && !string.IsNullOrWhiteSpace(authority);
+
+    /// <summary>Normalized scopes: trimmed, de-duplicated, ordinal, always including <c>openid</c>.</summary>
+    public IReadOnlyList<string> NormalizedScopes()
+    {
+        var scopes = new List<string> { "openid" };
+        foreach (var scope in Scopes ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(scope)) continue;
+            var trimmed = scope.Trim();
+            if (!scopes.Contains(trimmed, StringComparer.Ordinal)) scopes.Add(trimmed);
+        }
+        return scopes;
     }
 }

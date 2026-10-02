@@ -1,55 +1,27 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './support/deterministic'
 
-const API_BASE_URL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:7249'
-
+/**
+ * Industrial HMI visual hierarchy (S62 deterministic protocol).
+ *
+ * The workspace is rendered from an explicit in-test seed instead of a live orchestrator, so the
+ * machine-status sidebar no longer has to be masked: the whole surface is reproducible and no
+ * snapshot depends on a previous run or on shared database state.
+ */
 test.describe('industrial HMI visual hierarchy', () => {
   for (const viewport of [{ name: 'panel', width: 1280, height: 800 }, { name: 'laptop', width: 1024, height: 768 }]) {
-    test(`${viewport.name} preserves neutral navigation hierarchy`, async ({ page, request }) => {
+    test(`${viewport.name} preserves neutral navigation hierarchy`, async ({ page, hmi }) => {
       await page.setViewportSize(viewport)
+      await hmi.reset()
+      await hmi.seed('Operator')
+      await hmi.goto('/', '[data-testid="hmi-overview"]')
 
-      // Authenticate with a real Test-mode operator token before the app boots. The login surface
-      // itself is covered by component tests; here we validate the authenticated workspace.
-      const tokenResponse = await request.post(`${API_BASE_URL}/api/auth/dev-token`, {
-        data: { role: 'Operator', subject: 'e2e-operator' },
-      })
-      expect(tokenResponse.ok()).toBeTruthy()
-      const token = await tokenResponse.json() as { accessToken: string; mode: string }
-      // The seeded identity mirrors the server-resolved organization (S43) so the workspace renders
-      // the same context label it would after a real /api/auth/me refresh.
-      const seededIdentity = JSON.stringify({
-        subject: 'e2e-operator',
-        name: 'e2e-operator',
-        roles: ['Operator'],
-        mode: token.mode,
-        organizationId: 'default',
-        organizationName: 'Default organization',
-      })
-
-      await page.addInitScript(([accessToken, identity]) => {
-        sessionStorage.setItem('fabrik3d.auth.token', accessToken)
-        sessionStorage.setItem('fabrik3d.auth.identity', identity)
-      }, [token.accessToken, seededIdentity] as const)
-
-      await page.goto('/')
       await expect(page.getByRole('link', { name: /Select job|Selectionner|Auftrag zum Starten/ })).toBeVisible()
-      // The header renders the live SignalR connection state. This test runs against a live
-      // orchestrator, so wait for the steady connected state before capturing the baseline; without
-      // this the screenshot can race the transport and alternate between Connected/Disconnected.
-      await expect(page.getByTestId('hmi-connection-badge')).toHaveClass(/hmi-status--success/)
+      // The hub is deliberately offline in the deterministic fixture; the badge reflects that
+      // stable state instead of racing transport reconnect.
+      await expect(page.getByTestId('hmi-connection-badge')).toBeVisible()
 
-      // Screenshot baselines are platform-specific (the committed ones are
-      // win32). Compare them on the platform that owns the baseline, or when
-      // a developer explicitly opts in; other platforms still validate that
-      // the HMI renders the expected navigation.
-      test.skip(process.platform !== 'win32' && process.env.E2E_VISUAL !== '1', 'visual baselines are win32-only')
-      // The machine-status sidebar is driven by live orchestration data (tempo, robot/CNC state,
-      // phase) which differs between a clean and a used database. Mask it so the baseline captures
-      // the deterministic navigation hierarchy instead of ambient machine state.
-      await expect(page).toHaveScreenshot(`hmi-home-${viewport.name}.png`, {
-        fullPage: true,
-        animations: 'disabled',
-        mask: [page.getByTestId('hmi-machine-status')],
-      })
+      await hmi.freeze()
+      await hmi.screenshot(`hmi-home-${viewport.name}.png`)
     })
   }
 })
