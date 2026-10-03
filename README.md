@@ -29,7 +29,10 @@ in [VALIDATION_REVISION_3.md](./docs/operations/VALIDATION_REVISION_3.md)). Star
 [limitations/non-claims](./docs/operations/LIMITATIONS.md) and the
 [1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md) for depth.
 
-**Revision 3 (S58–S64) and Revision 4 (S65–S71) are complete; Revision 4 is validated.** Revision 3
+**Revision 3 (S58–S64) and Revision 4 (S65–S71) are complete; Revision 4 is validated. Revision 5
+(S72–S76) is planned and not yet validated; it targets procedural surface textures/grounding,
+anchor-driven modular assembly, industrial lighting/post-processing, state-driven equipment motion and
+a measured Revision 5 validation.** Revision 3
 adds the real 3D scenario runtime, scenario-specific cells, robot/cell visual fidelity, HMI operator
 polish, deterministic visual QA and GPU evidence, browser OIDC with public-demo isolation, and this
 flagship product surface. Revision 4 adds scenario-specific generated GLB assets, real six-axis robot

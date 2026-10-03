@@ -499,6 +499,21 @@
       "completedAt": "2026-10-02T23:12:08.670Z",
       "summary": "S71 Revision 4 validation and flagship demonstration: added a pure scenarioStageCapture plan helper and a ?stage=<stageId> hook on MaterialFlowScenarioHost that drives the existing S67 guided process to each declared stage, then produced 21 reproducible execution-stage captures (five stages each for palletizing, vision sorting, assembly/inspection and safety training plus CNC running) via demo-11-execution-stages.spec.ts, failing closed when a stage is not reached; re-ran the real hardware GPU benchmark after final assets and recorded the measured Revision 3 vs Revision 4 comparison (triangles, draw calls, load time, FPS and frame p50/p95/p99 on the documented Intel UHD reference host, honestly reporting increased fidelity and mixed FPS with no blanket improvement claim); finalized docs/operations/VALIDATION_REVISION_4.md and docs/releases/RELEASE_NOTES_REVISION_4.md (draft label removed, validation linked) and updated the docs gate, documentation index, roadmap, limitations and flagship media README. No new architecture, protocol, database, scenario family or HMI module; real PLC/PLCSIM, safety certification and OEM emulation remain explicitly deferred.",
       "evidence": "npm run sprint:validate => Roadmap validation passed: 71 sprints, 70 completed, active=S71; focused client tests (scenarioStageCapture.test.ts + MaterialFlowScenarioHost.test.ts) => 2 files 8 passed; npm --prefix Fabrik3D/fabrik3d.client run type-check => passed; dotnet build Fabrik3D/Fabrik3D.slnx => 0 warnings 0 errors; dotnet test Fabrik3D/Fabrik3D.slnx --no-build => Contracts 5/5, Infrastructure.IntegrationTests 16/16, Server.Tests 576/576, 0 failed (597 total; includes FlagshipWorkflowIntegrationTests and FlagshipDemoHistorianTests); npm run contracts:check against the real Fabrik3D.ServerTaskManager host non-blocking on 127.0.0.1:7249 (Development, disposable Mongo Fabrik3D_S71_Contracts, swagger polled, server stopped, port released) => [contracts] verified, exit 0; npm --prefix Fabrik3D/fabrik3d.client run test => 140 files 794 passed; run build => built; run test:visual => 40 passed; npm --prefix Fabrik3D/fabrik3d.hmi run type-check => passed; run test => 29 files 123 passed; run build (VITE_ORCHESTRATOR_URL=http://127.0.0.1:7249) => built; run test:e2e with a live Testing orchestrator (disposable Mongo Fabrik3D_S71_E2E) => 24 passed 0 failed incl. the 2 flagship-demo flows; execution captures: client preview on 127.0.0.1:4173 then npx playwright test --config=playwright.demo.config.ts demo-11-execution-stages.spec.ts --workers=1 => 21 passed (6.9m), all five flagship scenarios plus CNC, stage assertions data-execution-stage-reached=true fail-closed; npm --prefix Fabrik3D/fabrik3d.client run benchmark:gpu (headed) => 6 runs acceleration=hardware gpuEvidence=true, renderer ANGLE Intel UHD D3D11 1920x1080 0 textures, artifact test-results/perf/gpu-benchmark.json, Revision 3 vs Revision 4 comparison recorded in VALIDATION_REVISION_4.md; npm run docs:check => 29 required documents present, 462 links resolved; node --test scripts/tests/documentation.test.mjs scripts/tests/product-coherence.test.mjs scripts/tests/repository-policy.test.mjs scripts/tests/security-scan.test.mjs => 20 passed 0 failed; npm run audit => 0 npm vulnerabilities and no vulnerable NuGet packages; npm run security:scan => passed 1267 files; npm run repo:policy => passed 1258 files (mode=tracked); npm run repo:policy:changed => passed 216 files (mode=changed); node scripts/lifecycle/verify-config.mjs => passed for Fabrik3D/compose.production.yaml; docker compose -f Fabrik3D/compose.production.yaml config --quiet => exit 0."
+    },
+    "S72": {
+      "status": "planned"
+    },
+    "S73": {
+      "status": "planned"
+    },
+    "S74": {
+      "status": "planned"
+    },
+    "S75": {
+      "status": "planned"
+    },
+    "S76": {
+      "status": "planned"
     }
   }
 }

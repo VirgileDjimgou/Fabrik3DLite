@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "sprintCeiling": 71,
+  "version": 5,
+  "sprintCeiling": 76,
   "name": "Fabrik3D educational digital twin roadmap",
   "vision": "Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts.",
   "sprints": [
@@ -639,6 +639,51 @@
       "file": "docs/roadmap/sprints/S71-revision4-validation-demo.md",
       "dependsOn": [
         "S70"
+      ]
+    },
+    {
+      "id": "S72",
+      "phase": 16,
+      "title": "Procedural surface textures and equipment grounding",
+      "file": "docs/roadmap/sprints/S72-procedural-surfaces-grounding.md",
+      "dependsOn": [
+        "S71"
+      ]
+    },
+    {
+      "id": "S73",
+      "phase": 16,
+      "title": "Anchor-driven modular assembly and equipment attachment",
+      "file": "docs/roadmap/sprints/S73-anchor-driven-assembly.md",
+      "dependsOn": [
+        "S72"
+      ]
+    },
+    {
+      "id": "S74",
+      "phase": 16,
+      "title": "Industrial lighting, atmosphere and quality-gated post-processing",
+      "file": "docs/roadmap/sprints/S74-lighting-atmosphere-postprocessing.md",
+      "dependsOn": [
+        "S73"
+      ]
+    },
+    {
+      "id": "S75",
+      "phase": 16,
+      "title": "State-driven equipment motion and instanced scene detail",
+      "file": "docs/roadmap/sprints/S75-state-driven-motion-instancing.md",
+      "dependsOn": [
+        "S74"
+      ]
+    },
+    {
+      "id": "S76",
+      "phase": 16,
+      "title": "Revision 5 validation and flagship demonstration",
+      "file": "docs/roadmap/sprints/S76-revision5-validation-demo.md",
+      "dependsOn": [
+        "S75"
       ]
     }
   ]
