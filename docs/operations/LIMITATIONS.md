@@ -1,7 +1,10 @@
 # Limitations and non-claims
 
-Status: 1.0 baseline. This is the honest, consolidated list of what Fabrik3D is **not**. Claims
-elsewhere in the documentation are consistent with this list.
+Status: updated for the **completed and validated Revision 4** (S65-S71). The documentation set keeps
+four release eras explicitly distinguished and never rewrites their history: the immutable **1.0
+baseline** (S01-S50), completed **Roadmap Revision 2** (S51-S57), completed **Roadmap Revision 3**
+(S58-S64) and the **validated Revision 4** (S65-S71). This is the honest, consolidated list of what
+Fabrik3D is **not**. Claims elsewhere in the documentation are consistent with this list.
 
 ## Not a safety or certified system
 
@@ -77,11 +80,24 @@ elsewhere in the documentation are consistent with this list.
 
 ## Roadmap revision boundary
 
-S50 remains the completed Fabrik3D 1.0 baseline. Explicitly approved Roadmap Revision 2 adds planned
-post-1.0 product-hardening work in S51-S57 without modifying S01-S50 history or making those capabilities
-part of the 1.0 release. Roadmap Revision 2 is complete at S57; real PLC/PLCSIM proof is deferred until
-the required licensed environment or physical controller is available. New features, scenes,
-protocols, billing, marketplace and certification work remain out of scope for the 1.0 baseline.
+The four release eras are distinct and historical evidence is never rewritten:
+
+- **1.0 baseline (S01-S50, immutable).** The original 50-sprint roadmap and its validation evidence.
+- **Roadmap Revision 2 (S51-S57, complete, tagged `v1.1.0`).** Post-1.0 orchestration, operator HMI,
+  shared asset runtime, hero cell, resilience and security/deployment hardening.
+- **Roadmap Revision 3 (S58-S64, complete).** Real 3D scenario runtime, scenario cells, visual
+  fidelity, deterministic visual QA/GPU evidence, browser OIDC/demo isolation and the flagship demo.
+- **Roadmap Revision 4 (S65-S71, complete, validated by S71).** Scenario-specific generated GLB
+  assets, real six-axis scenario motion, deeper deterministic process flows, shared PBR
+  materials/factory environment, measured cell composition/cameras and the measured release
+  validation ([VALIDATION_REVISION_4.md](VALIDATION_REVISION_4.md)). Revision 4 is a visual and
+  scenario-fidelity revision: it adds no protocol, product, database or safety capability, and the
+  measured Revision 3 → Revision 4 comparison claims no blanket performance improvement.
+
+S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 remain completed Revision 2 work and S58-S71
+remain completed Revision 3/4 work. Real PLC/PLCSIM proof is deferred until the required licensed
+environment or physical controller is available. New features, scenes, protocols, billing, marketplace
+and certification work remain out of scope for all four eras.
 
 ## Related documents
 

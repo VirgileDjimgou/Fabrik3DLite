@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-emergency-stop-v1",
+  "equipmentDefinitionId": "emergency-stop",
+  "category": "safety-device",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.35,
+    "y": 1.16,
+    "z": 0.35
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "6d788c6112f3714f9b1f9bd523b8a58ab99eb172208cd871f96b9ac81d24814f"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "fae6b3895fc97127c7ab42087e7ed4c2866966820220fe3ce405ffad498c22df"
+        },
+        "triangleBudget": 500
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-estop-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.35,
+      "y": 1.15,
+      "z": 0.35
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "signal:estop",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "dark-steel",
+    "signal-red"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "f4f706cfd9d31eed310659666c5455f7e557f643324ebc0eb02b0daa25f489ff"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "6d788c6112f3714f9b1f9bd523b8a58ab99eb172208cd871f96b9ac81d24814f"
+  }
+}

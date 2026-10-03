@@ -108,6 +108,11 @@ export interface SceneCameraFraming {
   target: Vector3Meters
 }
 
+/** S69 derived camera views. `overview` is the single primary default. */
+export type CellCameraView = 'overview' | 'operator' | 'workcell'
+
+export type CellCameraPresets = Record<CellCameraView, SceneCameraFraming>
+
 export interface CellLayoutInput {
   footprints: readonly CellFootprint[]
   requirements?: Partial<CellLayoutRequirements>
@@ -122,11 +127,25 @@ export interface CellLayoutResult {
   requirements: CellLayoutRequirements
   extents: CellExtents
   floorSizeMeters: { x: number; z: number }
+  /** Primary default framing (equal to `cameras.overview`). */
   camera: SceneCameraFraming
+  /** S69 derived overview / operator / workcell views. */
+  cameras: CellCameraPresets
   diagnostics: CellLayoutDiagnostic[]
 }
 
 const EPSILON = 1e-6
+
+/** Renderer perspective values used to verify that a camera really contains the cell. */
+export const DEFAULT_CAMERA_FOV_DEGREES = 50
+export const DEFAULT_CAMERA_ASPECT_RATIO = 16 / 9
+const CAMERA_NEAR_METERS = 0.1
+/**
+ * The camera position is rounded to millimetres for deterministic data. The
+ * rounding can shorten the vector by up to ~1.5 mm, so the derived distance adds
+ * this allowance to keep the rounded camera inside the strict framing distance.
+ */
+const CAMERA_ROUNDING_ALLOWANCE_METERS = 0.01
 
 /** Conservative AABB for a footprint, expanding for any Y-rotation. */
 export function footprintBounds(footprint: CellFootprint): AxisAlignedBounds {
@@ -223,24 +242,142 @@ export interface CameraDerivationOptions {
   cameraMarginMeters?: number
   /** Vertical fraction of the tallest equipment used as the look-at height. */
   targetHeightRatio?: number
+  /** Explicit look-at height in metres; overrides `targetHeightRatio`. */
+  targetHeightMeters?: number
+}
+
+export interface CameraContainmentOptions {
+  fovDegrees?: number
+  aspectRatio?: number
+  nearMeters?: number
+}
+
+export interface CameraContainmentResult {
+  contains: boolean
+  minDepthMeters: number
+  maxAbsNdcX: number
+  maxAbsNdcY: number
+}
+
+function normalized(value: Vector3Meters): Vector3Meters {
+  const length = Math.hypot(value.x, value.y, value.z) || 1
+  return { x: value.x / length, y: value.y / length, z: value.z / length }
+}
+
+/** The eight Y-up corners of the measured extents box. */
+function extentsCorners(extents: CellExtents): Vector3Meters[] {
+  const top = Math.max(extents.maxHeightMeters, 0.01)
+  const corners: Vector3Meters[] = []
+  for (const x of [extents.minX, extents.maxX]) {
+    for (const y of [0, top]) {
+      for (const z of [extents.minZ, extents.maxZ]) corners.push({ x, y, z })
+    }
+  }
+  return corners
+}
+
+/**
+ * Camera basis (right, up) in world space for a unit forward direction
+ * (camera → target). `right = normalize(cross(worldUp, forward))`,
+ * `up = cross(right, forward)`.
+ */
+function cameraBasis(forward: Vector3Meters): { right: Vector3Meters; up: Vector3Meters } {
+  const rightLength = Math.hypot(forward.z, forward.x) || 1
+  const right = { x: forward.z / rightLength, y: 0, z: -forward.x / rightLength }
+  // up = cross(forward, right) so it points upward for a Y-up world.
+  const up = {
+    x: forward.y * right.z - forward.z * right.y,
+    y: forward.z * right.x - forward.x * right.z,
+    z: forward.x * right.y - forward.y * right.x,
+  }
+  return { right, up }
+}
+
+/**
+ * S69: strict distance needed so every corner of the measured box stays inside a
+ * perspective frustum looking from `target` towards the camera along `direction`.
+ * This is the geometrically correct framing distance, accounting for the
+ * renderer's vertical FOV and viewport aspect ratio.
+ */
+export function framingDistanceForContainment(
+  extents: CellExtents,
+  direction: Vector3Meters,
+  target: Vector3Meters,
+  options: CameraContainmentOptions = {},
+): number {
+  const unit = normalized(direction)
+  const fov = options.fovDegrees ?? DEFAULT_CAMERA_FOV_DEGREES
+  const aspect = options.aspectRatio ?? DEFAULT_CAMERA_ASPECT_RATIO
+  const tanHalf = Math.tan((fov * Math.PI) / 360)
+  const { right, up } = cameraBasis({ x: -unit.x, y: -unit.y, z: -unit.z })
+  let required = 0
+  for (const corner of extentsCorners(extents)) {
+    const v = { x: corner.x - target.x, y: corner.y - target.y, z: corner.z - target.z }
+    const along = v.x * unit.x + v.y * unit.y + v.z * unit.z
+    const rx = v.x * right.x + v.y * right.y + v.z * right.z
+    const ry = v.x * up.x + v.y * up.y + v.z * up.z
+    const needed = along + Math.max(Math.abs(rx) / (tanHalf * aspect), Math.abs(ry) / tanHalf)
+    required = Math.max(required, needed)
+  }
+  return Math.max(0, required)
+}
+
+/**
+ * Deterministic test that a camera frame contains the measured cell bounds. It
+ * projects the eight extents corners into normalized device coordinates using
+ * the renderer's perspective parameters.
+ */
+export function cameraContainsExtents(
+  camera: SceneCameraFraming,
+  extents: CellExtents,
+  options: CameraContainmentOptions = {},
+): CameraContainmentResult {
+  const fov = options.fovDegrees ?? DEFAULT_CAMERA_FOV_DEGREES
+  const aspect = options.aspectRatio ?? DEFAULT_CAMERA_ASPECT_RATIO
+  const near = options.nearMeters ?? CAMERA_NEAR_METERS
+  const tanHalf = Math.tan((fov * Math.PI) / 360)
+  const forward = normalized({
+    x: camera.target.x - camera.position.x,
+    y: camera.target.y - camera.position.y,
+    z: camera.target.z - camera.position.z,
+  })
+  const { right, up } = cameraBasis(forward)
+  let contains = true
+  let minDepthMeters = Number.POSITIVE_INFINITY
+  let maxAbsNdcX = 0
+  let maxAbsNdcY = 0
+  for (const corner of extentsCorners(extents)) {
+    const v = { x: corner.x - camera.position.x, y: corner.y - camera.position.y, z: corner.z - camera.position.z }
+    const depth = v.x * forward.x + v.y * forward.y + v.z * forward.z
+    minDepthMeters = Math.min(minDepthMeters, depth)
+    if (!(depth > near)) { contains = false; continue }
+    const ndcX = (v.x * right.x + v.y * right.y + v.z * right.z) / (depth * tanHalf * aspect)
+    const ndcY = (v.x * up.x + v.y * up.y + v.z * up.z) / (depth * tanHalf)
+    maxAbsNdcX = Math.max(maxAbsNdcX, Math.abs(ndcX))
+    maxAbsNdcY = Math.max(maxAbsNdcY, Math.abs(ndcY))
+    if (Math.abs(ndcX) > 1 || Math.abs(ndcY) > 1) contains = false
+  }
+  if (!Number.isFinite(minDepthMeters)) minDepthMeters = 0
+  return { contains, minDepthMeters, maxAbsNdcX, maxAbsNdcY }
 }
 
 /**
  * Camera framing derived from measured extents. The direction is preserved
  * (default three-quarter industrial view) and the distance is the strict
- * framing distance, so the cell always fits the viewport.
+ * framing distance, so the cell always fits the viewport even after rounding.
  */
 export function deriveCameraPreset(extents: CellExtents, options: CameraDerivationOptions = {}): SceneCameraFraming {
-  const raw = options.direction ?? { x: 0.55, y: 0.5, z: 0.67 }
-  const length = Math.hypot(raw.x, raw.y, raw.z) || 1
-  const direction = { x: raw.x / length, y: raw.y / length, z: raw.z / length }
+  const direction = normalized(options.direction ?? { x: 0.55, y: 0.5, z: 0.67 })
   const margin = options.cameraMarginMeters ?? 1
-  const distance = framingDistanceMeters(extents, margin)
   const target: Vector3Meters = {
     x: round3(extents.centerX),
-    y: round3(Math.max(extents.maxHeightMeters * (options.targetHeightRatio ?? 0.45), 0.6)),
+    y: round3(options.targetHeightMeters ?? Math.max(extents.maxHeightMeters * (options.targetHeightRatio ?? 0.45), 0.6)),
     z: round3(extents.centerZ),
   }
+  const distance = Math.max(
+    framingDistanceMeters(extents, margin),
+    framingDistanceForContainment(extents, direction, target),
+  ) + margin + CAMERA_ROUNDING_ALLOWANCE_METERS
   return {
     position: {
       x: round3(target.x + direction.x * distance),
@@ -249,6 +386,50 @@ export function deriveCameraPreset(extents: CellExtents, options: CameraDerivati
     },
     target,
   }
+}
+
+/**
+ * S69: derives the three camera views from the same measured extents.
+ *
+ * - `overview` is the primary default and contains the full measured bounds.
+ * - `operator` looks in from the +Z operator side at eye height.
+ * - `workcell` focuses on the robot and its working area (a closer shot).
+ *
+ * All three are pure functions of the extents and declared footprints and are
+ * therefore deterministic; no render frame, mesh or runtime state is read.
+ */
+export function deriveCameraPresets(
+  extents: CellExtents,
+  footprints: readonly CellFootprint[] = [],
+  options: CameraDerivationOptions = {},
+): CellCameraPresets {
+  const margin = options.cameraMarginMeters ?? 1
+  const overview = deriveCameraPreset(extents, options)
+  const operator = deriveCameraPreset(extents, {
+    ...options,
+    direction: { x: 0.1, y: 0.34, z: 0.94 },
+    targetHeightMeters: round3(Math.min(Math.max(extents.maxHeightMeters * 0.7, 0.9), 1.7)),
+  })
+  const robot = footprints.find((footprint) => footprint.role === 'robot')
+  const focusX = robot?.center.x ?? extents.centerX
+  const focusZ = robot?.center.z ?? extents.centerZ
+  const focusRadius = Math.max(robot?.reachMeters ?? 0, 1.5)
+  const workcell = deriveCameraPreset({
+    minX: focusX - focusRadius,
+    maxX: focusX + focusRadius,
+    minZ: focusZ - focusRadius,
+    maxZ: focusZ + focusRadius,
+    width: focusRadius * 2,
+    depth: focusRadius * 2,
+    centerX: focusX,
+    centerZ: focusZ,
+    maxHeightMeters: extents.maxHeightMeters,
+  }, {
+    cameraMarginMeters: margin,
+    direction: { x: 0.72, y: 0.52, z: 0.46 },
+    targetHeightMeters: round3(Math.min(Math.max(extents.maxHeightMeters * 0.45, 0.7), 1.4)),
+  })
+  return { overview, operator, workcell }
 }
 
 function round3(value: number): number {
@@ -395,19 +576,26 @@ export function validateCellLayout(input: CellLayoutValidationInput): CellLayout
     const outside = target.x < extents.minX - config.cameraMarginMeters || target.x > extents.maxX + config.cameraMarginMeters
       || target.z < extents.minZ - config.cameraMarginMeters || target.z > extents.maxZ + config.cameraMarginMeters
     if (outside) warning('camera-target-outside', 'Camera target lies outside the measured cell extents.')
+
+    // 10. Strict frustum containment: every measured corner must project inside the viewport.
+    const containment = cameraContainsExtents(input.camera, extents)
+    if (!containment.contains) {
+      warning('camera-clipping', `Camera frame clips the measured cell bounds (max |NDCx| ${containment.maxAbsNdcX.toFixed(2)}, max |NDCy| ${containment.maxAbsNdcY.toFixed(2)}).`)
+    }
   }
 
   return diagnostics
 }
 
-/** Full measured layout: extents, derived floor/camera and validation diagnostics. */
+/** Full measured layout: extents, derived floor/cameras and validation diagnostics. */
 export function resolveCellLayout(input: CellLayoutValidationInput): CellLayoutResult {
   const config = requirements(input)
   const extents = computeCellExtents(input.footprints)
   const floorSizeMeters = input.floorSizeMeters ?? deriveFloorSizeMeters(extents, config.floorMarginMeters)
-  const camera = input.camera ?? deriveCameraPreset(extents, { cameraMarginMeters: config.cameraMarginMeters })
+  const cameras = deriveCameraPresets(extents, input.footprints, { cameraMarginMeters: config.cameraMarginMeters })
+  const camera = input.camera ?? cameras.overview
   const diagnostics = validateCellLayout({ footprints: input.footprints, requirements: config, floorSizeMeters, camera })
-  return { requirements: config, extents, floorSizeMeters, camera, diagnostics }
+  return { requirements: config, extents, floorSizeMeters, camera, cameras, diagnostics }
 }
 
 /** Roles that may legitimately overlap (stacking, gantries, tools on flanges). */

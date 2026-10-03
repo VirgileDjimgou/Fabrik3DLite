@@ -5,7 +5,7 @@
  */
 
 import type { LocalizedText, ScenarioActivity, ScenarioDefinition } from './types'
-import { SCENARIO_SCHEMA_VERSION } from './types'
+import { SCENARIO_SCHEMA_VERSION, SCENARIO_STAGE_EVENT } from './types'
 import { WORKFLOW_PALLET_COMPLETE_EVENT, WORKFLOW_PHASE_EVENT, WORKFLOW_RUN_STATE_EVENT } from './workflowEvents'
 
 function t(en: string, fr: string, de: string): LocalizedText {
@@ -16,30 +16,228 @@ function phaseActivity(id: string, title: LocalizedText, instruction: LocalizedT
   return { id, title, instruction, expectedEvent: { type: WORKFLOW_PHASE_EVENT, match: { phase } } }
 }
 
-function industrialScenario(id: string, title: LocalizedText, level: 'intermediate' | 'advanced', event: string, faultInjections: import('../faults/types').FaultType[] = []): ScenarioDefinition {
+/**
+ * S67: one timed, inspectable process stage. Its event carries the stable
+ * `stageId` so the deterministic process scheduler and the visual reducer agree
+ * on the stage without relying on localized text.
+ */
+function stage(
+  id: string,
+  stageId: string,
+  durationSeconds: number,
+  title: LocalizedText,
+  instruction: LocalizedText,
+  flags: { faultPoint?: boolean; recoveryPoint?: boolean } = {},
+): ScenarioActivity {
   return {
-    schemaVersion: SCENARIO_SCHEMA_VERSION, id, title, level, prerequisites: [], faultInjections,
-    learningObjectives: [t('Run the declared simulated cell cycle.', 'Exécuter le cycle simulé déclaré.', 'Den deklarierten Simulationszyklus ausführen.')],
-    activities: [
-      { id: 'prerequisites', title: t('Verify prerequisites', 'Vérifier les prérequis', 'Voraussetzungen prüfen'), instruction: t('Confirm that the virtual equipment is ready.', 'Confirmez que les équipements virtuels sont prêts.', 'Bestätigen Sie, dass die virtuelle Ausrüstung bereit ist.'), expectedEvent: { type: 'scenario.ready' } },
-      { id: 'cycle', title, instruction: t('Run the simulated process.', 'Lancez le processus simulé.', 'Starten Sie den simulierten Prozess.'), expectedEvent: { type: event } },
-      { id: 'recovery', title: t('Confirm outcome', 'Confirmer le résultat', 'Ergebnis bestätigen'), instruction: t('Confirm the simulated result and recovery when required.', 'Confirmez le résultat simulé et la récupération si nécessaire.', 'Bestätigen Sie das Simulationsergebnis und ggf. die Wiederherstellung.'), expectedEvent: { type: 'scenario.recovered' } },
-    ],
-    successCriteria: [t('The declared virtual cycle and recovery were completed.', 'Le cycle virtuel et sa récupération ont été terminés.', 'Der deklarierte virtuelle Zyklus und die Wiederherstellung wurden abgeschlossen.')],
-    instructorNotes: t('All observed data is simulated training data.', 'Toutes les données observées sont des données de formation simulées.', 'Alle beobachteten Daten sind simulierte Trainingsdaten.'),
-    explanation: t('This is a deterministic educational scenario, not an OEM program.', 'Ceci est un scénario pédagogique déterministe, pas un programme OEM.', 'Dies ist ein deterministisches Lernszenario, kein OEM-Programm.'),
+    id,
+    stageId,
+    durationSeconds,
+    title,
+    instruction,
+    ...(flags.faultPoint ? { faultPoint: true } : {}),
+    ...(flags.recoveryPoint ? { recoveryPoint: true } : {}),
+    expectedEvent: { type: SCENARIO_STAGE_EVENT, match: { stage: stageId } },
   }
 }
+
+/** S67: terminal process stage whose event is the scenario's completion event. */
+function terminal(
+  id: string,
+  durationSeconds: number,
+  title: LocalizedText,
+  instruction: LocalizedText,
+  eventType: string,
+): ScenarioActivity {
+  return { id, durationSeconds, title, instruction, expectedEvent: { type: eventType } }
+}
+
+/** S67: explicit operator acknowledgement consumed by `recover()`. */
+function acknowledgement(): ScenarioActivity {
+  return {
+    id: 'recovery',
+    durationSeconds: 0.4,
+    title: t('Confirm outcome', 'Confirmer le résultat', 'Ergebnis bestätigen'),
+    instruction: t(
+      'Confirm the simulated result and complete the exercise.',
+      'Confirmez le résultat simulé et terminez l’exercice.',
+      'Bestätigen Sie das Simulationsergebnis und schließen Sie die Übung ab.',
+    ),
+    expectedEvent: { type: 'scenario.recovered' },
+  }
+}
+
+interface ProcessScenarioOptions {
+  id: string
+  title: LocalizedText
+  level: 'intermediate' | 'advanced'
+  faultInjections?: import('../faults/types').FaultType[]
+  stages: ScenarioActivity[]
+  successCriteria: LocalizedText[]
+  instructorNotes: LocalizedText
+  explanation: LocalizedText
+}
+
+/**
+ * S67 material-flow scenario builder. Activities are the declared ordered
+ * process stages plus the explicit acknowledgement; timing is simulation-clock
+ * driven by `scenarioProcess.ts`.
+ */
+function processScenario(options: ProcessScenarioOptions): ScenarioDefinition {
+  return {
+    schemaVersion: SCENARIO_SCHEMA_VERSION,
+    id: options.id,
+    title: options.title,
+    level: options.level,
+    prerequisites: [],
+    faultInjections: options.faultInjections ?? [],
+    learningObjectives: [t('Run the declared simulated cell process.', 'Exécuter le procédé simulé déclaré.', 'Den deklarierten simulierten Zellenprozess ausführen.')],
+    activities: [...options.stages, acknowledgement()],
+    successCriteria: options.successCriteria,
+    instructorNotes: options.instructorNotes,
+    explanation: options.explanation,
+  }
+}
+
+const SIMULATED_TRAINING_NOTE = t(
+  'All observed data is simulated training data, not real machine data.',
+  'Toutes les données observées sont des données de formation simulées, pas des données machine réelles.',
+  'Alle beobachteten Daten sind simulierte Trainingsdaten, keine echten Maschinendaten.',
+)
+
+const VISION_INSTRUCTION = t(
+  'Follow the simulated part through the declared vision-sorting stage.',
+  'Suivez la pièce simulée à travers l’étape déclarée de tri vision.',
+  'Verfolgen Sie das simulierte Werkstück durch die deklarierte Bildverarbeitungsstufe.',
+)
+
+const PALLETIZING_INSTRUCTION = t(
+  'Follow the simulated carton through the declared palletizing stage.',
+  'Suivez le carton simulé à travers l’étape déclarée de palettisation.',
+  'Verfolgen Sie den simulierten Karton durch die deklarierte Palettierstufe.',
+)
+
+const ASSEMBLY_INSTRUCTION = t(
+  'Follow the simulated part through the declared assembly stage.',
+  'Suivez la pièce simulée à travers l’étape déclarée d’assemblage.',
+  'Verfolgen Sie das simulierte Werkstück durch die deklarierte Montagestufe.',
+)
+
+const SAFETY_INSTRUCTION = t(
+  'Follow the simulated safety sequence; no real machine is affected.',
+  'Suivez la séquence de sécurité simulée ; aucune machine réelle n’est concernée.',
+  'Verfolgen Sie die simulierte Sicherheitssequenz; es ist keine reale Maschine betroffen.',
+)
 
 export const REFERENCE_SCENARIO_ID = 'pallet-processing'
 
 export const SCENARIO_CATALOG: readonly ScenarioDefinition[] = [
-  industrialScenario('sorting-normal-cycle', t('Vision sorting normal cycle', 'Cycle normal de tri vision', 'Normalzyklus Bildverarbeitung'), 'intermediate', 'sorting.complete'),
-  industrialScenario('sorting-jam-recovery', t('Vision sorting jam recovery', 'Récupération bourrage de tri', 'Sortier-Stau Wiederherstellung'), 'advanced', 'sorting.recovered', ['conveyor-blockage']),
-  industrialScenario('palletizing-normal-cycle', t('Palletizing normal cycle', 'Cycle normal de palettisation', 'Normalzyklus Palettierung'), 'intermediate', 'palletizing.complete'),
-  industrialScenario('palletizing-vacuum-recovery', t('Palletizing vacuum recovery', 'Récupération perte de vide', 'Vakuumverlust Wiederherstellung'), 'advanced', 'palletizing.recovered', ['communication-loss']),
-  industrialScenario('assembly-inspection-cycle', t('Assembly and inspection', 'Assemblage et contrôle', 'Montage und Prüfung'), 'intermediate', 'assembly.complete'),
-  industrialScenario('safety-door-recovery', t('Safety door recovery', 'Récupération porte de sécurité', 'Sicherheitstür Wiederherstellung'), 'advanced', 'safety.restarted', ['collision-risk']),
+  processScenario({
+    id: 'sorting-normal-cycle',
+    title: t('Vision sorting normal cycle', 'Cycle normal de tri vision', 'Normalzyklus Bildverarbeitung'),
+    level: 'intermediate',
+    stages: [
+      stage('part-enters', 'vision-part-enters', 0.8, t('Part enters', 'Entrée de la pièce', 'Werkstück läuft ein'), VISION_INSTRUCTION),
+      stage('sensor-detects', 'vision-sensor-detects', 0.5, t('Sensor detects', 'Détection capteur', 'Sensor erkennt'), VISION_INSTRUCTION),
+      stage('conveyor-advances', 'vision-conveyor-advances', 1.0, t('Conveyor advances', 'Avance du convoyeur', 'Förderband transportiert'), VISION_INSTRUCTION),
+      stage('inspection-begins', 'vision-inspection-begins', 1.0, t('Inspection begins', 'Début du contrôle', 'Prüfung beginnt'), VISION_INSTRUCTION),
+      stage('classification', 'vision-classified', 0.6, t('Classification', 'Classification', 'Klassifizierung'), VISION_INSTRUCTION),
+      stage('diverter-actuates', 'vision-diverter-actuates', 0.5, t('Diverter actuates', 'Actionnement de l’aiguillage', 'Weiche betätigt'), VISION_INSTRUCTION),
+      stage('part-routes', 'vision-part-routes', 0.8, t('Part routes', 'Acheminement de la pièce', 'Werkstück wird geleitet'), VISION_INSTRUCTION),
+      terminal('cycle-completes', 0.6, t('Cycle completes', 'Fin du cycle', 'Zyklus abgeschlossen'), VISION_INSTRUCTION, 'sorting.complete'),
+    ],
+    successCriteria: [t('Every declared simulated sorting stage completed.', 'Chaque étape simulée de tri déclarée a été terminée.', 'Jede deklarierte simulierte Sortierstufe wurde abgeschlossen.')],
+    instructorNotes: SIMULATED_TRAINING_NOTE,
+    explanation: t('A vision sorting cycle is a timed sequence of stages, from part entry to routing, not a single instant.', 'Un cycle de tri vision est une séquence d’étapes minutée, de l’entrée au routage, pas un instant unique.', 'Ein Bildverarbeitungs-Sortierzyklus ist eine zeitliche Abfolge von Stufen, vom Einlauf bis zum Weitertransport.'),
+  }),
+  processScenario({
+    id: 'sorting-jam-recovery',
+    title: t('Vision sorting jam recovery', 'Récupération bourrage de tri', 'Sortier-Stau Wiederherstellung'),
+    level: 'advanced',
+    faultInjections: ['conveyor-blockage'],
+    stages: [
+      stage('conveyor-advances', 'vision-conveyor-advances', 0.8, t('Conveyor advances', 'Avance du convoyeur', 'Förderband transportiert'), VISION_INSTRUCTION),
+      stage('jam-detected', 'vision-jam-detected', 0.6, t('Jam detected', 'Bourrage détecté', 'Stau erkannt'), VISION_INSTRUCTION, { faultPoint: true }),
+      stage('operator-acknowledged', 'vision-operator-acknowledged', 0.6, t('Operator acknowledgement', 'Acquittement opérateur', 'Bedienerquittierung'), VISION_INSTRUCTION, { recoveryPoint: true }),
+      stage('jam-cleared', 'vision-jam-cleared', 0.8, t('Jam cleared', 'Bourrage dégagé', 'Stau behoben'), VISION_INSTRUCTION),
+      stage('diverter-actuates', 'vision-diverter-actuates', 0.5, t('Diverter actuates', 'Actionnement de l’aiguillage', 'Weiche betätigt'), VISION_INSTRUCTION),
+      terminal('part-routes-reject', 0.8, t('Part routes to reject', 'Acheminement vers le rebut', 'Werkstück wird ausgeschleust'), VISION_INSTRUCTION, 'sorting.recovered'),
+    ],
+    successCriteria: [t('The simulated jam was acknowledged, cleared and routed to the reject lane.', 'Le bourrage simulé a été acquitté, dégagé et acheminé vers la voie de rebut.', 'Der simulierte Stau wurde quittiert, behoben und auf die Ausschleusbahn geleitet.')],
+    instructorNotes: SIMULATED_TRAINING_NOTE,
+    explanation: t('A jam interrupts the process at detection; recovery resumes from the defined acknowledgement point without skipping the clearing stages.', 'Un bourrage interrompt le procédé à la détection ; la récupération reprend au point d’acquittement défini sans sauter les étapes de dégagement.', 'Ein Stau unterbricht den Prozess bei der Erkennung; die Wiederherstellung beginnt am definierten Quittierungspunkt, ohne Stufen zu überspringen.'),
+  }),
+  processScenario({
+    id: 'palletizing-normal-cycle',
+    title: t('Palletizing normal cycle', 'Cycle normal de palettisation', 'Normalzyklus Palettierung'),
+    level: 'intermediate',
+    stages: [
+      stage('part-available', 'palletizing-part-available', 0.8, t('Part available', 'Pièce disponible', 'Werkstück verfügbar'), PALLETIZING_INSTRUCTION),
+      stage('robot-approach', 'palletizing-robot-approach', 1.0, t('Robot approach', 'Approche du robot', 'Roboter fährt an'), PALLETIZING_INSTRUCTION),
+      stage('gripper-on', 'palletizing-gripper-on', 0.5, t('Gripper on', 'Ventouse activée', 'Greifer ein'), PALLETIZING_INSTRUCTION),
+      stage('pick', 'palletizing-pick', 0.7, t('Pick', 'Prise', 'Aufnehmen'), PALLETIZING_INSTRUCTION),
+      stage('transfer', 'palletizing-transfer', 1.0, t('Transfer', 'Transfert', 'Transfer'), PALLETIZING_INSTRUCTION),
+      stage('place', 'palletizing-place', 0.7, t('Place', 'Pose', 'Ablegen'), PALLETIZING_INSTRUCTION),
+      stage('gripper-off', 'palletizing-gripper-off', 0.5, t('Gripper off', 'Ventouse désactivée', 'Greifer aus'), PALLETIZING_INSTRUCTION),
+      stage('layer-update', 'palletizing-layer-update', 0.5, t('Layer update', 'Mise à jour de couche', 'Lage aktualisiert'), PALLETIZING_INSTRUCTION),
+      terminal('cycle-completes', 0.6, t('Cycle completes', 'Fin du cycle', 'Zyklus abgeschlossen'), PALLETIZING_INSTRUCTION, 'palletizing.complete'),
+    ],
+    successCriteria: [t('Every declared simulated palletizing stage completed.', 'Chaque étape simulée de palettisation déclarée a été terminée.', 'Jede deklarierte simulierte Palettierstufe wurde abgeschlossen.')],
+    instructorNotes: SIMULATED_TRAINING_NOTE,
+    explanation: t('Palletizing is a timed pick, transfer, place and layer-update sequence; each stage is separately observable.', 'La palettisation est une séquence minutée de prise, transfert, pose et mise à jour de couche ; chaque étape est observable séparément.', 'Palettieren ist eine zeitliche Folge aus Aufnehmen, Transfer, Ablegen und Lageaktualisierung; jede Stufe ist einzeln beobachtbar.'),
+  }),
+  processScenario({
+    id: 'palletizing-vacuum-recovery',
+    title: t('Palletizing vacuum recovery', 'Récupération perte de vide', 'Vakuumverlust Wiederherstellung'),
+    level: 'advanced',
+    faultInjections: ['communication-loss'],
+    stages: [
+      stage('part-available', 'palletizing-part-available', 0.8, t('Part available', 'Pièce disponible', 'Werkstück verfügbar'), PALLETIZING_INSTRUCTION),
+      stage('vacuum-loss', 'palletizing-vacuum-loss', 0.6, t('Vacuum loss', 'Perte de vide', 'Vakuumverlust'), PALLETIZING_INSTRUCTION, { faultPoint: true }),
+      stage('operator-acknowledged', 'palletizing-operator-acknowledged', 0.6, t('Operator acknowledgement', 'Acquittement opérateur', 'Bedienerquittierung'), PALLETIZING_INSTRUCTION, { recoveryPoint: true }),
+      stage('vacuum-restored', 'palletizing-vacuum-restored', 0.8, t('Vacuum restored', 'Vide rétabli', 'Vakuum wiederhergestellt'), PALLETIZING_INSTRUCTION),
+      stage('layer-update', 'palletizing-layer-update', 0.5, t('Layer update', 'Mise à jour de couche', 'Lage aktualisiert'), PALLETIZING_INSTRUCTION),
+      terminal('cycle-completes', 0.6, t('Cycle completes', 'Fin du cycle', 'Zyklus abgeschlossen'), PALLETIZING_INSTRUCTION, 'palletizing.recovered'),
+    ],
+    successCriteria: [t('The simulated vacuum loss was acknowledged, restored and the layer completed.', 'La perte de vide simulée a été acquittée, rétablie et la couche terminée.', 'Der simulierte Vakuumverlust wurde quittiert, wiederhergestellt und die Lage abgeschlossen.')],
+    instructorNotes: SIMULATED_TRAINING_NOTE,
+    explanation: t('A vacuum loss interrupts the pick/transfer stage; recovery resumes from the acknowledgement point and completes the required stage transitions.', 'Une perte de vide interrompt l’étape prise/transfert ; la récupération reprend au point d’acquittement et termine les étapes requises.', 'Ein Vakuumverlust unterbricht die Aufnahme-/Transferstufe; die Wiederherstellung beginnt am Quittierungspunkt und schließt die erforderlichen Stufen ab.'),
+  }),
+  processScenario({
+    id: 'assembly-inspection-cycle',
+    title: t('Assembly and inspection', 'Assemblage et contrôle', 'Montage und Prüfung'),
+    level: 'intermediate',
+    stages: [
+      stage('part-available', 'assembly-part-available', 0.8, t('Part available', 'Pièce disponible', 'Werkstück verfügbar'), ASSEMBLY_INSTRUCTION),
+      stage('robot-load', 'assembly-robot-load', 1.0, t('Robot load', 'Chargement robot', 'Roboter lädt'), ASSEMBLY_INSTRUCTION),
+      stage('fixture-clamp', 'assembly-fixture-clamp', 0.6, t('Fixture clamp', 'Bridage du montage', 'Vorrichtung spannen'), ASSEMBLY_INSTRUCTION),
+      stage('assembly', 'assembly-process', 1.0, t('Assembly', 'Assemblage', 'Montage'), ASSEMBLY_INSTRUCTION),
+      stage('inspection', 'assembly-inspection', 0.8, t('Inspection', 'Contrôle', 'Prüfung'), ASSEMBLY_INSTRUCTION),
+      stage('decision', 'assembly-decision-accept', 0.5, t('Accept / rework decision', 'Décision accepté / retouche', 'Entscheidung Gut / Nacharbeit'), ASSEMBLY_INSTRUCTION),
+      stage('unclamp', 'assembly-unclamp', 0.5, t('Unclamp', 'Débridage', 'Vorrichtung lösen'), ASSEMBLY_INSTRUCTION),
+      terminal('cycle-completes', 0.6, t('Cycle completes', 'Fin du cycle', 'Zyklus abgeschlossen'), ASSEMBLY_INSTRUCTION, 'assembly.complete'),
+    ],
+    successCriteria: [t('Every declared simulated assembly stage completed.', 'Chaque étape simulée d’assemblage déclarée a été terminée.', 'Jede deklarierte simulierte Montagestufe wurde abgeschlossen.')],
+    instructorNotes: SIMULATED_TRAINING_NOTE,
+    explanation: t('Assembly is a timed load, clamp, process, inspect, decide and unclamp sequence; the decision stage is explicit.', 'L’assemblage est une séquence minutée de chargement, bridage, process, contrôle, décision et débridage ; l’étape de décision est explicite.', 'Montage ist eine zeitliche Folge aus Laden, Spannen, Prozess, Prüfen, Entscheiden und Lösen; die Entscheidungsstufe ist explizit.'),
+  }),
+  processScenario({
+    id: 'safety-door-recovery',
+    title: t('Safety door recovery', 'Récupération porte de sécurité', 'Sicherheitstür Wiederherstellung'),
+    level: 'advanced',
+    faultInjections: ['collision-risk'],
+    stages: [
+      stage('unsafe-state', 'safety-unsafe-state', 0.8, t('Unsafe state', 'État dangereux', 'Unsicherer Zustand'), SAFETY_INSTRUCTION),
+      stage('detection', 'safety-detection', 0.6, t('Interlock / scanner detection', 'Détection interverrouillage / scanner', 'Verriegelungs-/Scannererkennung'), SAFETY_INSTRUCTION),
+      stage('motion-inhibited', 'safety-motion-inhibited', 0.6, t('Motion inhibited', 'Mouvement inhibé', 'Bewegung gesperrt'), SAFETY_INSTRUCTION, { faultPoint: true }),
+      stage('operator-acknowledged', 'safety-operator-acknowledged', 0.6, t('Operator acknowledgement', 'Acquittement opérateur', 'Bedienerquittierung'), SAFETY_INSTRUCTION, { recoveryPoint: true }),
+      stage('safe-state-restored', 'safety-state-restored', 0.8, t('Safe state restored', 'État sûr rétabli', 'Sicherer Zustand wiederhergestellt'), SAFETY_INSTRUCTION),
+      terminal('controlled-restart', 0.5, t('Controlled restart', 'Redémarrage contrôlé', 'Kontrollierter Neustart'), SAFETY_INSTRUCTION, 'safety.restarted'),
+    ],
+    successCriteria: [t('The simulated unsafe state was acknowledged, restored and restarted in a controlled way.', 'L’état dangereux simulé a été acquitté, rétabli et redémarré de façon contrôlée.', 'Der simulierte unsichere Zustand wurde quittiert, wiederhergestellt und kontrolliert neu gestartet.')],
+    instructorNotes: SIMULATED_TRAINING_NOTE,
+    explanation: t('The exercise starts from a simulated unsafe condition; motion is inhibited until the acknowledgement restores the safe state and performs a controlled restart. This is simulated training behaviour and is not certified.', 'L’exercice démarre dans une condition dangereuse simulée ; le mouvement est inhibé jusqu’à ce que l’acquittement rétablisse l’état sûr et effectue un redémarrage contrôlé. Comportement de formation simulé, non certifié.', 'Die Übung startet aus einem simulierten unsicheren Zustand; die Bewegung ist gesperrt, bis die Quittierung den sicheren Zustand wiederherstellt und einen kontrollierten Neustart ausführt. Simuliertes Trainingsverhalten, nicht zertifiziert.'),
+  }),
   {
     schemaVersion: SCENARIO_SCHEMA_VERSION,
     id: 'robot-axes',

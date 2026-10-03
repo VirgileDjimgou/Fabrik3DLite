@@ -108,8 +108,13 @@ is a moderate pass within the documented budgets, not 4K/8K asset inflation.
 
 The S49 reference-scene frame-time probe recorded, under headless Chromium
 software rendering, `frames=11 mean=289.38ms p50=283.40ms p95=316.60ms`. This is
-an upper bound for a software backend, not reference-hardware GPU numbers;
-sustained hardware performance and resilience validation are S56.
+an upper bound for a software backend, not reference-hardware GPU numbers.
+Sustained hardware performance was subsequently measured: the S62 deterministic
+visual QA/GPU validation and the S68 PBR/environment re-measurement ran the headed
+hardware benchmark on the documented reference host (Intel UHD Graphics,
+1920×1080, `gpuEvidence=true`), and every measured profile stayed above the 60 FPS
+reference target (minimum 78.3 FPS). The exact numbers, methodology and
+non-claims are recorded in [PERFORMANCE.md](../operations/PERFORMANCE.md).
 
 ## Provenance and licensing
 
@@ -124,5 +129,6 @@ generated files pass the existing path, hash and manifest validation.
 - The dressing is decorative; the analytic cell collision models are unchanged.
 - No photorealism, cinematic renderer or OEM replica is claimed.
 - No safety certification, OEM emulation or standards compliance is claimed.
-- GPU frame time and renderer memory on the documented reference machine remain
-  an open measurement (S56).
+- Hardware GPU frame time is measured on the documented reference machine only;
+  it is a reference observation, not an SLA for other hardware, and the JS heap is
+  not GPU memory ([PERFORMANCE.md](../operations/PERFORMANCE.md)).

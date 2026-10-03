@@ -67,10 +67,12 @@ export const PALLETIZING_CELL: CellDefinition = cell('palletizing-cell', 'Pallet
   { id: 'completed-pallet-1', definitionId: 'euro-pallet', x: 1.8, y: 0, z: 0.6 },
   { id: 'infeed-buffer-1', definitionId: 'infeed-buffer', x: -2.5, y: 0, z: 1.3 },
   { id: 'outfeed-buffer-1', definitionId: 'outfeed-buffer', x: 2.0, y: 0, z: 1.4 },
-  { id: 'fence-panel-1', definitionId: 'fence-panel', x: 0, y: 0, z: -2.4 },
-  { id: 'fence-panel-2', definitionId: 'fence-panel', x: -2.4, y: 0, z: -2.4 },
-  { id: 'fence-panel-3', definitionId: 'fence-panel', x: 2.4, y: 0, z: -2.4 },
-  { id: 'light-curtain-1', definitionId: 'light-curtain', x: 0.2, y: 0, z: -2.4 },
+  // S69: the back fence sits outside the medium arm's swept envelope so the
+  // guarding is never inside the robot's reach.
+  { id: 'fence-panel-1', definitionId: 'fence-panel', x: 0, y: 0, z: -3.9 },
+  { id: 'fence-panel-2', definitionId: 'fence-panel', x: -2.4, y: 0, z: -3.9 },
+  { id: 'fence-panel-3', definitionId: 'fence-panel', x: 2.4, y: 0, z: -3.9 },
+  { id: 'light-curtain-1', definitionId: 'light-curtain', x: 0.2, y: 0, z: -3.9 },
   { id: 'controller-cabinet-1', definitionId: 'robot-controller-cabinet', x: -2.2, y: 0, z: 1.6 },
 ])
 
@@ -93,14 +95,16 @@ export const ASSEMBLY_INSPECTION_CELL: CellDefinition = cell('assembly-inspectio
 /** Fenced training cell with interlocked gate, scanner, E-stop, stack light and zones. */
 export const SAFETY_TRAINING_CELL: CellDefinition = cell('safety-training-cell', 'Safety training cell', [
   { id: 'robot-1', definitionId: 'fanuc-like-6axis', x: 0, y: 0, z: 0 },
-  { id: 'fence-panel-left', definitionId: 'fence-panel', x: -1.9, y: 0, z: 1.9, ry: Math.PI / 2 },
-  { id: 'fence-panel-right', definitionId: 'fence-panel', x: 1.9, y: 0, z: 1.9, ry: Math.PI / 2 },
-  { id: 'fence-panel-back', definitionId: 'fence-panel', x: 0, y: 0, z: -1.9 },
-  { id: 'interlocked-gate-1', definitionId: 'interlocked-gate', x: 0, y: 0, z: 1.9 },
-  { id: 'area-scanner-1', definitionId: 'area-scanner', x: 0.6, y: 0.12, z: 1.4 },
-  { id: 'emergency-stop-1', definitionId: 'emergency-stop', x: -1.6, y: 0, z: 1.3 },
-  { id: 'stack-light-1', definitionId: 'stack-light', x: -1.6, y: 1.55, z: 1.3 },
-  { id: 'operator-access-zone-1', definitionId: 'safety-zone', x: 0, y: 0, z: 2.8 },
+  // S69: the compact training arm's envelope is fully enclosed by the fence,
+  // which sits outside the swept envelope with the declared fence clearance.
+  { id: 'fence-panel-left', definitionId: 'fence-panel', x: -2.3, y: 0, z: 2.3, ry: Math.PI / 2 },
+  { id: 'fence-panel-right', definitionId: 'fence-panel', x: 2.3, y: 0, z: 2.3, ry: Math.PI / 2 },
+  { id: 'fence-panel-back', definitionId: 'fence-panel', x: 0, y: 0, z: -2.3 },
+  { id: 'interlocked-gate-1', definitionId: 'interlocked-gate', x: 0, y: 0, z: 2.3 },
+  { id: 'area-scanner-1', definitionId: 'area-scanner', x: 0.6, y: 0.12, z: 1.9 },
+  { id: 'emergency-stop-1', definitionId: 'emergency-stop', x: -1.8, y: 0, z: 1.7 },
+  { id: 'stack-light-1', definitionId: 'stack-light', x: -1.8, y: 1.55, z: 1.7 },
+  { id: 'operator-access-zone-1', definitionId: 'safety-zone', x: 0, y: 0, z: 3.2 },
   { id: 'protected-zone-1', definitionId: 'safety-zone', x: 0, y: 0, z: 0 },
-  { id: 'control-cabinet-1', definitionId: 'plc-cabinet', x: 1.8, y: 0, z: 1.3 },
+  { id: 'control-cabinet-1', definitionId: 'plc-cabinet', x: 1.5, y: 0, z: 1.4 },
 ])

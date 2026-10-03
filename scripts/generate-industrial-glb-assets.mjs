@@ -59,6 +59,10 @@ const concrete = new THREE.MeshStandardMaterial({ color: 0x596064, metalness: 0.
 const workLight = new THREE.MeshStandardMaterial({ color: 0xf6f3e6, emissive: 0xf6f3e6, emissiveIntensity: 0.85, metalness: 0.1, roughness: 0.4 })
 const signalRed = new THREE.MeshStandardMaterial({ color: 0xd64040, emissive: 0x3a0a0a, emissiveIntensity: 0.5, metalness: 0.2, roughness: 0.5 })
 const rackBlue = new THREE.MeshStandardMaterial({ color: 0x27557a, metalness: 0.42, roughness: 0.46 })
+// S65 scenario-equipment palette.
+const sensorGlass = new THREE.MeshStandardMaterial({ color: 0x9fe3ff, metalness: 0.1, roughness: 0.2 })
+const plastic = new THREE.MeshStandardMaterial({ color: 0x2b6f8f, metalness: 0.1, roughness: 0.8 })
+const enclosure = new THREE.MeshStandardMaterial({ color: 0xb9c2c8, metalness: 0.35, roughness: 0.55 })
 
 function mesh(group, name, geometry, material, position = [0, 0, 0], rotation = [0, 0, 0]) {
   const value = new THREE.Mesh(geometry, material)
@@ -477,6 +481,293 @@ function heroCellDressing(low = false) {
   return rootGroup
 }
 
+// ── S65 scenario-specific industrial equipment ─────────────────────
+// One generated, license-safe GLB package per equipment class used by the five
+// flagship scenario cells. Geometry is deliberately generic (no OEM extraction)
+// and moderate-budget. Every state-bearing node consumed by
+// `ScenarioCellAnimator` is preserved by name; the portable manifest declares the
+// subset expressible in the semantic-node namespaces and the pipeline test
+// asserts the full animator contract via `requiredNodeIds`.
+//
+// The `low` variant keeps the silhouette and every animator node while dropping
+// fine detail, so LOD1 is a real LOD rather than a duplicate.
+function scenarioEquipment(definitionId, low = false) {
+  const rootGroup = new THREE.Group()
+  rootGroup.name = 'equipment-root'
+  rootGroup.userData.semanticId = 'equipment-root'
+  const seg = low ? 10 : 20
+  const fine = low ? 8 : 14
+
+  switch (definitionId) {
+    case 'straight-conveyor': {
+      const length = 2.0, beltWidth = 0.5, surfaceY = 0.5
+      const frame = group(rootGroup, 'frame')
+      for (const z of [-0.28, 0.28]) {
+        mesh(frame, `frame:rail:${z}`, new THREE.BoxGeometry(length, 0.07, 0.05), steel, [0, 0.42, z])
+        mesh(frame, `guard:rail:${z}`, new THREE.BoxGeometry(length, 0.1, 0.02), safetyYellow, [0, 0.55, z])
+      }
+      for (const x of (low ? [-0.8, 0.8] : [-0.9, 0, 0.9])) {
+        for (const z of [-0.25, 0.25]) {
+          mesh(frame, `leg:${x}:${z}`, new THREE.BoxGeometry(0.06, 0.4, 0.06), steel, [x, 0.2, z])
+          mesh(frame, `foot:${x}:${z}`, new THREE.CylinderGeometry(0.06, 0.06, 0.012, 12), darkSteel, [x, 0.006, z])
+        }
+      }
+      const rollers = group(rootGroup, 'rollers')
+      const rollerGeometry = new THREE.CylinderGeometry(0.04, 0.04, beltWidth, 12)
+      rollerGeometry.rotateX(Math.PI / 2)
+      const rollerCount = low ? 6 : 14
+      for (let index = 0; index < rollerCount; index += 1) {
+        const x = -0.9 + index * (1.8 / (rollerCount - 1))
+        mesh(rollers, `roller:${index}`, rollerGeometry, darkSteel, [x, 0.46, 0])
+      }
+      const segments = group(rootGroup, 'belt')
+      const segmentCount = low ? 8 : 20
+      for (let index = 0; index < segmentCount; index += 1) {
+        const x = -0.92 + index * (1.84 / (segmentCount - 1))
+        mesh(segments, `belt:segment:${index}`, new THREE.BoxGeometry(0.1, 0.01, beltWidth), beltRubber, [x, surfaceY, 0])
+      }
+      const drive = group(rootGroup, 'motor:main')
+      mesh(drive, 'motor:body', new THREE.CylinderGeometry(0.08, 0.08, 0.2, seg), steel, [-0.9, 0.38, -0.3], [Math.PI / 2, 0, 0])
+      mesh(drive, 'motor:gearbox', new THREE.BoxGeometry(0.12, 0.12, 0.1), darkSteel, [-0.9, 0.42, -0.22])
+      for (const [id, x] of [['sensor:infeed', -0.6], ['sensor:outfeed', 0.6]]) {
+        const sensor = group(rootGroup, id)
+        mesh(sensor, `${id}:body`, new THREE.BoxGeometry(0.04, 0.09, 0.04), darkSteel, [x, 0.58, 0.29])
+        mesh(sensor, `${id}:lens`, new THREE.SphereGeometry(0.015, 10, 8), sensorGreen, [x, 0.6, 0.27])
+      }
+      const inAnchor = group(rootGroup, 'anchor:material.in'); inAnchor.position.set(-1.0, surfaceY, 0)
+      const outAnchor = group(rootGroup, 'anchor:material.out'); outAnchor.position.set(1.0, surfaceY, 0)
+      return rootGroup
+    }
+    case 'vision-inspection-station': {
+      const legHeight = 1.85
+      for (const sign of [-1, 1]) {
+        mesh(rootGroup, `leg:${sign}`, new THREE.BoxGeometry(0.07, legHeight, 0.07), darkSteel, [sign * 0.38, legHeight / 2, 0])
+        mesh(rootGroup, `foot:${sign}`, new THREE.BoxGeometry(0.12, 0.03, 0.12), steel, [sign * 0.38, 0.015, 0])
+      }
+      mesh(rootGroup, 'beam', new THREE.BoxGeometry(0.9, 0.11, 0.6), steel, [0, legHeight + 0.055, 0])
+      mesh(rootGroup, 'camera', new THREE.BoxGeometry(0.2, 0.16, 0.2), darkSteel, [0, legHeight - 0.08, 0])
+      mesh(rootGroup, 'lens', new THREE.CylinderGeometry(0.06, 0.06, 0.02, seg), sensorGlass, [0, legHeight - 0.18, 0])
+      mesh(rootGroup, 'inspection-light', new THREE.BoxGeometry(0.28, 0.02, 0.28), sensorGlass, [0, legHeight - 0.22, 0])
+      if (!low) {
+        mesh(rootGroup, 'camera:mount', new THREE.BoxGeometry(0.08, 0.06, 0.08), steel, [0, legHeight + 0.02, 0])
+        mesh(rootGroup, 'label:station', new THREE.BoxGeometry(0.16, 0.05, 0.005), labelWhite, [0, legHeight - 0.02, 0.31])
+      }
+      return rootGroup
+    }
+    case 'photoelectric-sensor': {
+      mesh(rootGroup, 'body', new THREE.BoxGeometry(0.1, 0.1, 0.1), plastic, [0, 0.06, 0])
+      mesh(rootGroup, 'lens', new THREE.CylinderGeometry(0.025, 0.025, 0.015, seg), sensorGlass, [0, 0.06, 0.055], [Math.PI / 2, 0, 0])
+      if (!low) mesh(rootGroup, 'bracket', new THREE.BoxGeometry(0.04, 0.04, 0.04), darkSteel, [0, 0.02, -0.05])
+      return rootGroup
+    }
+    case 'diverter-pusher': {
+      mesh(rootGroup, 'body', new THREE.BoxGeometry(0.5, 0.4, 0.6), steel, [0, 0.2, 0])
+      mesh(rootGroup, 'piston', new THREE.CylinderGeometry(0.04, 0.04, 0.5, seg), darkSteel, [0, 0.28, 0], [0, 0, Math.PI / 2])
+      mesh(rootGroup, 'pusher', new THREE.BoxGeometry(0.06, 0.24, 0.5), safetyYellow, [0.3, 0.28, 0])
+      if (!low) {
+        mesh(rootGroup, 'valve', new THREE.BoxGeometry(0.1, 0.1, 0.1), darkSteel, [-0.2, 0.42, 0])
+        mesh(rootGroup, 'label:pusher', new THREE.BoxGeometry(0.12, 0.04, 0.005), labelWhite, [0, 0.36, 0.31])
+      }
+      return rootGroup
+    }
+    case 'storage-bin': {
+      mesh(rootGroup, 'bin', new THREE.BoxGeometry(0.6, 0.45, 0.5), plastic, [0, 0.225, 0])
+      mesh(rootGroup, 'opening', new THREE.BoxGeometry(0.54, 0.02, 0.44), darkSteel, [0, 0.46, 0])
+      if (!low) {
+        mesh(rootGroup, 'bin:lip', new THREE.BoxGeometry(0.62, 0.03, 0.52), steel, [0, 0.44, 0])
+        mesh(rootGroup, 'label:bin', new THREE.BoxGeometry(0.16, 0.06, 0.005), labelWhite, [0, 0.24, 0.253])
+      }
+      return rootGroup
+    }
+    case 'plc-cabinet':
+    case 'robot-controller-cabinet': {
+      const w = definitionId === 'plc-cabinet' ? 1.0 : 0.8
+      const h = definitionId === 'plc-cabinet' ? 2.0 : 1.8
+      const d = definitionId === 'plc-cabinet' ? 0.5 : 0.65
+      mesh(rootGroup, 'cabinet', new THREE.BoxGeometry(w, h, d), enclosure, [0, h / 2, 0])
+      mesh(rootGroup, 'door', new THREE.BoxGeometry(w * 0.9, h * 0.88, 0.02), guardMesh, [0, h / 2, d / 2 + 0.01])
+      mesh(rootGroup, 'panel', new THREE.BoxGeometry(w * 0.5, h * 0.16, 0.02), darkSteel, [0, h * 0.72, d / 2 + 0.025])
+      if (!low) {
+        mesh(rootGroup, 'handle', new THREE.BoxGeometry(0.03, 0.2, 0.03), stainless, [w * 0.34, h / 2, d / 2 + 0.03])
+        for (let vent = 0; vent < 3; vent += 1) {
+          mesh(rootGroup, `vent:${vent}`, new THREE.BoxGeometry(w * 0.5, 0.025, 0.02), machineTrim, [0, h * 0.9 - vent * 0.05, d / 2 + 0.02])
+        }
+        mesh(rootGroup, 'label:cabinet', new THREE.BoxGeometry(0.2, 0.08, 0.005), labelWhite, [0, h * 0.6, d / 2 + 0.03])
+      }
+      return rootGroup
+    }
+    case 'operator-hmi-pedestal': {
+      mesh(rootGroup, 'column', new THREE.BoxGeometry(0.3, 0.9, 0.25), darkSteel, [0, 0.45, 0])
+      mesh(rootGroup, 'screen', new THREE.BoxGeometry(0.55, 0.4, 0.04), plastic, [0, 1.05, 0])
+      if (!low) {
+        mesh(rootGroup, 'screen:bezel', new THREE.BoxGeometry(0.6, 0.45, 0.02), darkSteel, [0, 1.05, -0.02])
+        mesh(rootGroup, 'base', new THREE.BoxGeometry(0.4, 0.05, 0.35), steel, [0, 0.025, 0])
+        mesh(rootGroup, 'label:hmi', new THREE.BoxGeometry(0.2, 0.05, 0.005), labelWhite, [0, 0.8, 0.13])
+      }
+      return rootGroup
+    }
+    case 'configurable-part': {
+      mesh(rootGroup, 'part', new THREE.BoxGeometry(0.12, 0.08, 0.12), enclosure, [0, 0.04, 0])
+      if (!low) mesh(rootGroup, 'part:top', new THREE.BoxGeometry(0.1, 0.01, 0.1), steel, [0, 0.085, 0])
+      return rootGroup
+    }
+    case 'vacuum-gripper': {
+      mesh(rootGroup, 'tool-body', new THREE.BoxGeometry(0.2, 0.1, 0.2), darkSteel, [0, 0.05, 0])
+      mesh(rootGroup, 'interface', new THREE.BoxGeometry(0.12, 0.03, 0.12), safetyYellow, [0, 0.11, 0])
+      if (!low) {
+        for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+          mesh(rootGroup, `cup:${sx}:${sz}`, new THREE.CylinderGeometry(0.03, 0.03, 0.03, fine), rubber, [sx * 0.06, 0.015, sz * 0.06])
+        }
+      }
+      return rootGroup
+    }
+    case 'carton': {
+      mesh(rootGroup, 'carton', new THREE.BoxGeometry(0.4, 0.3, 0.3), enclosure, [0, 0.15, 0])
+      if (!low) {
+        mesh(rootGroup, 'carton:tape', new THREE.BoxGeometry(0.4, 0.005, 0.05), labelWhite, [0, 0.302, 0])
+        mesh(rootGroup, 'carton:flap', new THREE.BoxGeometry(0.4, 0.01, 0.14), steel, [0, 0.305, 0.08])
+      }
+      return rootGroup
+    }
+    case 'euro-pallet': {
+      mesh(rootGroup, 'pallet', new THREE.BoxGeometry(1.2, 0.045, 0.8), safetyYellow, [0, 0.0225, 0])
+      for (const z of [-0.3, 0, 0.3]) mesh(rootGroup, `runner:${z}`, new THREE.BoxGeometry(1.16, 0.02, 0.1), darkSteel, [0, 0.01, z])
+      for (const [index, x, z] of (low ? [[1, -0.5, -0.3], [2, 0.5, 0.3]] : [[1, -0.5, -0.3], [2, 0.5, -0.3], [3, -0.5, 0.3], [4, 0.5, 0.3]])) {
+        mesh(rootGroup, `block:${index}`, new THREE.BoxGeometry(0.12, 0.1, 0.12), safetyYellow, [x, 0.05, z])
+      }
+      if (!low) mesh(rootGroup, 'label:pallet', new THREE.BoxGeometry(0.2, 0.05, 0.005), labelWhite, [0, 0.05, 0.401])
+      return rootGroup
+    }
+    case 'infeed-buffer':
+    case 'outfeed-buffer': {
+      mesh(rootGroup, 'deck', new THREE.BoxGeometry(1.2, 0.07, 0.8), steel, [0, 0.365, 0])
+      for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+        mesh(rootGroup, `leg:${sx}:${sz}`, new THREE.BoxGeometry(0.06, 0.33, 0.06), darkSteel, [sx * 0.54, 0.165, sz * 0.34])
+      }
+      if (!low) {
+        for (const z of [-0.34, 0.34]) mesh(rootGroup, `rail:${z}`, new THREE.BoxGeometry(1.2, 0.05, 0.04), safetyYellow, [0, 0.42, z])
+        mesh(rootGroup, 'label:buffer', new THREE.BoxGeometry(0.2, 0.05, 0.005), labelWhite, [0, 0.3, 0.401])
+      }
+      return rootGroup
+    }
+    case 'fence-panel': {
+      mesh(rootGroup, 'panel', new THREE.BoxGeometry(2.4, 2.1, 0.04), safetyYellow, [0, 1.05, 0])
+      for (const sign of [-1, 1]) mesh(rootGroup, `post:${sign}`, new THREE.BoxGeometry(0.08, 2.1, 0.08), darkSteel, [sign * 1.16, 1.05, 0])
+      if (!low) {
+        mesh(rootGroup, 'kick-plate', new THREE.BoxGeometry(2.4, 0.16, 0.05), darkSteel, [0, 0.08, 0])
+        for (let bar = 0; bar < 4; bar += 1) mesh(rootGroup, `bar:${bar}`, new THREE.BoxGeometry(2.3, 0.03, 0.02), guardMesh, [0, 0.5 + bar * 0.4, 0.03])
+      }
+      return rootGroup
+    }
+    case 'light-curtain': {
+      mesh(rootGroup, 'post-a', new THREE.BoxGeometry(0.06, 1.8, 0.06), darkSteel, [-0.67, 0.9, 0])
+      mesh(rootGroup, 'field', new THREE.BoxGeometry(0.05, 1.44, 0.04), sensorGlass, [0, 0.9, 0])
+      mesh(rootGroup, 'emitter', new THREE.BoxGeometry(1.4, 0.07, 0.05), darkSteel, [0, 1.8, 0])
+      if (!low) {
+        mesh(rootGroup, 'post-b', new THREE.BoxGeometry(0.06, 1.8, 0.06), darkSteel, [0.67, 0.9, 0])
+        mesh(rootGroup, 'receiver', new THREE.BoxGeometry(1.4, 0.07, 0.05), darkSteel, [0, 0.02, 0])
+      }
+      return rootGroup
+    }
+    case 'machining-fixture': {
+      mesh(rootGroup, 'fixture', new THREE.BoxGeometry(0.55, 0.16, 0.55), darkSteel, [0, 0.08, 0])
+      mesh(rootGroup, 'workface', new THREE.BoxGeometry(0.4, 0.02, 0.4), steel, [0, 0.17, 0])
+      if (!low) {
+        for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+          mesh(rootGroup, `bolt:${sx}:${sz}`, new THREE.CylinderGeometry(0.012, 0.012, 0.02, fine), stainless, [sx * 0.2, 0.18, sz * 0.2])
+        }
+      }
+      return rootGroup
+    }
+    case 'toggle-clamp': {
+      mesh(rootGroup, 'base', new THREE.BoxGeometry(0.2, 0.08, 0.12), darkSteel, [0, 0.04, 0])
+      mesh(rootGroup, 'handle', new THREE.BoxGeometry(0.06, 0.12, 0.06), safetyYellow, [0, 0.14, 0])
+      if (!low) {
+        mesh(rootGroup, 'arm', new THREE.BoxGeometry(0.16, 0.03, 0.04), steel, [0.02, 0.1, 0])
+        mesh(rootGroup, 'spindle', new THREE.CylinderGeometry(0.012, 0.012, 0.06, fine), stainless, [0.08, 0.06, 0])
+      }
+      return rootGroup
+    }
+    case 'part-presence-sensor': {
+      mesh(rootGroup, 'sensor', new THREE.BoxGeometry(0.1, 0.08, 0.1), plastic, [0, 0.04, 0])
+      mesh(rootGroup, 'port', new THREE.CylinderGeometry(0.02, 0.02, 0.01, seg), sensorGlass, [0, 0.04, 0.055], [Math.PI / 2, 0, 0])
+      if (!low) mesh(rootGroup, 'cable', new THREE.CylinderGeometry(0.012, 0.012, 0.08, fine), darkSteel, [0, 0.04, -0.08], [Math.PI / 2, 0, 0])
+      return rootGroup
+    }
+    case 'barcode-rfid-reader': {
+      mesh(rootGroup, 'body', new THREE.BoxGeometry(0.2, 0.16, 0.15), darkSteel, [0, 0.08, 0])
+      mesh(rootGroup, 'window', new THREE.BoxGeometry(0.14, 0.02, 0.11), sensorGlass, [0, 0.005, 0])
+      if (!low) {
+        mesh(rootGroup, 'reader:mount', new THREE.BoxGeometry(0.06, 0.06, 0.06), steel, [0, 0.18, 0])
+        mesh(rootGroup, 'label:reader', new THREE.BoxGeometry(0.1, 0.03, 0.005), labelWhite, [0, 0.1, 0.078])
+      }
+      return rootGroup
+    }
+    case 'workholding-adapter': {
+      mesh(rootGroup, 'adapter', new THREE.BoxGeometry(0.35, 0.12, 0.35), steel, [0, 0.06, 0])
+      if (!low) {
+        mesh(rootGroup, 'adapter:plate', new THREE.BoxGeometry(0.28, 0.02, 0.28), darkSteel, [0, 0.13, 0])
+        for (const [sx, sz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+          mesh(rootGroup, `adapter:bolt:${sx}:${sz}`, new THREE.CylinderGeometry(0.01, 0.01, 0.02, fine), stainless, [sx * 0.12, 0.14, sz * 0.12])
+        }
+      }
+      return rootGroup
+    }
+    case 'interlocked-gate': {
+      mesh(rootGroup, 'gate', new THREE.BoxGeometry(1.2, 2.1, 0.05), safetyYellow, [0, 1.05, 0])
+      mesh(rootGroup, 'interlock', new THREE.BoxGeometry(0.12, 0.12, 0.06), signalRed, [0.5, 1.26, 0.05])
+      if (!low) {
+        for (let bar = 0; bar < 4; bar += 1) mesh(rootGroup, `gate:bar:${bar}`, new THREE.BoxGeometry(1.1, 0.03, 0.02), guardMesh, [0, 0.5 + bar * 0.4, 0.04])
+        mesh(rootGroup, 'gate:handle', new THREE.BoxGeometry(0.04, 0.24, 0.04), stainless, [-0.5, 1.05, 0.05])
+      }
+      return rootGroup
+    }
+    case 'area-scanner': {
+      mesh(rootGroup, 'scanner', new THREE.CylinderGeometry(0.11, 0.12, 0.2, seg), darkSteel, [0, 0.1, 0])
+      mesh(rootGroup, 'window', new THREE.BoxGeometry(0.12, 0.02, 0.12), sensorGlass, [0, 0.21, 0])
+      if (!low) {
+        mesh(rootGroup, 'scanner:base', new THREE.CylinderGeometry(0.13, 0.13, 0.02, seg), steel, [0, 0.01, 0])
+        mesh(rootGroup, 'scanner:ring', new THREE.CylinderGeometry(0.115, 0.115, 0.02, seg), safetyYellow, [0, 0.16, 0])
+      }
+      return rootGroup
+    }
+    case 'emergency-stop': {
+      mesh(rootGroup, 'pedestal', new THREE.BoxGeometry(0.3, 1.1, 0.3), darkSteel, [0, 0.55, 0])
+      mesh(rootGroup, 'button', new THREE.CylinderGeometry(0.09, 0.09, 0.05, seg), signalRed, [0, 1.13, 0])
+      if (!low) {
+        mesh(rootGroup, 'button:base', new THREE.CylinderGeometry(0.11, 0.11, 0.03, seg), safetyYellow, [0, 1.1, 0])
+        mesh(rootGroup, 'label:estop', new THREE.BoxGeometry(0.16, 0.06, 0.005), labelWhite, [0, 0.9, 0.153])
+      }
+      return rootGroup
+    }
+    case 'stack-light': {
+      mesh(rootGroup, 'red', new THREE.CylinderGeometry(0.06, 0.06, 0.18, seg), signalRed, [0, 0.56, 0])
+      mesh(rootGroup, 'amber', new THREE.CylinderGeometry(0.06, 0.06, 0.18, seg), safetyYellow, [0, 0.37, 0])
+      mesh(rootGroup, 'green', new THREE.CylinderGeometry(0.06, 0.06, 0.18, seg), sensorGreen, [0, 0.18, 0])
+      if (!low) {
+        mesh(rootGroup, 'stack:pole', new THREE.CylinderGeometry(0.02, 0.02, 0.65, fine), darkSteel, [0, 0.325, 0])
+        mesh(rootGroup, 'stack:base', new THREE.CylinderGeometry(0.07, 0.07, 0.03, seg), darkSteel, [0, 0.015, 0])
+      }
+      return rootGroup
+    }
+    case 'safety-zone': {
+      mesh(rootGroup, 'zone-floor', new THREE.BoxGeometry(2.5, 0.03, 2.5), safetyYellow, [0, 0.015, 0])
+      mesh(rootGroup, 'zone-edge-a', new THREE.BoxGeometry(2.5, 0.04, 0.06), darkSteel, [0, 0.02, -1.25])
+      mesh(rootGroup, 'zone-edge-b', new THREE.BoxGeometry(2.5, 0.04, 0.06), darkSteel, [0, 0.02, 1.25])
+      mesh(rootGroup, 'zone-edge-c', new THREE.BoxGeometry(0.06, 0.04, 2.5), darkSteel, [-1.25, 0.02, 0])
+      mesh(rootGroup, 'zone-edge-d', new THREE.BoxGeometry(0.06, 0.04, 2.5), darkSteel, [1.25, 0.02, 0])
+      if (!low) {
+        for (const [index, x, z] of [[1, -1.1, -1.1], [2, 1.1, -1.1], [3, -1.1, 1.1], [4, 1.1, 1.1]]) {
+          mesh(rootGroup, `zone-corner:${index}`, new THREE.BoxGeometry(0.12, 0.05, 0.12), hazard, [x, 0.025, z])
+        }
+      }
+      return rootGroup
+    }
+    default:
+      throw new Error(`No S65 scenario equipment builder for '${definitionId}'.`)
+  }
+}
+
 function sceneSemanticIds(scene) {
   const ids = new Set()
   const names = new Set()
@@ -577,6 +868,248 @@ async function writeAsset(id, scene, lodScene, manifest, options = {}) {
   return { id, path: modelPath, hash, lodHash, thumbHash, bytes: (await fs.stat(modelPath)).size }
 }
 
+// S65 scenario equipment catalog. `semanticNodes` is the portable manifest
+// subset; `requiredNodes` is the full animator contract asserted by the pipeline
+// test (some state-bearing node names are not expressible in the manifest
+// namespaces). `bounds` are the declared SI envelopes the generated geometry
+// must fit inside.
+const SCENARIO_EQUIPMENT_SPECS = [
+  {
+    assetId: 'scenario-straight-conveyor-v1', definitionId: 'straight-conveyor', category: 'conveyor',
+    bounds: { x: 2.0, y: 0.62, z: 0.66 }, primaryBudget: 6000, lodBudget: 2200,
+    collision: { id: 'scenario-conveyor-1', kind: 'box', dimensionsMeters: { x: 2.0, y: 0.5, z: 0.6 } },
+    semanticNodes: [{ id: 'motor:main', kind: 'motor' }, { id: 'sensor:infeed', kind: 'sensor' }, { id: 'sensor:outfeed', kind: 'sensor' }, { id: 'anchor:material.in', kind: 'anchor' }, { id: 'anchor:material.out', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:material.in', transform: { frameId: 'equipment-base', position: { x: -1.0, y: 0.5, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }, { id: 'anchor:material.out', transform: { frameId: 'equipment-base', position: { x: 1.0, y: 0.5, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['painted-steel', 'dark-steel', 'belt-rubber', 'safety-yellow'],
+    requiredNodes: ['frame', 'belt', 'motor:main', 'sensor:infeed', 'sensor:outfeed', 'anchor:material.in', 'anchor:material.out'],
+  },
+  {
+    assetId: 'scenario-vision-inspection-station-v1', definitionId: 'vision-inspection-station', category: 'machine',
+    bounds: { x: 0.9, y: 2.0, z: 0.7 }, primaryBudget: 4000, lodBudget: 1600,
+    collision: { id: 'scenario-vision-station-1', kind: 'box', dimensionsMeters: { x: 0.9, y: 2.0, z: 0.7 } },
+    semanticNodes: [{ id: 'sensor:camera', kind: 'sensor' }, { id: 'signal:inspection-light', kind: 'signal' }],
+    anchors: [],
+    materials: ['dark-steel', 'painted-steel', 'sensor-glass'],
+    requiredNodes: ['leg:1', 'leg:-1', 'beam', 'camera', 'lens', 'inspection-light'],
+  },
+  {
+    assetId: 'scenario-photoelectric-sensor-v1', definitionId: 'photoelectric-sensor', category: 'sensor',
+    bounds: { x: 0.12, y: 0.12, z: 0.12 }, primaryBudget: 800, lodBudget: 400,
+    collision: { id: 'scenario-photoelectric-1', kind: 'box', dimensionsMeters: { x: 0.12, y: 0.12, z: 0.12 } },
+    semanticNodes: [{ id: 'sensor:lens', kind: 'sensor' }],
+    anchors: [],
+    materials: ['plastic', 'sensor-glass'],
+    requiredNodes: ['body', 'lens'],
+  },
+  {
+    assetId: 'scenario-diverter-pusher-v1', definitionId: 'diverter-pusher', category: 'conveyor',
+    bounds: { x: 0.75, y: 0.5, z: 0.75 }, primaryBudget: 2500, lodBudget: 1000,
+    collision: { id: 'scenario-diverter-1', kind: 'box', dimensionsMeters: { x: 0.75, y: 0.5, z: 0.75 } },
+    semanticNodes: [{ id: 'motor:pusher', kind: 'motor' }, { id: 'sensor:extended', kind: 'sensor' }],
+    anchors: [],
+    materials: ['painted-steel', 'dark-steel', 'safety-yellow'],
+    requiredNodes: ['body', 'piston', 'pusher'],
+  },
+  {
+    assetId: 'scenario-storage-bin-v1', definitionId: 'storage-bin', category: 'pallet-station',
+    bounds: { x: 0.62, y: 0.48, z: 0.52 }, primaryBudget: 1500, lodBudget: 700,
+    collision: { id: 'scenario-bin-1', kind: 'box', dimensionsMeters: { x: 0.6, y: 0.45, z: 0.5 } },
+    semanticNodes: [{ id: 'sensor:level', kind: 'sensor' }, { id: 'anchor:material.out', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:material.out', transform: { frameId: 'equipment-base', position: { x: 0, y: 0.45, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['plastic', 'dark-steel'],
+    requiredNodes: ['bin', 'opening'],
+  },
+  {
+    assetId: 'scenario-plc-cabinet-v1', definitionId: 'plc-cabinet', category: 'machine',
+    bounds: { x: 1.0, y: 2.0, z: 0.5 }, primaryBudget: 3000, lodBudget: 1200,
+    collision: { id: 'scenario-plc-1', kind: 'box', dimensionsMeters: { x: 1.0, y: 2.0, z: 0.5 } },
+    semanticNodes: [{ id: 'signal:panel', kind: 'signal' }, { id: 'door:panel', kind: 'door' }],
+    anchors: [],
+    materials: ['enclosure', 'dark-steel'],
+    requiredNodes: ['cabinet', 'door', 'panel'],
+  },
+  {
+    assetId: 'scenario-operator-hmi-pedestal-v1', definitionId: 'operator-hmi-pedestal', category: 'machine',
+    bounds: { x: 0.6, y: 1.35, z: 0.45 }, primaryBudget: 2200, lodBudget: 900,
+    collision: { id: 'scenario-hmi-1', kind: 'box', dimensionsMeters: { x: 0.55, y: 1.35, z: 0.45 } },
+    semanticNodes: [{ id: 'signal:screen', kind: 'signal' }],
+    anchors: [],
+    materials: ['dark-steel', 'plastic'],
+    requiredNodes: ['column', 'screen'],
+  },
+  {
+    assetId: 'scenario-configurable-part-v1', definitionId: 'configurable-part', category: 'pallet-station',
+    bounds: { x: 0.12, y: 0.09, z: 0.12 }, primaryBudget: 400, lodBudget: 200,
+    collision: { id: 'scenario-part-1', kind: 'box', dimensionsMeters: { x: 0.12, y: 0.08, z: 0.12 } },
+    semanticNodes: [{ id: 'anchor:grasp', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:grasp', transform: { frameId: 'equipment-base', position: { x: 0, y: 0.08, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['enclosure'],
+    requiredNodes: ['part'],
+  },
+  {
+    assetId: 'scenario-vacuum-gripper-v1', definitionId: 'vacuum-gripper', category: 'tool',
+    bounds: { x: 0.2, y: 0.14, z: 0.2 }, primaryBudget: 1200, lodBudget: 500,
+    collision: { id: 'scenario-vacuum-1', kind: 'box', dimensionsMeters: { x: 0.2, y: 0.14, z: 0.2 } },
+    semanticNodes: [{ id: 'tool:interface', kind: 'tool' }, { id: 'sensor:vacuum', kind: 'sensor' }],
+    anchors: [],
+    materials: ['dark-steel', 'safety-yellow'],
+    requiredNodes: ['tool-body', 'interface'],
+  },
+  {
+    assetId: 'scenario-carton-v1', definitionId: 'carton', category: 'pallet-station',
+    bounds: { x: 0.4, y: 0.31, z: 0.3 }, primaryBudget: 600, lodBudget: 300,
+    collision: { id: 'scenario-carton-1', kind: 'box', dimensionsMeters: { x: 0.4, y: 0.3, z: 0.3 } },
+    semanticNodes: [{ id: 'anchor:grasp', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:grasp', transform: { frameId: 'equipment-base', position: { x: 0, y: 0.3, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['enclosure'],
+    requiredNodes: ['carton'],
+  },
+  {
+    assetId: 'scenario-euro-pallet-v1', definitionId: 'euro-pallet', category: 'pallet-station',
+    bounds: { x: 1.2, y: 0.15, z: 0.8 }, primaryBudget: 1800, lodBudget: 800,
+    collision: { id: 'scenario-pallet-1', kind: 'box', dimensionsMeters: { x: 1.2, y: 0.15, z: 0.8 } },
+    semanticNodes: [{ id: 'fixture:locator', kind: 'fixture' }, { id: 'anchor:grasp', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:grasp', transform: { frameId: 'equipment-base', position: { x: 0, y: 0.15, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['safety-yellow', 'dark-steel'],
+    requiredNodes: ['pallet', 'runner:-0.3', 'runner:0', 'runner:0.3'],
+  },
+  {
+    assetId: 'scenario-infeed-buffer-v1', definitionId: 'infeed-buffer', category: 'pallet-station',
+    bounds: { x: 1.2, y: 0.45, z: 0.8 }, primaryBudget: 1600, lodBudget: 700,
+    collision: { id: 'scenario-infeed-buffer-1', kind: 'box', dimensionsMeters: { x: 1.2, y: 0.4, z: 0.8 } },
+    semanticNodes: [{ id: 'sensor:presence', kind: 'sensor' }, { id: 'anchor:material.in', kind: 'anchor' }, { id: 'anchor:material.out', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:material.in', transform: { frameId: 'equipment-base', position: { x: -0.6, y: 0.4, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }, { id: 'anchor:material.out', transform: { frameId: 'equipment-base', position: { x: 0.6, y: 0.4, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['painted-steel', 'dark-steel', 'safety-yellow'],
+    requiredNodes: ['deck', 'leg:-1:-1', 'leg:-1:1', 'leg:1:-1', 'leg:1:1'],
+  },
+  {
+    assetId: 'scenario-outfeed-buffer-v1', definitionId: 'outfeed-buffer', category: 'pallet-station',
+    bounds: { x: 1.2, y: 0.45, z: 0.8 }, primaryBudget: 1600, lodBudget: 700,
+    collision: { id: 'scenario-outfeed-buffer-1', kind: 'box', dimensionsMeters: { x: 1.2, y: 0.4, z: 0.8 } },
+    semanticNodes: [{ id: 'sensor:presence', kind: 'sensor' }, { id: 'anchor:material.in', kind: 'anchor' }, { id: 'anchor:material.out', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:material.in', transform: { frameId: 'equipment-base', position: { x: -0.6, y: 0.4, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }, { id: 'anchor:material.out', transform: { frameId: 'equipment-base', position: { x: 0.6, y: 0.4, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['painted-steel', 'dark-steel', 'safety-yellow'],
+    requiredNodes: ['deck', 'leg:-1:-1', 'leg:-1:1', 'leg:1:-1', 'leg:1:1'],
+  },
+  {
+    assetId: 'scenario-fence-panel-v1', definitionId: 'fence-panel', category: 'safety-device',
+    bounds: { x: 2.4, y: 2.1, z: 0.08 }, primaryBudget: 2000, lodBudget: 900,
+    collision: { id: 'scenario-fence-1', kind: 'box', dimensionsMeters: { x: 2.4, y: 2.1, z: 0.06 } },
+    semanticNodes: [{ id: 'signal:interlock', kind: 'signal' }],
+    anchors: [],
+    materials: ['safety-yellow', 'dark-steel'],
+    requiredNodes: ['panel', 'post:-1', 'post:1'],
+  },
+  {
+    assetId: 'scenario-light-curtain-v1', definitionId: 'light-curtain', category: 'safety-device',
+    bounds: { x: 1.4, y: 1.84, z: 0.08 }, primaryBudget: 1400, lodBudget: 600,
+    collision: { id: 'scenario-light-curtain-1', kind: 'box', dimensionsMeters: { x: 1.4, y: 1.8, z: 0.08 } },
+    semanticNodes: [{ id: 'sensor:field', kind: 'sensor' }],
+    anchors: [],
+    materials: ['dark-steel', 'sensor-glass'],
+    requiredNodes: ['post-a', 'field', 'emitter'],
+  },
+  {
+    assetId: 'scenario-robot-controller-cabinet-v1', definitionId: 'robot-controller-cabinet', category: 'machine',
+    bounds: { x: 0.8, y: 1.8, z: 0.65 }, primaryBudget: 2800, lodBudget: 1100,
+    collision: { id: 'scenario-robot-controller-1', kind: 'box', dimensionsMeters: { x: 0.8, y: 1.8, z: 0.65 } },
+    semanticNodes: [{ id: 'signal:panel', kind: 'signal' }, { id: 'door:panel', kind: 'door' }],
+    anchors: [],
+    materials: ['enclosure', 'dark-steel'],
+    requiredNodes: ['cabinet', 'door', 'panel'],
+  },
+  {
+    assetId: 'scenario-machining-fixture-v1', definitionId: 'machining-fixture', category: 'machine',
+    bounds: { x: 0.55, y: 0.2, z: 0.55 }, primaryBudget: 1600, lodBudget: 700,
+    collision: { id: 'scenario-fixture-1', kind: 'box', dimensionsMeters: { x: 0.55, y: 0.2, z: 0.55 } },
+    semanticNodes: [{ id: 'fixture:workface', kind: 'fixture' }, { id: 'anchor:material.in', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:material.in', transform: { frameId: 'equipment-base', position: { x: 0, y: 0.18, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['dark-steel', 'painted-steel'],
+    requiredNodes: ['fixture', 'workface'],
+  },
+  {
+    assetId: 'scenario-toggle-clamp-v1', definitionId: 'toggle-clamp', category: 'machine',
+    bounds: { x: 0.2, y: 0.2, z: 0.12 }, primaryBudget: 900, lodBudget: 400,
+    collision: { id: 'scenario-clamp-1', kind: 'box', dimensionsMeters: { x: 0.2, y: 0.2, z: 0.12 } },
+    semanticNodes: [{ id: 'fixture:clamp', kind: 'fixture' }, { id: 'sensor:clamped', kind: 'sensor' }],
+    anchors: [],
+    materials: ['dark-steel', 'safety-yellow'],
+    requiredNodes: ['base', 'handle'],
+  },
+  {
+    assetId: 'scenario-part-presence-sensor-v1', definitionId: 'part-presence-sensor', category: 'sensor',
+    bounds: { x: 0.12, y: 0.1, z: 0.12 }, primaryBudget: 700, lodBudget: 350,
+    collision: { id: 'scenario-presence-1', kind: 'box', dimensionsMeters: { x: 0.12, y: 0.1, z: 0.12 } },
+    semanticNodes: [{ id: 'sensor:presence', kind: 'sensor' }],
+    anchors: [],
+    materials: ['plastic', 'sensor-glass'],
+    requiredNodes: ['sensor', 'port'],
+  },
+  {
+    assetId: 'scenario-barcode-rfid-reader-v1', definitionId: 'barcode-rfid-reader', category: 'sensor',
+    bounds: { x: 0.2, y: 0.18, z: 0.15 }, primaryBudget: 900, lodBudget: 400,
+    collision: { id: 'scenario-reader-1', kind: 'box', dimensionsMeters: { x: 0.2, y: 0.18, z: 0.15 } },
+    semanticNodes: [{ id: 'sensor:reader', kind: 'sensor' }, { id: 'signal:data', kind: 'signal' }],
+    anchors: [],
+    materials: ['dark-steel', 'sensor-glass'],
+    requiredNodes: ['body', 'window'],
+  },
+  {
+    assetId: 'scenario-workholding-adapter-v1', definitionId: 'workholding-adapter', category: 'machine',
+    bounds: { x: 0.35, y: 0.15, z: 0.35 }, primaryBudget: 1200, lodBudget: 500,
+    collision: { id: 'scenario-adapter-1', kind: 'box', dimensionsMeters: { x: 0.35, y: 0.14, z: 0.35 } },
+    semanticNodes: [{ id: 'fixture:adapter', kind: 'fixture' }, { id: 'anchor:material.in', kind: 'anchor' }],
+    anchors: [{ id: 'anchor:material.in', transform: { frameId: 'equipment-base', position: { x: 0, y: 0.14, z: 0 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    materials: ['painted-steel', 'dark-steel'],
+    requiredNodes: ['adapter'],
+  },
+  {
+    assetId: 'scenario-interlocked-gate-v1', definitionId: 'interlocked-gate', category: 'safety-device',
+    bounds: { x: 1.2, y: 2.1, z: 0.08 }, primaryBudget: 1800, lodBudget: 800,
+    collision: { id: 'scenario-gate-1', kind: 'box', dimensionsMeters: { x: 1.2, y: 2.1, z: 0.08 } },
+    semanticNodes: [{ id: 'door:gate', kind: 'door' }, { id: 'signal:interlock', kind: 'signal' }],
+    anchors: [],
+    materials: ['safety-yellow', 'signal-red'],
+    requiredNodes: ['gate', 'interlock'],
+  },
+  {
+    assetId: 'scenario-area-scanner-v1', definitionId: 'area-scanner', category: 'safety-device',
+    bounds: { x: 0.26, y: 0.23, z: 0.26 }, primaryBudget: 900, lodBudget: 400,
+    collision: { id: 'scenario-scanner-1', kind: 'box', dimensionsMeters: { x: 0.25, y: 0.22, z: 0.25 } },
+    semanticNodes: [{ id: 'sensor:scanner', kind: 'sensor' }],
+    anchors: [],
+    materials: ['dark-steel', 'sensor-glass'],
+    requiredNodes: ['scanner', 'window'],
+  },
+  {
+    assetId: 'scenario-emergency-stop-v1', definitionId: 'emergency-stop', category: 'safety-device',
+    bounds: { x: 0.35, y: 1.16, z: 0.35 }, primaryBudget: 1200, lodBudget: 500,
+    collision: { id: 'scenario-estop-1', kind: 'box', dimensionsMeters: { x: 0.35, y: 1.15, z: 0.35 } },
+    semanticNodes: [{ id: 'signal:estop', kind: 'signal' }],
+    anchors: [],
+    materials: ['dark-steel', 'signal-red'],
+    requiredNodes: ['pedestal', 'button'],
+  },
+  {
+    assetId: 'scenario-stack-light-v1', definitionId: 'stack-light', category: 'safety-device',
+    bounds: { x: 0.15, y: 0.66, z: 0.15 }, primaryBudget: 1000, lodBudget: 450,
+    collision: { id: 'scenario-stack-light-1', kind: 'box', dimensionsMeters: { x: 0.15, y: 0.65, z: 0.15 } },
+    semanticNodes: [{ id: 'signal:stack', kind: 'signal' }],
+    anchors: [],
+    materials: ['signal-red', 'safety-yellow', 'signal-green'],
+    requiredNodes: ['red', 'amber', 'green'],
+  },
+  {
+    assetId: 'scenario-safety-zone-v1', definitionId: 'safety-zone', category: 'safety-device',
+    bounds: { x: 2.5, y: 0.05, z: 2.5 }, primaryBudget: 1400, lodBudget: 600,
+    collision: { id: 'scenario-safety-zone-1', kind: 'box', dimensionsMeters: { x: 2.5, y: 0.04, z: 2.5 } },
+    semanticNodes: [{ id: 'signal:zone', kind: 'signal' }],
+    anchors: [],
+    materials: ['safety-yellow', 'dark-steel'],
+    requiredNodes: ['zone-floor', 'zone-edge-a', 'zone-edge-b', 'zone-edge-c', 'zone-edge-d'],
+  },
+]
+
 const results = await Promise.all([
   writeAsset('generic-conveyor-v1', conveyor(), conveyor(true), ({ hash, lodHash, thumbHash }) => ({
     schemaVersion: '1.0', id: 'generic-conveyor-v1', equipmentDefinitionId: 'belt-conveyor', category: 'conveyor', version: '1.0.0',
@@ -637,5 +1170,33 @@ const results = await Promise.all([
     anchors: [{ id: 'anchor:buffer.access', transform: { frameId: 'equipment-base', position: { x: 3.0, y: 0.9, z: 0.15 }, rotation: { x: 0, y: 0, z: 0 } } }],
     materials: ['machine-trim', 'stainless', 'safety-hazard', 'rack-blue', 'work-light', 'concrete'], thumbnail: { path: 'thumbnail.svg', sha256: thumbHash }, license: { name: 'Fabrik3D generated generic asset; educational use' }, integrity: { path: 'model.glb', sha256: hash },
   }), { enforceBudgets: true, maxPrimaryTriangles: 12000, enforceBounds: true, checkLodSemanticNodes: true }),
+  // S65 scenario-specific industrial equipment packages.
+  ...SCENARIO_EQUIPMENT_SPECS.map((spec) => {
+    const primary = scenarioEquipment(spec.definitionId)
+    const lod = scenarioEquipment(spec.definitionId, true)
+    // Declared portable semantic nodes must exist in both levels. Builders that
+    // already create a node with the semantic name keep it; the rest get a
+    // marker group so the manifest contract is real and testable.
+    for (const node of spec.semanticNodes) {
+      if (!primary.getObjectByName(node.id)) group(primary, node.id)
+      if (!lod.getObjectByName(node.id)) group(lod, node.id)
+    }
+    return writeAsset(
+      spec.assetId,
+      primary,
+      lod,
+      ({ hash, lodHash, thumbHash }) => ({
+      schemaVersion: '1.0', id: spec.assetId, equipmentDefinitionId: spec.definitionId, category: spec.category, version: '1.0.0',
+      coordinateSystem: { units: 'meters', upAxis: 'Y', handedness: 'right', origin: 'equipment-base' }, boundsMeters: spec.bounds,
+      visual: { glb: { path: 'model.glb', sha256: hash }, lods: [{ id: 'lod1', glb: { path: 'lod/lod1.glb', sha256: lodHash }, triangleBudget: spec.lodBudget }] },
+      collision: spec.collision,
+      semanticNodes: spec.semanticNodes,
+      anchors: spec.anchors,
+      materials: spec.materials, thumbnail: { path: 'thumbnail.svg', sha256: thumbHash },
+      license: { name: 'Fabrik3D generated generic asset; educational use' }, integrity: { path: 'model.glb', sha256: hash },
+      }),
+      { enforceBudgets: true, maxPrimaryTriangles: spec.primaryBudget, enforceBounds: true, checkLodSemanticNodes: true },
+    )
+  }),
 ])
 console.log(JSON.stringify(results, null, 2))

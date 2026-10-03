@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-carton-v1",
+  "equipmentDefinitionId": "carton",
+  "category": "pallet-station",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.4,
+    "y": 0.31,
+    "z": 0.3
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "b48b19927d401de91ea444d6dff947f55abd12b98ec6ac6b75677a42c8f34585"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "51c29b34a894eb50f2cd9fcf76873d3de4055f871dd3de0384db0efc5e9d4b3a"
+        },
+        "triangleBudget": 300
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-carton-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.4,
+      "y": 0.3,
+      "z": 0.3
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "anchor:grasp",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:grasp",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 0,
+          "y": 0.3,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "enclosure"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "bf6500bcd2336082290b991de83cbbbbfa6a9e131d60caeadb460239c0b392c1"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "b48b19927d401de91ea444d6dff947f55abd12b98ec6ac6b75677a42c8f34585"
+  }
+}

@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { readRendererIdentity, type RendererIdentity } from '../observability/acceleration'
+import { createMaterial } from '../equipment/visuals/materialLibrary'
 
 export type SceneQuality = 'low' | 'medium' | 'high'
 
@@ -129,12 +130,8 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
       // Floor grid
       scene.add(new THREE.GridHelper(10, 20, 0x52616a, 0x354148))
 
-      // Floor plane (shadow receiver)
-      const floorMat = new THREE.MeshStandardMaterial({
-        color: 0x596064,
-        roughness: 0.94,
-        metalness: 0.03,
-      })
+      // Floor plane (shadow receiver) using the shared painted-floor material.
+      const floorMat = createMaterial('painted-floor')
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat)
       floor.rotation.x = -Math.PI / 2
       floor.receiveShadow = true

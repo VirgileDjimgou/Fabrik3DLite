@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-part-presence-sensor-v1",
+  "equipmentDefinitionId": "part-presence-sensor",
+  "category": "sensor",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.12,
+    "y": 0.1,
+    "z": 0.12
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "349269dc011b964ccc3dc644ca8a1a7330129f794ea055edfbb0a1d911399d8b"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "008bf629f0405d4a2541f4f2cc337e3ed7235b26c75a2c929435499e99a46336"
+        },
+        "triangleBudget": 350
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-presence-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.12,
+      "y": 0.1,
+      "z": 0.12
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "sensor:presence",
+      "kind": "sensor"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "plastic",
+    "sensor-glass"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "321a9261798632a9923a5ff5a9c96b4f018ddae6388a32efb9ef0671d2c4efb2"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "349269dc011b964ccc3dc644ca8a1a7330129f794ea055edfbb0a1d911399d8b"
+  }
+}

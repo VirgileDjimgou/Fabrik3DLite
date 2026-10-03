@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-plc-cabinet-v1",
+  "equipmentDefinitionId": "plc-cabinet",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 1,
+    "y": 2,
+    "z": 0.5
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "5e40817870d99aaded090507e8902ee137aae2be94219fa0ceb932714e72be08"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "63adb3188dc27a93adaa6798e2ad2a103d37c9f612f99b61ad6c84724535e8f2"
+        },
+        "triangleBudget": 1200
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-plc-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 1,
+      "y": 2,
+      "z": 0.5
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "signal:panel",
+      "kind": "signal"
+    },
+    {
+      "id": "door:panel",
+      "kind": "door"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "enclosure",
+    "dark-steel"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "01a110dc295ca42c631ead32bce4c909b1b9b8c66708af5ae1e0cd990f979a82"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "5e40817870d99aaded090507e8902ee137aae2be94219fa0ceb932714e72be08"
+  }
+}

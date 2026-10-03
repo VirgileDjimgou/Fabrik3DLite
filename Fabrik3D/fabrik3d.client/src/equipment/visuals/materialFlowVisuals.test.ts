@@ -9,6 +9,8 @@ import {
   resolveEquipmentAssetId,
 } from './materialFlowVisuals'
 import { EquipmentAssetRegistry } from '../assets/registry'
+import { createIndustrialAssetRegistry } from '../assets/industrialAssets'
+import { SCENARIO_EQUIPMENT_ASSET_IDS } from '../assets/scenarioAssets'
 import { measureSceneResources } from '../assets/sceneMetrics'
 
 describe('S58 procedural scenario visuals', () => {
@@ -50,9 +52,22 @@ describe('S58 procedural scenario visuals', () => {
     const registry = new EquipmentAssetRegistry()
     registerMaterialFlowProceduralAssets(registry)
     registerMaterialFlowProceduralAssets(registry)
-    expect(registry.has(resolveEquipmentAssetId('straight-conveyor'))).toBe(true)
-    expect(registry.has(resolveEquipmentAssetId('fanuc-like-6axis'))).toBe(true)
-    expect(registry.get(resolveEquipmentAssetId('euro-pallet')).source).toBe('procedural')
+    // Classes without a scenario GLB keep the S58 procedural asset.
+    expect(registry.has(resolveEquipmentAssetId('not-a-real-class'))).toBe(true)
     expect(resolveEquipmentAssetId('not-a-real-class')).toBe(`${resolveEquipmentAssetId(GENERIC_EQUIPMENT_CLASS)}`)
+  })
+
+  it('prefers the S65 scenario GLB and the professional robot, with procedural fallbacks', () => {
+    const registry = createIndustrialAssetRegistry()
+    // Every scenario equipment class resolves to a registered GLB asset.
+    for (const definitionId of Object.keys(SCENARIO_EQUIPMENT_ASSET_IDS)) {
+      const assetId = resolveEquipmentAssetId(definitionId)
+      expect(registry.get(assetId).source, definitionId).toBe('glb')
+    }
+    // The training manipulator uses the existing generic professional robot.
+    expect(resolveEquipmentAssetId('fanuc-like-6axis')).toBe('generic-6axis-compact-v1')
+    expect(registry.get(resolveEquipmentAssetId('fanuc-like-6axis')).source).toBe('glb')
+    // A class with no scenario GLB still resolves to a procedural asset.
+    expect(registry.get(resolveEquipmentAssetId('parts-rack')).source).toBe('procedural')
   })
 })

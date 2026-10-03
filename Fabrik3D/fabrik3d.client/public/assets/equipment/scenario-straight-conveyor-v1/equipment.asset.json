@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-straight-conveyor-v1",
+  "equipmentDefinitionId": "straight-conveyor",
+  "category": "conveyor",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 2,
+    "y": 0.62,
+    "z": 0.66
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "cbfe0c7bf1493bc81fc0b9ee3be34aaf5edd88c638ea533af63e952209a08cc0"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "e6daca0355b7f685ecffe3502596969ee8f11a497d9319791a0aff6eb02d5fcb"
+        },
+        "triangleBudget": 2200
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-conveyor-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 2,
+      "y": 0.5,
+      "z": 0.6
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "motor:main",
+      "kind": "motor"
+    },
+    {
+      "id": "sensor:infeed",
+      "kind": "sensor"
+    },
+    {
+      "id": "sensor:outfeed",
+      "kind": "sensor"
+    },
+    {
+      "id": "anchor:material.in",
+      "kind": "anchor"
+    },
+    {
+      "id": "anchor:material.out",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:material.in",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": -1,
+          "y": 0.5,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    },
+    {
+      "id": "anchor:material.out",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 1,
+          "y": 0.5,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "painted-steel",
+    "dark-steel",
+    "belt-rubber",
+    "safety-yellow"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "8d75c518d5505edb64cab498d9828cc9df6d6ee8e02b9b06b4ab566d9e92763d"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "cbfe0c7bf1493bc81fc0b9ee3be34aaf5edd88c638ea533af63e952209a08cc0"
+  }
+}

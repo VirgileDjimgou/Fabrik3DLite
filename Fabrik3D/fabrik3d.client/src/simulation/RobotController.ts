@@ -24,6 +24,12 @@ export interface RobotControllerOptions {
   dhParams?: readonly DHParameter[]
   /** Optional profile-specific, rendering-independent kinematics model. */
   kinematics?: RobotKinematicsModel
+  /**
+   * Optional monotonic clock in seconds used to timestamp trajectory starts.
+   * Defaults to `performance.now() / 1000`; inject a deterministic clock to
+   * drive joint motions from simulation time rather than render frame rate.
+   */
+  now?: () => number
 }
 
 /**
@@ -38,6 +44,7 @@ export class RobotController {
   private readonly limits: readonly JointLimit[]
   private readonly dhParams: readonly DHParameter[]
   private readonly kinematics: RobotKinematicsModel | null
+  private readonly now: () => number
 
   private activeTrajectory: Trajectory | null = null
   private trajectoryStart = 0
@@ -54,6 +61,7 @@ export class RobotController {
     this.limits = options.limits ?? DEFAULT_JOINT_LIMITS
     this.dhParams = options.dhParams ?? DEFAULT_DH_PARAMS
     this.kinematics = options.kinematics ?? null
+    this.now = options.now ?? (() => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000)
     this.jointAngles = new Array<number>(AXIS_COUNT).fill(0)
   }
 
@@ -97,7 +105,7 @@ export class RobotController {
   moveJoints(targetAngles: number[], duration = 1): void {
     const clamped = clampJoints(targetAngles, this.limits)
     this.activeTrajectory = planJointTrajectory([...this.jointAngles], clamped, duration)
-    this.trajectoryStart = performance.now() / 1000
+    this.trajectoryStart = this.now()
     this.setState('MOVING')
   }
 
@@ -129,6 +137,17 @@ export class RobotController {
   /** Remove all pending commands and stop after the current motion completes. */
   clearCommands(): void {
     this.commandQueue.length = 0
+  }
+
+  /**
+   * Cancel the active trajectory and any queued commands immediately, holding
+   * the current joint pose. Used by safety inhibition so a later controlled
+   * recovery can resume smoothly instead of teleporting to a stale target.
+   */
+  cancelMotion(): void {
+    this.activeTrajectory = null
+    this.commandQueue.length = 0
+    this.setState('IDLE')
   }
 
   private executeCommand(cmd: RobotCommand): void {

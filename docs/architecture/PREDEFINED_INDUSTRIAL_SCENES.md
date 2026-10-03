@@ -24,3 +24,24 @@ shared by the visual profiles and the composition tests. The visible state
 (part routing, jam, vacuum loss, gate/scanner/E-stop, stack light) is derived from
 the same expected events as the scenario outcome and is never read back from
 meshes. See [Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).
+
+## Scenario-specific industrial assets (S65)
+
+The preferred visual for each material-flow equipment class is now a generated,
+license-safe GLB package (with the S58 procedural visual as the deterministic
+fallback), and the training manipulator uses the existing generic professional
+six-axis robot instead of a procedural preference. Scenario identifiers, events,
+cell composition and success criteria are unchanged. See
+[Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).
+
+## Scenario robot motion (S66)
+
+The palletizing, assembly/inspection and safety cells now visibly execute
+deterministic six-axis motion. A thin `ScenarioRobotMotionAdapter` maps the
+authoritative scenario cell state to declared joint-space waypoints and drives the
+existing `RobotController` (owner of J1-J6) and `RobotVisualBinding`; a carried
+workpiece follows the derived tool frame. The simulated E-stop, interlock and
+scanner conditions inhibit motion until the existing scenario safety restart is
+observed. This is simulated training behavior, not an OEM program or certified
+safety function, and the robot controller remains the only source of joint state.
+See [Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).

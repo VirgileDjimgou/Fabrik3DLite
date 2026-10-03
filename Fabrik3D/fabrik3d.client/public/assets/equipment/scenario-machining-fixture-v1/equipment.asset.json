@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-machining-fixture-v1",
+  "equipmentDefinitionId": "machining-fixture",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.55,
+    "y": 0.2,
+    "z": 0.55
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "76a0b7f575947ef4f3965f9e835b8bac01da2f03f1a0afc4331658aaceb7380b"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "2e0851182e1ec84603592d1c708a0d063160a25ab0690025ef9bcdbfcfd6d0a7"
+        },
+        "triangleBudget": 700
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-fixture-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.55,
+      "y": 0.2,
+      "z": 0.55
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "fixture:workface",
+      "kind": "fixture"
+    },
+    {
+      "id": "anchor:material.in",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:material.in",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 0,
+          "y": 0.18,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "dark-steel",
+    "painted-steel"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "f05cece3af9419a55d0f0b8496510efbefe9f3acac18f7245e57d110d348bff1"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "76a0b7f575947ef4f3965f9e835b8bac01da2f03f1a0afc4331658aaceb7380b"
+  }
+}

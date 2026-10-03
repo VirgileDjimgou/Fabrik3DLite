@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, provide, onBeforeUnmount } from 'vue'
+import { ref, onMounted, provide, inject, onBeforeUnmount } from 'vue'
 import { useThreeScene } from '../composables/useThreeScene'
 import { useAnimationLoop } from '../composables/useAnimationLoop'
 import { SCENE_CONTEXT_KEY, ANIMATION_LOOP_KEY, ASSET_RUNTIME_KEY } from '../composables/injectionKeys'
@@ -55,7 +55,12 @@ const metricsReporter = new SimulatorMetricsReporter({
 
 // Let child components register into the scene / animation loop
 // S54: one shared asset runtime owns the registry, loader, cache, LOD policy and diagnostics.
-const assetRuntime = createDefaultEquipmentAssetRuntime()
+// An ancestor may provide a runtime (for example a deterministic test or a shared
+// application-scoped runtime); otherwise this scene owns its default instance and
+// disposes it on unmount.
+const injectedAssetRuntime = inject(ASSET_RUNTIME_KEY, null)
+const assetRuntime = injectedAssetRuntime ?? createDefaultEquipmentAssetRuntime()
+const ownsAssetRuntime = injectedAssetRuntime === null
 provide(SCENE_CONTEXT_KEY, context)
 provide(ANIMATION_LOOP_KEY, { onFrame })
 provide(ASSET_RUNTIME_KEY, assetRuntime)
@@ -102,7 +107,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   // Children release their instances first; this frees any unreferenced cache entries.
-  void assetRuntime.disposeAll()
+  // Only dispose a runtime this scene created; an injected runtime outlives the scene.
+  if (ownsAssetRuntime) void assetRuntime.disposeAll()
   if (diagnosticsOn) {
     delete (window as typeof window & { __fabrik3dDiagnostics?: Fabrik3dDiagnostics }).__fabrik3dDiagnostics
   }

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-interlocked-gate-v1",
+  "equipmentDefinitionId": "interlocked-gate",
+  "category": "safety-device",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 1.2,
+    "y": 2.1,
+    "z": 0.08
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "3b1248ad9683e93bf1ad8e214ab6ba7b484651406f0ab3f28748bad6a190fad9"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "6aaf66adc948ff45db6cab5fc2fd6131eb6ee91611298bf9157cadfc3707a406"
+        },
+        "triangleBudget": 800
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-gate-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 1.2,
+      "y": 2.1,
+      "z": 0.08
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "door:gate",
+      "kind": "door"
+    },
+    {
+      "id": "signal:interlock",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "safety-yellow",
+    "signal-red"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "f7b830eb1b88ff9ea0f2452ce9edb55875e050a0eee860adc22092ee58955f26"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "3b1248ad9683e93bf1ad8e214ab6ba7b484651406f0ab3f28748bad6a190fad9"
+  }
+}

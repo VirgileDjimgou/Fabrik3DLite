@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-infeed-buffer-v1",
+  "equipmentDefinitionId": "infeed-buffer",
+  "category": "pallet-station",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 1.2,
+    "y": 0.45,
+    "z": 0.8
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "e50c59925a11c204e2172eb051fb1fc1456948eae13c87da127f27b8485e8eb6"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "11625cd1311469ac6f569acde8df7b313048691559519ebc2b68aca9724fa698"
+        },
+        "triangleBudget": 700
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-infeed-buffer-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 1.2,
+      "y": 0.4,
+      "z": 0.8
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "sensor:presence",
+      "kind": "sensor"
+    },
+    {
+      "id": "anchor:material.in",
+      "kind": "anchor"
+    },
+    {
+      "id": "anchor:material.out",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:material.in",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": -0.6,
+          "y": 0.4,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    },
+    {
+      "id": "anchor:material.out",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 0.6,
+          "y": 0.4,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "painted-steel",
+    "dark-steel",
+    "safety-yellow"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "4d25317e2fd9fef4ffebff2968412634e2c1dbe1ab1e441206ea4b1c085f6081"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "e50c59925a11c204e2172eb051fb1fc1456948eae13c87da127f27b8485e8eb6"
+  }
+}

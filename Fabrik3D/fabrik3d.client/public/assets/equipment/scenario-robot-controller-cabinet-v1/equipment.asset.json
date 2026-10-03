@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-robot-controller-cabinet-v1",
+  "equipmentDefinitionId": "robot-controller-cabinet",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.8,
+    "y": 1.8,
+    "z": 0.65
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "29fcc91be46bfc97d40831440677690e3f3d6d9afb990dfbb27238c4d07cfc14"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "de7799bb198661d2f6bef8083c3eb05db30fa69e00bef239ac508a7ba43b71ff"
+        },
+        "triangleBudget": 1100
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-robot-controller-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.8,
+      "y": 1.8,
+      "z": 0.65
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "signal:panel",
+      "kind": "signal"
+    },
+    {
+      "id": "door:panel",
+      "kind": "door"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "enclosure",
+    "dark-steel"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "1b3d31c687895c5681289c50a9f6bf85906dce4feb05ca257a60398da8adce9c"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "29fcc91be46bfc97d40831440677690e3f3d6d9afb990dfbb27238c4d07cfc14"
+  }
+}

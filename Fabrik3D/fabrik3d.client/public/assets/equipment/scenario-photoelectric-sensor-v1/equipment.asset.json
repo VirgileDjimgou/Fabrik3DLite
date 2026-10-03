@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-photoelectric-sensor-v1",
+  "equipmentDefinitionId": "photoelectric-sensor",
+  "category": "sensor",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.12,
+    "y": 0.12,
+    "z": 0.12
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "ecee1e10aa90e63024adf7ba694cb04f91f5dfd936937fb9c43c5d2224494fc6"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "90659eee96446aaaa39da9b216243ff77cd51e3209f56caed18853f65961a9e0"
+        },
+        "triangleBudget": 400
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-photoelectric-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.12,
+      "y": 0.12,
+      "z": 0.12
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "sensor:lens",
+      "kind": "sensor"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "plastic",
+    "sensor-glass"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "a41bf97f5e45a65e15e363eae83d2df6e451fce475e583a72d586215af0458b3"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "ecee1e10aa90e63024adf7ba694cb04f91f5dfd936937fb9c43c5d2224494fc6"
+  }
+}

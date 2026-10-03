@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-configurable-part-v1",
+  "equipmentDefinitionId": "configurable-part",
+  "category": "pallet-station",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.12,
+    "y": 0.09,
+    "z": 0.12
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "705243ee3f887283ae3ea31a178bc715d5c8873701aa86a0db43f4e06ccc3568"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "3127a08277833a5349f23f059f3c3b1d03b69877c767485bbe0819c8ffc41e1c"
+        },
+        "triangleBudget": 200
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-part-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.12,
+      "y": 0.08,
+      "z": 0.12
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "anchor:grasp",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:grasp",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 0,
+          "y": 0.08,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "enclosure"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "d1d6d5039b2340e4f0da67c27cca118489ff22c84c6ce2b37578a8732396bbe2"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "705243ee3f887283ae3ea31a178bc715d5c8873701aa86a0db43f4e06ccc3568"
+  }
+}

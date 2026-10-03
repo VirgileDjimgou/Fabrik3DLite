@@ -21,21 +21,29 @@ around one explicit digital-twin model.
 | **Flagship video** | [Product walkthrough](https://github.com/user-attachments/assets/29b87539-a47f-4b07-9dd0-f6e0fa9c2436) — completed scenario, CNC fault recovery, cell editing and backend orchestration. |
 
 The step-by-step flagship flow and its scenario captures are in
-[FLAGSHIP_DEMO.md](./docs/operations/FLAGSHIP_DEMO.md); the measured gate results are in
-[VALIDATION_REVISION_3.md](./docs/operations/VALIDATION_REVISION_3.md). Start with the
+[FLAGSHIP_DEMO.md](./docs/operations/FLAGSHIP_DEMO.md); the current measured gate results are in
+[VALIDATION_REVISION_4.md](./docs/operations/VALIDATION_REVISION_4.md) (the Revision 3 record remains
+in [VALIDATION_REVISION_3.md](./docs/operations/VALIDATION_REVISION_3.md)). Start with the
 [documentation index](./docs/DOCUMENTATION_INDEX.md), the
 [architecture overview](./docs/architecture/OVERVIEW.md), the
 [limitations/non-claims](./docs/operations/LIMITATIONS.md) and the
 [1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md) for depth.
 
-**Revision 3 (S58–S64) is complete.** It adds the real 3D scenario runtime, scenario-specific cells,
-robot/cell visual fidelity, HMI operator polish, deterministic visual QA and GPU evidence, browser
-OIDC with public-demo isolation, and this flagship product surface. It builds on the 1.0
-training/VC baseline (tagged [`v1.1.0`](https://github.com/VirgileDjimgou/Fabrik3DLite/releases/tag/v1.1.0))
-and the completed Roadmap Revision 2 (S51–S57): authoritative operator execution, Job lifecycle,
-role-aware HMI, a shared 3D asset runtime, one flagship cell, sustained reliability, and
-deployment/security hardening. See the [delivery roadmap](./docs/roadmap/README.md) and the
-[post-1.0 validation record](./docs/operations/VALIDATION_POST_1.0.md).
+**Revision 3 (S58–S64) and Revision 4 (S65–S71) are complete; Revision 4 is validated.** Revision 3
+adds the real 3D scenario runtime, scenario-specific cells, robot/cell visual fidelity, HMI operator
+polish, deterministic visual QA and GPU evidence, browser OIDC with public-demo isolation, and this
+flagship product surface. Revision 4 adds scenario-specific generated GLB assets, real six-axis robot
+motion in the scenario cells, deeper deterministic process flows, shared PBR materials/factory
+environment, measured cell composition/cameras and measured release validation. It builds on the 1.0
+training/VC baseline (tagged
+[`v1.1.0`](https://github.com/VirgileDjimgou/Fabrik3DLite/releases/tag/v1.1.0)) and the completed
+Roadmap Revision 2 (S51–S57): authoritative operator execution, Job lifecycle, role-aware HMI, a shared
+3D asset runtime, one flagship cell, sustained reliability, and deployment/security hardening. See the
+[delivery roadmap](./docs/roadmap/README.md), the
+[post-1.0 validation record](./docs/operations/VALIDATION_POST_1.0.md), the
+[Revision 4 validation record](./docs/operations/VALIDATION_REVISION_4.md), the
+[Revision 4 release preparation](./docs/operations/RELEASE_PREPARATION_REVISION_4.md) and the
+[Revision 4 release notes](./docs/releases/RELEASE_NOTES_REVISION_4.md).
 
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available, so real-device interoperability is explicitly unvalidated.
 

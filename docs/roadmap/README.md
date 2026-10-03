@@ -2,7 +2,7 @@
 
 Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts. This roadmap evolves the existing repository incrementally toward that platform without restarting or replacing working modules.
 
-It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S64 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 added post-1.0 hardening in S51-S57, Roadmap Revision 3 added visual-fidelity and product-polish work in S58-S64, and Roadmap Revision 4 plans industrial visual fidelity and scenario motion in S65-S71.
+It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S71 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 added post-1.0 hardening in S51-S57, Roadmap Revision 3 added visual-fidelity and product-polish work in S58-S64, and Roadmap Revision 4 delivered industrial visual fidelity, scenario motion and measured validation in S65-S71 (complete).
 
 ## One-command workflow
 
@@ -95,7 +95,7 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 
 ## Sprint count and ceiling
 
-Roadmap Revision 4 contains exactly 71 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed Revision 2 work; S58-S64 are completed Revision 3 work; and S65-S71 are the planned Revision 4 industrial visual-fidelity and scenario-motion work. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. `MAX_BATCH_SPRINTS = 10` is unchanged, so the bounded autopilot can execute S65-S71 sequentially in a single invocation. Future roadmap work requires another explicitly approved revision that preserves S01-S71 history.
+Roadmap Revision 4 contains exactly 71 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed Revision 2 work; S58-S64 are completed Revision 3 work; and S65-S71 are the completed and validated Revision 4 industrial visual-fidelity and scenario-motion work (S71 produced the measured validation record). Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. `MAX_BATCH_SPRINTS = 10` is unchanged, so the bounded autopilot can execute S65-S71 sequentially in a single invocation. Future roadmap work requires another explicitly approved revision that preserves S01-S71 history.
 
 ## 1.0 baseline
 
@@ -129,13 +129,17 @@ The Revision 3 evidence is recorded in
 [FLAGSHIP_DEMO.md](../operations/FLAGSHIP_DEMO.md), and the release summary in
 [RELEASE_NOTES_REVISION_3.md](../releases/RELEASE_NOTES_REVISION_3.md).
 
-**Phase 15 — Industrial visual fidelity and scenario motion (S65-S71, planned).** This revision deepens
-the existing five flagship scenarios without adding product scope: it promotes license-safe industrial GLB
-assets over procedural fallbacks, reuses the existing robot controller and visual binding for visible J1-J6
-work, expands deterministic process stages, improves shared PBR materials and factory dressing, and refines
-measured cell composition and camera framing. It concludes with product-coherence cleanup and a measured,
-reproducible Revision 4 demonstration. Procedural fallback remains supported; scenario state stays authoritative
-over visuals; real PLC/PLCSIM, safety certification and OEM emulation remain explicitly deferred or unclaimed.
+**Phase 15 — Industrial visual fidelity and scenario motion (S65-S71, complete and validated by S71).** This
+revision deepens the existing five flagship scenarios without adding product scope: it promotes license-safe
+industrial GLB assets over procedural fallbacks, reuses the existing robot controller and visual binding for
+visible J1-J6 work, expands deterministic process stages, improves shared PBR materials and factory dressing,
+and refines measured cell composition and camera framing. It concludes with product-coherence cleanup and a
+measured, reproducible Revision 4 demonstration. Procedural fallback remains supported; scenario state stays
+authoritative over visuals; real PLC/PLCSIM, safety certification and OEM emulation remain explicitly deferred
+or unclaimed. The Revision 4 evidence is recorded in
+[VALIDATION_REVISION_4.md](../operations/VALIDATION_REVISION_4.md), the release summary in
+[RELEASE_NOTES_REVISION_4.md](../releases/RELEASE_NOTES_REVISION_4.md), and the flagship flow in
+[FLAGSHIP_DEMO.md](../operations/FLAGSHIP_DEMO.md).
 
 ## Quality policy
 

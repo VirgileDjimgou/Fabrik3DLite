@@ -39,7 +39,10 @@ describe('S58 scenario runtime resource evidence', () => {
       expect(metrics.drawCalls).toBeGreaterThan(0)
       expect(metrics.drawCalls).toBeLessThan(200)
       expect(metrics.loadMs).toBeGreaterThanOrEqual(0)
-      expect(host.root.children).toHaveLength(metrics.equipmentCount)
+      const equipmentChildren = host.root.children.filter((child) => typeof child.userData.equipmentId === 'string')
+      const environmentChildren = host.root.children.filter((child) => child.name.startsWith('FactoryEnvironment:'))
+      expect(equipmentChildren).toHaveLength(metrics.equipmentCount)
+      expect(environmentChildren).toHaveLength(1)
       host.dispose()
     }
 

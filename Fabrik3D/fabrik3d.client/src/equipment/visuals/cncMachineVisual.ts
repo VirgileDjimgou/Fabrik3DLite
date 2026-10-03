@@ -11,6 +11,7 @@
  */
 
 import * as THREE from 'three'
+import { createMaterial } from './materialLibrary'
 
 /** Height of the sliding loading door when fully closed (m). */
 export const CNC_DOOR_REST_Y = 1.0
@@ -58,19 +59,17 @@ export function buildCncMachineVisual(): CncMachineVisual {
   group.name = 'LargeCNC'
   group.userData.semanticId = 'equipment:cnc'
 
-  // ── Coherent PBR palette ─────────────────────────────────────────
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe8e9ea, metalness: 0.18, roughness: 0.44 })
-  const trimMat = new THREE.MeshStandardMaterial({ color: 0x333a3e, metalness: 0.62, roughness: 0.34 })
-  const chamberMat = new THREE.MeshStandardMaterial({ color: 0x181b1d, metalness: 0.22, roughness: 0.82 })
-  const glassMat = new THREE.MeshStandardMaterial({
-    color: 0x2a3a44, metalness: 0.72, roughness: 0.12, transparent: true, opacity: 0.42,
-  })
-  const panelMat = new THREE.MeshStandardMaterial({ color: 0x2a2f33, metalness: 0.34, roughness: 0.5 })
-  const hazardMat = new THREE.MeshStandardMaterial({ color: 0xd6a400, metalness: 0.2, roughness: 0.6 })
-  const rubberMat = new THREE.MeshStandardMaterial({ color: 0x1c1f21, metalness: 0.05, roughness: 0.92 })
-  const steelMat = new THREE.MeshStandardMaterial({ color: 0xaeb6bc, metalness: 0.85, roughness: 0.22 })
-  const screenMat = new THREE.MeshStandardMaterial({ color: 0x002211, emissive: 0x002211, emissiveIntensity: 0.5 })
-  const coolantMat = new THREE.MeshStandardMaterial({ color: 0x2f6f8f, emissive: 0x0b2533, emissiveIntensity: 0.35 })
+  // ── Coherent PBR palette (shared S68 material vocabulary) ────────
+  const bodyMat = createMaterial('machine-body')
+  const trimMat = createMaterial('machine-trim')
+  const chamberMat = createMaterial('machine-chamber')
+  const glassMat = createMaterial('glass')
+  const panelMat = createMaterial('machine-panel')
+  const hazardMat = createMaterial('hazard-amber')
+  const rubberMat = createMaterial('rubber')
+  const steelMat = createMaterial('bare-steel')
+  const screenMat = createMaterial('screen-emissive')
+  const coolantMat = createMaterial('coolant')
 
   // ── Main body ────────────────────────────────────────────────────
   const bodyW = 2.0, bodyH = 2.2, bodyD = 1.6
@@ -175,7 +174,7 @@ export function buildCncMachineVisual(): CncMachineVisual {
   panelGroup.add(estopBase)
   const estop = new THREE.Mesh(
     new THREE.CylinderGeometry(0.03, 0.03, 0.03, 16),
-    new THREE.MeshStandardMaterial({ color: 0xd64040, emissive: 0x3a0a0a, emissiveIntensity: 0.5, metalness: 0.2, roughness: 0.5 }),
+    createMaterial('warning-red'),
   )
   estop.name = 'safety:emergency-stop'
   estop.rotation.z = Math.PI / 2
@@ -183,22 +182,22 @@ export function buildCncMachineVisual(): CncMachineVisual {
   panelGroup.add(estop)
   group.add(panelGroup)
 
-  const label = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.09, 0.01), strokeMaterial(0xf4f6f7))
+  const label = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.09, 0.01), createMaterial('white-label'))
   label.name = 'label:equipment'
   label.position.set(-0.5, 1.9, bodyD / 2 + 0.005)
   group.add(label)
 
   // ── Stack light (green / amber / red, individually driven) ───────
-  const stackLightGreen = stackLamp(0x1fa85a)
+  const stackLightGreen = stackLamp('signal-green')
   stackLightGreen.name = 'signal:stack-light'
   stackLightGreen.userData.semanticId = 'signal:stack-light'
   stackLightGreen.position.set(0, bodyH + 0.15, 0)
   group.add(stackLightGreen)
-  const stackLightAmber = stackLamp(0xd6a400)
+  const stackLightAmber = stackLamp('signal-amber')
   stackLightAmber.name = 'signal:stack-light-amber'
   stackLightAmber.position.set(0.14, bodyH + 0.15, 0)
   group.add(stackLightAmber)
-  const stackLightRed = stackLamp(0xd64040)
+  const stackLightRed = stackLamp('signal-red')
   stackLightRed.name = 'signal:stack-light-red'
   stackLightRed.position.set(-0.14, bodyH + 0.15, 0)
   group.add(stackLightRed)
@@ -265,15 +264,19 @@ export function buildCncMachineVisual(): CncMachineVisual {
   return { group, nodes, apply, dispose }
 }
 
-function stackLamp(color: number): THREE.Mesh {
+function stackLamp(id: LampMaterialId): THREE.Mesh {
   return new THREE.Mesh(
     new THREE.CylinderGeometry(0.045, 0.045, 0.11, 16),
-    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.5, metalness: 0.1, roughness: 0.35 }),
+    createMaterial(id, { emissive: MATERIAL_LAMP_BASE[id], emissiveIntensity: 0.5 }),
   )
 }
 
-function strokeMaterial(color: number): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({ color, metalness: 0.1, roughness: 0.7 })
+type LampMaterialId = 'signal-green' | 'signal-amber' | 'signal-red'
+
+const MATERIAL_LAMP_BASE: Record<LampMaterialId, number> = {
+  'signal-green': 0x1fa85a,
+  'signal-amber': 0xd6a400,
+  'signal-red': 0xd64040,
 }
 
 function setLamp(mesh: THREE.Mesh, on: boolean, color: number): void {

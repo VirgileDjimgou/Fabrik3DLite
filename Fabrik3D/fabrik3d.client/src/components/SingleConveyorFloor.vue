@@ -7,8 +7,12 @@ import { inject, watch, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
 import { SCENE_CONTEXT_KEY } from '../composables/injectionKeys'
 import { SINGLE_CELL_POSITIONS } from '../simulation/SingleConveyorCellLayout'
+import { createMaterial } from '../equipment/visuals/materialLibrary'
+import { buildFactoryEnvironment, disposeFactoryEnvironment } from '../equipment/visuals/factoryEnvironment'
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
+
+const CNC_FLOOR_SIZE = { x: 14, z: 14 } as const
 
 let floorGroup: THREE.Group | null = null
 
@@ -22,129 +26,72 @@ watch(
   { immediate: true },
 )
 
+/**
+ * S68: the CNC reference cell now uses the same coherent factory environment as
+ * the four material-flow cells. Only the CNC-specific zone markings are added on
+ * top, using the shared material vocabulary.
+ */
 function buildFloor(): THREE.Group {
-  const group = new THREE.Group()
-  group.name = 'SingleConveyorFloor'
+  const group = buildFactoryEnvironment({
+    sizeMeters: { ...CNC_FLOOR_SIZE },
+    cellId: 'cnc-machine-tending',
+    variant: 'industrial-hall',
+  })
 
   const pos = SINGLE_CELL_POSITIONS
-  const h = 0.003
-  const t = 0.04
+  const h = 0.004
+  const safetyLine = createMaterial('safety-yellow-line')
+  const hazard = createMaterial('hazard-amber')
+  const clearZone = createMaterial('floor-marking-olive')
 
-  // ── Concrete floor ──────────────────────────────────────────────
-  const floorMat = new THREE.MeshStandardMaterial({
-    color: 0x596064,
-    roughness: 0.96,
-    metalness: 0.02,
-    polygonOffset: true,
-    polygonOffsetFactor: 1,
-    polygonOffsetUnits: 1,
-  })
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), floorMat)
-  floor.rotation.x = -Math.PI / 2
-  floor.position.set(0, 0.001, 0)
-  floor.receiveShadow = true
-  group.add(floor)
-
-  // Expansion joints keep the concrete readable without competing with safety overlays.
-  const jointMat = new THREE.MeshStandardMaterial({ color: 0x343b3e, roughness: 0.98, metalness: 0 })
-  for (let x = -4; x <= 4; x += 2) {
-    const joint = new THREE.Mesh(new THREE.BoxGeometry(0.012, h, 12), jointMat)
-    joint.position.set(x, 0.002, 0.5)
-    group.add(joint)
-  }
-  for (let z = -4; z <= 4; z += 2) {
-    const joint = new THREE.Mesh(new THREE.BoxGeometry(12, h, 0.012), jointMat)
-    joint.position.set(0, 0.002, z)
-    group.add(joint)
-  }
-
-  // ── Safety perimeter ────────────────────────────────────────────
-  const lineMat = new THREE.MeshBasicMaterial({ color: 0xccaa00 })
-  const left = -5.5, right = 5.5, front = 5.5, back = -4.5
-  const cx = (left + right) / 2
-  const cz = (front + back) / 2
-  const w = right - left
-  const d = front - back
-
-  for (const z of [front, back]) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(w, h, t), lineMat)
-    line.position.set(cx, 0.002, z)
-    group.add(line)
-  }
-  for (const x of [left, right]) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(t, h, d), lineMat)
-    line.position.set(x, 0.002, cz)
-    group.add(line)
+  const addMark = (name: string, geometry: THREE.BufferGeometry, material: THREE.Material, x: number, z: number) => {
+    const mark = new THREE.Mesh(geometry, material)
+    mark.name = name
+    mark.position.set(x, h, z)
+    group.add(mark)
+    return mark
   }
 
   // ── Robot center cross ──────────────────────────────────────────
-  const crossLen = 0.6
-  const crossThick = 0.02
-  const cross1 = new THREE.Mesh(new THREE.BoxGeometry(crossLen, h, crossThick), lineMat)
-  cross1.position.set(0, 0.002, 0)
-  group.add(cross1)
-  const cross2 = new THREE.Mesh(new THREE.BoxGeometry(crossThick, h, crossLen), lineMat)
-  cross2.position.set(0, 0.002, 0)
-  group.add(cross2)
+  addMark('cnc:robot-cross-x', new THREE.BoxGeometry(0.6, h, 0.02), safetyLine, 0, 0)
+  addMark('cnc:robot-cross-z', new THREE.BoxGeometry(0.02, h, 0.6), safetyLine, 0, 0)
 
   // ── Conveyor lane markers (dashed, along X at conveyor Z) ───────
-  const laneMat = new THREE.MeshBasicMaterial({ color: 0x887744 })
   const convZ = pos.conveyor[2]
   for (let x = -3.5; x <= 3.5; x += 0.8) {
     for (const dz of [-0.35, 0.35]) {
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.3, h, 0.03), laneMat)
-      dash.position.set(x, 0.002, convZ + dz)
-      group.add(dash)
+      addMark('cnc:conveyor-lane', new THREE.BoxGeometry(0.3, h, 0.03), hazard, x, convZ + dz)
     }
   }
 
   // ── CNC zone marking ────────────────────────────────────────────
   const cncX = pos.cnc[0], cncZ = pos.cnc[2]
   const cncZoneW = 2.4, cncZoneD = 2.0
-  const cncLineMat = new THREE.MeshBasicMaterial({ color: 0x996633 })
   for (const dz of [cncZoneD / 2, -cncZoneD / 2]) {
     for (let x = cncX - cncZoneW / 2; x <= cncX + cncZoneW / 2; x += 0.5) {
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.2, h, 0.03), cncLineMat)
-      dash.position.set(x, 0.002, cncZ + dz)
-      group.add(dash)
+      addMark('cnc:zone', new THREE.BoxGeometry(0.2, h, 0.03), hazard, x, cncZ + dz)
     }
   }
   for (const dx of [cncZoneW / 2, -cncZoneW / 2]) {
     for (let z = cncZ - cncZoneD / 2; z <= cncZ + cncZoneD / 2; z += 0.5) {
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.03, h, 0.2), cncLineMat)
-      dash.position.set(cncX + dx, 0.002, z)
-      group.add(dash)
+      addMark('cnc:zone', new THREE.BoxGeometry(0.03, h, 0.2), hazard, cncX + dx, z)
     }
   }
 
   // ── Clear-zone markers between robot and CNC ────────────────────
-  const clearMat = new THREE.MeshBasicMaterial({ color: 0x556644 })
   for (let z = 0.5; z <= cncZ - 1.2; z += 0.6) {
     for (const dx of [-0.8, 0.8]) {
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.03, h, 0.25), clearMat)
-      dash.position.set(dx, 0.002, z)
-      group.add(dash)
+      addMark('cnc:clear-zone', new THREE.BoxGeometry(0.03, h, 0.25), clearZone, dx, z)
     }
   }
 
   return group
 }
 
-function disposeGroup(g: THREE.Group) {
-  g.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      child.geometry.dispose()
-      const mat = child.material
-      if (Array.isArray(mat)) mat.forEach((m) => m.dispose())
-      else mat.dispose()
-    }
-  })
-}
-
 onBeforeUnmount(() => {
   const ctx = sceneCtx.value
   if (ctx && floorGroup) ctx.removeObject(floorGroup)
-  if (floorGroup) disposeGroup(floorGroup)
+  if (floorGroup) disposeFactoryEnvironment(floorGroup)
   floorGroup = null
 })
 </script>

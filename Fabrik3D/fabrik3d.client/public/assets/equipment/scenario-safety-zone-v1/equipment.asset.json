@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-safety-zone-v1",
+  "equipmentDefinitionId": "safety-zone",
+  "category": "safety-device",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 2.5,
+    "y": 0.05,
+    "z": 2.5
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "507751cb11136788f94f0d68cc19f8eb5362740b24c53f94c162a2bb7bf75fa3"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "27778d7ab8d6c1bd0c2cdc2061957fc510d0214ca4e38ef0dc1f2dd17c518482"
+        },
+        "triangleBudget": 600
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-safety-zone-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 2.5,
+      "y": 0.04,
+      "z": 2.5
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "signal:zone",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "safety-yellow",
+    "dark-steel"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "46da1e24956c00894f30e70af1cf2c2e3d27795bef702bdca848fb51f3bca0b6"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "507751cb11136788f94f0d68cc19f8eb5362740b24c53f94c162a2bb7bf75fa3"
+  }
+}

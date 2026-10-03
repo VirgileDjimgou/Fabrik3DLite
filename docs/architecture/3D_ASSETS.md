@@ -29,8 +29,9 @@ generic-conveyor/
 ```
 
 All paths in a manifest are package-relative POSIX paths. Absolute paths,
-protocol URLs, backslashes, and traversal sequences are rejected. S25 will add
-the trusted import/catalog workflow; S21 deliberately accepts only code-owned
+protocol URLs, backslashes, and traversal sequences are rejected. S25 added the
+trusted import/catalog workflow (see [ASSET_IMPORT.md](ASSET_IMPORT.md)); this
+document's contract applies to both code-owned and imported code-validated
 packages.
 
 ## Manifest conventions
@@ -132,6 +133,52 @@ budget, declared bounds and LOD semantic-node preservation for those packages at
 generation time. See [Hero reference cell](HERO_REFERENCE_CELL.md) and
 [Professional robot assets](PROFESSIONAL_ROBOT_ASSETS.md).
 
+S65 generates one generic, license-safe GLB package for every equipment class
+used by the five flagship scenario cells (conveyors, vision station, diverter,
+bins, cabinets, pedestal, pallet, cartons, gripper, fence, light curtain,
+buffers, fixture, clamps, sensors, parts and safety devices). The packages follow
+the same contract — meters, Y-up, right-handed, `equipment-base` origin, `lod1`
+LOD, embedded SHA-256 hashes, a `box` collision proxy and the Fabrik3D generated
+license — and are registered as preferred `glb` visuals with a procedural
+fallback. See [Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md) for the full
+inventory, budgets and node contract.
+
+## Shared PBR materials and factory environment (S68)
+
+S68 replaces the per-builder material literals with one small, documented PBR
+vocabulary in `equipment/visuals/materialLibrary.ts`, and adds a coherent
+industrial ground layer in `equipment/visuals/factoryEnvironment.ts`. No new
+asset runtime, scenario family or protocol was introduced; the appearance is
+visual-only and never becomes collision, runtime, scenario or telemetry truth.
+
+The vocabulary contains painted steel, bare steel, aluminium, rubber, industrial
+plastic, glass, safety yellow, painted floor, wood/cardboard, screen/emissive and
+the supporting industrial paints/indicators used by the existing visuals. Every
+definition records a color, metalness, roughness and provenance
+(repository-generated PBR parameters, Fabrik3D educational license);
+`validateMaterialLibrary()` fails on an out-of-range or undocumented definition.
+`createMaterialPack()` returns one material instance per id for a single visual,
+so materials are reused within a visual (bounded material allocation) while
+remaining instance-owned, and status-color edits cannot leak between visuals.
+
+The library is deliberately **texture-free**. No 1K/2K roughness, metalness,
+normal or decal atlas was added, because no measured visible benefit justified
+the texture-memory cost at this asset scale and the recorded budgets are
+0 textures. `MATERIAL_TEXTURES` is therefore empty and tested as such; a future
+atlas must record its resolution, source and license before it is accepted.
+
+The factory environment builder provides the shared ground layer used by the four
+material-flow flagship cells (through `ScenarioRuntimeHost`) and by the CNC
+reference cell (`SingleConveyorFloor.vue`): industrial (or training-lab) floor,
+expansion joints, safety-zone perimeter, pedestrian/operator access lane, cable
+tray and a cell-identifier plate. It is deterministic and texture-free; the
+`industrial-hall` variant measures **54 meshes / 638 triangles / 54 draw calls /
+0 textures** (GPU-free, `measureSceneResources`). A training-lab variant trims
+the access lane and cable tray. The equipment visuals were also given credible
+detail where it materially aids readability: cabinet doors/handles/hinges and
+labels, conveyor guard rails and a motor/cable drop, cardboard cartons, and a
+robot dress pack/hose.
+
 ## Reference-cell budgets and measured values
 
 S39 made the CNC machine-tending reference cell the deep demonstration baseline.
@@ -155,12 +202,12 @@ accumulation.
 The one signal-binding tick is also budgeted, because it runs every frame for the
 whole catalog: `binding.test.ts` drives 1 000 ticks and asserts < 1 ms per tick
 (measured average is printed by the test). The reference target remains a stable
-60 fps at 1080p on the documented reference machine and browser; that wall-clock
-GPU frame time must be re-measured on reference hardware (see the visual
-regression run), and is not asserted from geometry counts alone. No asset is
-downloaded at runtime: the reference cell's GLB packages are generated
-deterministically and the procedural CNC/conveyor/pallet builders remain the
-fallback.
+60 fps at 1080p on the documented reference machine and browser. That wall-clock
+GPU frame time was measured, hardware-labelled and re-measured by S62/S68 rather
+than asserted from geometry counts alone; the recorded numbers and non-claims are
+in [PERFORMANCE.md](../operations/PERFORMANCE.md). No asset is downloaded at
+runtime: the reference cell's GLB packages are generated deterministically and the
+procedural CNC/conveyor/pallet builders remain the fallback.
 
 S60 re-measured the generated packages with `measureSceneResources` (GPU-free,
 `test-results/perf`-style static counts). Full before/after tables are in
@@ -198,5 +245,8 @@ data, reports diagnostics (`equipment-outside-floor`, `equipment-overlap`,
 throwing, and never mutates simulation, collision, safety or telemetry state.
 `cellLayout.test.ts` covers the positive and negative clearance/reach/corridor
 cases and proves every built-in preset has zero error-severity diagnostics with
-floor and camera exactly matching the derived values.
+floor and camera exactly matching the derived values. S69 adds `composition.test.ts`,
+which enforces the same acceptance criteria on all five flagship cells and proves
+the derived `overview`/`operator`/`workcell` cameras contain the measured bounds
+(see `SCENE_PRESETS.md`).
 

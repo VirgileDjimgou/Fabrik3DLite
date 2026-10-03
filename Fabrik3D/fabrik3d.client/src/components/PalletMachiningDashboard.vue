@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard" :style="panelStyle">
+  <div class="dashboard" :style="panelStyle" data-pallet-dashboard :data-run-state="runState" :data-phase="phase">
     <h3 class="drag-handle" @pointerdown="beginDrag">⠿ 🏭 Pallet Machining</h3>
 
     <!-- ── Controls ──────────────────────────────────── -->

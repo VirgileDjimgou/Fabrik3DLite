@@ -16,6 +16,7 @@
 import { SCENARIO_CATALOG } from './catalog'
 import { cellKindForScenario, type ScenarioCellKind } from './cellComposition'
 import type { ScenarioEvent, ScenarioProgress, ScenarioStatus } from './types'
+import { SCENARIO_FAULT_EVENT, SCENARIO_STAGE_EVENT } from './types'
 
 export type { ScenarioCellKind } from './cellComposition'
 
@@ -33,6 +34,8 @@ export interface CellVisualState {
   lifecycle: CellLifecycle
   /** 0..1 normalised progress of the deterministic scenario program. */
   programProgress: number
+  /** S67: stable id of the current deterministic process stage, or null. */
+  processStageId: string | null
 
   // Vision sorting
   partStage: PartStage
@@ -72,6 +75,7 @@ function baseState(scenarioId: string, kind: ScenarioCellKind): CellVisualState 
     kind,
     lifecycle: 'idle',
     programProgress: 0,
+    processStageId: null,
     partStage: 'idle',
     inspectionActive: false,
     classification: null,
@@ -213,6 +217,163 @@ export function reduceCellVisualState(state: CellVisualState, event: ScenarioEve
       next.recovered = true
       return next
 
+    case SCENARIO_STAGE_EVENT: {
+      const stageId = typeof event.stage === 'string' ? event.stage : null
+      if (!stageId) return next
+      next.processStageId = stageId
+      return reduceStage(next, stageId)
+    }
+
+    case SCENARIO_FAULT_EVENT:
+      return applyFault(next)
+
+    default:
+      return next
+  }
+}
+
+/**
+ * S67: visible effect of an intermediate process stage. Stage ids are stable
+ * machine ids; unknown ids only record the stage and never fabricate state.
+ */
+function reduceStage(state: CellVisualState, stageId: string): CellVisualState {
+  const next = state
+  switch (stageId) {
+    // Vision sorting
+    case 'vision-part-enters':
+    case 'vision-sensor-detects':
+    case 'vision-conveyor-advances':
+      next.partStage = 'infeed'
+      return next
+    case 'vision-inspection-begins':
+      next.partStage = 'inspect'
+      next.inspectionActive = true
+      return next
+    case 'vision-classified':
+      next.inspectionActive = true
+      next.classification = 'accepted'
+      return next
+    case 'vision-diverter-actuates':
+      next.diverterExtended = true
+      return next
+    case 'vision-part-routes':
+      next.partStage = 'diverted'
+      return next
+    case 'vision-jam-detected':
+      next.jam = true
+      next.fault = true
+      next.partStage = 'jammed'
+      next.stackLight = 'red'
+      return next
+    case 'vision-operator-acknowledged':
+      return next
+    case 'vision-jam-cleared':
+      next.jam = false
+      next.fault = false
+      return next
+
+    // Robot palletizing
+    case 'palletizing-part-available':
+    case 'palletizing-robot-approach':
+      next.gripperHolding = false
+      return next
+    case 'palletizing-gripper-on':
+    case 'palletizing-pick':
+    case 'palletizing-transfer':
+    case 'palletizing-place':
+      next.gripperHolding = true
+      return next
+    case 'palletizing-gripper-off':
+      next.gripperHolding = false
+      return next
+    case 'palletizing-layer-update':
+      next.layerPlaced = Math.max(1, next.layerPlaced)
+      return next
+    case 'palletizing-vacuum-loss':
+      next.vacuumLoss = true
+      next.fault = true
+      next.stackLight = 'amber'
+      return next
+    case 'palletizing-operator-acknowledged':
+      return next
+    case 'palletizing-vacuum-restored':
+      next.vacuumLoss = false
+      next.fault = false
+      return next
+
+    // Assembly / inspection
+    case 'assembly-part-available':
+    case 'assembly-robot-load':
+      next.partPresent = true
+      return next
+    case 'assembly-fixture-clamp':
+    case 'assembly-process':
+      next.clamped = true
+      return next
+    case 'assembly-inspection':
+      next.inspectionActive = true
+      return next
+    case 'assembly-decision-accept':
+      next.reworkRequired = false
+      return next
+    case 'assembly-decision-rework':
+      next.reworkRequired = true
+      next.fault = true
+      next.stackLight = 'amber'
+      return next
+    case 'assembly-unclamp':
+      next.clamped = false
+      return next
+
+    // Safety training
+    case 'safety-unsafe-state':
+    case 'safety-detection':
+    case 'safety-motion-inhibited':
+      next.emergencyStop = true
+      next.gateOpen = true
+      next.scannerMuted = true
+      next.fault = true
+      next.stackLight = 'red'
+      return next
+    case 'safety-operator-acknowledged':
+      return next
+    case 'safety-state-restored':
+      next.emergencyStop = false
+      next.gateOpen = false
+      next.scannerMuted = false
+      next.fault = false
+      next.stackLight = 'green'
+      return next
+
+    default:
+      return next
+  }
+}
+
+/** S67: visible condition of a fault raised at its credible process stage. */
+function applyFault(state: CellVisualState): CellVisualState {
+  const next = state
+  next.fault = true
+  switch (next.kind) {
+    case 'vision-sorting':
+      next.jam = true
+      next.partStage = 'jammed'
+      next.stackLight = 'red'
+      return next
+    case 'robot-palletizing':
+      next.vacuumLoss = true
+      next.stackLight = 'amber'
+      return next
+    case 'assembly-inspection':
+      next.reworkRequired = true
+      next.stackLight = 'amber'
+      return next
+    case 'robot-safety-training':
+      next.emergencyStop = true
+      next.gateOpen = true
+      next.scannerMuted = true
+      next.stackLight = 'red'
+      return next
     default:
       return next
   }

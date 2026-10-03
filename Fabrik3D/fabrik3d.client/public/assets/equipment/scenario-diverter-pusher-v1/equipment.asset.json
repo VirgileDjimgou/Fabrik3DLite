@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-diverter-pusher-v1",
+  "equipmentDefinitionId": "diverter-pusher",
+  "category": "conveyor",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.75,
+    "y": 0.5,
+    "z": 0.75
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "cd3f814bd02c79be37b3ff8536cd8650ad7e019e232940936762fa59f10b7897"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "c88249ce9da56e70362e29131d8416ea9e8f50b51ef30e9eed6684546f322ba9"
+        },
+        "triangleBudget": 1000
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-diverter-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.75,
+      "y": 0.5,
+      "z": 0.75
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "motor:pusher",
+      "kind": "motor"
+    },
+    {
+      "id": "sensor:extended",
+      "kind": "sensor"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "painted-steel",
+    "dark-steel",
+    "safety-yellow"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "c6c3483591390718b479bd2be17e4198f66e69f9e8cee05443a8ab0f2f4eb089"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "cd3f814bd02c79be37b3ff8536cd8650ad7e019e232940936762fa59f10b7897"
+  }
+}

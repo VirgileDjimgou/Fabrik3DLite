@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-area-scanner-v1",
+  "equipmentDefinitionId": "area-scanner",
+  "category": "safety-device",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.26,
+    "y": 0.23,
+    "z": 0.26
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "263881569080de3de2a5de03f1dc86730a9fe676f6e6a01e506ab4809092f780"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "55aefa9093051c07d0d473cbe5ebb6d7b345cc26601c5bb7b46442c748134e34"
+        },
+        "triangleBudget": 400
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-scanner-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.25,
+      "y": 0.22,
+      "z": 0.25
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "sensor:scanner",
+      "kind": "sensor"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "dark-steel",
+    "sensor-glass"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "de6b9918b32a4d22d69af4cea91fe4dfe5727035c05e3b3dfc31829a4926114a"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "263881569080de3de2a5de03f1dc86730a9fe676f6e6a01e506ab4809092f780"
+  }
+}

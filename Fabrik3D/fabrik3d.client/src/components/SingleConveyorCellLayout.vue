@@ -43,8 +43,20 @@
 
     <!-- Floor & scene setup -->
     <SingleConveyorFloor />
-    <SingleConveyorSceneSetup />
+    <SingleConveyorSceneSetup :camera-view="cameraView" />
   </ThreeScene>
+
+  <!-- S69 derived camera views for the CNC reference cell. -->
+  <div class="camera-views" data-camera-views>
+    <button
+      v-for="view in cameraViews"
+      :key="view.id"
+      type="button"
+      :data-camera-view="view.id"
+      :class="{ active: cameraView === view.id }"
+      @click="cameraView = view.id"
+    >{{ view.label }}</button>
+  </div>
 
   <!-- Docked panels preserve the 3D cell as the primary visual surface. -->
   <SimulationDock side="left" :label="t('dock.tools')">
@@ -150,6 +162,7 @@
 
 <script setup lang="ts">
 import { shallowRef, ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import type { SceneCameraView } from '../scenes/types'
 import ThreeScene from './ThreeScene.vue'
 import ScaledRobotComponent from './ScaledRobotComponent.vue'
 import ConveyorBelt from './ConveyorBelt.vue'
@@ -229,6 +242,13 @@ import {
 // ── Layout (from centralised config) ───────────────────────────────
 const layout = SINGLE_CELL_POSITIONS
 const { t } = useSimulatorI18n()
+// S69: derived camera views for the CNC reference cell (overview is the default).
+const cameraViews: ReadonlyArray<{ id: SceneCameraView, label: string }> = [
+  { id: 'overview', label: 'Vue d’ensemble' },
+  { id: 'operator', label: 'Opérateur' },
+  { id: 'workcell', label: 'Cellule' },
+]
+const cameraView = ref<SceneCameraView>('overview')
 const conveyor = SINGLE_CELL_CONVEYOR
 const flowCfg = { ...SINGLE_CELL_FLOW }
 const conveyorSensorActive = ref(false)
@@ -838,3 +858,9 @@ watch(
   () => ensureWorkflow(),
 )
 </script>
+
+<style scoped>
+.camera-views { position: absolute; z-index: 46; bottom: .75rem; right: .75rem; display: flex; gap: .25rem; padding: .25rem; border: 1px solid #34758a; border-radius: .4rem; background: rgb(10 22 31 / 92%); font: .72rem/1.2 ui-monospace, monospace; }
+.camera-views button { padding: .3rem .6rem; border: 1px solid #34758a; border-radius: .25rem; background: transparent; color: #b9eaff; cursor: pointer; font: inherit; }
+.camera-views button.active { background: #00cc88; color: #06201a; font-weight: 700; }
+</style>

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-vision-inspection-station-v1",
+  "equipmentDefinitionId": "vision-inspection-station",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.9,
+    "y": 2,
+    "z": 0.7
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "ed9168bcf4fc9a11e07f8c77bed16b0b9e8488d9e4fb17f9a53a2026027f14f8"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "8cf214fe96b343dc8dd0e8e65f92a94faa032ac7477b516678c52548319b79ff"
+        },
+        "triangleBudget": 1600
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-vision-station-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.9,
+      "y": 2,
+      "z": 0.7
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "sensor:camera",
+      "kind": "sensor"
+    },
+    {
+      "id": "signal:inspection-light",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "dark-steel",
+    "painted-steel",
+    "sensor-glass"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "0700c716b36243636c81be7b81b98704b755660e233f53b638b6eb82da014dcd"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "ed9168bcf4fc9a11e07f8c77bed16b0b9e8488d9e4fb17f9a53a2026027f14f8"
+  }
+}

@@ -61,3 +61,31 @@ test('the CNC machine-tending reference cell remains a supported 3D preset', asy
   await expect(page.locator('canvas').first()).toBeVisible()
   await expect(page.locator('[data-layout-preview]')).toHaveCount(0)
 })
+
+/**
+ * S66: running the palletizing and assembly cells must visibly execute
+ * deterministic six-axis motion through the existing controller and visual
+ * binding, not just change the 2D state overlay.
+ */
+test('palletizing and assembly execute visible multi-joint robot motion', async ({ page }) => {
+  test.setTimeout(180_000)
+  await page.goto('/')
+  await page.waitForSelector('[data-scene-selector]')
+  await page.locator('[data-scene-selector]').evaluate((element) => {
+    ;(element as HTMLDetailsElement).open = true
+  })
+
+  for (const scene of ['robot-palletizing', 'assembly-inspection'] as const) {
+    await page.selectOption('[data-scene-select]', scene)
+    await expect(page.locator('[data-runtime-equipment-count]')).not.toHaveAttribute('data-runtime-equipment-count', '0', { timeout: 20_000 })
+    const robot = page.locator('[data-robot-motion]')
+    await expect(robot).toHaveAttribute('data-robot-blocked', 'false')
+    const homeJoints = await robot.getAttribute('data-robot-joints')
+
+    await page.locator('[data-action="run-material-flow"]').click()
+    await expect(robot).toHaveAttribute('data-robot-started', 'true')
+    // Motion is executed on deterministic simulation time and changes J1-J6.
+    await expect.poll(async () => robot.getAttribute('data-robot-joints'), { timeout: 30_000 }).not.toBe(homeJoints)
+    await expect(robot).toHaveAttribute('data-robot-complete', 'true', { timeout: 45_000 })
+  }
+})

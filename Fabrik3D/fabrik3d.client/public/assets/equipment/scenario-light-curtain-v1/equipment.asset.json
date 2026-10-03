@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-light-curtain-v1",
+  "equipmentDefinitionId": "light-curtain",
+  "category": "safety-device",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 1.4,
+    "y": 1.84,
+    "z": 0.08
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "e7d0eaa8ee219003e389112f93ea1d5061c32d2a2cf04dead97af86dfe29838f"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "d5b422fe87c21b97cf4f290717441ce9ee92e7f8b627b55abc42f6808a395ca8"
+        },
+        "triangleBudget": 600
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-light-curtain-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 1.4,
+      "y": 1.8,
+      "z": 0.08
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "sensor:field",
+      "kind": "sensor"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "dark-steel",
+    "sensor-glass"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "be3f230751f58a81e57195df8ba7cba155470f95b4b00b0217e54e157a6e401b"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "e7d0eaa8ee219003e389112f93ea1d5061c32d2a2cf04dead97af86dfe29838f"
+  }
+}

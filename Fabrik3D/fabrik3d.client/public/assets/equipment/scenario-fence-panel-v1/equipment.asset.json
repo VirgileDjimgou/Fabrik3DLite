@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-fence-panel-v1",
+  "equipmentDefinitionId": "fence-panel",
+  "category": "safety-device",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 2.4,
+    "y": 2.1,
+    "z": 0.08
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "b996fc70a8d3aa555594274f528c6275905f12714a81a05d9dc1bbdd03c65041"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "defbfdd8e7498ecc4012b712e576c754df4fe30cc1f6c12cd7fb01c9efac6e4e"
+        },
+        "triangleBudget": 900
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-fence-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 2.4,
+      "y": 2.1,
+      "z": 0.06
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "signal:interlock",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "safety-yellow",
+    "dark-steel"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "73a3c48050232a182767a4e8ad91657c0e89590f0f1f4e1f9a630de4c5e1c4a4"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "b996fc70a8d3aa555594274f528c6275905f12714a81a05d9dc1bbdd03c65041"
+  }
+}

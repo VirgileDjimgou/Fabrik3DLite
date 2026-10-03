@@ -12,6 +12,9 @@ export interface SceneCameraPreset {
   target: Vector3Meters
 }
 
+/** S69 derived camera views; `overview` is the single primary default. */
+export type SceneCameraView = 'overview' | 'operator' | 'workcell'
+
 export interface ScenePanelPosition {
   x: number
   y: number
@@ -33,6 +36,8 @@ export interface ScenePreset {
     floorSizeMeters: { x: number; z: number }
   }
   camera: SceneCameraPreset
+  /** S69 optional derived overview/operator/workcell framings; `camera` stays the primary default. */
+  cameraPresets?: Partial<Record<SceneCameraView, SceneCameraPreset>>
   defaultPanelLayout?: Record<string, ScenePanelPosition>
 }
 

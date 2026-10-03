@@ -115,6 +115,19 @@ const PRESET_CELL_KIND: Readonly<Record<string, ScenarioCellKind>> = {
   'cnc-machine-tending': 'cnc-machine-tending',
 }
 
+/**
+ * S69: cell-definition ids (`CellDefinition.id`) map to the same industrial
+ * kinds so the measured-layout layer can resolve a cell's robot profile from
+ * the same motion-plan source of truth the runtime uses.
+ */
+const CELL_KIND_BY_CELL_ID: Readonly<Record<string, ScenarioCellKind>> = {
+  'single-conveyor-machining-cell': 'cnc-machine-tending',
+  'vision-sorting-cell': 'vision-sorting',
+  'palletizing-cell': 'robot-palletizing',
+  'assembly-inspection-cell': 'assembly-inspection',
+  'safety-training-cell': 'robot-safety-training',
+}
+
 /** Resolves a scenario id to its industrial cell kind. Unknown ids are CNC (fallback). */
 export function cellKindForScenario(scenarioId: string): ScenarioCellKind {
   return SCENARIO_CELL_KIND_BY_ID[scenarioId] ?? 'cnc-machine-tending'
@@ -123,6 +136,11 @@ export function cellKindForScenario(scenarioId: string): ScenarioCellKind {
 /** Resolves a scene preset id to its industrial cell kind. */
 export function cellKindForPreset(presetId: string): ScenarioCellKind {
   return PRESET_CELL_KIND[presetId] ?? 'cnc-machine-tending'
+}
+
+/** Resolves a cell definition id to its industrial cell kind. Unknown ids are CNC (fallback). */
+export function cellKindForCellId(cellId: string): ScenarioCellKind {
+  return CELL_KIND_BY_CELL_ID[cellId] ?? 'cnc-machine-tending'
 }
 
 /** Unique required equipment classes for a cell, in declaration order. */

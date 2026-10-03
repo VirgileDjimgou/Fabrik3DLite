@@ -1,7 +1,7 @@
-# Flagship media set (Revision 3)
+# Flagship media set (Revision 3–4)
 
-A small, curated set of **real, deterministic** captures of the Fabrik3D Revision 3 surfaces. This
-supersedes the stale 2026-09-27 scenario captures for product presentation; the older
+A small, curated set of **real, deterministic** captures of the Fabrik3D Revision 3 and Revision 4
+surfaces. This supersedes the stale 2026-09-27 scenario captures for product presentation; the older
 `artifacts/demo/client/shots/` gallery remains as historical evidence and is not deleted.
 
 Every image was produced by the running application — never mocked, never fabricated. Captures that
@@ -23,6 +23,37 @@ reproduced exactly.
 | `shots/hmi-instructor-dashboard.png` | Instructor dashboard | S62 deterministic baseline | `hmi/e2e/instructor-dashboard-visual.spec.ts` |
 | `shots/fault-lab.png` | Simulated fault injection | S62 deterministic baseline | `client/e2e/fault-lab-visual.spec.ts` |
 | `shots/time-travel.png` | Deterministic read-only time travel | S62 deterministic baseline | `client/e2e/time-travel-visual.spec.ts` |
+
+## Execution captures (Revision 4, S71)
+
+`execution/` holds 21 stills that show **real declared process stages**, not idle cells, for the five
+flagship scenarios. Each is produced by the committed
+`Fabrik3D/fabrik3d.client/e2e-demo/demo-11-execution-stages.spec.ts`, which drives the existing S67
+guided process to a declared stage through the `?stage=<stageId>` hook, waits for the explicit
+`data-execution-stage-reached="true"` marker and then follows the deterministic visual protocol
+(reset → seed → ready → settle → freeze). A stage that is not reached fails the test closed.
+
+| Scenario | Stages captured |
+| --- | --- |
+| Palletizing | `palletizing-robot-approach`, `palletizing-pick`, `palletizing-transfer`, `palletizing-place`, `palletizing-layer-update` |
+| Vision sorting | `vision-part-enters`, `vision-inspection-begins`, `vision-classified`, `vision-diverter-actuates`, `vision-part-routes` |
+| Assembly / inspection | `assembly-robot-load`, `assembly-fixture-clamp`, `assembly-inspection`, `assembly-decision-accept`, `assembly-unclamp` |
+| Safety training | `safety-unsafe-state`, `safety-detection`, `safety-motion-inhibited`, `safety-state-restored`, `safety-operator-acknowledged` |
+| CNC | `cnc-cell-running` |
+
+Reproduce:
+
+```powershell
+npm --prefix Fabrik3D/fabrik3d.client run build
+npm --prefix Fabrik3D/fabrik3d.client run preview -- --host 127.0.0.1 --port 4173 --strictPort
+npx playwright test --config=playwright.demo.config.ts demo-11-execution-stages.spec.ts --workers=1
+```
+
+These are demo media, not byte-compared visual-regression baselines: re-running reproduces every
+stage and assertion, while individual PNG bytes may vary by a few hundred bytes because the freeze
+happens after real render frames. The CNC capture shows the deterministic local execution; its
+authoritative HMI → server → simulator → historian workflow is proven separately by the automated
+flagship tests (see [`../../../docs/operations/VALIDATION_REVISION_4.md`](../../../docs/operations/VALIDATION_REVISION_4.md)).
 
 ## Provenance and boundary statements
 

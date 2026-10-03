@@ -10,7 +10,7 @@
 
 import type { CellDefinition } from '../equipment/types'
 import { DEFAULT_SCENE_PRESET_ID, ScenePresetCatalog, createDefaultScenePresetCatalog } from '../scenes/catalog'
-import type { SceneCameraPreset, SceneEnvironmentPreset, ScenePreset } from '../scenes/types'
+import type { SceneCameraPreset, SceneCameraView, SceneEnvironmentPreset, ScenePreset } from '../scenes/types'
 import { SCENARIO_CATALOG } from './catalog'
 import type { ScenarioDefinition } from './types'
 import { deriveScenarioVisualProfile, getScenarioVisualProfile, type ScenarioVisualProfile } from './visualProfile'
@@ -40,6 +40,8 @@ export interface ScenarioSceneBinding {
   visualProfile: ScenarioVisualProfile
   /** Effective camera: profile override when present, otherwise the scene preset camera. */
   camera: SceneCameraPreset
+  /** S69 derived overview/operator/workcell framings; `camera` remains the primary default. */
+  cameraPresets: Partial<Record<SceneCameraView, SceneCameraPreset>>
   environmentLevel: SceneEnvironmentPreset
   diagnostics: ScenarioBindingDiagnostic[]
   /** True when the binding used a fallback preset/profile rather than the declared one. */
@@ -115,6 +117,7 @@ export function resolveScenarioSceneBinding(
     cell: preset.cell,
     visualProfile,
     camera: visualProfile.camera ?? preset.camera,
+    cameraPresets: visualProfile.camera ? { overview: visualProfile.camera } : (preset.cameraPresets ?? { overview: preset.camera }),
     environmentLevel: visualProfile.environmentLevel,
     diagnostics,
     fallbackUsed,

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-euro-pallet-v1",
+  "equipmentDefinitionId": "euro-pallet",
+  "category": "pallet-station",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 1.2,
+    "y": 0.15,
+    "z": 0.8
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "cafdb401f8a233053023bfd762ec1b9883a9749ab3919d2c432a1f18c7cde916"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "b3d231acd50d3a3df8ee74f9b35394f8ed48a64409698066ccd135c16ecf97c3"
+        },
+        "triangleBudget": 800
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-pallet-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 1.2,
+      "y": 0.15,
+      "z": 0.8
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "fixture:locator",
+      "kind": "fixture"
+    },
+    {
+      "id": "anchor:grasp",
+      "kind": "anchor"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "anchor:grasp",
+      "transform": {
+        "frameId": "equipment-base",
+        "position": {
+          "x": 0,
+          "y": 0.15,
+          "z": 0
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      }
+    }
+  ],
+  "materials": [
+    "safety-yellow",
+    "dark-steel"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "500f6436746a16503524a44fd2276cebe120c8d84a0e380d70d881a8f4c99ddf"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "cafdb401f8a233053023bfd762ec1b9883a9749ab3919d2c432a1f18c7cde916"
+  }
+}

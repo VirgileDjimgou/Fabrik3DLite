@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-toggle-clamp-v1",
+  "equipmentDefinitionId": "toggle-clamp",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.2,
+    "y": 0.2,
+    "z": 0.12
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "e1e7a9901df5f13931934ac2cc32191e8c0724c421ebf6381c42a9eb269e160a"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "c04f96e7d8d162eacc2f94ed4821dba8238ee4a1490035609eb6fb2ee54b5f4d"
+        },
+        "triangleBudget": 400
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-clamp-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.2,
+      "y": 0.2,
+      "z": 0.12
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "fixture:clamp",
+      "kind": "fixture"
+    },
+    {
+      "id": "sensor:clamped",
+      "kind": "sensor"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "dark-steel",
+    "safety-yellow"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "e9bae0cc9fe9ae0a4e464817f1591d1b13f49824fb64216ac4f694f3f8d45ec6"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "e1e7a9901df5f13931934ac2cc32191e8c0724c421ebf6381c42a9eb269e160a"
+  }
+}

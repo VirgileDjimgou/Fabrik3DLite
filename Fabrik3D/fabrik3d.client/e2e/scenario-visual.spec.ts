@@ -56,6 +56,30 @@ for (const scene of SCENES) {
   })
 }
 
+/**
+ * S69: the derived secondary camera views must be selectable and deterministic.
+ * The overview default is already covered above; this captures the operator and
+ * workcell framings for the CNC reference cell and one material-flow cell.
+ */
+const SECONDARY_VIEWS = [
+  { id: 'cnc-machine-tending', name: 'cnc-cell' },
+  { id: 'robot-palletizing', name: 'palletizing' },
+] as const
+
+for (const scene of SECONDARY_VIEWS) {
+  for (const view of ['operator', 'workcell'] as const) {
+    test(`deterministic visual: ${scene.name} ${view} view`, async ({ page, visual }) => {
+      test.setTimeout(120_000)
+      await page.setViewportSize(VIEWPORT)
+      await selectScene(page, visual, scene.id)
+      await page.locator(`[data-camera-view="${view}"]`).click()
+      await visual.settleRender()
+      await visual.freeze()
+      await visual.screenshot(`scenario-${scene.name}-${view}.png`)
+    })
+  }
+}
+
 test('the CNC cell baseline is identical when captured first and after another scenario', async ({ page, visual }) => {
   // Three full WebGL captures: allow more than the default timeout on software rendering.
   test.setTimeout(180_000)

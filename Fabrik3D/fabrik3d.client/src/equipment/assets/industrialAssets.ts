@@ -1,6 +1,7 @@
 import { EquipmentAssetRegistry } from './registry'
 import type { EquipmentAssetManifest } from './types'
 import { PROFESSIONAL_ROBOT_ASSET_IDS, PROFESSIONAL_ROBOT_MANIFESTS } from './robotAssets'
+import { registerScenarioEquipmentAssets } from './scenarioAssets'
 import {
   HERO_CELL_DRESSING_ASSET_ID,
   HERO_CELL_DRESSING_MANIFEST,
@@ -68,5 +69,7 @@ export function createIndustrialAssetRegistry(): EquipmentAssetRegistry {
   registry.register({ id: PROCEDURAL_CELL_DRESSING_ASSET_ID, source: 'procedural', description: 'Procedural hero-cell dressing fallback.' })
   registry.register({ id: HERO_CNC_MACHINE_ASSET_ID, source: 'glb', description: 'Generated flagship CNC machining centre (S55).', manifest: HERO_CNC_MACHINE_MANIFEST, url: `/assets/equipment/${HERO_CNC_MACHINE_ASSET_ID}/model.glb`, fallbackAssetId: PROCEDURAL_HERO_CNC_ASSET_ID })
   registry.register({ id: HERO_CELL_DRESSING_ASSET_ID, source: 'glb', description: 'Generated render-only hero-cell dressing (S55).', manifest: HERO_CELL_DRESSING_MANIFEST, url: `/assets/equipment/${HERO_CELL_DRESSING_ASSET_ID}/model.glb`, fallbackAssetId: PROCEDURAL_CELL_DRESSING_ASSET_ID })
+  // S65 scenario-specific industrial equipment packages.
+  registerScenarioEquipmentAssets(registry)
   return registry
 }

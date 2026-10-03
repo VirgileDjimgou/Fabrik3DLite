@@ -219,6 +219,54 @@ whose runs are not all `hardware` with a renderer identity is rejected by
 - Benchmark result schema validation and acceleration classification are covered by unit tests
   (`src/observability/gpuBenchmark.test.ts`).
 
+## S68 PBR material/environment re-measurement
+
+S68 added the shared PBR material vocabulary and the coherent factory
+environment. The S62 manual hardware benchmark was re-run on the same documented
+reference machine with the same command and the same scenes:
+
+```powershell
+npm --prefix Fabrik3D/fabrik3d.client run benchmark:gpu
+# -> writes test-results/perf/gpu-benchmark.json
+```
+
+Renderer: `ANGLE (Intel, Intel(R) UHD Graphics (0x0000A7A8) Direct3D11 vs_5_0 ps_5_0, D3D11)`,
+resolution 1920×1080, `acceleration=hardware`, `gpuEvidence=true`, headed
+Chromium, 2026-10-02.
+
+| Scene | Profile | FPS | p50 | p95 | p99 | draw calls | triangles | textures | load |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CNC machine tending | Performance | 128.8 | 7.30 ms | 11.10 ms | 12.12 ms | 435 | 9 780 | 0 | 2 523 ms |
+| CNC machine tending | Balanced | 109.9 | 9.20 ms | 11.20 ms | 12.74 ms | 487 | 13 752 | 0 | 1 504 ms |
+| CNC machine tending | Quality | 78.3 | 12.50 ms | 16.00 ms | 22.73 ms | 487 | 13 752 | 0 | 1 066 ms |
+| Robot palletizing | Performance | 133.5 | 7.30 ms | 9.70 ms | 10.89 ms | 164 | 3 732 | 0 | 1 743 ms |
+| Robot palletizing | Balanced | 123.7 | 7.90 ms | 10.40 ms | 11.30 ms | 164 | 3 732 | 0 | 1 620 ms |
+| Robot palletizing | Quality | 104.3 | 9.70 ms | 11.53 ms | 12.56 ms | 164 | 3 732 | 0 | 1 440 ms |
+
+The 60 FPS reference target is satisfied on every measured profile; the minimum
+measured FPS is **78.3** (CNC, Quality). All runs report **0 textures** and
+`gpuEvidence=true`.
+
+Comparison with the S62 (Revision 3) table above:
+
+- The CNC cell moved from 414/466/466 draw calls and 9 528/13 500/13 500
+  triangles (S62) to 435/487/487 draw calls and 9 780/13 752/13 752 triangles.
+  The delta is the S68 environment/marking layer on top of the same hero asset
+  (the S68 builder alone measures 54 meshes / 638 triangles / 54 draw calls /
+  0 textures, GPU-free).
+- Robot palletizing moved from 42 draw calls / 534 triangles (S62, procedural
+  visuals) to 164 / 3 732. That increase is the accumulated Revision 4 visual
+  work already in the tree — S65 generated GLB scenario equipment, S66 robot
+  motion and S67 process stages — not S68 alone; S68's own contribution is the
+  bounded environment above plus material reassignment of the same meshes.
+- No measured profile regressed below the reference target, so no throttling,
+  LOD or environment rollback was required.
+
+The same benchmark run headless is classified `software`/`gpuEvidence=false` and
+is never presented as a GPU result; the CI visual suite (software rendering)
+still passes deterministically and the soak reports flat draw calls
+(`487`) and texture bytes (`0`) across repeated scene loads.
+
 ## Measurements recorded by earlier sprints
 
 | Dimension | Measured result | Source sprint |
@@ -278,8 +326,10 @@ npm --prefix Fabrik3D/fabrik3d.client run load:signalr
 - No 4–8 hour soak was executed in this repository environment; the CI short soak is only a
   seconds-long guard. The long soak is a documented manual procedure (above) and its result is a
   human-required evidence item until performed.
-- Browser frame time in CI is measured headless (software rendering). It is labelled `software` or
-  `unknown`, never `hardware`; GPU vendor numbers are not recorded here and must not be inferred.
+- CI browser frame time is measured headless (software rendering) and is labelled `software` or
+  `unknown`, never `hardware`. Hardware GPU numbers are recorded here only from the explicit headed
+  benchmark runs on the documented reference host (S62/S68) and apply to that host only; they must not
+  be inferred for other hardware or from geometry counts.
 - The SignalR harness runs on a single host; multi-host network effects are not measured, and the
   100-client point is conditional on the host.
 - Budgets are soft regression guards for CI, not an SLA or a capacity-planning input.

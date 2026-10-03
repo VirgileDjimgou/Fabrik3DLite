@@ -171,15 +171,24 @@ Deterministic, GPU-free evidence is recorded by the S54 tests:
   scenario switches. `materialFlowVisuals.test.ts` registers the procedural
   scenario assets idempotently and disposes their instance-owned geometry.
 - `ScenarioCellAnimator.test.ts` / `cellComposition.test.ts` (S59) — the animator
-  mutates only instance-local procedural materials (created per
-  `createMaterialFlowVisual` call, so no cross-instance sharing), and the
-  composition tests prove the S59 cells resolve entirely from procedural visuals
-  through the shared runtime.
+  mutates only instance-local materials (created per `createMaterialFlowVisual`
+  call, so no cross-instance sharing), and the composition tests prove the S59
+  cells resolve through the shared runtime. After S65 the preferred asset for a
+  scenario class is the generated `scenario-*` GLB with the S58 procedural visual
+  as its registered fallback.
+- `s65ScenarioAssets.test.ts` (S65) — the shared runtime acquires the preferred
+  scenario GLB for a scenario class and the generic professional robot for the
+  training manipulator, and degrades deterministically to the procedural fallback
+  (with a diagnostic) when the GLB 404s or is corrupt. See
+  [Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).
 
-Visual regression (`npm --prefix Fabrik3D/fabrik3d.client run test:visual`, 26
-tests) passed without snapshot changes after the migration. The S49 reference
-scene frame-time probe recorded, on this development machine under headless
-Chromium software rendering (2026-10-01): `frames=15 mean=208.87ms p50=216.60ms
-p95=216.70ms`. These are an upper bound for a software backend, not reference
-hardware numbers; wall-clock GPU frame time and renderer memory on the
-documented reference machine remain an open measurement and are not claimed.
+The simulator visual-regression gate (`npm --prefix Fabrik3D/fabrik3d.client run
+test:visual`) passed after the migration. The S49 reference scene frame-time
+probe recorded, on this development machine under headless Chromium software
+rendering (2026-10-01): `frames=15 mean=208.87ms p50=216.60ms p95=216.70ms`.
+These are an upper bound for a software backend, not reference-hardware GPU
+numbers. Hardware GPU frame time was subsequently measured by the S62 GPU
+validation and re-measured after S68: the headed benchmark on the documented
+reference host reports `acceleration=hardware`, `gpuEvidence=true`, every profile
+above the 60 FPS reference target and 0 textures. See
+[PERFORMANCE.md](../operations/PERFORMANCE.md) for the numbers and non-claims.

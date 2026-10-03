@@ -20,9 +20,13 @@ export const DEFAULT_SCENE_PRESET_ID = 'cnc-machine-tending'
  * hand-tuned. The layout layer is a configuration aid only and never becomes
  * runtime truth.
  */
-function framing(cell: CellDefinition): { floorSizeMeters: { x: number; z: number }, camera: ScenePreset['camera'] } {
+function framing(cell: CellDefinition): {
+  floorSizeMeters: { x: number; z: number }
+  camera: ScenePreset['camera']
+  cameraPresets: NonNullable<ScenePreset['cameraPresets']>
+} {
   const layout = resolveCellLayout({ footprints: cellFootprints(cell) })
-  return { floorSizeMeters: layout.floorSizeMeters, camera: layout.camera }
+  return { floorSizeMeters: layout.floorSizeMeters, camera: layout.camera, cameraPresets: layout.cameras }
 }
 
 const CNC_FRAMING = framing(SINGLE_CONVEYOR_CELL)
@@ -44,6 +48,7 @@ export const BUILT_IN_SCENE_PRESETS: readonly ScenePreset[] = [
     defaultScenarioId: 'pallet-processing',
     environment: { preset: 'industrial-hall', floorSizeMeters: CNC_FRAMING.floorSizeMeters },
     camera: CNC_FRAMING.camera,
+    cameraPresets: CNC_FRAMING.cameraPresets,
     defaultPanelLayout: { guide: { x: 16, y: 16 }, dashboard: { x: 1150, y: 16 } },
   },
   {
@@ -52,7 +57,7 @@ export const BUILT_IN_SCENE_PRESETS: readonly ScenePreset[] = [
     purpose: { en: 'Conveyor sorting with inspection, diverter and reject bins.', fr: 'Tri sur convoyeur avec contrôle, déviateur et bacs de rebut.', de: 'Fördersortierung mit Prüfung, Weiche und Ausschussbehältern.' },
     capability: 'simulation-ready', runtimeProfile: 'material-flow', cell: VISION_SORTING_CELL,
     compatibleScenarioIds: ['sorting-normal-cycle', 'sorting-jam-recovery'], defaultScenarioId: 'sorting-normal-cycle',
-    environment: { preset: 'industrial-hall', floorSizeMeters: SORTING_FRAMING.floorSizeMeters }, camera: SORTING_FRAMING.camera,
+    environment: { preset: 'industrial-hall', floorSizeMeters: SORTING_FRAMING.floorSizeMeters }, camera: SORTING_FRAMING.camera, cameraPresets: SORTING_FRAMING.cameraPresets,
   },
   {
     schemaVersion: SCENE_PRESET_SCHEMA_VERSION, id: 'robot-palletizing',
@@ -60,7 +65,7 @@ export const BUILT_IN_SCENE_PRESETS: readonly ScenePreset[] = [
     purpose: { en: 'Vacuum pick, layer pattern and finished-pallet buffer.', fr: 'Prise par vide, motif de couche et buffer palette finie.', de: 'Vakuumgreifen, Lagenmuster und Fertigpalettenpuffer.' },
     capability: 'simulation-ready', runtimeProfile: 'material-flow', cell: PALLETIZING_CELL,
     compatibleScenarioIds: ['palletizing-normal-cycle', 'palletizing-vacuum-recovery'], defaultScenarioId: 'palletizing-normal-cycle',
-    environment: { preset: 'industrial-hall', floorSizeMeters: PALLETIZING_FRAMING.floorSizeMeters }, camera: PALLETIZING_FRAMING.camera,
+    environment: { preset: 'industrial-hall', floorSizeMeters: PALLETIZING_FRAMING.floorSizeMeters }, camera: PALLETIZING_FRAMING.camera, cameraPresets: PALLETIZING_FRAMING.cameraPresets,
   },
   {
     schemaVersion: SCENE_PRESET_SCHEMA_VERSION, id: 'assembly-inspection',
@@ -68,7 +73,7 @@ export const BUILT_IN_SCENE_PRESETS: readonly ScenePreset[] = [
     purpose: { en: 'Robot fixture, simplified press, inspection and rework buffer.', fr: 'Robot, montage, presse simplifiée, contrôle et buffer de reprise.', de: 'Roboter, Vorrichtung, vereinfachte Presse, Prüfung und Nacharbeitspuffer.' },
     capability: 'simulation-ready', runtimeProfile: 'material-flow', cell: ASSEMBLY_INSPECTION_CELL,
     compatibleScenarioIds: ['assembly-inspection-cycle'], defaultScenarioId: 'assembly-inspection-cycle',
-    environment: { preset: 'industrial-hall', floorSizeMeters: ASSEMBLY_FRAMING.floorSizeMeters }, camera: ASSEMBLY_FRAMING.camera,
+    environment: { preset: 'industrial-hall', floorSizeMeters: ASSEMBLY_FRAMING.floorSizeMeters }, camera: ASSEMBLY_FRAMING.camera, cameraPresets: ASSEMBLY_FRAMING.cameraPresets,
   },
   {
     schemaVersion: SCENE_PRESET_SCHEMA_VERSION, id: 'robot-safety-training',
@@ -76,7 +81,7 @@ export const BUILT_IN_SCENE_PRESETS: readonly ScenePreset[] = [
     purpose: { en: 'Access gate, scanner, emergency stop and controlled restart exercise.', fr: 'Exercice porte d’accès, scanner, arrêt d’urgence et redémarrage contrôlé.', de: 'Übung mit Zugangstür, Scanner, Not-Halt und kontrolliertem Neustart.' },
     capability: 'simulation-ready', runtimeProfile: 'material-flow', cell: SAFETY_TRAINING_CELL,
     compatibleScenarioIds: ['safety-door-recovery'], defaultScenarioId: 'safety-door-recovery',
-    environment: { preset: 'training-lab', floorSizeMeters: SAFETY_FRAMING.floorSizeMeters }, camera: SAFETY_FRAMING.camera,
+    environment: { preset: 'training-lab', floorSizeMeters: SAFETY_FRAMING.floorSizeMeters }, camera: SAFETY_FRAMING.camera, cameraPresets: SAFETY_FRAMING.cameraPresets,
   },
 ]
 

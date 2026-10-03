@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-operator-hmi-pedestal-v1",
+  "equipmentDefinitionId": "operator-hmi-pedestal",
+  "category": "machine",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.6,
+    "y": 1.35,
+    "z": 0.45
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "d1121204b8e7fa537190e86715432b38ba70c61fdbf3a0c19739a77223f2e373"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "0c925d20bb7bf210407b0bfcba0a87afc95b80fe0a4bd0d2b4327cc7dc2388ae"
+        },
+        "triangleBudget": 900
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-hmi-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.55,
+      "y": 1.35,
+      "z": 0.45
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "signal:screen",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "dark-steel",
+    "plastic"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "b91e18616e696827ed7859c1b5fc0381b341e58c343a54863a25af308221f01c"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "d1121204b8e7fa537190e86715432b38ba70c61fdbf3a0c19739a77223f2e373"
+  }
+}

@@ -1,8 +1,9 @@
 # Fabrik3D documentation index
 
-Status: 1.0 baseline plus completed post-1.0 Roadmap Revisions 2 (S51–S57) and 3 (S58–S64). This
-index is the map of the documentation set. Every link below resolves to a
-file in this repository; broken documentation links fail the `npm run docs:check` gate.
+Status: the immutable 1.0 baseline plus completed post-1.0 Roadmap Revision 2 (S51–S57), completed
+Roadmap Revision 3 (S58–S64) and the completed and validated Roadmap Revision 4 (S65–S71). This index
+is the map of the documentation set. Every link below resolves to a file in this repository; broken
+documentation links and release-era/claim consistency fail the `npm run docs:check` gate.
 
 Notation: **implemented** = built and tested; **simulated** = modeled, explicitly training data;
 **experimental** = opt-in and documented as such; **manual** = a documented human procedure;
@@ -19,8 +20,11 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 | [Release notes 1.0](releases/RELEASE_NOTES_1.0.md) | Everyone |
 | [Release notes 1.1](releases/RELEASE_NOTES_1.1.md) | Everyone |
 | [Release notes Revision 3](releases/RELEASE_NOTES_REVISION_3.md) | Everyone |
+| [Release notes Revision 4](releases/RELEASE_NOTES_REVISION_4.md) | Everyone |
+| [Revision 4 release preparation](operations/RELEASE_PREPARATION_REVISION_4.md) | Everyone |
 | [Flagship demonstration runbook](operations/FLAGSHIP_DEMO.md) | Everyone |
 | [Revision 3 validation evidence](operations/VALIDATION_REVISION_3.md) | Everyone |
+| [Revision 4 validation evidence](operations/VALIDATION_REVISION_4.md) | Everyone |
 | [Limitations and non-claims](operations/LIMITATIONS.md) | Everyone |
 | [Setup](development/SETUP.md) | Developer |
 | [Testing](TESTING.md) | Developer |
@@ -136,6 +140,9 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 - [Validation 1.0](operations/VALIDATION_1.0.md) — recorded S50 1.0 gate and lifecycle transcript
 - [Validation post-1.0](operations/VALIDATION_POST_1.0.md) — automated flagship workflow/fixture evidence plus explicitly deferred real-PLC validation
 - [Validation Revision 3](operations/VALIDATION_REVISION_3.md) — S58–S64 automated/visual/hardware/fixture/manual evidence with deferred real PLC
+- [Validation Revision 4](operations/VALIDATION_REVISION_4.md) — S65–S71 automated/visual/hardware-benchmark/fixture/manual evidence, execution captures and the measured Revision 3 → Revision 4 comparison
+- [Revision 4 release preparation](operations/RELEASE_PREPARATION_REVISION_4.md) — version/tag recommendation, migration status, known limitations, validation and media links
+- [Release notes Revision 4](releases/RELEASE_NOTES_REVISION_4.md) — finalized Revision 4 highlights, measured comparison and boundaries
 - [Flagship demonstration runbook](operations/FLAGSHIP_DEMO.md) — deterministic end-to-end product demonstration
 - [TESTING.md](TESTING.md) — test layers and commands
 - [Dependency audit](development/DEPENDENCY_AUDIT.md)

@@ -34,10 +34,13 @@ export const REQUIRED_DOCUMENTS = [
   'docs/operations/VALIDATION_1.0.md',
   'docs/operations/VALIDATION_POST_1.0.md',
   'docs/operations/VALIDATION_REVISION_3.md',
+  'docs/operations/VALIDATION_REVISION_4.md',
+  'docs/operations/RELEASE_PREPARATION_REVISION_4.md',
   'docs/operations/FLAGSHIP_DEMO.md',
   'docs/development/TROUBLESHOOTING.md',
   'docs/releases/RELEASE_NOTES_1.0.md',
   'docs/releases/RELEASE_NOTES_REVISION_3.md',
+  'docs/releases/RELEASE_NOTES_REVISION_4.md',
   `${SAMPLE_PROJECT_DIR}/project.json`,
   `${SAMPLE_PROJECT_DIR}/README.md`,
   `${SAMPLE_PROJECT_DIR}/reference-cell.cell.json`,
@@ -61,11 +64,51 @@ export const LINK_CHECKED_DOCUMENTS = [
   'docs/operations/VALIDATION_1.0.md',
   'docs/operations/VALIDATION_POST_1.0.md',
   'docs/operations/VALIDATION_REVISION_3.md',
+  'docs/operations/VALIDATION_REVISION_4.md',
+  'docs/operations/RELEASE_PREPARATION_REVISION_4.md',
   'docs/operations/FLAGSHIP_DEMO.md',
   'docs/development/TROUBLESHOOTING.md',
   'docs/releases/RELEASE_NOTES_1.0.md',
   'docs/releases/RELEASE_NOTES_REVISION_3.md',
+  'docs/releases/RELEASE_NOTES_REVISION_4.md',
   `${SAMPLE_PROJECT_DIR}/README.md`,
+]
+
+/** Current documents that must distinguish the four release eras (1.0, Revision 2, Revision 3, Revision 4). */
+export const RELEASE_ERA_DOCUMENTS = [
+  'README.md',
+  'docs/DOCUMENTATION_INDEX.md',
+  'docs/operations/LIMITATIONS.md',
+  'docs/roadmap/README.md',
+  'docs/architecture/OVERVIEW.md',
+]
+
+export const RELEASE_ERA_PATTERNS = [
+  { label: '1.0 baseline', pattern: /1\.0/ },
+  { label: 'Revision 2', pattern: /Revision 2/i },
+  { label: 'Revision 3', pattern: /Revision 3/i },
+  { label: 'Revision 4', pattern: /Revision 4/i },
+]
+
+export const REVISION_4_PREP_DOCUMENT = 'docs/operations/RELEASE_PREPARATION_REVISION_4.md'
+export const REVISION_4_RELEASE_NOTES = 'docs/releases/RELEASE_NOTES_REVISION_4.md'
+export const REVISION_4_VALIDATION = 'docs/operations/VALIDATION_REVISION_4.md'
+
+/**
+ * Stale claims a current document must not repeat. Each names the files to check and why the claim
+ * was superseded, so the failure message explains the contradiction instead of only the regex.
+ */
+export const SUPERSEDED_CLAIMS = [
+  {
+    pattern: /remain an open measurement/i,
+    documents: ['docs/architecture/HERO_REFERENCE_CELL.md', 'docs/architecture/ASSET_RUNTIME.md'],
+    reason: 'hardware GPU frame time is measured by S62/S68, not an open measurement',
+  },
+  {
+    pattern: /will be available in a future update/i,
+    documents: ['Fabrik3D/fabrik3d.hmi/src/i18n/en.ts', 'Fabrik3D/fabrik3d.hmi/src/i18n/fr.ts', 'Fabrik3D/fabrik3d.hmi/src/i18n/de.ts'],
+    reason: 'the Robot Positions placeholder text was removed when the surface was implemented',
+  },
 ]
 
 const MARKDOWN_LINK = /\[[^\]]*\]\(([^)]+)\)/g
@@ -117,6 +160,79 @@ function readJson(path, errors) {
   } catch (error) {
     errors.push(`invalid JSON: ${relative(REPO_ROOT, path)} (${error.message})`)
     return undefined
+  }
+}
+
+/**
+ * S70 release coherence: current documents must distinguish the four release eras, must not repeat
+ * superseded claims, and the Revision 4 release artifacts must state version, migration, limitations,
+ * validation and media information before final validation.
+ *
+ * S71 finalization: once S71 has produced `VALIDATION_REVISION_4.md`, the Revision 4 release notes
+ * must no longer be labelled draft, must link the validation record, and the validation record itself
+ * must carry the measured hardware benchmark, the Revision 3 → Revision 4 comparison and its
+ * explicit non-claims.
+ * @param {string} rootDir
+ * @param {string[]} errors
+ */
+export function verifyReleaseCoherence(rootDir, errors) {
+  for (const document of RELEASE_ERA_DOCUMENTS) {
+    const absolute = join(rootDir, document)
+    if (!existsSync(absolute)) continue
+    const text = readFileSync(absolute, 'utf8')
+    for (const { label, pattern } of RELEASE_ERA_PATTERNS) {
+      if (!pattern.test(text)) errors.push(`${document}: does not distinguish ${label}`)
+    }
+  }
+
+  for (const { pattern, documents, reason } of SUPERSEDED_CLAIMS) {
+    for (const document of documents) {
+      const absolute = join(rootDir, document)
+      if (!existsSync(absolute)) continue
+      if (pattern.test(readFileSync(absolute, 'utf8'))) {
+        errors.push(`${document}: repeats a superseded claim (${reason})`)
+      }
+    }
+  }
+
+  const prep = join(rootDir, REVISION_4_PREP_DOCUMENT)
+  if (existsSync(prep)) {
+    const text = readFileSync(prep, 'utf8')
+    const required = [
+      ['a version/tag recommendation', /v1\.\d+\.\d+/],
+      ['a migration statement', /no migration/i],
+      ['a known-limitations link', /LIMITATIONS\.md/],
+      ['a validation link', /VALIDATION_/],
+      ['a media link', /artifacts\/demo|docs\/demo/],
+    ]
+    for (const [label, pattern] of required) {
+      if (!pattern.test(text)) errors.push(`${REVISION_4_PREP_DOCUMENT}: missing ${label}`)
+    }
+  }
+
+  const notes = join(rootDir, REVISION_4_RELEASE_NOTES)
+  if (existsSync(notes)) {
+    const text = readFileSync(notes, 'utf8')
+    if (/draft/i.test(text)) errors.push(`${REVISION_4_RELEASE_NOTES}: must be finalized by S71 (remove the draft label)`)
+    if (!/v1\.\d+\.\d+/.test(text)) errors.push(`${REVISION_4_RELEASE_NOTES}: missing a version recommendation`)
+    if (!/VALIDATION_REVISION_4\.md/.test(text)) errors.push(`${REVISION_4_RELEASE_NOTES}: missing the Revision 4 validation link`)
+  }
+
+  const validation = join(rootDir, REVISION_4_VALIDATION)
+  if (existsSync(validation)) {
+    const text = readFileSync(validation, 'utf8')
+    const requiredValidation = [
+      ['a hardware/acceleration classification', /acceleration=(hardware|software)/i],
+      ['the Revision 3 comparison', /Revision 3/],
+      ['the Revision 4 comparison', /Revision 4/],
+      ['an explicit comparison statement', /compar/i],
+      ['the hardware benchmark artifact path', /gpu-benchmark\.json/],
+      ['the five flagship scenarios', /palletizing[\s\S]{0,6000}vision[- ]sorting/i],
+      ['an explicit deferred or non-claim statement', /deferred|non-claim/i],
+    ]
+    for (const [label, pattern] of requiredValidation) {
+      if (!pattern.test(text)) errors.push(`${REVISION_4_VALIDATION}: missing ${label}`)
+    }
   }
 }
 
@@ -178,6 +294,8 @@ export function checkDocumentation(options = {}) {
     const text = readFileSync(releaseNotes, 'utf8')
     if (!/1\.0/.test(text)) errors.push('release notes do not mention the 1.0 release')
   }
+
+  verifyReleaseCoherence(rootDir, errors)
 
   return { errors, checked: { documents: REQUIRED_DOCUMENTS.length, links } }
 }

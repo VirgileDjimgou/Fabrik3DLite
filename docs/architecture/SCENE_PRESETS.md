@@ -93,5 +93,34 @@ The clearance constants live in `DEFAULT_CELL_LAYOUT_REQUIREMENTS`
 1.5 m). `cellLayout.test.ts` covers each positive and negative case and asserts
 every built-in preset derives zero error-severity diagnostics.
 
+## Derived camera views (S69)
+
+S69 replaces the single framing with three derived camera presets.
+`deriveCameraPresets(extents, footprints, options)` returns:
+
+- `overview` — the primary default, equal to `deriveCameraPreset(extents)` and
+  containing every measured corner inside the renderer frustum;
+- `operator` — a `+Z` operator-side eye-height framing;
+- `workcell` — a closer framing centred on the declared robot footprint and its
+  reach envelope.
+
+All three are pure functions of the measured extents and declared footprints, so
+they are deterministic and never read a mesh or a render frame.
+`cameraContainsExtents` projects the eight extents corners into normalized device
+coordinates using the documented renderer parameters (50° vertical FOV, 16:9
+aspect, near plane) and fails when a corner leaves the viewport or crosses the
+near plane; `validateCellLayout` reports a `camera-clipping` diagnostic for that
+case. `SingleConveyorCellLayout.vue` and `MaterialFlowScenarioHost.vue` expose the
+views as `[data-camera-view]` buttons; the CNC cell applies them through
+`SingleConveyorSceneSetup`, the material-flow cells through
+`ScenarioRuntimeHost.placeCamera(camera, view)`.
+
+`src/scenes/composition.test.ts` enforces the S69 acceptance criteria for all
+five flagship presets: zero error diagnostics (overlap, floor bounds, reach,
+service/operator/safety clearance), robot service targets inside the reach
+envelope, fencing outside the swept envelope plus fence clearance, protective
+zones large enough for the swept envelope, and full overview-camera containment —
+plus a negative fixture proving each diagnostic fires on a real violation.
+
 Future equipment, scenario, editor, and rendering work extends registries and
 the scene host resolver; the application shell and selector remain unchanged.

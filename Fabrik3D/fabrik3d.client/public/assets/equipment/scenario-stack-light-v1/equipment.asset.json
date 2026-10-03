@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0",
+  "id": "scenario-stack-light-v1",
+  "equipmentDefinitionId": "stack-light",
+  "category": "safety-device",
+  "version": "1.0.0",
+  "coordinateSystem": {
+    "units": "meters",
+    "upAxis": "Y",
+    "handedness": "right",
+    "origin": "equipment-base"
+  },
+  "boundsMeters": {
+    "x": 0.15,
+    "y": 0.66,
+    "z": 0.15
+  },
+  "visual": {
+    "glb": {
+      "path": "model.glb",
+      "sha256": "97020fde1e7d5f7d566897fc927ddf1ad4be30a81825f93d048987938621e821"
+    },
+    "lods": [
+      {
+        "id": "lod1",
+        "glb": {
+          "path": "lod/lod1.glb",
+          "sha256": "2a995939058fffd91007d5522714b355e97c5a12b5ead87d9ce41041ef496b76"
+        },
+        "triangleBudget": 450
+      }
+    ]
+  },
+  "collision": {
+    "id": "scenario-stack-light-1",
+    "kind": "box",
+    "dimensionsMeters": {
+      "x": 0.15,
+      "y": 0.65,
+      "z": 0.15
+    }
+  },
+  "semanticNodes": [
+    {
+      "id": "signal:stack",
+      "kind": "signal"
+    }
+  ],
+  "anchors": [],
+  "materials": [
+    "signal-red",
+    "safety-yellow",
+    "signal-green"
+  ],
+  "thumbnail": {
+    "path": "thumbnail.svg",
+    "sha256": "f67ace7e9c24732cf4bf314fda76336a5c56a7cb97e9d70d1ae7bb26a6e94507"
+  },
+  "license": {
+    "name": "Fabrik3D generated generic asset; educational use"
+  },
+  "integrity": {
+    "path": "model.glb",
+    "sha256": "97020fde1e7d5f7d566897fc927ddf1ad4be30a81825f93d048987938621e821"
+  }
+}

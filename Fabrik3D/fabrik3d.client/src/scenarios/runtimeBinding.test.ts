@@ -12,13 +12,31 @@ import {
 describe('S58 scenario runtime binding', () => {
   it('derives expected events in declared activity order', () => {
     const scenario = getScenario('sorting-normal-cycle')
-    expect(scenarioExpectedEventSequence(scenario).map(event => event.type))
-      .toEqual(['scenario.ready', 'sorting.complete', 'scenario.recovered'])
+    const events = scenarioExpectedEventSequence(scenario)
+    expect(events.slice(0, 7).map(event => event.type)).toEqual(Array(7).fill('scenario.stage'))
+    expect(events.slice(0, 7).map(event => event.stage)).toEqual([
+      'vision-part-enters',
+      'vision-sensor-detects',
+      'vision-conveyor-advances',
+      'vision-inspection-begins',
+      'vision-classified',
+      'vision-diverter-actuates',
+      'vision-part-routes',
+    ])
+    expect(events[7]!.type).toBe('sorting.complete')
+    expect(events[8]!.type).toBe('scenario.recovered')
   })
 
   it('splits the program like the historical material-flow host', () => {
     const program = createScenarioEventProgram(getScenario('sorting-jam-recovery'))
-    expect(program.run.map(event => event.type)).toEqual(['scenario.ready', 'sorting.recovered'])
+    expect(program.run.map(event => event.type)).toEqual([
+      'scenario.stage',
+      'scenario.stage',
+      'scenario.stage',
+      'scenario.stage',
+      'scenario.stage',
+      'sorting.recovered',
+    ])
     expect(program.recovery.map(event => event.type)).toEqual(['scenario.recovered'])
   })
 

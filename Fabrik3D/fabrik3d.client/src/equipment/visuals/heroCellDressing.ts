@@ -1,22 +1,25 @@
 import * as THREE from 'three'
+import { createMaterialPack } from './materialLibrary'
 
 /**
  * Procedural fallback for the S55 hero-cell dressing. It mirrors the generated
  * `hero-cell-dressing-v1` GLB closely enough to keep the scene coherent when the
  * asset is missing or corrupt. It is render-only and never a collision
- * authority.
+ * authority. Materials come from the shared S68 vocabulary.
  */
 export function buildHeroCellDressingFallback(): THREE.Group {
   const group = new THREE.Group()
   group.name = 'HeroCellDressingFallback'
   group.userData.semanticId = 'equipment:cell-dressing'
 
-  const trim = new THREE.MeshStandardMaterial({ color: 0x333a3e, metalness: 0.62, roughness: 0.34 })
-  const steel = new THREE.MeshStandardMaterial({ color: 0x39424b, metalness: 0.78, roughness: 0.33 })
-  const hazard = new THREE.MeshStandardMaterial({ color: 0xd6a400, metalness: 0.2, roughness: 0.6 })
-  const rackBlue = new THREE.MeshStandardMaterial({ color: 0x27557a, metalness: 0.42, roughness: 0.46 })
-  const workLight = new THREE.MeshStandardMaterial({ color: 0xf6f3e6, emissive: 0xf6f3e6, emissiveIntensity: 0.85, metalness: 0.1, roughness: 0.4 })
-  const rubber = new THREE.MeshStandardMaterial({ color: 0x1c1f21, metalness: 0.05, roughness: 0.92 })
+  const pack = createMaterialPack()
+  const trim = pack.get('machine-trim')
+  const steel = pack.get('structural-steel')
+  const hazard = pack.get('hazard-amber')
+  const rackBlue = pack.get('pallet-blue')
+  const workLight = pack.get('work-light')
+  const rubber = pack.get('rubber')
+  const coolant = pack.get('coolant')
 
   const add = (name: string, geometry: THREE.BufferGeometry, material: THREE.Material, position: [number, number, number]) => {
     const mesh = new THREE.Mesh(geometry, material)
@@ -41,7 +44,7 @@ export function buildHeroCellDressingFallback(): THREE.Group {
   auger.rotation.x = Math.PI / 2
   auger.position.set(0, 0.5, 0)
   chip.add(auger)
-  add('chip:coolant-tank', new THREE.BoxGeometry(0.72, 0.5, 0.9), new THREE.MeshStandardMaterial({ color: 0x2f6f8f, metalness: 0.3, roughness: 0.4 }), [1.42, 0.28, 2.2])
+  add('chip:coolant-tank', new THREE.BoxGeometry(0.72, 0.5, 0.9), coolant, [1.42, 0.28, 2.2])
   add('chip:bin', new THREE.BoxGeometry(0.6, 0.62, 0.5), rubber, [-1.65, 0.31, 3.4])
 
   for (const [index, z] of [[1, -0.45], [2, 0.75]] as const) {

@@ -7,24 +7,37 @@ import { inject, watch, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
 import { SCENE_CONTEXT_KEY } from '../composables/injectionKeys'
 import { SINGLE_CELL_CAMERA } from '../simulation/SingleConveyorCellLayout'
+import { SINGLE_CONVEYOR_CELL } from '../equipment/fixtures/singleConveyorCell'
+import { cellFootprints } from '../scenes/cellFootprints'
+import { resolveCellLayout } from '../scenes/cellLayout'
+import type { SceneCameraView } from '../scenes/types'
+
+const props = withDefaults(defineProps<{ cameraView?: SceneCameraView }>(), { cameraView: 'overview' })
 
 const sceneCtx = inject(SCENE_CONTEXT_KEY)!
 
 let axesHelper: THREE.AxesHelper | null = null
 let cellGrid: THREE.GridHelper | null = null
 
+// S69: the CNC reference cell's camera views are derived from the same measured
+// layout as the scene preset. The legacy constant remains the documented
+// fallback if the derived framing is unavailable.
+const CNC_CAMERAS = resolveCellLayout({ footprints: cellFootprints(SINGLE_CONVEYOR_CELL) }).cameras
+
+function applyCamera(ctx: NonNullable<typeof sceneCtx.value>): void {
+  const cam = CNC_CAMERAS[props.cameraView] ?? SINGLE_CELL_CAMERA
+  ctx.camera.position.set(cam.position.x, cam.position.y, cam.position.z)
+  ctx.camera.lookAt(cam.target.x, cam.target.y, cam.target.z)
+  ctx.controls.target.set(cam.target.x, cam.target.y, cam.target.z)
+  ctx.controls.update()
+}
+
 watch(
   () => sceneCtx.value,
   (ctx) => {
     if (!ctx) return
 
-    const cam = SINGLE_CELL_CAMERA
-
-    // ── Camera – elevated side-front view ────────────────────────
-    ctx.camera.position.set(...cam.position)
-    ctx.camera.lookAt(...cam.target)
-    ctx.controls.target.set(...cam.target)
-    ctx.controls.update()
+    applyCamera(ctx)
 
     // ── Shadow coverage ──────────────────────────────────────────
     ctx.scene.traverse((child) => {
@@ -51,6 +64,14 @@ watch(
     ctx.addObject(cellGrid)
   },
   { immediate: true },
+)
+
+watch(
+  () => props.cameraView,
+  () => {
+    const ctx = sceneCtx.value
+    if (ctx) applyCamera(ctx)
+  },
 )
 
 onBeforeUnmount(() => {

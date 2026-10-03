@@ -19,6 +19,9 @@ import {
   PROCEDURAL_PALLET_STATION_ASSET_ID,
   PROCEDURAL_ROBOT_ASSET_ID,
 } from '../assets/industrialAssets'
+import { SCENARIO_EQUIPMENT_ASSET_IDS } from '../assets/scenarioAssets'
+import { PROFESSIONAL_ROBOT_ASSET_IDS } from '../assets/robotAssets'
+import { createMaterialPack, type MaterialId } from './materialLibrary'
 
 export const PROCEDURAL_MATERIAL_FLOW_ASSET_PREFIX = 'procedural-material-flow:' as const
 export const GENERIC_EQUIPMENT_CLASS = 'generic' as const
@@ -66,9 +69,20 @@ export function dimensionsFor(definitionId: string): Vector3Meters {
   return DIMENSIONS[definitionId] ?? GENERIC_DIMENSIONS
 }
 
-/** Shared asset id used by the `EquipmentAssetRuntime` for a class. */
+/**
+ * Shared asset id used by the `EquipmentAssetRuntime` for a class.
+ *
+ * S65 prefers the generated scenario-specific GLB package for every class that
+ * has one, and the existing generic professional six-axis robot for the
+ * `fanuc-like-6axis` training manipulator. Classes without a scenario GLB keep
+ * the S58 procedural asset. The runtime still resolves `GLB -> procedural
+ * fallback`, so a missing or corrupt package degrades to the same procedural
+ * visual as before.
+ */
 export function resolveEquipmentAssetId(definitionId: string): string {
-  if (definitionId === 'fanuc-like-6axis') return PROCEDURAL_ROBOT_ASSET_ID
+  const scenarioAssetId = SCENARIO_EQUIPMENT_ASSET_IDS[definitionId]
+  if (scenarioAssetId) return scenarioAssetId
+  if (definitionId === 'fanuc-like-6axis') return PROFESSIONAL_ROBOT_ASSET_IDS.compact
   if (CONVEYOR_CLASSES.has(definitionId)) return PROCEDURAL_CONVEYOR_ASSET_ID
   if (PALLET_STATION_CLASSES.has(definitionId)) return PROCEDURAL_PALLET_STATION_ASSET_ID
   return `${PROCEDURAL_MATERIAL_FLOW_ASSET_PREFIX}${KNOWN_EQUIPMENT_CLASSES.includes(definitionId) ? definitionId : GENERIC_EQUIPMENT_CLASS}`
@@ -118,21 +132,29 @@ type EquipmentPalette = {
   enclosure: THREE.MeshStandardMaterial
   plastic: THREE.MeshStandardMaterial
   sensorGlass: THREE.MeshStandardMaterial
+  cardboard: THREE.MeshStandardMaterial
 }
 
+/**
+ * Builds the per-visual material pack from the shared S68 vocabulary. One
+ * material instance is created per role and reused by every mesh of that role in
+ * this visual, so material allocation stays bounded; the materials remain
+ * instance-owned and are released by `disposeProceduralResources`.
+ */
 function palette(): EquipmentPalette {
-  const make = (color: number, metalness: number, roughness: number) =>
-    new THREE.MeshStandardMaterial({ color, metalness, roughness })
+  const pack = createMaterialPack()
+  const get = (id: MaterialId) => pack.get(id)
   return {
-    steelFrame: make(0x5d6b73, 0.65, 0.45),
-    darkSteel: make(0x2f3a40, 0.7, 0.5),
-    rubber: make(0x1c2124, 0.05, 0.95),
-    safetyYellow: make(0xd8a51f, 0.25, 0.6),
-    signalGreen: make(0x2fa864, 0.1, 0.7),
-    signalRed: make(0xc0392b, 0.1, 0.7),
-    enclosure: make(0xb9c2c8, 0.35, 0.55),
-    plastic: make(0x2b6f8f, 0.1, 0.8),
-    sensorGlass: make(0x9fe3ff, 0.1, 0.2),
+    steelFrame: get('painted-steel'),
+    darkSteel: get('dark-steel'),
+    rubber: get('rubber'),
+    safetyYellow: get('safety-yellow'),
+    signalGreen: get('signal-green'),
+    signalRed: get('signal-red'),
+    enclosure: get('machine-enclosure'),
+    plastic: get('industrial-plastic'),
+    sensorGlass: get('sensor-glass'),
+    cardboard: get('wood-cardboard'),
   }
 }
 
@@ -180,7 +202,13 @@ function buildInto(group: THREE.Group, definitionId: string, size: Vector3Meters
     case 'straight-conveyor':
       addBox(group, { x: size.x, y: 0.12, z: size.z }, p.steelFrame, 'frame', { x: 0, y: size.y - 0.06, z: 0 })
       addBox(group, { x: size.x, y: 0.04, z: size.z * 0.82 }, p.rubber, 'belt', { x: 0, y: size.y, z: 0 })
-      for (const sign of [-1, 1]) addBox(group, { x: 0.08, y: size.y, z: size.z }, p.darkSteel, `leg-${sign}`, { x: sign * (size.x / 2 - 0.1), y: size.y / 2, z: 0 })
+      for (const sign of [-1, 1]) {
+        addBox(group, { x: 0.08, y: size.y, z: size.z }, p.darkSteel, `leg-${sign}`, { x: sign * (size.x / 2 - 0.1), y: size.y / 2, z: 0 })
+        // Side guard rails and their fasteners improve edge readability.
+        addBox(group, { x: size.x, y: 0.05, z: 0.03 }, p.darkSteel, `guard-${sign}`, { x: 0, y: size.y + 0.06, z: sign * size.z * 0.44 })
+      }
+      addCylinder(group, 0.07, 0.16, p.darkSteel, 'motor:main', { x: -size.x / 2 + 0.2, y: size.y - 0.1, z: size.z / 2 + 0.06 }, 'x')
+      addCylinder(group, 0.02, 0.4, p.rubber, 'cable-drop', { x: -size.x / 2 + 0.2, y: size.y / 2, z: size.z / 2 + 0.06 })
       return
     case 'curved-conveyor':
       addBox(group, { x: size.x, y: 0.12, z: size.z }, p.steelFrame, 'frame', { x: 0, y: size.y - 0.06, z: 0 })
@@ -231,7 +259,8 @@ function buildInto(group: THREE.Group, definitionId: string, size: Vector3Meters
       for (let i = -1; i <= 1; i += 1) addBox(group, { x: size.x, y: size.y * 0.7, z: 0.08 }, p.safetyYellow, `runner-${i}`, { x: 0, y: size.y * 0.35, z: i * size.z * 0.35 })
       return
     case 'carton':
-      addBox(group, { x: size.x, y: size.y, z: size.z }, p.enclosure, 'carton')
+      addBox(group, { x: size.x, y: size.y, z: size.z }, p.cardboard, 'carton')
+      addBox(group, { x: size.x * 0.9, y: 0.006, z: size.z * 0.9 }, p.enclosure, 'carton-label', { x: 0, y: size.y + 0.003, z: 0 })
       return
     case 'two-finger-gripper':
     case 'vacuum-gripper':
@@ -307,6 +336,13 @@ function buildInto(group: THREE.Group, definitionId: string, size: Vector3Meters
     case 'plc-cabinet':
       addBox(group, { x: size.x, y: size.y, z: size.z }, p.enclosure, 'cabinet')
       addBox(group, { x: size.x * 0.5, y: size.y * 0.15, z: 0.02 }, p.darkSteel, 'panel', { x: 0, y: size.y * 0.7, z: size.z / 2 + 0.01 })
+      // Door seam, handle, hinges and identifier label improve cabinet readability.
+      addBox(group, { x: 0.02, y: size.y * 0.9, z: 0.02 }, p.darkSteel, 'door', { x: 0, y: size.y * 0.45, z: size.z / 2 + 0.01 })
+      addBox(group, { x: 0.04, y: 0.18, z: 0.04 }, p.steelFrame, 'handle', { x: size.x * 0.35, y: size.y * 0.5, z: size.z / 2 + 0.03 })
+      for (const sign of [-1, 1]) {
+        addBox(group, { x: 0.03, y: 0.12, z: 0.03 }, p.darkSteel, `hinge-${sign}`, { x: -size.x * 0.42, y: size.y * (sign > 0 ? 0.7 : 0.25), z: size.z / 2 + 0.02 })
+      }
+      addBox(group, { x: size.x * 0.4, y: 0.08, z: 0.01 }, p.enclosure, 'label', { x: 0, y: size.y * 0.86, z: size.z / 2 + 0.02 })
       return
     case 'operator-hmi-pedestal':
       addBox(group, { x: size.x * 0.6, y: 0.9, z: size.z * 0.6 }, p.darkSteel, 'column', { x: 0, y: 0.45, z: 0 })
@@ -343,10 +379,47 @@ function buildInto(group: THREE.Group, definitionId: string, size: Vector3Meters
   }
 }
 
+/**
+ * S66: articulated procedural fallback for the `fanuc-like-6axis` training
+ * manipulator. It declares the same `joint:j1`…`joint:j6` / `tool:flange` /
+ * `tool:tcp` semantic pivots as the professional GLB rigs, so scenario robot
+ * motion stays visible when the GLB package cannot load. It is render-only and
+ * never becomes scenario, collision or telemetry authority.
+ */
 function buildRobot(group: THREE.Group, p: EquipmentPalette): void {
-  addCylinder(group, 0.22, 0.18, p.darkSteel, 'base', { x: 0, y: 0.09, z: 0 })
-  addBox(group, { x: 0.22, y: 0.5, z: 0.22 }, p.safetyYellow, 'link-1', { x: 0, y: 0.44, z: 0 })
-  addBox(group, { x: 0.18, y: 0.5, z: 0.18 }, p.safetyYellow, 'link-2', { x: 0, y: 0.95, z: 0.12 })
-  addBox(group, { x: 0.14, y: 0.32, z: 0.14 }, p.darkSteel, 'wrist', { x: 0, y: 1.32, z: 0.18 })
-  addBox(group, { x: 0.1, y: 0.08, z: 0.1 }, p.plastic, 'flange', { x: 0, y: 1.5, z: 0.18 })
+  const j1 = pivot(group, 'joint:j1')
+  addCylinder(j1, 0.22, 0.18, p.darkSteel, 'base', { x: 0, y: 0.09, z: 0 })
+
+  const j2 = pivot(j1, 'joint:j2', { x: 0, y: 0.44, z: 0 })
+  addBox(j2, { x: 0.22, y: 0.5, z: 0.22 }, p.safetyYellow, 'link-1')
+  // Robot dress pack: a rubber conduit and a hose loop keep the fallback
+  // manipulator credible without changing any semantic pivot.
+  addCylinder(j2, 0.035, 0.42, p.rubber, 'dress-pack', { x: 0, y: 0.24, z: -0.15 })
+  addCylinder(j2, 0.02, 0.3, p.darkSteel, 'hose', { x: 0.12, y: 0.28, z: -0.06 }, 'y')
+
+  const j3 = pivot(j2, 'joint:j3', { x: 0, y: 0.5, z: 0 })
+  addBox(j3, { x: 0.18, y: 0.5, z: 0.18 }, p.safetyYellow, 'link-2', { x: 0, y: 0.25, z: 0.12 })
+
+  const j4 = pivot(j3, 'joint:j4', { x: 0, y: 0.5, z: 0.12 })
+  addCylinder(j4, 0.08, 0.16, p.darkSteel, 'wrist-roll', { x: 0, y: 0, z: 0 }, 'x')
+
+  const j5 = pivot(j4, 'joint:j5', { x: 0, y: 0.1, z: 0 })
+  addBox(j5, { x: 0.14, y: 0.24, z: 0.14 }, p.darkSteel, 'wrist', { x: 0, y: 0.02, z: 0 })
+
+  const j6 = pivot(j5, 'joint:j6', { x: 0, y: 0.14, z: 0 })
+  addBox(j6, { x: 0.1, y: 0.08, z: 0.1 }, p.plastic, 'flange', { x: 0, y: 0.04, z: 0 })
+  addBox(j6, { x: 0.06, y: 0.05, z: 0.12 }, p.darkSteel, 'gripper', { x: 0, y: 0.11, z: 0 })
+
+  const flange = pivot(j6, 'tool:flange', { x: 0, y: 0.08, z: 0 })
+  pivot(flange, 'tool:tcp', { x: 0, y: 0.08, z: 0 })
+}
+
+/** Creates a state-bearing pivot group with a stable semantic id. */
+function pivot(parent: THREE.Object3D, semanticId: string, position: Vector3Meters = { x: 0, y: 0, z: 0 }): THREE.Group {
+  const group = new THREE.Group()
+  group.name = semanticId
+  group.userData.semanticId = semanticId
+  group.position.set(position.x, position.y, position.z)
+  parent.add(group)
+  return group
 }
