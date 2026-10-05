@@ -447,7 +447,11 @@ cell rendered through `ThreeScene`/`ScenarioRuntimeScene` now shares:
 
 The configuration and budgets (environment intensity, fog density, local-light
 budget, one shadow-casting key light, bloom threshold/strength, `renderScale`)
-are documented in [3D assets](3D_ASSETS.md). The S74 benchmark re-measured the
+are documented in [3D assets](3D_ASSETS.md). The shipped lighting baseline was
+raised so the default reads as a lit hall, and each scenario/CNC scene panel
+exposes a persisted **ambient brightness** slider (0.5-3.0, default 1.4) that
+scales the ambient terms only — never the key light, scenario events or runtime
+state. The S74 benchmark re-measured the
 hero CNC cell and the robot-palletizing cell on the reference host: the geometry
 delta is +1 draw call / +2 triangles (the gradient background quad) and every
 measured profile stayed above the 60 FPS target (minimum 63.8 FPS). Exact

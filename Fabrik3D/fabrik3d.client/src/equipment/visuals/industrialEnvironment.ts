@@ -19,6 +19,7 @@
 
 import * as THREE from 'three'
 import type { SceneQuality } from '../../composables/useThreeScene'
+import { ambientBrightnessApplication } from './ambientBrightness'
 
 export const INDUSTRIAL_ENVIRONMENT_SCHEMA_VERSION = '1.0' as const
 
@@ -50,41 +51,47 @@ export interface IndustrialEnvironmentPreset {
  * Per-quality atmosphere and lighting budget. Low quality keeps the scene cheap
  * (no fog, no local lights, no shadows); medium is the reference; high adds a
  * denser atmosphere and the full local-light budget.
+ *
+ * Values were raised from the original S74 baseline so the shipped default
+ * reads as a lit hall rather than a dark room. The user-adjustable ambient
+ * brightness (`ambientBrightness.ts`) multiplies the environment, hemisphere,
+ * fill and local-light terms at runtime; the key light and shadow setup stay
+ * fixed so contrast and shadows remain readable.
  */
 export const INDUSTRIAL_ENVIRONMENT_PRESETS: Record<SceneQuality, IndustrialEnvironmentPreset> = {
   low: {
-    environmentIntensity: 0.55,
-    backgroundTop: 0x1b232a,
-    backgroundBottom: 0x2c343a,
-    fogColor: 0x232b31,
+    environmentIntensity: 0.75,
+    backgroundTop: 0x28333c,
+    backgroundBottom: 0x3d4850,
+    fogColor: 0x333d45,
     fogDensity: 0,
-    hemisphereIntensity: 1.1,
-    keyLightIntensity: 2.0,
-    fillLightIntensity: 0.4,
+    hemisphereIntensity: 1.45,
+    keyLightIntensity: 2.2,
+    fillLightIntensity: 0.55,
     localLightBudget: 0,
     localLightsCastShadow: false,
   },
   medium: {
-    environmentIntensity: 0.85,
-    backgroundTop: 0x1d262e,
-    backgroundBottom: 0x39434a,
-    fogColor: 0x2a333a,
+    environmentIntensity: 1.15,
+    backgroundTop: 0x2b3740,
+    backgroundBottom: 0x4d5961,
+    fogColor: 0x39444c,
     fogDensity: 0.012,
-    hemisphereIntensity: 1.35,
-    keyLightIntensity: 2.4,
-    fillLightIntensity: 0.55,
+    hemisphereIntensity: 1.75,
+    keyLightIntensity: 2.6,
+    fillLightIntensity: 0.75,
     localLightBudget: 6,
     localLightsCastShadow: false,
   },
   high: {
-    environmentIntensity: 1.0,
-    backgroundTop: 0x1f2a33,
-    backgroundBottom: 0x424d55,
-    fogColor: 0x2f3941,
+    environmentIntensity: 1.3,
+    backgroundTop: 0x2e3b45,
+    backgroundBottom: 0x556169,
+    fogColor: 0x3e4952,
     fogDensity: 0.016,
-    hemisphereIntensity: 1.5,
-    keyLightIntensity: 2.6,
-    fillLightIntensity: 0.65,
+    hemisphereIntensity: 1.95,
+    keyLightIntensity: 2.85,
+    fillLightIntensity: 0.85,
     localLightBudget: 7,
     localLightsCastShadow: false,
   },
@@ -199,6 +206,15 @@ export interface IndustrialEnvironmentHandle {
   localLights: THREE.Light[]
   /** Declared definition for diagnostics/tests. */
   definition: IndustrialEnvironmentDefinition
+  /** Current ambient brightness multiplier (1 = the preset baseline). */
+  ambientBrightness: number
+  /**
+   * Applies a clamped ambient brightness multiplier live. It scales the
+   * environment, hemisphere, fill and local-light terms and the background
+   * intensity; the key light, shadows and post-processing are untouched.
+   * Visual-only: never state, signal, safety, collision or telemetry truth.
+   */
+  setAmbientBrightness(multiplier: number): void
   dispose(): void
 }
 
@@ -295,13 +311,31 @@ export function applyIndustrialEnvironment(options: IndustrialEnvironmentOptions
     }
     localLights.push(light)
   }
+  // Base intensities so the ambient brightness multiplier scales rather than drifts.
+  const baseLocalIntensities = localLights.map((light) => light.intensity)
 
-  return {
+  const applyAmbientBrightness = (multiplier: number): number => {
+    const application = ambientBrightnessApplication(preset, multiplier)
+    scene.environmentIntensity = application.environmentIntensity
+    scene.backgroundIntensity = application.backgroundIntensity
+    hemisphere.intensity = application.hemisphereIntensity
+    fillLight.intensity = application.fillLightIntensity
+    localLights.forEach((light, index) => {
+      light.intensity = (baseLocalIntensities[index] ?? light.intensity) * application.localLightScale
+    })
+    return application.multiplier
+  }
+
+  const handle: IndustrialEnvironmentHandle = {
     environmentTexture: environmentTarget.texture,
     backgroundTexture,
     keyLight,
     localLights,
     definition,
+    ambientBrightness: 1,
+    setAmbientBrightness: (multiplier) => {
+      handle.ambientBrightness = applyAmbientBrightness(multiplier)
+    },
     dispose: () => {
       scene.remove(hemisphere)
       scene.remove(keyLight)
@@ -315,6 +349,8 @@ export function applyIndustrialEnvironment(options: IndustrialEnvironmentOptions
       scene.fog = null
     },
   }
+
+  return handle
 }
 
 function createLocalLight(placement: LocalLightPlacement): { light: THREE.Light; target: THREE.Object3D | null } {

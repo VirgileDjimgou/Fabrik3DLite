@@ -241,15 +241,26 @@ changes runtime, state, signal, safety or collision authority.
 
   | Preset | Environment intensity | Fog density | Local-light budget | Shadow-casting lights |
   |---|---|---|---|---|
-  | `low` (Performance) | 0.55 | 0 (disabled) | 0 | 1 (key light only) |
-  | `medium` (Balanced) | 0.85 | 0.012 | 6 | 1 (key light only) |
-  | `high` (Quality) | 1.00 | 0.016 | 7 | 1 (key light only) |
+  | `low` (Performance) | 0.75 | 0 (disabled) | 0 | 1 (key light only) |
+  | `medium` (Balanced) | 1.15 | 0.012 | 6 | 1 (key light only) |
+  | `high` (Quality) | 1.30 | 0.016 | 7 | 1 (key light only) |
 
   `MAX_LOCAL_LIGHT_BUDGET = 10` is a hard ceiling; decorative local lights never
   cast shadows. Exactly one shadow-casting key light exists, and it is the only
   shadow caster. `validateIndustrialEnvironmentPresets()` rejects out-of-range
   intensities/densities, out-of-budget local lights and any decorative light that
   would cast a shadow.
+- The shipped baseline was raised so the default reads as a lit industrial hall
+  rather than a dark room, and the operator can adjust it live: an
+  **ambient brightness** slider (`components/SceneBrightnessControl.vue`, backed by
+  the pure policy in `equipment/visuals/ambientBrightness.ts` and the shared
+  persisted store in `composables/sceneBrightness.ts`) applies a 0.5-3.0
+  multiplier (default 1.4, stored per browser) to the environment, hemisphere,
+  fill and local-light terms and to the background intensity. The shadow-casting
+  key light and the shadow setup are intentionally not scaled, so contrast and
+  shadow definition stay readable. The preference is visual-only: it never
+  affects runtime state, signals, safety, collision or telemetry, and it is
+  clamped and validated like the rest of the lighting policy.
 - The local-light vocabulary is `work-light`, `machine-hood-spot` and
   `emissive-fixture` (`LOCAL_LIGHT_KINDS`), tied to the existing `work-light` /
   `screen-emissive` material families. Their placements are deterministic and

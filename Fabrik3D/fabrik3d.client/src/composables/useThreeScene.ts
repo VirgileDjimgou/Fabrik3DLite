@@ -1,9 +1,10 @@
-import { ref, shallowRef, onBeforeUnmount } from 'vue'
+import { ref, shallowRef, watch, onBeforeUnmount } from 'vue'
 import type { Ref, ShallowRef } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { readRendererIdentity, type RendererIdentity } from '../observability/acceleration'
 import { createMaterial } from '../equipment/visuals/materialLibrary'
+import { ambientBrightness } from './sceneBrightness'
 import {
   applyIndustrialEnvironment,
   type IndustrialEnvironmentHandle,
@@ -23,9 +24,9 @@ export interface SceneQualityPreset {
 }
 
 export const SCENE_QUALITY_PRESETS: Record<SceneQuality, SceneQualityPreset> = {
-  low: { shadows: false, shadowMapSize: 512, pixelRatioCap: 1, toneMappingExposure: 0.9 },
-  medium: { shadows: true, shadowMapSize: 2048, pixelRatioCap: 2, toneMappingExposure: 1.0 },
-  high: { shadows: true, shadowMapSize: 4096, pixelRatioCap: 2, toneMappingExposure: 1.08 },
+  low: { shadows: false, shadowMapSize: 512, pixelRatioCap: 1, toneMappingExposure: 1.0 },
+  medium: { shadows: true, shadowMapSize: 2048, pixelRatioCap: 2, toneMappingExposure: 1.12 },
+  high: { shadows: true, shadowMapSize: 4096, pixelRatioCap: 2, toneMappingExposure: 1.2 },
 }
 
 export function resolveSceneQuality(search = ''): SceneQuality {
@@ -117,6 +118,9 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
       // subtle fog and bounded local lighting replace the generic neutral
       // RoomEnvironment PMREM. Visual-only; never state/collision/telemetry truth.
       const environment = applyIndustrialEnvironment({ quality, renderer, scene })
+      // User-adjustable ambient brightness (persisted preference). Applies the
+      // stored value now and live on every later change.
+      environment.setAmbientBrightness(ambientBrightness.value)
 
       // Camera
       const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
@@ -158,6 +162,7 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
         pixelRatio,
       })
 
+      let stopAmbientBrightnessWatch: (() => void) | null = null
       const ctx: ThreeSceneContext = {
         scene,
         camera,
@@ -174,6 +179,8 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
           else renderer.render(scene, camera)
         },
         dispose: () => {
+          stopAmbientBrightnessWatch?.()
+          stopAmbientBrightnessWatch = null
           controls.dispose()
           postProcessing?.dispose()
           environment.dispose()
@@ -190,6 +197,9 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
         },
       }
 
+      stopAmbientBrightnessWatch = watch(ambientBrightness, (value) => {
+        environment.setAmbientBrightness(value)
+      })
       context.value = ctx
       window.addEventListener('resize', onResize)
     } catch (e) {

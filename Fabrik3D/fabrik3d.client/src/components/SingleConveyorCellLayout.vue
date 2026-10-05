@@ -46,16 +46,19 @@
     <SingleConveyorSceneSetup :camera-view="cameraView" />
   </ThreeScene>
 
-  <!-- S69 derived camera views for the CNC reference cell. -->
-  <div class="camera-views" data-camera-views>
-    <button
-      v-for="view in cameraViews"
-      :key="view.id"
-      type="button"
-      :data-camera-view="view.id"
-      :class="{ active: cameraView === view.id }"
-      @click="cameraView = view.id"
-    >{{ view.label }}</button>
+  <!-- S69 derived camera views + user-adjustable ambient brightness for the CNC reference cell. -->
+  <div class="scene-controls">
+    <SceneBrightnessControl />
+    <div class="camera-views" data-camera-views>
+      <button
+        v-for="view in cameraViews"
+        :key="view.id"
+        type="button"
+        :data-camera-view="view.id"
+        :class="{ active: cameraView === view.id }"
+        @click="cameraView = view.id"
+      >{{ view.label }}</button>
+    </div>
   </div>
 
   <!-- Docked panels preserve the 3D cell as the primary visual surface. -->
@@ -173,6 +176,7 @@ import IndustrialInfrastructureSystem from './IndustrialInfrastructureSystem.vue
 import HeroCellDressing from './HeroCellDressing.vue'
 import SingleConveyorFloor from './SingleConveyorFloor.vue'
 import SingleConveyorSceneSetup from './SingleConveyorSceneSetup.vue'
+import SceneBrightnessControl from './SceneBrightnessControl.vue'
 import PalletMachiningDashboard from './PalletMachiningDashboard.vue'
 import RobotCatalogPanel from './RobotCatalogPanel.vue'
 import KinematicsDeveloperOverlay from './KinematicsDeveloperOverlay.vue'
@@ -860,7 +864,8 @@ watch(
 </script>
 
 <style scoped>
-.camera-views { position: absolute; z-index: 46; bottom: .75rem; right: .75rem; display: flex; gap: .25rem; padding: .25rem; border: 1px solid #34758a; border-radius: .4rem; background: rgb(10 22 31 / 92%); font: .72rem/1.2 ui-monospace, monospace; }
+.scene-controls { position: absolute; z-index: 46; bottom: .75rem; right: .75rem; display: grid; gap: .35rem; justify-items: end; padding: .35rem; border: 1px solid #34758a; border-radius: .4rem; background: rgb(10 22 31 / 92%); font: .72rem/1.2 ui-monospace, monospace; }
+.camera-views { display: flex; gap: .25rem; }
 .camera-views button { padding: .3rem .6rem; border: 1px solid #34758a; border-radius: .25rem; background: transparent; color: #b9eaff; cursor: pointer; font: inherit; }
 .camera-views button.active { background: #00cc88; color: #06201a; font-weight: 700; }
 </style>

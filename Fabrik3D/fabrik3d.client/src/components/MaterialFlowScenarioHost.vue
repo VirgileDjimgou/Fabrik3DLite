@@ -69,6 +69,7 @@
           @click="selectCameraView(view.id)"
         >{{ view.label }}</button>
       </div>
+      <SceneBrightnessControl />
       <button type="button" data-action="run-material-flow" @click="run">Lancer le scénario</button>
       <button type="button" data-action="recover-material-flow" :disabled="state.status !== 'running'" @click="recover">Acquitter / récupération</button>
     </aside>
@@ -79,6 +80,7 @@
 import { computed, ref, watch } from 'vue'
 import ThreeScene from './ThreeScene.vue'
 import ScenarioRuntimeScene from './ScenarioRuntimeScene.vue'
+import SceneBrightnessControl from './SceneBrightnessControl.vue'
 import { createDefaultScenePresetCatalog, type ScenePreset } from '../scenes'
 import { idleScenarioProgress, resolveScenarioSceneBinding, type ScenarioProgress, type ScenarioRuntimeMetrics } from '../scenarios'
 import {
