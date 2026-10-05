@@ -86,11 +86,17 @@ onMounted(() => {
       const ctx = context.value
       if (!ctx) return
       ctx.controls.update()
-      ctx.renderer.render(ctx.scene, ctx.camera)
+      // S74: renders through the quality-gated composer when enabled, otherwise
+      // the direct renderer.render path. The fallback is decided in useThreeScene.
+      ctx.render()
+      // With the composer active, `renderer.info.render` reflects the trailing
+      // fullscreen pass; use the captured scene beauty-pass stats instead so the
+      // frame metrics and GPU benchmark stay honest.
+      const stats = ctx.postProcessing?.sceneRenderStats()
       frameSampler.record({
         frameMs: delta * 1000,
-        drawCalls: ctx.renderer.info.render.calls,
-        triangles: ctx.renderer.info.render.triangles,
+        drawCalls: stats ? stats.drawCalls : ctx.renderer.info.render.calls,
+        triangles: stats ? stats.triangles : ctx.renderer.info.render.triangles,
       })
       // Scene resource sampling is needed by the reporter and by soak/performance harnesses.
       if (metricsReporter.enabled || diagnosticsOn) {

@@ -12,7 +12,7 @@
  * but never scenario truth, runtime behavior, collision or telemetry.
  */
 
-import { EQUIPMENT_SDK_VERSION, createTransform, type CellDefinition } from '../equipment'
+import { EQUIPMENT_SDK_VERSION, createTransform, type CellDefinition, type EquipmentAttachment } from '../equipment'
 
 interface Piece {
   id: string
@@ -21,6 +21,8 @@ interface Piece {
   y: number
   z: number
   ry?: number
+  /** S73 declared attachment; the transform above stays the compatibility fallback. */
+  attachTo?: EquipmentAttachment
 }
 
 function cell(id: string, name: string, pieces: Piece[]): CellDefinition {
@@ -36,6 +38,7 @@ function cell(id: string, name: string, pieces: Piece[]): CellDefinition {
         { x: piece.x, y: piece.y, z: piece.z },
         { x: 0, y: piece.ry ?? 0, z: 0 },
       ),
+      ...(piece.attachTo ? { attachTo: piece.attachTo } : {}),
     })),
   }
 }
@@ -58,7 +61,10 @@ export const VISION_SORTING_CELL: CellDefinition = cell('vision-sorting-cell', '
 /** Robot + vacuum gripper tending an infeed conveyor, empty and completed pallets. */
 export const PALLETIZING_CELL: CellDefinition = cell('palletizing-cell', 'Palletizing cell', [
   { id: 'robot-1', definitionId: 'fanuc-like-6axis', x: -0.7, y: 0, z: 0.2 },
-  { id: 'vacuum-gripper-1', definitionId: 'vacuum-gripper', x: -0.7, y: 1.35, z: 0.55 },
+  // S73: the gripper is attached to the robot's declared `tool:flange` anchor.
+  // The declared transform is the compatibility fallback and resolves to the
+  // same pose, so the existing visual baseline is unchanged.
+  { id: 'vacuum-gripper-1', definitionId: 'vacuum-gripper', x: -0.7, y: 1.35, z: 0.55, attachTo: { targetId: 'robot-1', anchorId: 'tool:flange' } },
   { id: 'infeed-conveyor-1', definitionId: 'straight-conveyor', x: -2.3, y: 0, z: -1.3 },
   { id: 'box-1', definitionId: 'carton', x: -2.6, y: 0.55, z: -1.3 },
   { id: 'box-2', definitionId: 'carton', x: -2.3, y: 0.55, z: -1.3 },
@@ -90,6 +96,28 @@ export const ASSEMBLY_INSPECTION_CELL: CellDefinition = cell('assembly-inspectio
   { id: 'rework-buffer-1', definitionId: 'outfeed-buffer', x: 1.9, y: 0, z: -0.7 },
   { id: 'operator-station-1', definitionId: 'operator-hmi-pedestal', x: 2.0, y: 0, z: 1.3 },
   { id: 'control-cabinet-1', definitionId: 'plc-cabinet', x: -2.6, y: 0, z: -0.9 },
+])
+
+/**
+ * S73 anchor-driven composition demonstration. Every attached instance declares
+ * only an origin fallback transform; its effective placement is derived end to
+ * end from declared anchors/ports:
+ * - `conveyor-b`/`conveyor-c` chain onto `conveyor-a` (`anchor:out` → `anchor:in`),
+ * - `fence-2`/`gate-1` form a fence run with an interlocked gate,
+ * - `gripper-1` mounts on the robot's `tool:flange`,
+ * - `pallet-station-1` attaches to the conveyor's declared material port.
+ * It is data-only and never scenario truth, collision or telemetry.
+ */
+export const MODULAR_ASSEMBLY_CELL: CellDefinition = cell('modular-assembly-cell', 'Modular assembly cell', [
+  { id: 'conveyor-a', definitionId: 'straight-conveyor', x: 0, y: 0, z: 0 },
+  { id: 'conveyor-b', definitionId: 'straight-conveyor', x: 0, y: 0, z: 0, attachTo: { targetId: 'conveyor-a', anchorId: 'anchor:out', sourceAnchorId: 'anchor:in' } },
+  { id: 'conveyor-c', definitionId: 'straight-conveyor', x: 0, y: 0, z: 0, attachTo: { targetId: 'conveyor-b', anchorId: 'anchor:out', sourceAnchorId: 'anchor:in' } },
+  { id: 'robot-1', definitionId: 'fanuc-like-6axis', x: 0, y: 0, z: 3 },
+  { id: 'gripper-1', definitionId: 'vacuum-gripper', x: 0, y: 0, z: 0, attachTo: { targetId: 'robot-1', anchorId: 'tool:flange' } },
+  { id: 'fence-1', definitionId: 'fence-panel', x: -3, y: 0, z: -3 },
+  { id: 'fence-2', definitionId: 'fence-panel', x: 0, y: 0, z: 0, attachTo: { targetId: 'fence-1', anchorId: 'anchor:out', sourceAnchorId: 'anchor:in' } },
+  { id: 'gate-1', definitionId: 'interlocked-gate', x: 0, y: 0, z: 0, attachTo: { targetId: 'fence-2', anchorId: 'anchor:out', sourceAnchorId: 'anchor:in' } },
+  { id: 'pallet-station-1', definitionId: 'pallet-station', x: 0, y: 0, z: 0, attachTo: { targetId: 'conveyor-a', portId: 'material-out' } },
 ])
 
 /** Fenced training cell with interlocked gate, scanner, E-stop, stack light and zones. */

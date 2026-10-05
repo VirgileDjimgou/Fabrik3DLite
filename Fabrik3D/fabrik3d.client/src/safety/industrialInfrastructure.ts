@@ -1,4 +1,4 @@
-import { EQUIPMENT_SDK_VERSION, type EquipmentDefinition, type EquipmentParameter, type EquipmentPort, type Vector3Meters } from '../equipment'
+import { EQUIPMENT_SDK_VERSION, type EquipmentAnchor, type EquipmentDefinition, type EquipmentParameter, type EquipmentPort, type Vector3Meters } from '../equipment'
 import type { SafetyVisualState } from './safetyVisualState'
 
 export type IndustrialInfrastructureKind =
@@ -14,10 +14,18 @@ export interface InfrastructureAnchor { id: string; position: Vector3Meters }
  * data; their render meshes and runtime adapters remain independent.
  */
 export const INDUSTRIAL_INFRASTRUCTURE_DEFINITIONS: readonly EquipmentDefinition[] = [
-  safety('fence-panel', 'Fence panel', { x: 2.4, y: 2.1, z: 0.06 }, 'static'),
+  // S73: fence panels and the interlocked gate declare end anchors so a run can
+  // be composed from data (`anchor:out` → `anchor:in`) instead of literals.
+  safety('fence-panel', 'Fence panel', { x: 2.4, y: 2.1, z: 0.06 }, 'static', [], [], [
+    { id: 'anchor:in', kind: 'placement', position: { x: -1.2, y: 0, z: 0 } },
+    { id: 'anchor:out', kind: 'placement', position: { x: 1.2, y: 0, z: 0 } },
+  ]),
   safety('corner-post', 'Fence corner post', { x: 0.1, y: 2.1, z: 0.1 }, 'static'),
   safety('kick-plate', 'Fence kick plate', { x: 2.4, y: 0.18, z: 0.07 }, 'static'),
-  safety('interlocked-gate', 'Interlocked access gate', { x: 1.2, y: 2.1, z: 0.08 }, 'simulation-ready', [{ id: 'interlock', kind: 'safety', direction: 'output' }], [{ id: 'gate-open', label: 'Gate open', defaultValue: false }]),
+  safety('interlocked-gate', 'Interlocked access gate', { x: 1.2, y: 2.1, z: 0.08 }, 'simulation-ready', [{ id: 'interlock', kind: 'safety', direction: 'output' }], [{ id: 'gate-open', label: 'Gate open', defaultValue: false }], [
+    { id: 'anchor:in', kind: 'placement', position: { x: -0.6, y: 0, z: 0 } },
+    { id: 'anchor:out', kind: 'placement', position: { x: 0.6, y: 0, z: 0 } },
+  ]),
   safety('light-curtain', 'Light curtain', { x: 1.4, y: 1.8, z: 0.08 }, 'simulation-ready', [{ id: 'protective-field', kind: 'safety', direction: 'output' }], [{ id: 'field-height', label: 'Field height', defaultValue: 1.45, unit: 'm' }]),
   safety('area-scanner', 'Safety area scanner', { x: 0.25, y: 0.22, z: 0.25 }, 'simulation-ready', [{ id: 'protective-zone', kind: 'safety', direction: 'output' }], [{ id: 'scan-range', label: 'Scan range', defaultValue: 2.5, unit: 'm' }]),
   safety('emergency-stop', 'Pedestal emergency stop', { x: 0.35, y: 1.15, z: 0.35 }, 'simulation-ready', [{ id: 'emergency-stop', kind: 'safety', direction: 'output' }]),
@@ -53,11 +61,11 @@ export function infrastructureState(cncState: string, online: boolean, emergency
   return 'safe'
 }
 
-function safety(id: IndustrialInfrastructureKind, description: string, dimensionsMeters: Vector3Meters, runtimeCapability: 'static' | 'simulation-ready', ports: EquipmentPort[] = [], parameters: EquipmentParameter[] = []): EquipmentDefinition {
+function safety(id: IndustrialInfrastructureKind, description: string, dimensionsMeters: Vector3Meters, runtimeCapability: 'static' | 'simulation-ready', ports: EquipmentPort[] = [], parameters: EquipmentParameter[] = [], anchors: EquipmentAnchor[] = []): EquipmentDefinition {
   return {
     sdkVersion: EQUIPMENT_SDK_VERSION, id, category: 'safety-device', capabilities: [{ id, description }], ports, dimensionsMeters,
     collisionProxy: { kind: 'box', dimensionsMeters }, runtimeCapability,
-    anchors: [{ id: 'anchor:placement', kind: 'placement', position: { x: 0, y: 0, z: 0 } }], parameters,
+    anchors: [{ id: 'anchor:placement', kind: 'placement', position: { x: 0, y: 0, z: 0 } }, ...anchors], parameters,
   }
 }
 

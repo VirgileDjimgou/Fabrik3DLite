@@ -31,7 +31,8 @@ describe('buildHeroCellDressingFallback', () => {
     console.info(`[hero-dressing-budget] meshes=${metrics.meshes} triangles=${metrics.triangles} drawCalls=${metrics.drawCalls} textures=${metrics.textures}`)
     expect(metrics.triangles).toBeLessThanOrEqual(12_000)
     expect(metrics.drawCalls).toBeLessThanOrEqual(120)
-    expect(metrics.textures).toBe(0)
+    // S72: shared procedural surfaces are attached where the vocabulary declares them.
+    expect(metrics.textures).toBeLessThanOrEqual(14)
     disposeHeroCellDressing(group)
   })
 

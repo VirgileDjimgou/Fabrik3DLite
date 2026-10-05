@@ -15,6 +15,12 @@ import {
 } from '../simulation/CncCycleMachine'
 import { buildCncMachineVisual, type CncMachineVisual } from '../equipment/visuals/cncMachineVisual'
 import { bindCncGlbVisual, cncGlbVisual } from '../equipment/visuals/cncGlbBinding'
+import {
+  applyEquipmentShadowFlags,
+  applyEquipmentSurfaceTextures,
+  createContactShadow,
+  disposeContactShadow,
+} from '../equipment/visuals/equipmentGrounding'
 import { HERO_CNC_MACHINE_ASSET_ID, type AssetRuntimeInstance } from '../equipment'
 
 const props = withDefaults(defineProps<{
@@ -45,6 +51,7 @@ machine.onCycleComplete = () => emit('machining-complete')
 
 let visual: CncMachineVisual | null = null
 let loadedVisual: AssetRuntimeInstance | null = null
+let contactShadow: THREE.Mesh | null = null
 let usesProceduralFallback = false
 let online = true
 
@@ -91,6 +98,10 @@ async function mountVisual(ctx: { addObject: (object: THREE.Object3D) => void, c
   }
   loadedVisual = instance
   usesProceduralFallback = instance.source === 'procedural'
+  // S72: enforce shadow flags and attach procedural surfaces to generated
+  // label/screen nodes. Visual-only; the machine simulation is unchanged.
+  applyEquipmentShadowFlags(instance.root)
+  applyEquipmentSurfaceTextures(instance.root)
   if (instance.source === 'glb') {
     const binding = bindCncGlbVisual(instance.root)
     if (binding.missingNodes.length > 0) {
@@ -108,6 +119,9 @@ async function mountVisual(ctx: { addObject: (object: THREE.Object3D) => void, c
   }
   visual.group.position.set(...props.position)
   visual.group.rotation.y = props.rotationY
+  applyEquipmentShadowFlags(visual.group)
+  contactShadow = createContactShadow({ radius: 1.35, name: 'grounding:contact-shadow:cnc' })
+  visual.group.add(contactShadow)
   ctx.addObject(visual.group)
   syncState()
 
@@ -166,6 +180,10 @@ onBeforeUnmount(() => {
   if (ctx && visual) ctx.removeObject(visual.group)
   // The runtime owns GLB geometry/materials; only a procedural fallback is
   // disposed here (the runtime instance owns its own clone).
+  if (contactShadow) {
+    disposeContactShadow(contactShadow)
+    contactShadow = null
+  }
   if (usesProceduralFallback) visual?.dispose()
   loadedVisual?.dispose()
   loadedVisual = null

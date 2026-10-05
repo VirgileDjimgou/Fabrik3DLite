@@ -10,7 +10,7 @@ namespace Fabrik3D.Server.Services;
 public static class CellFileContentValidator
 {
     /// <summary>Schema versions the server accepts for persisted templates.</summary>
-    public static readonly string[] SupportedVersions = ["0.9", "1.0"];
+    public static readonly string[] SupportedVersions = ["0.9", "1.0", "1.1"];
 
     /// <summary>
     /// Hard upper bound on persisted cell-file size (characters). Prevents oversized uploads from

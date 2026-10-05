@@ -10,6 +10,9 @@ import {
   REVISION_4_PREP_DOCUMENT,
   REVISION_4_RELEASE_NOTES,
   REVISION_4_VALIDATION,
+  REVISION_5_PREP_DOCUMENT,
+  REVISION_5_RELEASE_NOTES,
+  REVISION_5_VALIDATION,
 } from '../docs/check-docs.mjs'
 import {
   evaluateRepositoryPolicy,
@@ -42,7 +45,7 @@ test('documentation set passes link, claim and version coherence', () => {
   assert.ok(checked.documents >= 28, `expected at least 28 required documents, got ${checked.documents}`)
 })
 
-test('current documents distinguish the 1.0, Revision 2, Revision 3 and Revision 4 eras', () => {
+test('current documents distinguish the 1.0, Revision 2, Revision 3, Revision 4 and Revision 5 eras', () => {
   for (const document of RELEASE_ERA_DOCUMENTS) {
     const absolute = join(REPO_ROOT, document)
     assert.ok(existsSync(absolute), `missing release-era document ${document}`)
@@ -78,6 +81,37 @@ test('Revision 4 validation record carries the measured comparison and non-claim
   assert.match(validation, /acceleration=(hardware|software)/i, 'validation must record an honest acceleration class')
   assert.match(validation, /Revision 3/, 'validation must reference Revision 3 measurements')
   assert.match(validation, /Revision 4/, 'validation must reference Revision 4 measurements')
+  assert.match(validation, /compar/i, 'validation must present the measured comparison')
+  assert.match(validation, /gpu-benchmark\.json/, 'validation must point at the recorded benchmark artifact')
+  assert.match(validation, /palletizing[\s\S]{0,6000}vision[- ]sorting/i, 'validation must cover the five flagship scenarios')
+  assert.match(validation, /deferred|non-claim/i, 'validation must preserve the deferred/non-claim statements')
+})
+
+test('Revision 5 release artifacts state version, migration, limitations, validation and media', () => {
+  const prepPath = join(REPO_ROOT, REVISION_5_PREP_DOCUMENT)
+  assert.ok(existsSync(prepPath), `missing ${REVISION_5_PREP_DOCUMENT}`)
+  const prep = readFileSync(prepPath, 'utf8')
+  assert.match(prep, /v1\.\d+\.\d+/, 'release preparation must recommend a version tag')
+  assert.match(prep, /migration/i, 'release preparation must state the migration status')
+  assert.match(prep, /LIMITATIONS\.md/, 'release preparation must link the known limitations')
+  assert.match(prep, /VALIDATION_/, 'release preparation must link validation evidence')
+  assert.match(prep, /artifacts\/demo|docs\/demo/, 'release preparation must link media')
+
+  const notesPath = join(REPO_ROOT, REVISION_5_RELEASE_NOTES)
+  assert.ok(existsSync(notesPath), `missing ${REVISION_5_RELEASE_NOTES}`)
+  const notes = readFileSync(notesPath, 'utf8')
+  assert.doesNotMatch(notes, /draft/i, 'S76 must finalize the release notes (remove the draft label)')
+  assert.match(notes, /v1\.\d+\.\d+/, 'release notes must state the recommended version')
+  assert.match(notes, /VALIDATION_REVISION_5\.md/, 'release notes must link the Revision 5 validation record')
+})
+
+test('Revision 5 validation record carries the measured comparison and non-claims', () => {
+  const validationPath = join(REPO_ROOT, REVISION_5_VALIDATION)
+  assert.ok(existsSync(validationPath), `missing ${REVISION_5_VALIDATION}`)
+  const validation = readFileSync(validationPath, 'utf8')
+  assert.match(validation, /acceleration=(hardware|software)/i, 'validation must record an honest acceleration class')
+  assert.match(validation, /Revision 4/, 'validation must reference Revision 4 measurements')
+  assert.match(validation, /Revision 5/, 'validation must reference Revision 5 measurements')
   assert.match(validation, /compar/i, 'validation must present the measured comparison')
   assert.match(validation, /gpu-benchmark\.json/, 'validation must point at the recorded benchmark artifact')
   assert.match(validation, /palletizing[\s\S]{0,6000}vision[- ]sorting/i, 'validation must cover the five flagship scenarios')

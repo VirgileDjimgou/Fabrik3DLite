@@ -22,22 +22,26 @@ around one explicit digital-twin model.
 
 The step-by-step flagship flow and its scenario captures are in
 [FLAGSHIP_DEMO.md](./docs/operations/FLAGSHIP_DEMO.md); the current measured gate results are in
-[VALIDATION_REVISION_4.md](./docs/operations/VALIDATION_REVISION_4.md) (the Revision 3 record remains
-in [VALIDATION_REVISION_3.md](./docs/operations/VALIDATION_REVISION_3.md)). Start with the
+[VALIDATION_REVISION_5.md](./docs/operations/VALIDATION_REVISION_5.md) (the Revision 4 record remains in
+[VALIDATION_REVISION_4.md](./docs/operations/VALIDATION_REVISION_4.md) and the Revision 3 record in
+[VALIDATION_REVISION_3.md](./docs/operations/VALIDATION_REVISION_3.md)). Start with the
 [documentation index](./docs/DOCUMENTATION_INDEX.md), the
 [architecture overview](./docs/architecture/OVERVIEW.md), the
 [limitations/non-claims](./docs/operations/LIMITATIONS.md) and the
 [1.0 reference sample project](./docs/samples/fabrik3d-1.0-reference-project/README.md) for depth.
 
-**Revision 3 (S58–S64) and Revision 4 (S65–S71) are complete; Revision 4 is validated. Revision 5
-(S72–S76) is planned and not yet validated; it targets procedural surface textures/grounding,
-anchor-driven modular assembly, industrial lighting/post-processing, state-driven equipment motion and
-a measured Revision 5 validation.** Revision 3
+**Revision 3 (S58–S64), Revision 4 (S65–S71) and Revision 5 (S72–S76) are complete; Revision 4 and
+Revision 5 are validated.** Revision 5 targets procedural surface textures/grounding, anchor-driven
+modular assembly, industrial lighting/post-processing and state-driven equipment motion, and concludes
+with a measured Revision 5 validation. Revision 3
 adds the real 3D scenario runtime, scenario-specific cells, robot/cell visual fidelity, HMI operator
 polish, deterministic visual QA and GPU evidence, browser OIDC with public-demo isolation, and this
 flagship product surface. Revision 4 adds scenario-specific generated GLB assets, real six-axis robot
 motion in the scenario cells, deeper deterministic process flows, shared PBR materials/factory
-environment, measured cell composition/cameras and measured release validation. It builds on the 1.0
+environment, measured cell composition/cameras and measured release validation. Revision 5 adds
+deterministic license-safe procedural surface maps and equipment grounding, anchor-driven modular
+assembly with a versioned cell-file migration, an industrial lighting/atmosphere with quality-gated
+post-processing and state-driven equipment motion with instanced scene detail. It builds on the 1.0
 training/VC baseline (tagged
 [`v1.1.0`](https://github.com/VirgileDjimgou/Fabrik3DLite/releases/tag/v1.1.0)) and the completed
 Roadmap Revision 2 (S51–S57): authoritative operator execution, Job lifecycle, role-aware HMI, a shared
@@ -45,8 +49,9 @@ Roadmap Revision 2 (S51–S57): authoritative operator execution, Job lifecycle,
 [delivery roadmap](./docs/roadmap/README.md), the
 [post-1.0 validation record](./docs/operations/VALIDATION_POST_1.0.md), the
 [Revision 4 validation record](./docs/operations/VALIDATION_REVISION_4.md), the
-[Revision 4 release preparation](./docs/operations/RELEASE_PREPARATION_REVISION_4.md) and the
-[Revision 4 release notes](./docs/releases/RELEASE_NOTES_REVISION_4.md).
+[Revision 5 validation record](./docs/operations/VALIDATION_REVISION_5.md), the
+[Revision 5 release preparation](./docs/operations/RELEASE_PREPARATION_REVISION_5.md) and the
+[Revision 5 release notes](./docs/releases/RELEASE_NOTES_REVISION_5.md).
 
 It is intended for learning, technical demonstrations, and prototyping. It is **not** a safety-certified control system, an OEM robot-program emulator, or a substitute for commissioning a physical cell. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available, so real-device interoperability is explicitly unvalidated.
 

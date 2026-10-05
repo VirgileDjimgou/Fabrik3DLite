@@ -12,11 +12,14 @@
  * - Visual-only. It never becomes collision, runtime, scenario or telemetry
  *   truth; it declares no semantic anchors and no collision geometry.
  * - Deterministic: same options → identical mesh/material counts.
- * - Texture-free: it reuses the shared {@link MaterialId} vocabulary only.
+ * - S72: the floor, safety markings and cell-identifier plate carry deterministic
+ *   procedural surface maps from the shared material vocabulary. Every texture is
+ *   repository-generated at runtime; no image file is imported.
  */
 
 import * as THREE from 'three'
 import { createMaterialPack, MATERIAL_IDS, type MaterialId } from './materialLibrary'
+import type { SurfaceId } from './proceduralSurfaces'
 
 export const FACTORY_ENVIRONMENT_SCHEMA_VERSION = '1.0' as const
 
@@ -37,6 +40,8 @@ export interface FactoryEnvironmentOptions {
   includeAccessLane?: boolean
   includeCableTray?: boolean
   includeCellLabel?: boolean
+  /** S75: human-scale dressing props (mannequins, cabinets, extinguishers, signage, pipes). */
+  includeDressing?: boolean
 }
 
 export interface FactoryEnvironmentDefinition {
@@ -52,7 +57,16 @@ export interface FactoryEnvironmentDefinition {
 
 export const DEFAULT_FACTORY_ENVIRONMENT_SIZE: FactoryEnvironmentSize = Object.freeze({ x: 12, z: 10 })
 
-export const FACTORY_ENVIRONMENT_TEXTURES: readonly string[] = Object.freeze([])
+/** Procedural surfaces the environment builder can attach (S72). */
+export const FACTORY_ENVIRONMENT_TEXTURES: readonly SurfaceId[] = Object.freeze([
+  'painted-floor',
+  'painted-floor-roughness',
+  'concrete-floor',
+  'safety-stripes',
+  'equipment-signage',
+  'brushed-metal',
+  'painted-steel-wear',
+])
 
 const MARKING_HEIGHT = 0.003
 const LINE_THICKNESS = 0.05
@@ -82,6 +96,38 @@ function mesh(
 }
 
 /**
+ * S75: places one shared geometry/material as a single `InstancedMesh` for a
+ * list of repeated static elements. This keeps the draw-call count at one per
+ * repeated family instead of one per element. Returns `null` for an empty list
+ * so no empty instance is added.
+ */
+function instanced(
+  parent: THREE.Object3D,
+  geometry: THREE.BufferGeometry,
+  material: THREE.Material,
+  name: string,
+  positions: readonly [number, number, number][],
+): THREE.InstancedMesh | null {
+  if (positions.length === 0) {
+    geometry.dispose()
+    return null
+  }
+  const object = new THREE.InstancedMesh(geometry, material, positions.length)
+  object.name = name
+  object.userData.semanticId = name
+  object.userData.instanced = true
+  object.receiveShadow = true
+  const matrix = new THREE.Matrix4()
+  positions.forEach((position, index) => {
+    matrix.makeTranslation(position[0], position[1], position[2])
+    object.setMatrixAt(index, matrix)
+  })
+  object.instanceMatrix.needsUpdate = true
+  parent.add(object)
+  return object
+}
+
+/**
  * Builds the shared environment group. Options default to the full
  * `industrial-hall` treatment; callers can trim features (e.g. a training lab).
  */
@@ -97,6 +143,7 @@ export function buildFactoryEnvironment(options: FactoryEnvironmentOptions = {})
   const includeAccessLane = options.includeAccessLane ?? industrial
   const includeCableTray = options.includeCableTray ?? industrial
   const includeCellLabel = options.includeCellLabel ?? true
+  const includeDressing = options.includeDressing ?? true
 
   const group = new THREE.Group()
   group.name = `FactoryEnvironment:${cellId}`
@@ -109,6 +156,12 @@ export function buildFactoryEnvironment(options: FactoryEnvironmentOptions = {})
     trayRail: pack.get('aluminium'),
     trayRung: pack.get('bare-steel'),
     label: pack.get('white-label'),
+    // S75 dressing materials.
+    dressingSteel: pack.get('structural-steel'),
+    dressingTrim: pack.get('machine-trim'),
+    dressingHazard: pack.get('hazard-amber'),
+    dressingRed: pack.get('warning-red'),
+    dressingLabel: pack.get('white-label'),
   }
 
   const features: string[] = []
@@ -127,16 +180,16 @@ export function buildFactoryEnvironment(options: FactoryEnvironmentOptions = {})
     used.add(industrial ? 'painted-floor' : 'concrete-floor')
   }
 
-  // ── Expansion joints ─────────────────────────────────────────────
+  // ── Expansion joints (S75: one InstancedMesh per axis) ───────────
   if (includeExpansionJoints) {
     const jointX = new THREE.BoxGeometry(size.x, MARKING_HEIGHT, 0.02)
     const jointZ = new THREE.BoxGeometry(0.02, MARKING_HEIGHT, size.z)
-    for (let x = -size.x / 2 + JOINT_SPACING; x < size.x / 2; x += JOINT_SPACING) {
-      mesh(group, jointX, materials.joint, 'env:joint-x', [x, 0.001, 0])
-    }
-    for (let z = -size.z / 2 + JOINT_SPACING; z < size.z / 2; z += JOINT_SPACING) {
-      mesh(group, jointZ, materials.joint, 'env:joint-z', [0, 0.001, z])
-    }
+    const xs: number[] = []
+    for (let x = -size.x / 2 + JOINT_SPACING; x < size.x / 2; x += JOINT_SPACING) xs.push(x)
+    const zs: number[] = []
+    for (let z = -size.z / 2 + JOINT_SPACING; z < size.z / 2; z += JOINT_SPACING) zs.push(z)
+    instanced(group, jointX, materials.joint, 'env:joint-x', xs.map((x) => [x, 0.001, 0] as [number, number, number]))
+    instanced(group, jointZ, materials.joint, 'env:joint-z', zs.map((z) => [0, 0.001, z] as [number, number, number]))
     features.push('expansion-joints')
     used.add('dark-steel')
   }
@@ -164,9 +217,9 @@ export function buildFactoryEnvironment(options: FactoryEnvironmentOptions = {})
       mesh(group, laneX, materials.marking, 'env:access-lane', [0, 0.004, laneZ + offset])
     }
     const tick = new THREE.BoxGeometry(0.06, MARKING_HEIGHT, laneHalfWidth)
-    for (let x = -laneLength / 2; x <= laneLength / 2; x += 0.9) {
-      mesh(group, tick, materials.marking, 'env:access-lane-tick', [x, 0.004, laneZ])
-    }
+    const ticks: [number, number, number][] = []
+    for (let x = -laneLength / 2; x <= laneLength / 2; x += 0.9) ticks.push([x, 0.004, laneZ])
+    instanced(group, tick, materials.marking, 'env:access-lane-tick', ticks)
     features.push('operator-access-lane')
     used.add('safety-yellow-line')
   }
@@ -180,9 +233,9 @@ export function buildFactoryEnvironment(options: FactoryEnvironmentOptions = {})
       mesh(group, railGeometry, materials.trayRail, 'env:cable-tray-rail', [0, 0.1, trayZ + offset])
     }
     const rungGeometry = new THREE.BoxGeometry(0.05, 0.02, 0.4)
-    for (let x = -trayLength / 2; x <= trayLength / 2; x += 0.5) {
-      mesh(group, rungGeometry, materials.trayRung, 'env:cable-tray-rung', [x, 0.08, trayZ])
-    }
+    const rungs: [number, number, number][] = []
+    for (let x = -trayLength / 2; x <= trayLength / 2; x += 0.5) rungs.push([x, 0.08, trayZ])
+    instanced(group, rungGeometry, materials.trayRung, 'env:cable-tray-rung', rungs)
     features.push('cable-tray')
     used.add('aluminium')
     used.add('bare-steel')
@@ -202,6 +255,11 @@ export function buildFactoryEnvironment(options: FactoryEnvironmentOptions = {})
     used.add('white-label')
   }
 
+  // ── Human-scale dressing props (S75) ─────────────────────────────
+  if (includeDressing) {
+    buildDressing(group, size, materials, features, used)
+  }
+
   group.userData.environment = {
     schemaVersion: FACTORY_ENVIRONMENT_SCHEMA_VERSION,
     kind: 'framework-factory-environment',
@@ -210,10 +268,145 @@ export function buildFactoryEnvironment(options: FactoryEnvironmentOptions = {})
     sizeMeters: size,
     features,
     materialIds: [...used].sort(),
-    textures: [...FACTORY_ENVIRONMENT_TEXTURES],
+    textures: [...collectEnvironmentSurfaces(group)].sort(),
   } satisfies FactoryEnvironmentDefinition
 
   return group
+}
+
+/**
+ * S75 human-scale dressing. Adds silhouette mannequins, a control cabinet, an
+ * extinguisher, signage boards and a pipe run using shared geometry and
+ * materials. It is render-only, deterministic and never a collision authority.
+ */
+function buildDressing(
+  group: THREE.Group,
+  size: FactoryEnvironmentSize,
+  materials: {
+    dressingSteel: THREE.Material
+    dressingTrim: THREE.Material
+    dressingHazard: THREE.Material
+    dressingRed: THREE.Material
+    dressingLabel: THREE.Material
+  },
+  features: string[],
+  used: Set<MaterialId>,
+): void {
+  const halfX = size.x / 2
+  const halfZ = size.z / 2
+
+  // Silhouette mannequins: a simple human-scale figure (1.75 m) that gives the
+  // cell a readable scale reference. Two figures, one per access side.
+  const mannequin = (name: string, x: number, z: number, rotationY: number) => {
+    const figure = new THREE.Group()
+    figure.name = name
+    figure.userData.semanticId = name
+    figure.position.set(x, 0, z)
+    figure.rotation.y = rotationY
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.5, 4, 8), materials.dressingTrim)
+    torso.position.set(0, 1.05, 0)
+    torso.castShadow = true
+    figure.add(torso)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), materials.dressingHazard)
+    head.position.set(0, 1.55, 0)
+    head.castShadow = true
+    figure.add(head)
+    for (const sign of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.55, 4, 8), materials.dressingSteel)
+      leg.position.set(sign * 0.09, 0.42, 0)
+      leg.castShadow = true
+      figure.add(leg)
+    }
+    group.add(figure)
+  }
+  mannequin('env:dressing:mannequin-a', -halfX + 1.1, halfZ - 1.4, Math.PI)
+  mannequin('env:dressing:mannequin-b', halfX - 1.1, -halfZ + 1.4, 0)
+
+  // Control cabinet with a door seam and a label plate.
+  const cabinet = new THREE.Group()
+  cabinet.name = 'env:dressing:cabinet'
+  cabinet.userData.semanticId = 'env:dressing:cabinet'
+  cabinet.position.set(-halfX + 0.6, 0, -halfZ + 0.6)
+  const cabinetBody = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.9, 0.5), materials.dressingSteel)
+  cabinetBody.position.set(0, 0.95, 0)
+  cabinetBody.castShadow = true
+  cabinetBody.receiveShadow = true
+  cabinet.add(cabinetBody)
+  const cabinetDoor = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.7, 0.02), materials.dressingTrim)
+  cabinetDoor.position.set(0, 0.95, 0.26)
+  cabinet.add(cabinetDoor)
+  const cabinetLabel = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.12, 0.01), materials.dressingLabel)
+  cabinetLabel.position.set(0, 1.6, 0.26)
+  cabinet.add(cabinetLabel)
+  group.add(cabinet)
+
+  // Wall-mounted extinguisher on a small bracket.
+  const extinguisher = new THREE.Group()
+  extinguisher.name = 'env:dressing:extinguisher'
+  extinguisher.userData.semanticId = 'env:dressing:extinguisher'
+  extinguisher.position.set(halfX - 0.5, 0, -halfZ + 0.5)
+  const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.5, 12), materials.dressingRed)
+  bottle.position.set(0, 0.9, 0)
+  bottle.castShadow = true
+  extinguisher.add(bottle)
+  const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 0.12), materials.dressingTrim)
+  bracket.position.set(0, 1.18, 0)
+  extinguisher.add(bracket)
+  group.add(extinguisher)
+
+  // Signage boards: a hazard board and a keep-clear board.
+  const signage = (name: string, x: number, z: number, rotationY: number, material: THREE.Material) => {
+    const board = new THREE.Group()
+    board.name = name
+    board.userData.semanticId = name
+    board.position.set(x, 0, z)
+    board.rotation.y = rotationY
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.6, 0.05), materials.dressingSteel)
+    post.position.set(0, 0.8, 0)
+    board.add(post)
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.02), material)
+    panel.position.set(0, 1.5, 0)
+    panel.castShadow = true
+    board.add(panel)
+    group.add(board)
+  }
+  signage('env:dressing:signage-hazard', -halfX + 0.4, halfZ - 0.4, Math.PI / 2, materials.dressingHazard)
+  signage('env:dressing:signage-clear', halfX - 0.4, halfZ - 0.4, -Math.PI / 2, materials.dressingLabel)
+
+  // Overhead pipe run along the back wall with two support brackets.
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, size.x - 1.2, 12), materials.dressingSteel)
+  pipe.name = 'env:dressing:pipe'
+  pipe.userData.semanticId = 'env:dressing:pipe'
+  pipe.rotation.z = Math.PI / 2
+  pipe.position.set(0, 2.6, -halfZ + 0.35)
+  pipe.castShadow = true
+  group.add(pipe)
+  for (const x of [-size.x / 4, size.x / 4]) {
+    const support = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.05), materials.dressingTrim)
+    support.position.set(x, 2.45, -halfZ + 0.35)
+    group.add(support)
+  }
+
+  features.push('human-scale-dressing')
+  used.add('structural-steel')
+  used.add('machine-trim')
+  used.add('hazard-amber')
+  used.add('warning-red')
+  used.add('white-label')
+}
+
+/** Collects the procedural surface ids actually attached to the built environment. */
+function collectEnvironmentSurfaces(group: THREE.Object3D): Set<string> {
+  const surfaces = new Set<string>()
+  group.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return
+    const materials = Array.isArray(child.material) ? child.material : [child.material]
+    for (const material of materials) {
+      const ids = material.userData?.surfaceIds
+      if (Array.isArray(ids)) for (const id of ids) if (typeof id === 'string') surfaces.add(id)
+    }
+  })
+  return surfaces
 }
 
 /** Reads the declared definition back out of a built environment group. */
@@ -241,5 +434,6 @@ export function factoryEnvironmentMaterialIds(): MaterialId[] {
   return [...new Set([
     'painted-floor', 'concrete-floor', 'dark-steel', 'safety-yellow-line',
     'aluminium', 'bare-steel', 'white-label',
+    'structural-steel', 'machine-trim', 'hazard-amber', 'warning-red',
   ] satisfies MaterialId[])].filter((id) => MATERIAL_IDS.includes(id))
 }

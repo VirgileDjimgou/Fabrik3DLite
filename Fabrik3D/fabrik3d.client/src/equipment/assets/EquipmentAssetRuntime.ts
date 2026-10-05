@@ -4,6 +4,7 @@ import { EquipmentAssetRegistry } from './registry'
 import { createIndustrialAssetRegistry } from './industrialAssets'
 import { ThreeGlbAssetLoader, type LoadedEquipmentVisual } from './ThreeGlbAssetLoader'
 import { measureSceneResources, type SceneRenderMetrics } from './sceneMetrics'
+import { applyEquipmentShadowFlags } from '../visuals/equipmentGrounding'
 import type { AssetFileReference, EquipmentAssetManifest } from './types'
 import {
   isAssetQualityProfile,
@@ -417,6 +418,9 @@ export class EquipmentAssetRuntime {
   }
 
   private createProceduralInstance(assetId: string, root: THREE.Object3D, diagnostic: string): AssetRuntimeInstance {
+    // S72: procedural fallbacks are grounded too, so a missing GLB still casts
+    // and receives shadows instead of floating visually.
+    applyEquipmentShadowFlags(root)
     let disposed = false
     return {
       assetId,

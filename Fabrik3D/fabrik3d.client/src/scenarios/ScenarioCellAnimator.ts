@@ -16,6 +16,15 @@
 import * as THREE from 'three'
 import type { Vector3Meters } from '../equipment/types'
 import type { CellLifecycle, CellVisualState, ScenarioCellKind, StackLight } from './cellVisualState'
+import {
+  BELT_MARKER_TRAVEL_METERS,
+  DECLARED_CONVEYOR_SPEED_MPS,
+  advanceBeltOffset,
+  dressPackFlex,
+  gripperFingerGap,
+  robotBeaconSignal,
+  type RobotBeaconSignal,
+} from './stateDrivenMotion'
 
 /** Minimal view of a loaded equipment visual; mirrors `ScenarioEquipmentVisual`. */
 export interface AnimatableEquipment {
@@ -52,6 +61,13 @@ export interface ScenarioCellSnapshot {
   scannerMuted: boolean
   emergencyStop: boolean
   estopPressedAmount: number
+  /** S75 state-driven secondary motion */
+  gripperFingerGap: number
+  beltOffset: number
+  beltSpeed: number
+  beltRunning: boolean
+  robotBeaconSignal: RobotBeaconSignal
+  dressPackFlex: number
 }
 
 const SIGNAL_RED = 0xc0392b
@@ -59,6 +75,12 @@ const SIGNAL_GREEN = 0x2fa864
 const SIGNAL_AMBER = 0xd8a51f
 const SIGNAL_DARK = 0x20262a
 const SENSOR_BLUE = 0x9fe3ff
+
+const BEACON_COLORS: Record<RobotBeaconSignal, number> = {
+  off: SIGNAL_DARK,
+  running: SIGNAL_GREEN,
+  fault: SIGNAL_RED,
+}
 
 const STACK_COLORS: Record<StackLight, number> = { green: SIGNAL_GREEN, amber: SIGNAL_AMBER, red: SIGNAL_RED }
 
@@ -98,6 +120,8 @@ export class ScenarioCellAnimator {
   private currentState: CellVisualState | null = null
   private previousState: CellVisualState | null = null
   private elapsed = CELL_ANIMATION_TRANSITION_SECONDS
+  private beltOffset = 0
+  private robotPose: readonly number[] = []
   private disposed = false
 
   constructor(equipment: readonly AnimatableEquipment[]) {
@@ -126,8 +150,27 @@ export class ScenarioCellAnimator {
   /** Advances the deterministic transition clock and applies the interpolated state. */
   tick(deltaSeconds: number): void {
     if (this.disposed || !this.currentState) return
-    this.elapsed = Math.max(0, this.elapsed + Math.max(0, deltaSeconds))
+    const delta = Math.max(0, deltaSeconds)
+    this.elapsed = Math.max(0, this.elapsed + delta)
+    // S75: the belt offset advances on deterministic simulation time only while
+    // the authoritative lifecycle is running; a stopped cell produces no motion.
+    this.beltOffset = advanceBeltOffset(this.beltOffset, this.beltSpeed(), delta)
     this.apply()
+  }
+
+  /**
+   * S75: pushes the authoritative robot joint pose so bounded dress-pack
+   * secondary motion can follow it. Render-only; never feeds state back.
+   */
+  setRobotPose(jointAngles: readonly number[]): void {
+    if (this.disposed) return
+    this.robotPose = [...jointAngles]
+    this.apply()
+  }
+
+  /** Declared visual belt speed derived from the authoritative lifecycle. */
+  private beltSpeed(): number {
+    return this.currentState?.lifecycle === 'running' ? DECLARED_CONVEYOR_SPEED_MPS : 0
   }
 
   /** True once the current state transition has fully settled. */
@@ -183,7 +226,23 @@ export class ScenarioCellAnimator {
       scannerMuted: Boolean(state?.scannerMuted),
       emergencyStop: Boolean(state?.emergencyStop),
       estopPressedAmount: estopButton ? clamp01((this.baseOf(estopButton).y - estopButton.position.y) / ESTOP_PRESS_METERS) : 0,
+      gripperFingerGap: this.currentGripperGap(),
+      beltOffset: this.beltOffset,
+      beltSpeed: this.beltSpeed(),
+      beltRunning: this.beltSpeed() > 0,
+      robotBeaconSignal: state ? robotBeaconSignal(state) : 'off',
+      dressPackFlex: dressPackFlex(this.robotPose),
     }
+  }
+
+  /** Current interpolated finger separation read back from the scene graph. */
+  private currentGripperGap(): number {
+    const gripper = this.first('two-finger-gripper')
+    if (!gripper) return 0
+    const left = this.node(gripper, 'gripper:finger-left')
+    const right = this.node(gripper, 'gripper:finger-right')
+    if (!left || !right) return 0
+    return Math.abs(right.position.x - left.position.x)
   }
 
   private transitionFactor(): number {
@@ -194,6 +253,11 @@ export class ScenarioCellAnimator {
     const state = this.currentState
     if (!state) return
     this.applyStackLight(state)
+    // S75: state-driven secondary motion shared by every cell kind.
+    this.applyGripper(state)
+    this.applyConveyor()
+    this.applyRobotBeacon(state)
+    this.applyDressPack()
     switch (state.kind) {
       case 'vision-sorting':
         this.applyVisionSorting(state)
@@ -218,6 +282,67 @@ export class ScenarioCellAnimator {
     for (const [node, color] of [['red', SIGNAL_RED], ['amber', SIGNAL_AMBER], ['green', SIGNAL_GREEN]] as const) {
       const mesh = this.node(light, node)
       if (mesh) emissive(mesh, node === state.stackLight ? STACK_COLORS[state.stackLight] : SIGNAL_DARK)
+    }
+  }
+
+  /**
+   * S75: binds the gripper fingers (or the vacuum cup) to the authoritative
+   * holding state with deterministic interpolation. A visual without the nodes
+   * is skipped; nothing is invented.
+   */
+  private applyGripper(state: CellVisualState): void {
+    const from = this.previousState?.gripperHolding ?? state.gripperHolding
+    const gap = gripperFingerGap(from, state.gripperHolding, this.transitionFactor())
+    for (const gripper of this.byClass.get('two-finger-gripper') ?? []) {
+      const left = this.node(gripper, 'gripper:finger-left')
+      const right = this.node(gripper, 'gripper:finger-right')
+      if (left) left.position.x = -gap / 2
+      if (right) right.position.x = gap / 2
+    }
+    for (const gripper of this.byClass.get('vacuum-gripper') ?? []) {
+      const cup = this.node(gripper, 'gripper:vacuum-cup')
+      if (cup) cup.position.y = this.baseOf(cup).y - (state.gripperHolding ? 0.02 : 0)
+    }
+  }
+
+  /**
+   * S75: moves the belt marker along the belt surface and rotates the roller
+   * transfer rollers from the accumulated state-driven offset. A stopped cell
+   * leaves the offset unchanged, so the belt visibly stops.
+   */
+  private applyConveyor(): void {
+    const marker = this.first('straight-conveyor')
+    if (marker) {
+      const node = this.node(marker, 'belt-marker')
+      if (node) node.position.x = this.baseOf(node).x + (this.beltOffset - BELT_MARKER_TRAVEL_METERS / 2)
+    }
+    for (const transfer of this.byClass.get('roller-transfer') ?? []) {
+      for (let index = 0; index < 5; index += 1) {
+        const roller = this.node(transfer, `roller-${index}`)
+        if (roller) roller.rotation.y = this.beltOffset * 6
+      }
+    }
+  }
+
+  /** S75: optional robot-base beacon driven by authoritative robot state. */
+  private applyRobotBeacon(state: CellVisualState): void {
+    const robot = this.first('fanuc-like-6axis')
+    if (!robot) return
+    const beacon = this.node(robot, 'robot-base-beacon')
+    if (beacon) emissive(beacon, BEACON_COLORS[robotBeaconSignal(state)])
+  }
+
+  /**
+   * S75: bounded dress-pack/hose secondary motion driven by the robot joint
+   * pose. The flex is clamped so a cable never swings beyond a credible range.
+   */
+  private applyDressPack(): void {
+    const flex = dressPackFlex(this.robotPose)
+    for (const robot of this.byClass.get('fanuc-like-6axis') ?? []) {
+      const dressPack = this.node(robot, 'dress-pack')
+      if (dressPack) dressPack.rotation.z = flex
+      const hose = this.node(robot, 'hose')
+      if (hose) hose.rotation.x = flex * 0.6
     }
   }
 
@@ -400,8 +525,13 @@ function asMesh(node: THREE.Object3D | null): THREE.Mesh | null {
 function colorOf(node: THREE.Object3D | null): string | null {
   const mesh = asMesh(node)
   const material = mesh && !Array.isArray(mesh.material) ? mesh.material : null
-  if (!material || !('color' in material)) return null
-  return `#${(material as THREE.MeshStandardMaterial).color.getHexString()}`
+  if (!material) return null
+  // S75: signal nodes carry their state in the emissive channel while the PBR
+  // base color is preserved, so the reported signal colour reads emissive first.
+  const standard = material as THREE.MeshStandardMaterial
+  if (standard.emissive) return `#${standard.emissive.getHexString()}`
+  if ('color' in material) return `#${(material as THREE.MeshStandardMaterial).color.getHexString()}`
+  return null
 }
 
 function emissive(node: THREE.Object3D | null, hex: number): void {
@@ -410,6 +540,7 @@ function emissive(node: THREE.Object3D | null, hex: number): void {
   const material = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material
   if (!material) return
   const standard = material as THREE.MeshStandardMaterial
+  // S75: only the emissive channel changes. The PBR base color is preserved so
+  // switching a signal never overwrites the material identity.
   if (standard.emissive) standard.emissive.setHex(hex)
-  if (standard.color) standard.color.setHex(hex)
 }

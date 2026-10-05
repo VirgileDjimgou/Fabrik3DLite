@@ -82,7 +82,13 @@ export const SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS: EquipmentDefinition[] = [
     manufacturer: 'Fabrik3D',
     model: 'Educational 6-axis',
     capabilities: [{ id: 'pick-place', description: 'Moves a part between defined work positions.' }],
-    ports: [{ id: 'tool-flange', kind: 'material', direction: 'bidirectional' }],
+    // S73: the wrist flange is a declared `tool:flange` anchor so a tool or
+    // gripper can attach to it without a hard-coded scene transform.
+    ports: [{ id: 'tool-flange', kind: 'material', direction: 'bidirectional', anchorId: 'tool:flange' }],
+    anchors: [
+      { id: 'anchor:placement', kind: 'placement', position: { x: 0, y: 0, z: 0 } },
+      { id: 'tool:flange', kind: 'service', position: { x: 0, y: 1.35, z: 0.35 } },
+    ],
     signals: ROBOT_SIGNALS,
   },
   {
@@ -92,7 +98,11 @@ export const SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS: EquipmentDefinition[] = [
     manufacturer: 'Fabrik3D',
     model: 'CNC cell',
     capabilities: [{ id: 'machining', description: 'Processes a loaded workpiece.' }],
-    ports: [{ id: 'load-door', kind: 'material', direction: 'input' }],
+    ports: [{ id: 'load-door', kind: 'material', direction: 'input', anchorId: 'anchor:load.door' }],
+    anchors: [
+      { id: 'anchor:placement', kind: 'placement', position: { x: 0, y: 0, z: 0 } },
+      { id: 'anchor:load.door', kind: 'material', position: { x: 0, y: 0, z: -0.8 } },
+    ],
     signals: CNC_SIGNALS,
   },
   {
@@ -102,7 +112,18 @@ export const SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS: EquipmentDefinition[] = [
     manufacturer: 'Fabrik3D',
     model: 'Single line',
     capabilities: [{ id: 'pallet-feed', description: 'Brings pallets to the robot work area.' }],
-    ports: [{ id: 'pallet-infeed', kind: 'material', direction: 'input' }, { id: 'pallet-stop', kind: 'material', direction: 'output' }],
+    ports: [
+      { id: 'pallet-infeed', kind: 'material', direction: 'input', anchorId: 'anchor:in' },
+      { id: 'pallet-stop', kind: 'material', direction: 'output', anchorId: 'anchor:pallet.stop' },
+    ],
+    // S73: declared conveyor ends and the pallet-stop surface so a pallet
+    // station can attach to the conveyor's declared port instead of a literal.
+    anchors: [
+      { id: 'anchor:placement', kind: 'placement', position: { x: 0, y: 0, z: 0 } },
+      { id: 'anchor:in', kind: 'material', position: { x: -SINGLE_CELL_CONVEYOR.length / 2, y: 0, z: 0 } },
+      { id: 'anchor:out', kind: 'material', position: { x: SINGLE_CELL_CONVEYOR.length / 2, y: 0, z: 0 } },
+      { id: 'anchor:pallet.stop', kind: 'material', position: { x: 0, y: SINGLE_CELL_CONVEYOR.surfaceY, z: 0 } },
+    ],
     dimensionsMeters: { x: SINGLE_CELL_CONVEYOR.length, y: 0.6, z: 0.5 },
     signals: CONVEYOR_SIGNALS,
   },
@@ -111,7 +132,11 @@ export const SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS: EquipmentDefinition[] = [
     id: 'pallet-station',
     category: 'pallet-station',
     capabilities: [{ id: 'part-storage', description: 'Stores raw and machined parts in a cavity grid.' }],
-    ports: [{ id: 'robot-access', kind: 'material', direction: 'bidirectional' }],
+    ports: [{ id: 'robot-access', kind: 'material', direction: 'bidirectional', anchorId: 'anchor:pallet.stop' }],
+    anchors: [
+      { id: 'anchor:placement', kind: 'placement', position: { x: 0, y: 0, z: 0 } },
+      { id: 'anchor:pallet.stop', kind: 'material', position: { x: 0, y: 0, z: 0 } },
+    ],
   },
   {
     sdkVersion: EQUIPMENT_SDK_VERSION,
@@ -135,7 +160,15 @@ export const SINGLE_CONVEYOR_CELL: CellDefinition = {
     { id: 'robot-1', definitionId: 'fanuc-like-6axis', transform: createTransform(tupleToVector(SINGLE_CELL_POSITIONS.robot)) },
     { id: 'cnc-1', definitionId: 'educational-cnc', transform: createTransform(tupleToVector(SINGLE_CELL_POSITIONS.cnc), { x: 0, y: SINGLE_CELL_POSITIONS.cncRotationY, z: 0 }) },
     { id: 'conveyor-1', definitionId: 'belt-conveyor', transform: createTransform(tupleToVector(SINGLE_CELL_POSITIONS.conveyor), { x: 0, y: SINGLE_CELL_POSITIONS.conveyorRotationY, z: 0 }) },
-    { id: 'pallet-station-1', definitionId: 'pallet-station', transform: createTransform({ x: SINGLE_CELL_FLOW_STOP_X, y: SINGLE_CELL_CONVEYOR.surfaceY, z: SINGLE_CELL_POSITIONS.conveyor[2] }) },
+    // S73: the pallet station's effective transform is derived from the
+    // conveyor's declared `pallet-stop` port/anchor; the declared transform
+    // remains the compatibility fallback and resolves to the same pose.
+    {
+      id: 'pallet-station-1',
+      definitionId: 'pallet-station',
+      transform: createTransform({ x: SINGLE_CELL_FLOW_STOP_X, y: SINGLE_CELL_CONVEYOR.surfaceY, z: SINGLE_CELL_POSITIONS.conveyor[2] }),
+      attachTo: { targetId: 'conveyor-1', portId: 'pallet-stop' },
+    },
     { id: 'safety-zone-1', definitionId: 'safety-zone', transform: createTransform({ x: SINGLE_CELL_POSITIONS.robot[0], y: 0, z: SINGLE_CELL_POSITIONS.robot[2] }) },
   ],
 }

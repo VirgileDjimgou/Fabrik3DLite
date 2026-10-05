@@ -1,0 +1,22 @@
+# Local runtime override for the Fabrik3D development stack (not for production).
+# Used with:
+#   docker compose -f Fabrik3D/compose.production.yaml -f Fabrik3D/compose.local-runtime.yaml up -d --build
+#
+# Runs the orchestrator in the guarded Development identity mode so the simulator and HMI can be
+# exercised locally without an external OIDC provider. Never deploy this override.
+
+services:
+  orchestrator:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Deployment__Profile: Development
+      Authentication__Mode: Development
+      Authentication__Authority: ""
+      Authentication__Issuer: ""
+      Authentication__Audience: ""
+      Authentication__RequireHttpsMetadata: "false"
+      Cors__AllowedOrigins__0: http://127.0.0.1:8081
+      Cors__AllowedOrigins__1: http://127.0.0.1:8082
+      Cors__AllowedOrigins__2: http://localhost:8081
+      Cors__AllowedOrigins__3: http://localhost:8082
+      Historian__Enabled: "true"

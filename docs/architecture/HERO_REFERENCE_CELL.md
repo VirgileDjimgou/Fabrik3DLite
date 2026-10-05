@@ -79,9 +79,23 @@ referenced SHA-256 and fails on any drift.
 The hero assets use a conservative, reusable PBR palette (documented in the
 generator): painted machine body `#e8e9ea`, dark trim `#333a3e`, stainless
 `#aeb6bc`, safety hazard `#d6a400`, chamber `#181b1d`, glass `#2a3a44`, rack
-blue `#27557a`, work light `#f6f3e6`. No 4K/8K texture set is used; the assets
-are texture-free and rely on the shared renderer's sRGB output, ACES tone
-mapping, PBR environment lighting and shadows.
+blue `#27557a`, work light `#f6f3e6`. No 4K/8K texture set is used and the
+committed GLB packages embed **0 textures**; they rely on the shared renderer's
+sRGB output, ACES tone mapping, PBR environment lighting and shadows. Since S72
+the runtime additionally generates bounded procedural surfaces and a contact
+decal for the procedural fallback and for generated label/screen nodes; those
+maps are not committed binaries (see [3D assets](3D_ASSETS.md)).
+
+Since S74 the cell is lit by a deterministic industrial-hall environment instead
+of the generic neutral `RoomEnvironment`: a procedural softbox PMREM, a gradient
+background, a subtle distance fog and a bounded set of decorative local lights
+(one shadow-casting key light only). On `medium`/`high` quality, an optional
+quality-gated `EffectComposer` adds cheap depth AO, selective bloom for emissive
+screens and FXAA, with a guaranteed direct-render fallback on `low` quality or a
+non-hardware renderer. The hero-cell GLB geometry, textures and semantic nodes are
+unchanged; the S74 measured geometry delta is +1 draw call / +2 triangles (the
+gradient background quad). Configuration and budgets are in
+[3D assets](3D_ASSETS.md).
 
 ## Measured budgets
 
@@ -103,18 +117,21 @@ lod1 25 / 656 / 25 / 69 200 B; dressing primary 38 / 676 / 38 / 85 160 B and lod
 kept only the silhouette, and S60 detail does not belong in the distance level.
 
 Declared budgets: hero CNC primary ≤ 16 000 triangles, LOD1 ≤ 6 000; dressing
-primary ≤ 12 000 triangles, LOD1 ≤ 6 000. Textures: 0 (procedural materials). This
+primary ≤ 12 000 triangles, LOD1 ≤ 6 000. Embedded textures: 0 (the committed GLBs
+carry no image data); S72 procedural surfaces are generated at runtime. This
 is a moderate pass within the documented budgets, not 4K/8K asset inflation.
 
 The S49 reference-scene frame-time probe recorded, under headless Chromium
 software rendering, `frames=11 mean=289.38ms p50=283.40ms p95=316.60ms`. This is
 an upper bound for a software backend, not reference-hardware GPU numbers.
 Sustained hardware performance was subsequently measured: the S62 deterministic
-visual QA/GPU validation and the S68 PBR/environment re-measurement ran the headed
-hardware benchmark on the documented reference host (Intel UHD Graphics,
-1920×1080, `gpuEvidence=true`), and every measured profile stayed above the 60 FPS
-reference target (minimum 78.3 FPS). The exact numbers, methodology and
-non-claims are recorded in [PERFORMANCE.md](../operations/PERFORMANCE.md).
+visual QA/GPU validation and the S68 PBR/environment and S72/S74 re-measurements
+ran the headed hardware benchmark on the documented reference host (Intel UHD
+Graphics, 1920×1080, `gpuEvidence=true`), and every measured profile stayed above
+the 60 FPS reference target (minimum 63.8 FPS after the S74 composer path, down
+from 78.3 FPS at S68 and 108.3 FPS at S72 for the same scenes before
+post-processing). The exact numbers, methodology and non-claims are recorded in
+[PERFORMANCE.md](../operations/PERFORMANCE.md).
 
 ## Provenance and licensing
 

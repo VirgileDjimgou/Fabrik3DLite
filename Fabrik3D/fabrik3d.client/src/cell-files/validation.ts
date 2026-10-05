@@ -20,7 +20,7 @@ export function validateCellFile(cell: CellFileV1, knownDefinitionIds?: Readonly
   if (!cell.id?.trim()) diagnostics.push(errorDiagnostic('missing_id', 'Cell file is missing an id.', '/id'))
   if (!cell.name?.trim()) diagnostics.push(errorDiagnostic('missing_name', 'Cell file is missing a name.', '/name'))
   if (!cell.worldFrameId?.trim()) diagnostics.push(errorDiagnostic('missing_world_frame', 'Cell file is missing a worldFrameId.', '/worldFrameId'))
-  if (cell.schemaVersion !== '1.0') diagnostics.push(errorDiagnostic('unsupported_version', `Expected schemaVersion 1.0, got '${cell.schemaVersion}'.`, '/schemaVersion'))
+  if (cell.schemaVersion !== '1.1') diagnostics.push(errorDiagnostic('unsupported_version', `Expected schemaVersion 1.1, got '${cell.schemaVersion}'.`, '/schemaVersion'))
 
   if (!Array.isArray(cell.equipment)) {
     diagnostics.push(errorDiagnostic('missing_equipment', 'Cell file is missing the equipment list.', '/equipment'))
@@ -64,5 +64,23 @@ function validateEquipment(equipment: CellFileEquipmentV1, path: string, diagnos
     if (!Number.isFinite(equipment.transform.rotation?.[key])) {
       diagnostics.push(errorDiagnostic('non_finite_rotation', `Equipment rotation.${key} is not a finite number.`, `${path}/transform/rotation/${key}`))
     }
+  }
+
+  if (equipment.attachTo !== undefined) validateAttachment(equipment.attachTo, path, diagnostics)
+}
+
+function validateAttachment(attachment: CellFileEquipmentV1['attachTo'], path: string, diagnostics: CellFileDiagnostic[]): void {
+  if (!attachment || typeof attachment !== 'object') {
+    diagnostics.push(errorDiagnostic('invalid_attachment', 'Equipment attachTo must be an object.', `${path}/attachTo`))
+    return
+  }
+  if (!attachment.targetId?.trim()) {
+    diagnostics.push(errorDiagnostic('missing_attachment_target', 'Equipment attachTo is missing a targetId.', `${path}/attachTo/targetId`))
+  }
+  if (attachment.anchorId && attachment.portId) {
+    diagnostics.push(errorDiagnostic('ambiguous_attachment', 'Equipment attachTo cannot declare both anchorId and portId.', `${path}/attachTo`))
+  }
+  if (attachment.rotationOffsetRad !== undefined && !Number.isFinite(attachment.rotationOffsetRad)) {
+    diagnostics.push(errorDiagnostic('non_finite_rotation', 'Equipment attachTo rotationOffsetRad is not a finite number.', `${path}/attachTo/rotationOffsetRad`))
   }
 }

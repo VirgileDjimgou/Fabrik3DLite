@@ -6,6 +6,16 @@ public class CellFileContentValidatorTests
 {
     private static readonly string ValidV1 = """
         {
+          "schemaVersion": "1.1",
+          "id": "cell-1",
+          "name": "Cell",
+          "worldFrameId": "world",
+          "equipment": []
+        }
+        """;
+
+    private static readonly string ValidV10 = """
+        {
           "schemaVersion": "1.0",
           "id": "cell-1",
           "name": "Cell",
@@ -26,6 +36,7 @@ public class CellFileContentValidatorTests
     public void Accepts_supported_schema_versions()
     {
         Assert.Null(CellFileContentValidator.ValidateContent(ValidV1));
+        Assert.Null(CellFileContentValidator.ValidateContent(ValidV10));
         Assert.Null(CellFileContentValidator.ValidateContent(ValidV09));
     }
 
@@ -64,7 +75,8 @@ public class CellFileContentValidatorTests
     [Fact]
     public void Reads_the_schema_version_from_valid_content()
     {
-        Assert.Equal("1.0", CellFileContentValidator.SchemaVersionOf(ValidV1));
+        Assert.Equal("1.1", CellFileContentValidator.SchemaVersionOf(ValidV1));
+        Assert.Equal("1.0", CellFileContentValidator.SchemaVersionOf(ValidV10));
         Assert.Equal("0.9", CellFileContentValidator.SchemaVersionOf(ValidV09));
     }
 }

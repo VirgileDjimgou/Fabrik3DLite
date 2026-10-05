@@ -2,7 +2,7 @@
  * Migration of older supported cell files to the current schema.
  */
 
-import { CELL_SCHEMA_VERSION, isCellFileV0, isCellFileV1, type CellFileV0, type CellFileV1 } from './schema'
+import { CELL_SCHEMA_VERSION, isCellFileV0, isCellFileV1, isCellFileV1_0, type CellFileV0, type CellFileV1, type CellFileV1_0 } from './schema'
 import { CellFileError, errorDiagnostic, warningDiagnostic, type CellFileDiagnostic } from './diagnostics'
 
 /** Maps the legacy equipment `type` field to current `definitionId` values. */
@@ -40,13 +40,43 @@ export function migrateCellFile(input: string | unknown): MigrationResult {
     return { cell: parsed, migrated: false, diagnostics: [] }
   }
 
+  if (isCellFileV1_0(parsed)) {
+    return migrateV1_0(parsed)
+  }
+
   if (isCellFileV0(parsed)) {
     return migrateV0(parsed)
   }
 
   throw new CellFileError('Unsupported cell file.', [
-    errorDiagnostic('unsupported_version', 'The cell file has no supported schemaVersion. Supported versions: 0.9, 1.0.'),
+    errorDiagnostic('unsupported_version', 'The cell file has no supported schemaVersion. Supported versions: 0.9, 1.0, 1.1.'),
   ])
+}
+
+/**
+ * S73: schema 1.0 → 1.1 adds the optional `attachTo` attachment declaration.
+ * Existing 1.0 files carry no attachment, so their transforms are unchanged.
+ */
+function migrateV1_0(previous: CellFileV1_0): MigrationResult {
+  return {
+    migrated: true,
+    diagnostics: [
+      warningDiagnostic('migrated_from_1.0', 'Cell file migrated from schemaVersion 1.0 to 1.1.'),
+    ],
+    cell: {
+      schemaVersion: CELL_SCHEMA_VERSION,
+      id: previous.id,
+      name: previous.name,
+      worldFrameId: previous.worldFrameId,
+      equipment: previous.equipment.map((entry) => ({
+        id: entry.id,
+        definitionId: entry.definitionId,
+        transform: entry.transform,
+        ...(entry.parameterValues ? { parameterValues: { ...entry.parameterValues } } : {}),
+      })),
+      ...(previous.connections ? { connections: previous.connections.map((connection) => ({ ...connection })) } : {}),
+    },
+  }
 }
 
 function migrateV0(legacy: CellFileV0): MigrationResult {
@@ -73,7 +103,7 @@ function migrateV0(legacy: CellFileV0): MigrationResult {
   return {
     migrated: true,
     diagnostics: [
-      warningDiagnostic('migrated_from_0.9', 'Cell file migrated from schemaVersion 0.9 to 1.0.'),
+      warningDiagnostic('migrated_from_0.9', 'Cell file migrated from schemaVersion 0.9 to 1.1.'),
       ...diagnostics,
     ],
     cell: {

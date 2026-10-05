@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { applyEquipmentShadowFlags } from '../visuals/equipmentGrounding'
 import type { EquipmentAssetManifest } from './types'
 
 export interface GlbLoaderLike {
@@ -79,6 +80,9 @@ export class ThreeGlbAssetLoader {
     const { entry } = this.ensureEntry(manifest, url)
     const template = await entry.promise
     const root = clone(template)
+    // S72: every loaded GLB instance casts and receives shadows. The template is
+    // left untouched so cached resources stay immutable.
+    applyEquipmentShadowFlags(root)
     const clonedMaterials = options.isolateMaterials ? isolateInstanceMaterials(root) : []
     entry.activeInstances += 1
     let disposed = false

@@ -8,7 +8,12 @@ import type { RobotCatalogService } from '../robot/catalog'
 import { createSafetyRobotModel } from '../safety/robotModel'
 import type { CellDefinition } from '../equipment'
 import { INDUSTRIAL_INFRASTRUCTURE_DEFINITIONS } from '../safety'
-import { MATERIAL_FLOW_EQUIPMENT_DEFINITIONS } from '../equipment'
+import {
+  MATERIAL_FLOW_EQUIPMENT_DEFINITIONS,
+  SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS,
+  definitionLookupFrom,
+  resolveCellAttachments,
+} from '../equipment'
 import type { EditorCatalogEntry, EditorEquipmentKind, EditorPlacement } from './editorTypes'
 
 export const ROBOT_DEFINITION_ID = 'medium-6axis'
@@ -86,9 +91,20 @@ export function cellDefinitionToPlacements(
     }
   }
 
+  // S73 editor/runtime parity: the 2D editor resolves the same declared
+  // anchors/ports as the 3D runtime, so both surfaces show identical world
+  // transforms for the same `CellDefinition`.
+  const lookup = definitionLookupFrom([
+    ...MATERIAL_FLOW_EQUIPMENT_DEFINITIONS,
+    ...SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS,
+    ...INDUSTRIAL_INFRASTRUCTURE_DEFINITIONS,
+  ])
+  const resolution = resolveCellAttachments(cell, lookup)
+
   const placements: EditorPlacement[] = []
   const skipped: string[] = []
   for (const instance of cell.equipment) {
+    const transform = resolution.byEquipmentId.get(instance.id)!.transform
     const entry = byDefinition.get(instance.definitionId)
     if (entry) {
       placements.push({
@@ -96,9 +112,9 @@ export function cellDefinitionToPlacements(
         kind: entry.kind,
         definitionId: entry.definitionId,
         label: entry.label,
-        x: instance.transform.position.x,
-        z: instance.transform.position.z,
-        rotationRad: instance.transform.rotation.y,
+        x: transform.position.x,
+        z: transform.position.z,
+        rotationRad: transform.rotation.y,
         width: entry.width,
         depth: entry.depth,
         reachMeters: entry.reachMeters,
@@ -112,9 +128,9 @@ export function cellDefinitionToPlacements(
         kind: 'robot',
         definitionId: instance.definitionId,
         label: `Robot (${instance.definitionId})`,
-        x: instance.transform.position.x,
-        z: instance.transform.position.z,
-        rotationRad: instance.transform.rotation.y,
+        x: transform.position.x,
+        z: transform.position.z,
+        rotationRad: transform.rotation.y,
         width: 1.2,
         depth: 1.2,
         reachMeters: reach,

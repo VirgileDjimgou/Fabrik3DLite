@@ -155,7 +155,7 @@ public record MachineStateDto(
 
 /// <summary>
 /// A named, persisted cell template. <c>Content</c> is the versioned cell
-/// file JSON (schemaVersion 0.9 or 1.0) retained verbatim for Git review.
+/// file JSON (schemaVersion 0.9, 1.0 or 1.1) retained verbatim for Git review.
 /// </summary>
 public record CellTemplateDto(
     string Id,

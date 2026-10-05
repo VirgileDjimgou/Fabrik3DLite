@@ -15,6 +15,16 @@
 
 import * as THREE from 'three'
 import type { Vector3Meters } from '../equipment/types'
+import {
+  MATERIAL_FLOW_EQUIPMENT_DEFINITIONS,
+  SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS,
+  definitionLookupFrom,
+  resolveCellAttachments,
+  type AttachmentDiagnostic,
+  type AttachmentWorldAnchor,
+  type EquipmentDefinitionLookup,
+} from '../equipment'
+import { INDUSTRIAL_INFRASTRUCTURE_DEFINITIONS, INFRASTRUCTURE_ANCHORS } from '../safety'
 import type { AssetRuntimeInstance, EquipmentAssetRuntime } from '../equipment/assets'
 import { measureSceneResources, type SceneRenderMetrics } from '../equipment/assets/sceneMetrics'
 import {
@@ -23,6 +33,12 @@ import {
   resolveEquipmentAssetId,
 } from '../equipment/visuals/materialFlowVisuals'
 import { buildFactoryEnvironment, disposeFactoryEnvironment } from '../equipment/visuals/factoryEnvironment'
+import {
+  applyEquipmentShadowFlags,
+  applyEquipmentSurfaceTextures,
+  createContactShadow,
+  disposeContactShadow,
+} from '../equipment/visuals/equipmentGrounding'
 import { ScenarioCellAnimator, type ScenarioCellSnapshot } from './ScenarioCellAnimator'
 import { RobotVisualBinding } from '../robot/RobotVisualBinding'
 import { createDefaultRobotCatalog } from '../robot/catalog'
@@ -56,6 +72,10 @@ export interface ScenarioRuntimeHostOptions {
   now?: () => number
   /** Builds the shared factory environment; set to `null` to omit it (tests/tools). */
   createEnvironment?: ((binding: ScenarioSceneBinding) => THREE.Object3D | null) | null
+  /** S73 equipment definition lookup used to resolve declared anchors/ports. */
+  definitionLookup?: EquipmentDefinitionLookup
+  /** S73 world/infrastructure anchors an instance may attach to. */
+  worldAnchors?: readonly AttachmentWorldAnchor[]
 }
 
 export interface ScenarioEquipmentVisual {
@@ -81,10 +101,14 @@ export class ScenarioRuntimeHost {
   readonly root = new THREE.Group()
   private readonly instances: AssetRuntimeInstance[] = []
   private readonly visuals: ScenarioEquipmentVisual[] = []
+  private readonly contactShadows: THREE.Mesh[] = []
   private readonly createProcedural: (definitionId: string, dimensions?: Vector3Meters) => THREE.Object3D
   private readonly createEnvironment: ((binding: ScenarioSceneBinding) => THREE.Object3D | null) | null
   private readonly assetRuntime: EquipmentAssetRuntime
   private readonly now: () => number
+  private readonly definitionLookup: EquipmentDefinitionLookup
+  private readonly worldAnchors: readonly AttachmentWorldAnchor[]
+  private lastAttachmentDiagnostics: AttachmentDiagnostic[] = []
 
   private currentBinding: ScenarioSceneBinding | null = null
   private environment: THREE.Object3D | null = null
@@ -113,6 +137,12 @@ export class ScenarioRuntimeHost {
         variant: binding.environmentLevel,
       })
       : options.createEnvironment
+    this.definitionLookup = options.definitionLookup ?? definitionLookupFrom([
+      ...MATERIAL_FLOW_EQUIPMENT_DEFINITIONS,
+      ...SINGLE_CONVEYOR_EQUIPMENT_DEFINITIONS,
+      ...INDUSTRIAL_INFRASTRUCTURE_DEFINITIONS,
+    ])
+    this.worldAnchors = options.worldAnchors ?? INFRASTRUCTURE_ANCHORS
     this.root.name = 'scenario-runtime-root'
   }
 
@@ -125,6 +155,8 @@ export class ScenarioRuntimeHost {
   get process(): ScenarioProcessDefinition | null { return this.processDefinition }
   /** S67 current deterministic process state, or null when unbound. */
   get processState(): ScenarioProcessSnapshot | null { return this.processDriver?.snapshot() ?? null }
+  /** S73 structured diagnostics from the last attachment resolution (empty when all resolved). */
+  get attachmentDiagnostics(): readonly AttachmentDiagnostic[] { return this.lastAttachmentDiagnostics }
 
   /**
    * Binds a resolved scenario and constructs its deterministic runner. This is
@@ -139,6 +171,7 @@ export class ScenarioRuntimeHost {
     this.processDriver = null
     this.runner = binding.scenario ? new ScenarioRunner(binding.scenario) : null
     this.status = 'idle'
+    this.lastAttachmentDiagnostics = []
     this.cellState = applyScenarioProgress(createCellVisualState(binding.scenarioId), this.progress())
     this.lastMetrics = { equipmentCount: 0, meshes: 0, triangles: 0, drawCalls: 0, textures: 0, loadMs: 0 }
     return this.progress()
@@ -240,6 +273,9 @@ export class ScenarioRuntimeHost {
     this.animator?.tick(deltaSeconds)
     // Robot motion advances on deterministic simulation time, never render frames.
     this.robotMotion?.tick(deltaSeconds)
+    // S75: the animator mirrors the authoritative joint pose for bounded
+    // dress-pack secondary motion; it never feeds geometry back into state.
+    if (this.robotMotion) this.animator?.setRobotPose(this.robotMotion.jointAngles)
     this.syncCarriedWorkpiece()
   }
 
@@ -298,7 +334,13 @@ export class ScenarioRuntimeHost {
       this.environment = this.createEnvironment(binding)
       if (this.environment) this.root.add(this.environment)
     }
+    // S73: declared anchors/ports are authoritative for placement. The declared
+    // transform is the compatibility fallback and is used unchanged when no
+    // attachment is declared or when resolution fails closed with a diagnostic.
+    const attachmentResolution = resolveCellAttachments(binding.cell, this.definitionLookup, { worldAnchors: this.worldAnchors })
+    this.lastAttachmentDiagnostics = attachmentResolution.diagnostics
     for (const equipment of binding.cell.equipment) {
+      const placement = attachmentResolution.byEquipmentId.get(equipment.id)!.transform
       const instance = await this.assetRuntime.acquire(resolveEquipmentAssetId(equipment.definitionId), {
         proceduralFallback: () => this.createProcedural(equipment.definitionId),
         distanceMeters: 8,
@@ -306,8 +348,20 @@ export class ScenarioRuntimeHost {
       const object = instance.root
       if (!object.name) object.name = `equipment:${equipment.id}`
       object.userData.equipmentId = equipment.id
-      object.position.set(equipment.transform.position.x, equipment.transform.position.y, equipment.transform.position.z)
-      object.rotation.y = equipment.transform.rotation.y
+      object.position.set(placement.position.x, placement.position.y, placement.position.z)
+      object.rotation.y = placement.rotation.y
+      // S72 grounding: shadow flags are enforced on every source (GLB and
+      // procedural), generated label/screen nodes receive procedural surfaces and
+      // a deterministic contact decal anchors the equipment to the floor. All of
+      // this is render-only and never becomes collision, state or telemetry truth.
+      applyEquipmentShadowFlags(object)
+      applyEquipmentSurfaceTextures(object)
+      const contactShadow = createContactShadow({
+        radius: contactShadowRadiusFor(object),
+        name: `grounding:contact-shadow:${equipment.id}`,
+      })
+      object.add(contactShadow)
+      this.contactShadows.push(contactShadow)
       this.root.add(object)
       this.instances.push(instance)
       this.visuals.push({
@@ -334,6 +388,7 @@ export class ScenarioRuntimeHost {
     })))
     this.animator.setState(this.cellState)
     this.bindRobotMotion()
+    if (this.robotMotion) this.animator.setRobotPose(this.robotMotion.jointAngles)
     return this.lastMetrics
   }
 
@@ -448,6 +503,8 @@ export class ScenarioRuntimeHost {
       disposeFactoryEnvironment(this.environment)
       this.environment = null
     }
+    for (const shadow of this.contactShadows) disposeContactShadow(shadow)
+    this.contactShadows.length = 0
     for (const instance of this.instances) {
       if (instance.source === 'procedural') disposeProceduralResources(instance.root)
       instance.dispose()
@@ -456,6 +513,19 @@ export class ScenarioRuntimeHost {
     this.visuals.length = 0
     this.root.clear()
   }
+}
+
+/**
+ * S72: derives a bounded contact-shadow radius from an equipment visual's
+ * footprint, so large cabinets and small sensors both get a proportionate decal.
+ */
+export function contactShadowRadiusFor(object: THREE.Object3D): number {
+  const bounds = new THREE.Box3().setFromObject(object)
+  const size = new THREE.Vector3()
+  bounds.getSize(size)
+  const radius = Math.max(size.x, size.z) * 0.55
+  if (!Number.isFinite(radius) || radius <= 0) return 0.7
+  return Math.max(0.25, Math.min(2.0, radius))
 }
 
 /** Disposes instance-owned geometry and materials for procedural visuals. */

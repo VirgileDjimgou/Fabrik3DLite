@@ -161,23 +161,157 @@ definition records a color, metalness, roughness and provenance
 so materials are reused within a visual (bounded material allocation) while
 remaining instance-owned, and status-color edits cannot leak between visuals.
 
-The library is deliberately **texture-free**. No 1K/2K roughness, metalness,
-normal or decal atlas was added, because no measured visible benefit justified
-the texture-memory cost at this asset scale and the recorded budgets are
-0 textures. `MATERIAL_TEXTURES` is therefore empty and tested as such; a future
-atlas must record its resolution, source and license before it is accepted.
+S68 originally kept the library texture-free. S72 supersedes that policy: selected
+materials now carry deterministic, repository-generated procedural surfaces from
+`equipment/visuals/proceduralSurfaces.ts` (see the next section).
+`MATERIAL_TEXTURES` is no longer empty; it records the surface id, kind,
+resolution, estimated RGBA8 bytes, source and license of every bound surface, and
+`validateMaterialLibrary()` rejects an unknown surface reference.
 
 The factory environment builder provides the shared ground layer used by the four
 material-flow flagship cells (through `ScenarioRuntimeHost`) and by the CNC
 reference cell (`SingleConveyorFloor.vue`): industrial (or training-lab) floor,
 expansion joints, safety-zone perimeter, pedestrian/operator access lane, cable
-tray and a cell-identifier plate. It is deterministic and texture-free; the
-`industrial-hall` variant measures **54 meshes / 638 triangles / 54 draw calls /
-0 textures** (GPU-free, `measureSceneResources`). A training-lab variant trims
-the access lane and cable tray. The equipment visuals were also given credible
-detail where it materially aids readability: cabinet doors/handles/hinges and
-labels, conveyor guard rails and a motor/cable drop, cardboard cartons, and a
-robot dress pack/hose.
+tray and a cell-identifier plate. It is deterministic; the `industrial-hall`
+variant measures **54 meshes / 638 triangles / 54 draw calls / 5 textures**
+(GPU-free, `measureSceneResources`) after S72. A training-lab variant trims the
+access lane and cable tray. The equipment visuals were also given credible detail
+where it materially aids readability: cabinet doors/handles/hinges and labels,
+conveyor guard rails and a motor/cable drop, cardboard cartons, and a robot
+dress pack/hose.
+
+## Procedural surface textures and equipment grounding (S72)
+
+S72 removes the flat, ungrounded look without shipping an image file, adding a
+runtime dependency or touching runtime/collision/telemetry authority.
+
+- `equipment/visuals/proceduralSurfaces.ts` generates four categories of surface:
+  floors (concrete, painted-profile, roughness), markings (safety stripes,
+  access-lane), metals (diamond plate, perforated mesh, painted steel with wear,
+  brushed metal), wood/cardboard grain, label/screen faces (warning label,
+  equipment signage, HMI screen) and the radial contact-shadow decal. Every
+  surface is a pure function of a seeded mulberry32 PRNG; `renderSurfacePixels()`
+  is byte-identical for the same surface id and seed and the module contains no
+  `Math.random` or `Date.now` (asserted by tests).
+- The 14 declared surfaces are bounded by
+  `SURFACE_TEXTURE_BUDGET = { maxResolution: 256, maxTextureCount: 14,
+  maxEstimatedBytes: 4 MiB }`. The whole library estimates to **2.08 MiB** RGBA8
+  base level (`width * height * 4`); the estimate is always labelled as an
+  estimate because WebGL does not expose real texture memory.
+- `materialLibrary.ts` attaches the shared cached `map`/`roughnessMap` surfaces
+  declared by `MATERIAL_SURFACE_BINDINGS` (floor, floor roughness, safety
+  markings, clear-zone paint, signage, painted steel, brushed metal, wood grain,
+  HMI screen). One cached GPU texture is shared per surface, so many materials and
+  instances reuse it. `createMaterial(id, { textures: false })` yields an
+  explicitly untextured variant.
+- Label and screen surfaces use a `CanvasTexture` with real text when a 2D canvas
+  exists; headless hosts and tests get the deterministic `DataTexture` bitmap
+  instead of a missing texture.
+- `equipmentGrounding.ts` centralizes `castShadow`/`receiveShadow` for loaded GLB
+  instances (`ThreeGlbAssetLoader` and `EquipmentAssetRuntime` call it) and for
+  procedural fallbacks, adds the contact-shadow decal, and attaches surfaces to
+  generated `label:*`/`signal:*screen*` GLB nodes.
+
+Measured (GPU-free `measureSceneResources` / `estimateSceneTextureMemory`):
+
+| Visual | Meshes | Triangles | Draw calls | Textures | Texture bytes |
+|---|---|---|---|---|---|
+| Factory environment (industrial-hall) | 54 | 638 | 54 | 5 | 1 048 576 |
+| Procedural hero CNC visual | 28 | 764 | 28 | 4 | 851 968 |
+| Material-flow scenarios (procedural fallback) | 55–125 | 1 008–1 652 | 55–125 | 5–8 | 0.81–1.50 MiB |
+
+Textures, surfaces and contact decals are visual-only. They never become
+collision proxies, runtime state, scenario truth or telemetry, and the procedural
+fallback path is unchanged.
+
+## Industrial environment, atmosphere and post-processing (S74)
+
+S74 makes every cell read as a real industrial hall. It is visual-only and never
+changes runtime, state, signal, safety or collision authority.
+
+- `equipment/visuals/industrialEnvironment.ts` replaces the generic neutral
+  `RoomEnvironment` PMREM with a deterministic procedural softbox rig
+  (dark shell, bright ceiling softbox, two side softboxes, warm work strip)
+  captured into a PMREM cube. It also assigns a deterministic vertical gradient
+  background (`DataTexture`, sRGB, no downloaded HDRI), an optional
+  `FogExp2` and the bounded local lights. The same quality always produces the
+  same configuration (no `Math.random`, no `Date.now`), and every geometry and
+  material it owns is disposed by `handle.dispose()`.
+- The environment and light configuration is declared per quality preset:
+
+  | Preset | Environment intensity | Fog density | Local-light budget | Shadow-casting lights |
+  |---|---|---|---|---|
+  | `low` (Performance) | 0.55 | 0 (disabled) | 0 | 1 (key light only) |
+  | `medium` (Balanced) | 0.85 | 0.012 | 6 | 1 (key light only) |
+  | `high` (Quality) | 1.00 | 0.016 | 7 | 1 (key light only) |
+
+  `MAX_LOCAL_LIGHT_BUDGET = 10` is a hard ceiling; decorative local lights never
+  cast shadows. Exactly one shadow-casting key light exists, and it is the only
+  shadow caster. `validateIndustrialEnvironmentPresets()` rejects out-of-range
+  intensities/densities, out-of-budget local lights and any decorative light that
+  would cast a shadow.
+- The local-light vocabulary is `work-light`, `machine-hood-spot` and
+  `emissive-fixture` (`LOCAL_LIGHT_KINDS`), tied to the existing `work-light` /
+  `screen-emissive` material families. Their placements are deterministic and
+  capped by the preset budget, and they are scenery: they never drive a signal,
+  a status color or collision.
+- `equipment/visuals/postProcessing.ts` adds an optional `EffectComposer` path
+  gated by the existing quality presets: cheap depth AO (reuses the depth buffer
+  produced by the beauty pass, so the scene is not re-rendered), selective bloom
+  for emissive screens/signals and FXAA, followed by `OutputPass` for tone
+  mapping/color space. `low` quality, a missing context, a WebGL1 context or a
+  non-`hardware` acceleration class fall back to the direct
+  `renderer.render(scene, camera)` path (`resolvePostProcessingDecision`).
+- The blast radius of bloom is bounded so status colors stay readable: the
+  luminance threshold is ≥ 0.8 and the strength ≤ 0.45. `validatePostProcessingPresets()`
+  rejects a disabled preset that declares passes, an enabled preset with no
+  passes, and any threshold/strength/scale outside the documented range.
+- `useThreeScene` re-applies the preset pixel ratio on resize and resizes the
+  composer, and the frame metrics/benchmark read the captured scene beauty-pass
+  statistics (not the trailing fullscreen pass) so draw-call/triangle numbers
+  stay honest when the composer is active.
+
+Measured on the documented reference machine: the geometry delta is +1 draw call
+and +2 triangles (the gradient background quad); the composer path costs frame
+time but every measured profile stays above the 60 FPS target (minimum 63.8 FPS).
+The full before/after table, methodology and non-claims are in
+[PERFORMANCE.md](../operations/PERFORMANCE.md).
+
+## State-driven motion and instanced detail (S75)
+
+S75 adds secondary motion that strictly derives from runtime state and raises
+scene detail without inflating draw calls. It is visual-only and never changes
+runtime, state, signal, safety or collision authority.
+
+- **State-bearing nodes.** The procedural `two-finger-gripper` declares
+  `gripper:finger-left` / `gripper:finger-right`; the `vacuum-gripper` declares
+  `gripper:vacuum-cup`; the `straight-conveyor` declares `belt-marker`; the
+  `fanuc-like-6axis` fallback declares `robot-base-beacon`, `dress-pack` and
+  `hose`. `ScenarioCellAnimator` binds them to the authoritative
+  `CellVisualState` and the mirrored robot joint pose; a visual without a node is
+  skipped rather than inventing state.
+- **Deterministic helpers.** `scenarios/stateDrivenMotion.ts` holds the pure,
+  WebGL-free functions (`gripperFingerGap`, `advanceBeltOffset`, `dressPackFlex`,
+  `robotBeaconSignal`) with declared constants (`GRIPPER_FINGER_OPEN_METERS`,
+  `GRIPPER_FINGER_CLOSED_METERS`, `DECLARED_CONVEYOR_SPEED_MPS`,
+  `BELT_MARKER_TRAVEL_METERS`, `DRESS_PACK_MAX_FLEX_RADIANS`). The belt offset
+  advances only while the lifecycle is `running`, so a stopped conveyor produces
+  no motion.
+- **Emissive preservation.** `emissive()` changes only the emissive channel; the
+  PBR base color is preserved, so a signal change never overwrites the material
+  identity. The optional robot-base beacon uses the off/running/fault roles.
+- **Instancing.** The factory environment places expansion joints, access-lane
+  ticks and cable-tray rungs as one `InstancedMesh` per repeated family (one draw
+  call each) instead of one mesh per element.
+- **Human-scale dressing.** Silhouette mannequins (~1.75 m), a control cabinet,
+  an extinguisher, two signage boards and an overhead pipe run are built from
+  shared geometry and the shared material vocabulary. The dressing is optional
+  (`includeDressing`) and render-only.
+
+Measured on the four material-flow cells (procedural fallback, GPU-free,
+2026-10-03): 76–108 meshes / 2 396–2 824 triangles / 76–108 draw calls per cell,
+inside the documented `< 200` draw-call budget. The full table is in
+[SCENARIO_3D_RUNTIME.md](SCENARIO_3D_RUNTIME.md).
 
 ## Reference-cell budgets and measured values
 
@@ -186,12 +320,12 @@ Its visual state is driven by `CncCycleMachine`; the visual geometry is built by
 `equipment/visuals/cncMachineVisual.ts` and measured deterministically with
 `measureSceneResources` in `cncMachineVisual.test.ts` (no GPU required):
 
-| Metric | Documented budget | Measured (CNC visual, S39) |
+| Metric | Documented budget | Measured (CNC visual, S39/S72) |
 |---|---|---|
 | Draw calls | ≤ 60 | 28 |
 | Triangles | ≤ 6 000 | 764 |
 | Meshes | ≤ 40 | 28 |
-| Textures | 0 (procedural, no external download) | 0 |
+| Textures | ≤ 14 (procedural, ≤ 4 MiB) | 4 (851 968 bytes) |
 
 The machine visual uses a coherent painted-steel / stainless / safety-yellow /
 rubber / glass palette with believable roughness and metalness. Build/dispose was

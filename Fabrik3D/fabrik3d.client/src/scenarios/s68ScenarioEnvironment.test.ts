@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import * as THREE from 'three'
 import { EquipmentAssetRuntime, ThreeGlbAssetLoader, createIndustrialAssetRegistry } from '../equipment/assets'
 import { collectMaterialIds, isMaterialId } from '../equipment/visuals/materialLibrary'
 import { factoryEnvironmentDefinition } from '../equipment/visuals/factoryEnvironment'
@@ -46,5 +47,35 @@ describe('S68 flagship scenario environments', () => {
       }
       host.dispose()
     }
+  })
+
+  it('grounds every scenario equipment visual with shadow flags and a contact decal (S72)', async () => {
+    const catalog = createDefaultScenePresetCatalog()
+    const preset = catalog.list().find((candidate) => candidate.runtimeProfile === 'material-flow')!
+    const binding = resolveScenarioSceneBinding(preset.defaultScenarioId!, catalog)
+    const host = new ScenarioRuntimeHost({ assetRuntime: testRuntime(), now: () => 0 })
+    host.bind(binding)
+    await host.loadVisuals()
+
+    const equipment = host.root.children.filter((child) => typeof child.userData.equipmentId === 'string')
+    expect(equipment.length).toBeGreaterThan(0)
+    for (const root of equipment) {
+      let meshes = 0
+      let castShadow = 0
+      let receiveShadow = 0
+      root.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return
+        if (child.name.startsWith('grounding:contact-shadow')) return
+        meshes += 1
+        if (child.castShadow) castShadow += 1
+        if (child.receiveShadow) receiveShadow += 1
+      })
+      expect(meshes, String(root.userData.equipmentId)).toBeGreaterThan(0)
+      expect(castShadow, String(root.userData.equipmentId)).toBe(meshes)
+      expect(receiveShadow, String(root.userData.equipmentId)).toBe(meshes)
+      const decal = root.children.find((child) => child.name.startsWith('grounding:contact-shadow'))
+      expect(decal, String(root.userData.equipmentId)).toBeTruthy()
+    }
+    host.dispose()
   })
 })

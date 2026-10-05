@@ -6,15 +6,18 @@ export type MaterialFlowEquipmentKind =
   | 'two-finger-gripper' | 'vacuum-gripper' | 'iso-flange-tcp' | 'tool-changer' | 'tool-rack' | 'part-presence-sensor' | 'grip-pressure-sensor'
   | 'pallet-nest' | 'machining-fixture' | 'toggle-clamp' | 'three-jaw-chuck' | 'workholding-adapter' | 'configurable-part'
 
-const materialIn = (): EquipmentPort => ({ id: 'material-in', kind: 'material', direction: 'input' })
-const materialOut = (): EquipmentPort => ({ id: 'material-out', kind: 'material', direction: 'output' })
+/** S73 default placement anchor id. Always available at an instance's origin. */
+export const PLACEMENT_ANCHOR_ID = 'anchor:placement' as const
+
+const materialIn = (): EquipmentPort => ({ id: 'material-in', kind: 'material', direction: 'input', anchorId: 'anchor:in' })
+const materialOut = (): EquipmentPort => ({ id: 'material-out', kind: 'material', direction: 'output', anchorId: 'anchor:out' })
 const signalOut = (): EquipmentPort => ({ id: 'detected', kind: 'signal', direction: 'output' })
 const signalIn = (): EquipmentPort => ({ id: 'command', kind: 'signal', direction: 'input' })
 const dimensions = (x: number, y: number, z: number): Vector3Meters => ({ x, y, z })
 const definition = (id: MaterialFlowEquipmentKind, category: EquipmentDefinition['category'], description: string, size: Vector3Meters, ports: EquipmentPort[], runtimeCapability: 'static' | 'simulation-ready' = 'static'): EquipmentDefinition => ({
   sdkVersion: EQUIPMENT_SDK_VERSION, id, category, capabilities: [{ id, description }], ports, dimensionsMeters: size,
   collisionProxy: { kind: 'box', dimensionsMeters: size }, runtimeCapability,
-  anchors: [{ id: 'anchor:placement', kind: 'placement', position: { x: 0, y: 0, z: 0 } }, { id: 'anchor:in', kind: 'material', position: { x: -size.x / 2, y: 0, z: 0 } }, { id: 'anchor:out', kind: 'material', position: { x: size.x / 2, y: 0, z: 0 } }],
+  anchors: [{ id: PLACEMENT_ANCHOR_ID, kind: 'placement', position: { x: 0, y: 0, z: 0 } }, { id: 'anchor:in', kind: 'material', position: { x: -size.x / 2, y: 0, z: 0 } }, { id: 'anchor:out', kind: 'material', position: { x: size.x / 2, y: 0, z: 0 } }],
 })
 
 /** Catalog data: detailed visual assets can be swapped without changing these semantics. */

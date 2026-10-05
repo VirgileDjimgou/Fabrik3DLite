@@ -58,8 +58,10 @@ lighting and soft shadows. Select a profile with the URL parameter:
 | High | `?quality=high` | 4096 shadows for inspection screenshots |
 
 The generated conveyor contains fewer than 8,000 triangles; its LOD and the
-pallet LOD are checked against their manifest budgets. No texture is required
-by the current generated assets, keeping memory use and loading deterministic.
+pallet LOD are checked against their manifest budgets. The generated GLB
+packages embed no texture, keeping memory use and loading deterministic; since
+S72 bounded procedural surfaces are generated at runtime for the floor,
+markings, signage and selected materials (see [3D assets](3D_ASSETS.md)).
 
 ## Reference-cell material flow (S39)
 

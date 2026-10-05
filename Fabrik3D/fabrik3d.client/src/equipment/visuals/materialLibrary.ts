@@ -10,16 +10,26 @@
  * Boundaries:
  * - Materials are **visual-only**. They never become collision, runtime, scenario
  *   or telemetry truth (`Definition ≠ Runtime ≠ Visual ≠ Collision ≠ Telemetry`).
- * - The library is texture-free by design. No external texture, atlas or scanned
- *   map is imported, because the S39/S60/S65 measured budgets are 0 textures and
- *   no measured visible benefit justified an atlas at this asset scale. The
- *   provenance of every material is recorded and the texture registry is empty.
+ * - S72 replaces the earlier texture-free policy: relevant materials carry
+ *   deterministic, repository-generated procedural `map`/`roughnessMap`/
+ *   `normalMap` surfaces from `proceduralSurfaces.ts`. No external texture, atlas
+ *   or scanned map is imported and none is committed as a binary. The provenance,
+ *   resolution and estimated byte cost of every surface are recorded in
+ *   `MATERIAL_TEXTURES`.
  * - `color` is authored as an sRGB hex; three.js color management converts it to
  *   the renderer's working space. `outputColorSpace`/tone mapping stay owned by
  *   `useThreeScene` and are deliberately unchanged.
  */
 
 import * as THREE from 'three'
+import {
+  SURFACE_SPECS,
+  getSurfaceTexture,
+  isSurfaceId,
+  surfaceEstimatedBytes,
+  surfaceSpec,
+  type SurfaceId,
+} from './proceduralSurfaces'
 
 export const MATERIAL_LIBRARY_SCHEMA_VERSION = '1.0' as const
 
@@ -63,6 +73,13 @@ export interface MaterialProvenance {
   license: string
 }
 
+/** Which procedural surfaces a material carries. All optional and visual-only. */
+export interface MaterialSurfaceBinding {
+  map?: SurfaceId
+  roughnessMap?: SurfaceId
+  normalMap?: SurfaceId
+}
+
 export interface MaterialDefinition {
   id: MaterialId
   label: string
@@ -78,31 +95,87 @@ export interface MaterialDefinition {
   /** Visual role used only for documentation and tests. */
   usage: string
   provenance: MaterialProvenance
+  /** Deterministic procedural surface maps attached by `createMaterial`. */
+  surfaces?: MaterialSurfaceBinding
 }
 
 /**
- * External texture/atlas registry. Empty by design: the sprint deliberately did
- * **not** add a 1K/2K roughness/metalness/normal/decal atlas because no measured
- * visible benefit justified the texture-memory cost at this asset scale. Tests
- * assert that every declared material is texture-free.
+ * Procedural texture registry (S72). It records every surface actually bound by a
+ * material together with its resolution, estimated RGBA8 bytes, provenance and
+ * license. Tests assert the registry matches the bindings and stays within the
+ * documented budget; nothing is downloaded and no binary is committed.
  */
 export interface MaterialTextureReference {
-  id: string
-  kind: 'roughness' | 'metalness' | 'normal' | 'detail' | 'label-decal'
-  /** e.g. '1K' (1024) or '2K' (2048). */
+  id: SurfaceId
+  kind: 'basecolor' | 'roughness' | 'metalness' | 'normal' | 'detail' | 'label' | 'screen' | 'decal'
+  /** e.g. '256' (256 px) or '128x256'. */
   resolution: string
+  /** Estimated RGBA8 base-level bytes (`width * height * 4`). */
+  estimatedBytes: number
   source: string
   license: string
 }
-
-export const MATERIAL_TEXTURES: readonly MaterialTextureReference[] = Object.freeze([])
 
 const GENERATED_PROVENANCE: MaterialProvenance = Object.freeze({
   source: 'Fabrik3D procedural PBR parameters (repository-generated, no external texture or mesh)',
   license: 'Fabrik3D generated; educational use',
 })
 
-export const MATERIAL_DEFINITIONS: Readonly<Record<MaterialId, MaterialDefinition>> = Object.freeze({
+/**
+ * S72 procedural surface bindings. Only the materials whose flat look the sprint
+ * targets carry surfaces; the rest stay parameter-only. Every surface is a
+ * repository-generated, deterministic, license-safe map (see
+ * `proceduralSurfaces.ts`).
+ */
+export const MATERIAL_SURFACE_BINDINGS: Readonly<Partial<Record<MaterialId, MaterialSurfaceBinding>>> = Object.freeze({
+  'painted-floor': { map: 'painted-floor', roughnessMap: 'painted-floor-roughness' },
+  'concrete-floor': { map: 'concrete-floor' },
+  'safety-yellow-line': { map: 'safety-stripes' },
+  'floor-marking-olive': { map: 'access-lane-marking' },
+  'white-label': { map: 'equipment-signage' },
+  'painted-steel': { map: 'painted-steel-wear' },
+  'machine-body': { map: 'painted-steel-wear' },
+  'machine-trim': { map: 'painted-steel-wear' },
+  'bare-steel': { map: 'brushed-metal' },
+  aluminium: { map: 'brushed-metal' },
+  'wood-cardboard': { map: 'wood-cardboard-grain' },
+  'screen-emissive': { map: 'hmi-screen' },
+  'machine-panel': { map: 'hmi-screen' },
+})
+
+function resolveTextureKind(surfaceId: SurfaceId, binding: MaterialSurfaceBinding): MaterialTextureReference['kind'] {
+  const spec = surfaceSpec(surfaceId)
+  if (binding.roughnessMap === surfaceId) return 'roughness'
+  if (binding.normalMap === surfaceId) return 'normal'
+  if (spec.kind === 'label') return 'label'
+  if (spec.kind === 'screen') return 'screen'
+  if (spec.kind === 'decal') return 'decal'
+  return 'basecolor'
+}
+
+function buildMaterialTextures(): MaterialTextureReference[] {
+  const references = new Map<SurfaceId, MaterialTextureReference>()
+  for (const binding of Object.values(MATERIAL_SURFACE_BINDINGS)) {
+    if (!binding) continue
+    for (const surfaceId of [binding.map, binding.roughnessMap, binding.normalMap]) {
+      if (!surfaceId || references.has(surfaceId)) continue
+      const spec = SURFACE_SPECS[surfaceId]
+      references.set(surfaceId, {
+        id: surfaceId,
+        kind: resolveTextureKind(surfaceId, binding),
+        resolution: `${spec.width}x${spec.height}`,
+        estimatedBytes: surfaceEstimatedBytes(surfaceId),
+        source: spec.provenance.source,
+        license: spec.provenance.license,
+      })
+    }
+  }
+  return [...references.values()].sort((a, b) => a.id.localeCompare(b.id))
+}
+
+export const MATERIAL_TEXTURES: readonly MaterialTextureReference[] = Object.freeze(buildMaterialTextures())
+
+const MATERIAL_BASE_DEFINITIONS: Readonly<Record<MaterialId, Omit<MaterialDefinition, 'surfaces'>>> = Object.freeze({
   'painted-steel': { id: 'painted-steel', label: 'Painted steel', color: 0x5d6b73, metalness: 0.65, roughness: 0.45, usage: 'Conveyor frames, guards and structural steel.', provenance: GENERATED_PROVENANCE },
   'bare-steel': { id: 'bare-steel', label: 'Bare steel', color: 0xaeb6bc, metalness: 0.85, roughness: 0.22, usage: 'Machined steel surfaces and exposed tooling.', provenance: GENERATED_PROVENANCE },
   aluminium: { id: 'aluminium', label: 'Aluminium', color: 0xc3c9cd, metalness: 0.72, roughness: 0.38, usage: 'Cable trays, profiles and light machine parts.', provenance: GENERATED_PROVENANCE },
@@ -135,6 +208,21 @@ export const MATERIAL_DEFINITIONS: Readonly<Record<MaterialId, MaterialDefinitio
   'floor-marking-olive': { id: 'floor-marking-olive', label: 'Floor clear-zone paint', color: 0x556644, metalness: 0.05, roughness: 0.72, emissive: 0x121809, emissiveIntensity: 0.3, usage: 'Clearance / keep-clear floor markings.', provenance: GENERATED_PROVENANCE },
 })
 
+/**
+ * The public library: every base definition merged with its optional S72 surface
+ * binding. Keeping the merge here means a new material automatically exposes its
+ * surfaces through `materialDefinition()`.
+ */
+export const MATERIAL_DEFINITIONS: Readonly<Record<MaterialId, MaterialDefinition>> = Object.freeze(
+  Object.fromEntries(
+    (Object.entries(MATERIAL_BASE_DEFINITIONS) as [MaterialId, Omit<MaterialDefinition, 'surfaces'>][])
+      .map(([id, definition]) => {
+        const surfaces = MATERIAL_SURFACE_BINDINGS[id]
+        return [id, surfaces ? { ...definition, surfaces } : definition]
+      }),
+  ) as Record<MaterialId, MaterialDefinition>,
+)
+
 export const MATERIAL_IDS: readonly MaterialId[] = Object.freeze(
   Object.keys(MATERIAL_DEFINITIONS) as MaterialId[],
 )
@@ -159,12 +247,19 @@ export interface CreateMaterialOverrides {
   metalness?: number
   roughness?: number
   side?: THREE.Side
+  /** Set to false for an explicitly untextured variant (defaults to true). */
+  textures?: boolean
 }
 
 /**
  * Creates one independent material from the shared definition. Every visual owns
  * its materials so a status-color change on one instance can never leak into
  * another (or into a later scene), and disposal stays deterministic.
+ *
+ * S72: when the definition declares procedural surfaces, the shared cached
+ * `map`/`roughnessMap`/`normalMap` textures are attached. The textures are owned
+ * by the surface cache (one GPU texture per surface), not by the material, so
+ * `material.dispose()` is unchanged.
  */
 export function createMaterial(id: MaterialId, overrides: CreateMaterialOverrides = {}): THREE.MeshStandardMaterial {
   const definition = materialDefinition(id)
@@ -181,7 +276,32 @@ export function createMaterial(id: MaterialId, overrides: CreateMaterialOverride
   material.name = id
   material.userData.materialId = id
   material.userData.visualOnly = true
+  if ((overrides.textures ?? true) && definition.surfaces) {
+    applyMaterialSurfaces(material, definition.surfaces)
+  }
   return material
+}
+
+/** Attaches the shared cached procedural surfaces declared by a binding. */
+function applyMaterialSurfaces(material: THREE.MeshStandardMaterial, binding: MaterialSurfaceBinding): void {
+  const surfaceIds: SurfaceId[] = []
+  if (binding.map) {
+    material.map = getSurfaceTexture(binding.map)
+    material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping
+    surfaceIds.push(binding.map)
+  }
+  if (binding.roughnessMap) {
+    material.roughnessMap = getSurfaceTexture(binding.roughnessMap)
+    material.roughnessMap.wrapS = material.roughnessMap.wrapT = THREE.RepeatWrapping
+    surfaceIds.push(binding.roughnessMap)
+  }
+  if (binding.normalMap) {
+    material.normalMap = getSurfaceTexture(binding.normalMap)
+    material.normalMap.wrapS = material.normalMap.wrapT = THREE.RepeatWrapping
+    surfaceIds.push(binding.normalMap)
+  }
+  material.userData.surfaceIds = surfaceIds
+  material.needsUpdate = true
 }
 
 /**
@@ -258,11 +378,17 @@ export function validateMaterialLibrary(): MaterialLibraryProblem[] {
     }
     if (!definition.provenance.source.trim()) problems.push({ id, message: 'provenance.source is empty' })
     if (!definition.provenance.license.trim()) problems.push({ id, message: 'provenance.license is empty' })
+    if (definition.surfaces) {
+      for (const [slot, surfaceId] of Object.entries(definition.surfaces)) {
+        if (!isSurfaceId(surfaceId)) problems.push({ id, message: `surface ${slot} references unknown surface '${String(surfaceId)}'` })
+      }
+    }
   }
   for (const texture of MATERIAL_TEXTURES) {
     if (!texture.resolution) problems.push({ id: texture.id, message: 'texture resolution is empty' })
     if (!texture.source.trim()) problems.push({ id: texture.id, message: 'texture source is empty' })
     if (!texture.license.trim()) problems.push({ id: texture.id, message: 'texture license is empty' })
+    if (!(texture.estimatedBytes > 0)) problems.push({ id: texture.id, message: `texture estimatedBytes invalid: ${texture.estimatedBytes}` })
   }
   return problems
 }

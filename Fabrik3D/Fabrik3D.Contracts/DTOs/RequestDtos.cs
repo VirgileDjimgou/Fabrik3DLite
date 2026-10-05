@@ -221,7 +221,7 @@ public record DispatchAckRequest
 
 /// <summary>
 /// Saves a named cell template. <c>Content</c> is the versioned cell file
-/// JSON (schemaVersion 0.9 or 1.0).
+/// JSON (schemaVersion 0.9, 1.0 or 1.1).
 /// </summary>
 public record SaveCellTemplateRequest
 {

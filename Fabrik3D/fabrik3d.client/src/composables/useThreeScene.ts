@@ -2,9 +2,16 @@ import { ref, shallowRef, onBeforeUnmount } from 'vue'
 import type { Ref, ShallowRef } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { readRendererIdentity, type RendererIdentity } from '../observability/acceleration'
 import { createMaterial } from '../equipment/visuals/materialLibrary'
+import {
+  applyIndustrialEnvironment,
+  type IndustrialEnvironmentHandle,
+} from '../equipment/visuals/industrialEnvironment'
+import {
+  createPostProcessing,
+  type PostProcessingHandle,
+} from '../equipment/visuals/postProcessing'
 
 export type SceneQuality = 'low' | 'medium' | 'high'
 
@@ -34,11 +41,17 @@ export interface ThreeSceneContext {
   quality: SceneQuality
   /** Observed WebGL renderer identity, used to classify acceleration honestly (S56). */
   rendererIdentity: RendererIdentity
+  /** S74 optional quality-gated post-processing; `null` means the direct render path. */
+  postProcessing: PostProcessingHandle | null
+  /** S74 declared industrial environment/atmosphere handle. */
+  environment: IndustrialEnvironmentHandle
 
   /** Add any Object3D to the scene. */
   addObject(obj: THREE.Object3D): void
   /** Remove an Object3D from the scene. */
   removeObject(obj: THREE.Object3D): void
+  /** Renders one frame through the composer when enabled, otherwise directly. */
+  render(): void
   /** Dispose the entire scene context. */
   dispose(): void
 }
@@ -65,7 +78,12 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
     const h = el.clientHeight
     ctx.camera.aspect = w / h
     ctx.camera.updateProjectionMatrix()
+    // S74: re-apply the pixel ratio on resize so a monitor/DPR change is honoured
+    // and the composer render targets stay in sync with the drawing buffer.
+    const pixelRatio = Math.min(window.devicePixelRatio, SCENE_QUALITY_PRESETS[ctx.quality].pixelRatioCap)
+    ctx.renderer.setPixelRatio(pixelRatio)
     ctx.renderer.setSize(w, h)
+    ctx.postProcessing?.setSize(w, h, pixelRatio)
   }
 
   function init() {
@@ -94,13 +112,11 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
 
       // Scene
       const scene = new THREE.Scene()
-      scene.background = new THREE.Color(0x202a31)
-      const pmrem = new THREE.PMREMGenerator(renderer)
-      const room = new RoomEnvironment()
-      const environmentTarget = pmrem.fromScene(room, 0.04)
-      scene.environment = environmentTarget.texture
-      room.dispose()
-      pmrem.dispose()
+
+      // S74: deterministic industrial-hall environment, gradient background,
+      // subtle fog and bounded local lighting replace the generic neutral
+      // RoomEnvironment PMREM. Visual-only; never state/collision/telemetry truth.
+      const environment = applyIndustrialEnvironment({ quality, renderer, scene })
 
       // Camera
       const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100)
@@ -114,18 +130,10 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
       controls.dampingFactor = 0.08
       controls.update()
 
-      // Lights
-      scene.add(new THREE.HemisphereLight(0xdfeaf2, 0x2a3130, 1.4))
-
-      const dirLight = new THREE.DirectionalLight(0xfff4df, 2.4)
-      dirLight.position.set(5, 8, 4)
-      dirLight.castShadow = true
-      dirLight.shadow.mapSize.set(preset.shadowMapSize, preset.shadowMapSize)
-      scene.add(dirLight)
-
-      const fillLight = new THREE.DirectionalLight(0x9bc8e8, 0.55)
-      fillLight.position.set(-3, 4, -2)
-      scene.add(fillLight)
+      // S74: the key light is owned by the environment handle; the CNC cell
+      // setup re-frames its shadow camera. The floor grid stays here.
+      const keyLight = environment.keyLight
+      keyLight.shadow.mapSize.set(preset.shadowMapSize, preset.shadowMapSize)
 
       // Floor grid
       scene.add(new THREE.GridHelper(10, 20, 0x52616a, 0x354148))
@@ -137,6 +145,19 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
       floor.receiveShadow = true
       scene.add(floor)
 
+      // S74: optional quality-gated post-processing. `low` quality and any
+      // unsupported environment fall back to the direct render path.
+      const pixelRatio = Math.min(window.devicePixelRatio, preset.pixelRatioCap)
+      const postProcessing = createPostProcessing({
+        renderer,
+        scene,
+        camera,
+        quality,
+        width,
+        height,
+        pixelRatio,
+      })
+
       const ctx: ThreeSceneContext = {
         scene,
         camera,
@@ -144,11 +165,18 @@ export function useThreeScene(containerRef: Ref<HTMLDivElement | null>): {
         controls,
         quality,
         rendererIdentity: readRendererIdentity(renderer.getContext()),
+        postProcessing,
+        environment,
         addObject: (obj) => scene.add(obj),
         removeObject: (obj) => scene.remove(obj),
+        render: () => {
+          if (postProcessing) postProcessing.render()
+          else renderer.render(scene, camera)
+        },
         dispose: () => {
           controls.dispose()
-          environmentTarget.dispose()
+          postProcessing?.dispose()
+          environment.dispose()
           renderer.dispose()
           scene.traverse((child) => {
             if (child instanceof THREE.Mesh) {

@@ -36,11 +36,14 @@ export const REQUIRED_DOCUMENTS = [
   'docs/operations/VALIDATION_REVISION_3.md',
   'docs/operations/VALIDATION_REVISION_4.md',
   'docs/operations/RELEASE_PREPARATION_REVISION_4.md',
+  'docs/operations/VALIDATION_REVISION_5.md',
+  'docs/operations/RELEASE_PREPARATION_REVISION_5.md',
   'docs/operations/FLAGSHIP_DEMO.md',
   'docs/development/TROUBLESHOOTING.md',
   'docs/releases/RELEASE_NOTES_1.0.md',
   'docs/releases/RELEASE_NOTES_REVISION_3.md',
   'docs/releases/RELEASE_NOTES_REVISION_4.md',
+  'docs/releases/RELEASE_NOTES_REVISION_5.md',
   `${SAMPLE_PROJECT_DIR}/project.json`,
   `${SAMPLE_PROJECT_DIR}/README.md`,
   `${SAMPLE_PROJECT_DIR}/reference-cell.cell.json`,
@@ -66,15 +69,18 @@ export const LINK_CHECKED_DOCUMENTS = [
   'docs/operations/VALIDATION_REVISION_3.md',
   'docs/operations/VALIDATION_REVISION_4.md',
   'docs/operations/RELEASE_PREPARATION_REVISION_4.md',
+  'docs/operations/VALIDATION_REVISION_5.md',
+  'docs/operations/RELEASE_PREPARATION_REVISION_5.md',
   'docs/operations/FLAGSHIP_DEMO.md',
   'docs/development/TROUBLESHOOTING.md',
   'docs/releases/RELEASE_NOTES_1.0.md',
   'docs/releases/RELEASE_NOTES_REVISION_3.md',
   'docs/releases/RELEASE_NOTES_REVISION_4.md',
+  'docs/releases/RELEASE_NOTES_REVISION_5.md',
   `${SAMPLE_PROJECT_DIR}/README.md`,
 ]
 
-/** Current documents that must distinguish the four release eras (1.0, Revision 2, Revision 3, Revision 4). */
+/** Current documents that must distinguish the five release eras (1.0, Revision 2, Revision 3, Revision 4, Revision 5). */
 export const RELEASE_ERA_DOCUMENTS = [
   'README.md',
   'docs/DOCUMENTATION_INDEX.md',
@@ -88,11 +94,16 @@ export const RELEASE_ERA_PATTERNS = [
   { label: 'Revision 2', pattern: /Revision 2/i },
   { label: 'Revision 3', pattern: /Revision 3/i },
   { label: 'Revision 4', pattern: /Revision 4/i },
+  { label: 'Revision 5', pattern: /Revision 5/i },
 ]
 
 export const REVISION_4_PREP_DOCUMENT = 'docs/operations/RELEASE_PREPARATION_REVISION_4.md'
 export const REVISION_4_RELEASE_NOTES = 'docs/releases/RELEASE_NOTES_REVISION_4.md'
 export const REVISION_4_VALIDATION = 'docs/operations/VALIDATION_REVISION_4.md'
+
+export const REVISION_5_PREP_DOCUMENT = 'docs/operations/RELEASE_PREPARATION_REVISION_5.md'
+export const REVISION_5_RELEASE_NOTES = 'docs/releases/RELEASE_NOTES_REVISION_5.md'
+export const REVISION_5_VALIDATION = 'docs/operations/VALIDATION_REVISION_5.md'
 
 /**
  * Stale claims a current document must not repeat. Each names the files to check and why the claim
@@ -164,14 +175,13 @@ function readJson(path, errors) {
 }
 
 /**
- * S70 release coherence: current documents must distinguish the four release eras, must not repeat
- * superseded claims, and the Revision 4 release artifacts must state version, migration, limitations,
- * validation and media information before final validation.
+ * S70 release coherence (extended by S76 for Revision 5): current documents must distinguish the five
+ * release eras, must not repeat superseded claims, and the Revision 4/Revision 5 release artifacts must
+ * state version, migration, limitations, validation and media information before final validation.
  *
- * S71 finalization: once S71 has produced `VALIDATION_REVISION_4.md`, the Revision 4 release notes
- * must no longer be labelled draft, must link the validation record, and the validation record itself
- * must carry the measured hardware benchmark, the Revision 3 → Revision 4 comparison and its
- * explicit non-claims.
+ * S71/S76 finalization: once the validation record exists, the release notes must no longer be labelled
+ * draft, must link the validation record, and the validation record itself must carry the measured
+ * hardware benchmark, the previous-revision → current-revision comparison and its explicit non-claims.
  * @param {string} rootDir
  * @param {string[]} errors
  */
@@ -232,6 +242,46 @@ export function verifyReleaseCoherence(rootDir, errors) {
     ]
     for (const [label, pattern] of requiredValidation) {
       if (!pattern.test(text)) errors.push(`${REVISION_4_VALIDATION}: missing ${label}`)
+    }
+  }
+
+  const prep5 = join(rootDir, REVISION_5_PREP_DOCUMENT)
+  if (existsSync(prep5)) {
+    const text = readFileSync(prep5, 'utf8')
+    const required = [
+      ['a version/tag recommendation', /v1\.\d+\.\d+/],
+      ['a migration statement', /migration/i],
+      ['a known-limitations link', /LIMITATIONS\.md/],
+      ['a validation link', /VALIDATION_/],
+      ['a media link', /artifacts\/demo|docs\/demo/],
+    ]
+    for (const [label, pattern] of required) {
+      if (!pattern.test(text)) errors.push(`${REVISION_5_PREP_DOCUMENT}: missing ${label}`)
+    }
+  }
+
+  const notes5 = join(rootDir, REVISION_5_RELEASE_NOTES)
+  if (existsSync(notes5)) {
+    const text = readFileSync(notes5, 'utf8')
+    if (/draft/i.test(text)) errors.push(`${REVISION_5_RELEASE_NOTES}: must be finalized by S76 (remove the draft label)`)
+    if (!/v1\.\d+\.\d+/.test(text)) errors.push(`${REVISION_5_RELEASE_NOTES}: missing a version recommendation`)
+    if (!/VALIDATION_REVISION_5\.md/.test(text)) errors.push(`${REVISION_5_RELEASE_NOTES}: missing the Revision 5 validation link`)
+  }
+
+  const validation5 = join(rootDir, REVISION_5_VALIDATION)
+  if (existsSync(validation5)) {
+    const text = readFileSync(validation5, 'utf8')
+    const requiredValidation = [
+      ['a hardware/acceleration classification', /acceleration=(hardware|software)/i],
+      ['the Revision 4 comparison', /Revision 4/],
+      ['the Revision 5 comparison', /Revision 5/],
+      ['an explicit comparison statement', /compar/i],
+      ['the hardware benchmark artifact path', /gpu-benchmark\.json/],
+      ['the five flagship scenarios', /palletizing[\s\S]{0,6000}vision[- ]sorting/i],
+      ['an explicit deferred or non-claim statement', /deferred|non-claim/i],
+    ]
+    for (const [label, pattern] of requiredValidation) {
+      if (!pattern.test(text)) errors.push(`${REVISION_5_VALIDATION}: missing ${label}`)
     }
   }
 }

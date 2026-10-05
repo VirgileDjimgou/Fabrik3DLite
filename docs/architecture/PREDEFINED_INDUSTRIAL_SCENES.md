@@ -34,6 +34,23 @@ six-axis robot instead of a procedural preference. Scenario identifiers, events,
 cell composition and success criteria are unchanged. See
 [Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).
 
+## Anchor-driven modular assembly (S73)
+
+Declared anchors, ports and connections are now authoritative for 3D runtime
+placement. `resolveCellAttachments` (`src/equipment/attachment.ts`) derives an
+attached instance's world transform from its target's declared anchor or port,
+with the declared transform kept as the compatibility fallback. The palletizing
+cell attaches its vacuum gripper to the robot's `tool:flange` anchor and the CNC
+reference cell attaches its pallet station to the conveyor's `pallet-stop` port;
+both resolve to their existing poses, so the five flagship cells and the CNC
+reference cell keep their transforms and visual baselines. A data-only
+`MODULAR_ASSEMBLY_CELL` demonstrates conveyor chains, a fence run with an
+interlocked gate, tool-on-flange and pallet-station-on-port composition with no
+hard-coded transforms. The 2D editor and the 3D runtime consume the same
+resolver, so a `CellDefinition` resolves to identical world transforms on both
+surfaces. Attachment changes placement only; scenario state, collision authority
+and telemetry are unchanged.
+
 ## Scenario robot motion (S66)
 
 The palletizing, assembly/inspection and safety cells now visibly execute
@@ -45,3 +62,17 @@ scanner conditions inhibit motion until the existing scenario safety restart is
 observed. This is simulated training behavior, not an OEM program or certified
 safety function, and the robot controller remains the only source of joint state.
 See [Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).
+
+## State-driven motion and instanced detail (S75)
+
+The five flagship cells now show secondary motion that strictly follows runtime
+state: gripper fingers (or the vacuum cup) open and close with the authoritative
+holding state, the conveyor belt marker and rollers move only while the cell is
+running and stop when it stops, an optional robot-base beacon follows robot state,
+and the dress-pack cables flex within a bounded range from the joint pose. The
+shared factory environment instances its repeated static elements (expansion
+joints, access-lane ticks, cable-tray rungs) and adds human-scale dressing
+(mannequins, cabinet, extinguisher, signage, pipe) without inflating draw calls.
+Scenario identifiers, events, cell composition, success criteria and collision
+authority are unchanged; no visual invents a state the runtime does not have. See
+[Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).

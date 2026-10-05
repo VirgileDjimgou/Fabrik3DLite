@@ -12,11 +12,11 @@ const LEGACY = JSON.stringify({
 })
 
 describe('cell file migration from the initial schema', () => {
-  it('migrates 0.9 to 1.0 predictably', () => {
+  it('migrates 0.9 to 1.1 predictably', () => {
     const result = migrateCellFile(LEGACY)
 
     expect(result.migrated).toBe(true)
-    expect(result.cell.schemaVersion).toBe('1.0')
+    expect(result.cell.schemaVersion).toBe('1.1')
     expect(result.cell.id).toBe('legacy-cell')
     expect(result.cell.name).toBe('Legacy cell')
     expect(result.cell.worldFrameId).toBe('world')
@@ -37,8 +37,23 @@ describe('cell file migration from the initial schema', () => {
     expect(cnc.transform.rotation.y).toBeCloseTo(Math.PI, 9)
   })
 
+  it('migrates 1.0 to 1.1 without changing transforms', () => {
+    const previous = JSON.stringify({
+      schemaVersion: '1.0',
+      id: 'c',
+      name: 'C',
+      worldFrameId: 'world',
+      equipment: [{ id: 'a', definitionId: 'straight-conveyor', transform: { position: { x: 1, y: 0, z: 2 }, rotation: { x: 0, y: 0, z: 0 } } }],
+    })
+    const result = migrateCellFile(previous)
+    expect(result.migrated).toBe(true)
+    expect(result.cell.schemaVersion).toBe('1.1')
+    expect(result.cell.equipment[0]!.transform.position).toEqual({ x: 1, y: 0, z: 2 })
+    expect(result.diagnostics.some((d) => d.code === 'migrated_from_1.0')).toBe(true)
+  })
+
   it('migrating an already-current file is a no-op', () => {
-    const current = JSON.stringify({ schemaVersion: '1.0', id: 'c', name: 'C', worldFrameId: 'world', equipment: [] })
+    const current = JSON.stringify({ schemaVersion: '1.1', id: 'c', name: 'C', worldFrameId: 'world', equipment: [] })
     const result = migrateCellFile(current)
     expect(result.migrated).toBe(false)
     expect(result.cell.id).toBe('c')

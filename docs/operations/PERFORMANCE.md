@@ -265,7 +265,213 @@ Comparison with the S62 (Revision 3) table above:
 The same benchmark run headless is classified `software`/`gpuEvidence=false` and
 is never presented as a GPU result; the CI visual suite (software rendering)
 still passes deterministically and the soak reports flat draw calls
-(`487`) and texture bytes (`0`) across repeated scene loads.
+(`487`) and texture bytes (`0`) across repeated scene loads. These are the S68
+numbers and predate the S72 procedural surfaces below.
+
+## S72 procedural surface and grounding re-measurement
+
+S72 adds deterministic procedural surface maps and equipment grounding. The
+renderer configuration, lighting and ACES/sRGB pipeline are unchanged. GPU-free,
+deterministic measurements (`measureSceneResources` +
+`estimateSceneTextureMemory`, RGBA8 base-level estimate) are recorded by the
+client tests:
+
+| Visual | Meshes | Triangles | Draw calls | Textures | Texture bytes |
+| --- | --- | --- | --- | --- | --- |
+| Factory environment (industrial-hall) | 54 | 638 | 54 | 5 | 1 048 576 |
+| Procedural hero CNC visual | 28 | 764 | 28 | 4 | 851 968 |
+| Scenario `sorting-normal-cycle` | 89 | 1 208 | 89 | 8 | 1 572 864 |
+| Scenario `palletizing-normal-cycle` | 125 | 1 652 | 125 | 8 | 1 441 792 |
+| Scenario `assembly-inspection-cycle` | 96 | 1 282 | 96 | 8 | 1 572 864 |
+| Scenario `safety-door-recovery` | 55 | 1 008 | 55 | 5 | 851 968 |
+
+The whole 14-surface library estimates to **2 179 072 bytes (2.08 MiB)** and its
+documented budget is 256 px maximum, 14 textures and 4 MiB, so every measured
+scene stays inside budget. These counts include the per-equipment contact decal
+(one shared texture, one mesh per equipment root) and are recorded with the GLB
+packages offline, so they describe the procedural fallback path.
+
+The S62/S68 manual hardware benchmark command was re-run for the S72 build on the
+same documented reference machine (headed Chromium, 1920×1080,
+`acceleration=hardware`, `gpuEvidence=true`, 2026-10-03), writing
+`test-results/perf/gpu-benchmark.json`:
+
+| Scene | Profile | FPS | p50 | p95 | p99 | draw calls | triangles | textures | texture bytes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CNC machine tending | Performance | 162.7 | 6.10 ms | 7.40 ms | 9.66 ms | 462 | 10 084 | 8 | 1 376 256 |
+| CNC machine tending | Balanced | 114.7 | 8.30 ms | 13.07 ms | 16.75 ms | 514 | 14 056 | 8 | 1 376 256 |
+| CNC machine tending | Quality | 108.3 | 9.10 ms | 11.26 ms | 11.97 ms | 514 | 14 056 | 8 | 1 376 256 |
+| Robot palletizing | Performance | 136.9 | 6.10 ms | 13.14 ms | 16.66 ms | 185 | 3 834 | 6 | 1 114 112 |
+| Robot palletizing | Balanced | 159.6 | 6.00 ms | 7.30 ms | 13.06 ms | 185 | 3 834 | 6 | 1 114 112 |
+| Robot palletizing | Quality | 118.3 | 8.35 ms | 10.70 ms | 11.40 ms | 185 | 3 834 | 6 | 1 114 112 |
+
+Compared with the S68 table above, S72 adds the bounded procedural surfaces and
+the per-equipment contact decals:
+
+- CNC draw calls moved 435/487/487 → 462/514/514 (+27) and triangles
+  9 780/13 752/13 752 → 10 084/14 056/14 056 (+304); textures 0 → 8
+  (1 376 256 bytes estimated RGBA8). The delta is the environment surface layer
+  plus the equipment contact decals.
+- Robot palletizing draw calls moved 164 → 185 (+21) and triangles 3 732 → 3 834
+  (+102); textures 0 → 6 (1 114 112 bytes).
+- Every measured profile stays above the 60 FPS reference target; the minimum
+  measured FPS is **108.3** (was 78.3 in S68). The FPS differences are
+  single-run observations and partly run-to-run variance, not a guaranteed
+  speed-up.
+
+S72 did not change scenario state, robot kinematics, collision, signalling or the
+asset loader fallback contract: textures and contact decals are visual-only.
+
+## S74 industrial environment and post-processing re-measurement
+
+S74 replaces the generic neutral `RoomEnvironment` PMREM with a deterministic
+industrial-hall environment (procedural softbox PMREM, gradient background,
+subtle fog, bounded local lights) and adds an optional, quality-gated
+`EffectComposer` path (cheap depth AO + selective bloom + FXAA). Only the
+`low`/`medium`/`high` presets already authoritative for the simulator are used.
+The post-processing path is **fail-closed**: `low` quality, a missing/WebGL1
+context or any non-`hardware` renderer class falls back to the direct
+`renderer.render(scene, camera)` path, so the visual baselines in CI (headless
+SwiftShader, classified `software`) never exercise the composer.
+
+The S62/S68/S72 manual hardware benchmark command was re-run for the S74 build on
+the same documented reference machine (headed Chromium, 1920×1080,
+`acceleration=hardware`, `gpuEvidence=true`, 2026-10-03), writing
+`test-results/perf/gpu-benchmark.json`:
+
+```powershell
+npm --prefix Fabrik3D/fabrik3d.client run benchmark:gpu
+```
+
+| Scene | Profile | FPS | p50 | p95 | p99 | draw calls | triangles | textures | texture bytes | load |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CNC machine tending | Performance | 156.1 | 6.10 ms | 10.08 ms | 13.80 ms | 463 | 10 086 | 8 | 1 376 256 | 2 294 ms |
+| CNC machine tending | Balanced | 72.9 | 13.60 ms | 15.50 ms | 16.20 ms | 515 | 14 058 | 8 | 1 376 256 | 2 669 ms |
+| CNC machine tending | Quality | 63.8 | 15.60 ms | 17.74 ms | 18.64 ms | 515 | 14 058 | 8 | 1 376 256 | 5 477 ms |
+| Robot palletizing | Performance | 143.1 | 6.20 ms | 12.55 ms | 14.48 ms | 186 | 3 836 | 6 | 1 114 112 | 4 574 ms |
+| Robot palletizing | Balanced | 84.8 | 11.90 ms | 13.91 ms | 14.77 ms | 186 | 3 836 | 6 | 1 114 112 | 1 873 ms |
+| Robot palletizing | Quality | 68.7 | 14.50 ms | 16.66 ms | 17.69 ms | 186 | 3 836 | 6 | 1 114 112 | 2 534 ms |
+
+Every measured profile stays above the 60 FPS reference target; the minimum
+measured FPS is **63.8** (CNC, Quality). Compared with the S72 table above:
+
+- The geometry is unchanged. The scene beauty pass moved by exactly +1 draw call
+  and +2 triangles per run (CNC 462/514/514 → 463/515/515 and
+  10 084/14 056/14 056 → 10 086/14 058/14 058; palletizing 185 → 186 and
+  3 834 → 3 836): the added count is the single full-screen gradient-background
+  quad. The local lights add per-fragment shading cost but no draw calls, so the
+  GPU-free geometry tables in [3D_ASSETS.md](../architecture/3D_ASSETS.md) are
+  unchanged.
+- The composer path costs frame time at Balanced/Quality: CNC FPS moved
+  114.7 → 72.9 and 108.3 → 63.8, and palletizing 159.6 → 84.8 and 118.3 → 68.7.
+  The Performance (direct-render) path is essentially unchanged (162.7 → 156.1
+  and 136.9 → 143.1, i.e. run-to-run variance). The cost is the depth-AO,
+  selective-bloom and FXAA passes plus the composer's half-float targets.
+- The AO and bloom internal targets run at `renderScale` of the drawing buffer
+  (0.45 for both medium and high) while the scene beauty pass and the final
+  anti-aliasing stay at full resolution, which is what keeps the cost bounded.
+  An earlier `SSAOPass` attempt re-rendered the scene and measured below the
+  target, so it was replaced by the depth-buffer AO pass.
+
+These are single-run observations on the documented developer-reference host, not
+an SLA. The FPS differences partly reflect run-to-run and thermal variance; only
+the classification (`hardware`, `gpuEvidence=true`) and the above-target result
+are claims. Headless runs stay `software`/`gpuEvidence=false` and are never
+presented as GPU results.
+
+## S75 state-driven motion and instanced detail re-measurement
+
+S75 adds state-driven secondary motion (gripper fingers, belt marker/rollers,
+robot-base beacon, bounded dress-pack flex) and raises scene detail through
+`InstancedMesh` for repeated static elements plus human-scale dressing props. It
+changes no scenario state, robot kinematics, collision, signalling or the
+orchestration path.
+
+The S62/S68/S72/S74 manual hardware benchmark command was re-run for the S75
+build on the same documented reference machine (headed Chromium, 1920×1080,
+`acceleration=hardware`, `gpuEvidence=true`, 2026-10-03), writing
+`test-results/perf/gpu-benchmark.json`:
+
+```powershell
+npm --prefix Fabrik3D/fabrik3d.client run benchmark:gpu
+```
+
+| Scene | Profile | FPS | p50 | p95 | p99 | draw calls | triangles | textures | texture bytes | load |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CNC machine tending | Performance | 164.8 | 6.10 ms | 7.20 ms | 7.80 ms | 435 | 11 610 | 9 | 1 638 400 | 2 607 ms |
+| CNC machine tending | Balanced | 71.5 | 14.10 ms | 15.82 ms | 16.38 ms | 487 | 15 582 | 9 | 1 638 400 | 3 231 ms |
+| CNC machine tending | Quality | 60.3 | 16.60 ms | 18.19 ms | 18.62 ms | 487 | 15 582 | 9 | 1 638 400 | 5 486 ms |
+| Robot palletizing | Performance | 140.2 | 6.20 ms | 12.80 ms | 16.00 ms | 166 | 5 348 | 7 | 1 376 256 | 4 408 ms |
+| Robot palletizing | Balanced | 83.5 | 12.10 ms | 14.00 ms | 14.70 ms | 166 | 5 348 | 7 | 1 376 256 | 1 879 ms |
+| Robot palletizing | Quality | 68.5 | 14.60 ms | 17.04 ms | 17.59 ms | 166 | 5 348 | 7 | 1 376 256 | 4 039 ms |
+
+Every measured profile stays above the 60 FPS reference target; the minimum
+measured FPS is **60.3** (CNC, Quality). Compared with the S74 table above:
+
+- The CNC reference cell gains the human-scale dressing and the instanced
+  environment families; the palletizing cell gains the same environment detail.
+  The repeated expansion joints, access-lane ticks and cable-tray rungs are one
+  `InstancedMesh` per family, so the added dressing does not multiply draw calls.
+- The GPU-free per-cell geometry is recorded in
+  [SCENARIO_3D_RUNTIME.md](../architecture/SCENARIO_3D_RUNTIME.md): 76–108 meshes /
+  2 396–2 824 triangles / 76–108 draw calls per material-flow cell, inside the
+  documented `< 200` draw-call budget.
+- The state-driven motion is applied on the deterministic simulation clock, not
+  per render frame, so it adds no per-frame allocation.
+
+These are single-run observations on the documented developer-reference host, not
+an SLA. Only the classification (`hardware`, `gpuEvidence=true`) and the
+above-target result are claims. Headless runs stay `software`/`gpuEvidence=false`
+and are never presented as GPU results.
+
+## S76 Revision 5 validation re-measurement
+
+S76 adds no rendering code: it re-runs the S62/S68/S72/S74/S75 manual hardware
+benchmark on the final Revision 5 build so the release validation records a fresh,
+reproducible Revision 4 → Revision 5 comparison. Command and host are unchanged
+(headed Chromium, 1920×1080, `acceleration=hardware`, `gpuEvidence=true`,
+2026-10-03), writing `test-results/perf/gpu-benchmark.json`:
+
+```powershell
+npm --prefix Fabrik3D/fabrik3d.client run benchmark:gpu
+```
+
+| Scene | Profile | FPS | p50 | p95 | p99 | draw calls | triangles | textures | texture bytes | load |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CNC machine tending | Performance | 157.4 | 6.10 ms | 8.73 ms | 10.35 ms | 435 | 11 610 | 9 | 1 638 400 | 3 526 ms |
+| CNC machine tending | Balanced | 63.8 | 15.50 ms | 18.60 ms | 20.51 ms | 487 | 15 582 | 9 | 1 638 400 | 2 956 ms |
+| CNC machine tending | Quality | 58.1 | 17.20 ms | 19.46 ms | 20.77 ms | 487 | 15 582 | 9 | 1 638 400 | 3 540 ms |
+| Robot palletizing | Performance | 150.5 | 6.20 ms | 10.00 ms | 13.00 ms | 166 | 5 348 | 7 | 1 376 256 | 5 022 ms |
+| Robot palletizing | Balanced | 77.6 | 12.70 ms | 15.63 ms | 17.83 ms | 166 | 5 348 | 7 | 1 376 256 | 1 732 ms |
+| Robot palletizing | Quality | 63.7 | 15.60 ms | 18.30 ms | 19.35 ms | 166 | 5 348 | 7 | 1 376 256 | 3 507 ms |
+
+Compared with the Revision 4 baseline (S71 table in
+[VALIDATION_REVISION_4.md](VALIDATION_REVISION_4.md), same host/browser):
+
+- **No blanket improvement is claimed.** The `Performance` (direct-render) profiles
+  stay within a few percent of Revision 4 or improve slightly: CNC 148.5 → 157.4
+  FPS with better p95/p99, palletizing 143.4 → 150.5 FPS with better p95/p99.
+- The `Balanced`/`Quality` profiles are measurably slower (CNC 153.5 → 63.8 and
+  110.6 → 58.1; palletizing 162.2 → 77.6 and 119.9 → 63.7) because the S74
+  quality-gated composer path is active there. This is the intended fidelity cost
+  documented in the S74 section above, not an optimization regression.
+- **On this run five of six profiles meet the 60 FPS reference target; CNC Quality
+  is 58.1 FPS, marginally below it.** The S75 run of the same code recorded CNC
+  Quality at 60.3 FPS, so the border is within run-to-run/thermal variance and is
+  reported as such rather than rounded up.
+- Draw calls decrease slightly (CNC 460 → 435 low, 512 → 487 medium/high;
+  palletizing 170 → 166) because S75 instances repeated environment elements.
+- Triangles increase by design (CNC low 10 080 → 11 610, medium/high
+  14 052 → 15 582; palletizing 3 804 → 5 348) with the S72 surface detail, S73
+  assembled modules and S75 instancing/motion detail.
+- Texture memory is no longer zero: S72's in-code procedural surface maps record
+  9 textures / 1 638 400 bytes (CNC) and 7 / 1 376 256 bytes (palletizing) versus
+  0 textures in Revision 4. No image file or external texture license is
+  introduced.
+
+These remain single-run observations on the documented developer-reference host,
+not an SLA. Headless runs stay `software`/`gpuEvidence=false` and are never
+presented as GPU results.
 
 ## Measurements recorded by earlier sprints
 
@@ -328,8 +534,8 @@ npm --prefix Fabrik3D/fabrik3d.client run load:signalr
   human-required evidence item until performed.
 - CI browser frame time is measured headless (software rendering) and is labelled `software` or
   `unknown`, never `hardware`. Hardware GPU numbers are recorded here only from the explicit headed
-  benchmark runs on the documented reference host (S62/S68) and apply to that host only; they must not
-  be inferred for other hardware or from geometry counts.
+  benchmark runs on the documented reference host (S62/S68/S72/S74/S75/S76) and apply to that host only; they
+  must not be inferred for other hardware or from geometry counts.
 - The SignalR harness runs on a single host; multi-host network effects are not measured, and the
   100-client point is conditional on the host.
 - Budgets are soft regression guards for CI, not an SLA or a capacity-planning input.

@@ -44,6 +44,29 @@ describe('ThreeGlbAssetLoader', () => {
     expect(loader.cacheSize()).toBe(0)
   })
 
+  it('marks every loaded GLB mesh as a shadow caster and receiver (S72)', async () => {
+    const template = new THREE.Group()
+    const inner = new THREE.Group()
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial())
+    const nested = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial())
+    inner.add(nested)
+    template.add(top, inner)
+    const loader = new ThreeGlbAssetLoader({ loadAsync: vi.fn(async () => ({ scene: template }) as GLTF) })
+    const loaded = await loader.load(testManifest())
+    const meshes: THREE.Mesh[] = []
+    loaded.root.traverse((child) => { if (child instanceof THREE.Mesh) meshes.push(child) })
+    expect(meshes).toHaveLength(2)
+    for (const mesh of meshes) {
+      expect(mesh.castShadow).toBe(true)
+      expect(mesh.receiveShadow).toBe(true)
+    }
+    // The cached template is never mutated: only the returned clone is flagged.
+    expect(top.castShadow).toBe(false)
+    expect(nested.castShadow).toBe(false)
+    loaded.dispose()
+    await loader.disposeUnused()
+  })
+
   it('falls back to the supplied procedural visual with a useful diagnostic', async () => {
     const registry = new EquipmentAssetRegistry()
     registry.register({ id: 'procedural', source: 'procedural', description: 'Fallback robot.' })

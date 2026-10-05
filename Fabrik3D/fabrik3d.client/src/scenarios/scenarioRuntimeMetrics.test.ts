@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { EquipmentAssetRuntime, ThreeGlbAssetLoader, createIndustrialAssetRegistry } from '../equipment/assets'
+import { estimateSceneTextureMemory } from '../equipment/assets/sceneMetrics'
 import { createDefaultScenePresetCatalog } from '../scenes'
 import { ScenarioRuntimeHost, type ScenarioRuntimeMetrics } from './ScenarioRuntimeHost'
 import { resolveScenarioSceneBinding } from './sceneBinding'
@@ -9,6 +10,7 @@ import { resolveScenarioSceneBinding } from './sceneBinding'
 interface ScenarioMetricReport extends ScenarioRuntimeMetrics {
   scenarioId: string
   presetId: string
+  textureBytes: number
 }
 
 /**
@@ -31,7 +33,9 @@ describe('S58 scenario runtime resource evidence', () => {
       const host = new ScenarioRuntimeHost({ assetRuntime: runtime })
       host.bind(binding)
       const metrics = await host.loadVisuals()
-      report.push({ scenarioId: binding.scenarioId, presetId: preset.id, ...metrics })
+      const textureMemory = estimateSceneTextureMemory(host.root)
+      console.info(`[scenario-runtime-budget] ${binding.scenarioId} meshes=${metrics.meshes} triangles=${metrics.triangles} drawCalls=${metrics.drawCalls} textures=${textureMemory.textureCount} textureBytes=${textureMemory.estimatedBytes}`)
+      report.push({ scenarioId: binding.scenarioId, presetId: preset.id, ...metrics, textureBytes: textureMemory.estimatedBytes })
 
       expect(metrics.equipmentCount).toBe(binding.cell.equipment.length)
       expect(metrics.triangles).toBeGreaterThan(0)

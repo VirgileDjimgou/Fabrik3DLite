@@ -72,6 +72,9 @@ different LOD or decoder.
   runtime never renames them.
 - Procedural fallbacks remain owned by the caller, which disposes their geometry
   and materials when it unmounts.
+- S72 applies `castShadow`/`receiveShadow` to every mesh of a loaded GLB instance
+  and of a procedural fallback (`visuals/equipmentGrounding.ts`). Only the
+  returned clone is mutated; the cached template stays untouched.
 
 ## Quality profiles and LOD policy
 
@@ -98,6 +101,29 @@ renderer-independent (no GPU required for tests).
   band, which prevents thrashing at a boundary.
 - Selection never affects simulation state; it only chooses which visual file is
   requested.
+
+## Scene environment and post-processing lifecycle (S74)
+
+The scene environment/atmosphere and the optional composer are owned by the
+`useThreeScene` context, not by the asset runtime, so the runtime's cache/LOD
+contract is unchanged. Their lifecycle mirrors the runtime's instance-owned
+disposal rule:
+
+- `applyIndustrialEnvironment()` returns one handle that owns the PMREM
+  environment texture, the gradient background texture, the key/fill/hemisphere
+  lights, the bounded local lights and the scene fog. `useThreeScene.dispose()`
+  calls `postProcessing?.dispose()` and `environment.dispose()` before
+  `renderer.dispose()`, so repeated scene mounts do not accumulate GPU
+  environment textures, render targets or lights.
+- `createPostProcessing()` returns `null` on the fallback decision; the caller
+  then keeps the direct `renderer.render` path. When enabled, the handle owns the
+  composer, its render targets and the depth texture and disposes all of them.
+- The composer is rebuilt per scene mount from the active quality preset; the
+  renderer pixel ratio is re-applied on resize and propagated to the composer so
+  the drawing buffer, composer targets and render targets stay in sync.
+- Environment intensity, fog, background and pass selection are deterministic
+  functions of the quality preset. No asset load, cache key or LOD threshold
+  depends on them, and none of them touches simulation state.
 
 ## Failure and degraded modes
 
@@ -181,6 +207,13 @@ Deterministic, GPU-free evidence is recorded by the S54 tests:
   training manipulator, and degrades deterministically to the procedural fallback
   (with a diagnostic) when the GLB 404s or is corrupt. See
   [Real 3D scenario runtime](SCENARIO_3D_RUNTIME.md).
+- `equipmentGrounding.test.ts` / `ThreeGlbAssetLoader.test.ts` (S72) — loaded GLB
+  meshes and procedural fallbacks receive shadow flags, the radial contact decal
+  follows its equipment transform, and generated label/screen nodes receive the
+  procedural surfaces. `s68ScenarioEnvironment.test.ts` additionally proves that
+  every scenario equipment visual is shadow-flagged and carries a contact decal.
+  The scenario texture estimate is bounded (0.81–1.50 MiB across the four
+  material-flow cells, see [3D assets](3D_ASSETS.md)).
 
 The simulator visual-regression gate (`npm --prefix Fabrik3D/fabrik3d.client run
 test:visual`) passed after the migration. The S49 reference scene frame-time
@@ -188,7 +221,8 @@ probe recorded, on this development machine under headless Chromium software
 rendering (2026-10-01): `frames=15 mean=208.87ms p50=216.60ms p95=216.70ms`.
 These are an upper bound for a software backend, not reference-hardware GPU
 numbers. Hardware GPU frame time was subsequently measured by the S62 GPU
-validation and re-measured after S68: the headed benchmark on the documented
-reference host reports `acceleration=hardware`, `gpuEvidence=true`, every profile
-above the 60 FPS reference target and 0 textures. See
+validation and re-measured after S68 and S72: the headed benchmark on the
+documented reference host reports `acceleration=hardware`, `gpuEvidence=true`,
+every profile above the 60 FPS reference target, and the bounded procedural
+texture set from S72. See
 [PERFORMANCE.md](../operations/PERFORMANCE.md) for the numbers and non-claims.

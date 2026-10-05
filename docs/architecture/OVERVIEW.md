@@ -1,9 +1,11 @@
 # Fabrik3D architecture overview
 
 Status: **implemented** for the S01-S50 1.0 feature set, the completed post-1.0 Roadmap Revision 2
-(S51-S57), the completed Roadmap Revision 3 (S58-S64), and the completed and validated Roadmap
-Revision 4 (S65-S71). The four release eras are distinguished in
-[LIMITATIONS.md](../operations/LIMITATIONS.md); the Revision 4 validation record is
+(S51-S57), the completed Roadmap Revision 3 (S58-S64), the completed and validated Roadmap
+Revision 4 (S65-S71) and the completed and validated Roadmap Revision 5 (S72-S76). The five release eras
+are distinguished in
+[LIMITATIONS.md](../operations/LIMITATIONS.md); the Revision 5 validation record is
+[VALIDATION_REVISION_5.md](../operations/VALIDATION_REVISION_5.md) and the Revision 4 record is
 [VALIDATION_REVISION_4.md](../operations/VALIDATION_REVISION_4.md).
 
 This document is the single-page map of the platform. It states what each component owns, which

@@ -2,7 +2,7 @@
 
 Fabrik3D is a modular browser-based industrial simulation, training, digital-twin and lightweight virtual-commissioning platform that connects realistic virtual equipment, external controllers, operator interfaces and educational scenarios through explicit versioned contracts. This roadmap evolves the existing repository incrementally toward that platform without restarting or replacing working modules.
 
-It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S71 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 added post-1.0 hardening in S51-S57, Roadmap Revision 3 added visual-fidelity and product-polish work in S58-S64, and Roadmap Revision 4 delivered industrial visual fidelity, scenario motion and measured validation in S65-S71 (complete). Roadmap Revision 5 plans visual-credibility and modular-assembly work in S72-S76 (planned, not yet validated).
+It deliberately does not restart the project. Every sprint must preserve working behavior and introduce migrations or compatibility adapters when boundaries change. S01-S76 are historical, completed work; their briefs, evidence and completion records are an audit trail and must never be renumbered, rewritten or deleted. Roadmap Revision 2 added post-1.0 hardening in S51-S57, Roadmap Revision 3 added visual-fidelity and product-polish work in S58-S64, Roadmap Revision 4 delivered industrial visual fidelity, scenario motion and measured validation in S65-S71 (complete), and Roadmap Revision 5 delivered visual-credibility and modular-assembly work in S72-S76 (complete and validated by S76).
 
 ## One-command workflow
 
@@ -97,7 +97,7 @@ The roadmap source of truth is [`roadmap.json`](roadmap.json). Tool-specific fil
 
 ## Sprint count and ceiling
 
-Roadmap Revision 5 contains exactly 76 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed Revision 2 work; S58-S64 are completed Revision 3 work; S65-S71 are the completed and validated Revision 4 industrial visual-fidelity and scenario-motion work; and S72-S76 are the planned Revision 5 visual-credibility and modular-assembly work (not yet validated). Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. `MAX_BATCH_SPRINTS = 10` is unchanged, so the bounded autopilot can execute S72-S76 sequentially in a single invocation. Future roadmap work requires another explicitly approved revision that preserves S01-S76 history.
+Roadmap Revision 5 contains exactly 76 sprints. S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 are completed Revision 2 work; S58-S64 are completed Revision 3 work; S65-S71 are the completed and validated Revision 4 industrial visual-fidelity and scenario-motion work; and S72-S76 are the completed and validated Revision 5 visual-credibility and modular-assembly work. Real PLC/PLCSIM proof is deliberately deferred until suitable licensed software or physical hardware is available. `MAX_BATCH_SPRINTS = 10` is unchanged. Future roadmap work requires another explicitly approved revision that preserves S01-S76 history.
 
 ## 1.0 baseline
 
@@ -143,14 +143,17 @@ or unclaimed. The Revision 4 evidence is recorded in
 [RELEASE_NOTES_REVISION_4.md](../releases/RELEASE_NOTES_REVISION_4.md), and the flagship flow in
 [FLAGSHIP_DEMO.md](../operations/FLAGSHIP_DEMO.md).
 
-**Phase 16 — Visual credibility and modular assembly (S72-S76, planned).** This revision targets the
-remaining visual and composition gaps without adding product scope: deterministic license-safe
-procedural surface textures and equipment grounding (S72), anchor-driven modular assembly and
-attachment so cells compose from declared ports/anchors (S73), industrial lighting/atmosphere and
-quality-gated post-processing (S74), state-driven equipment motion with instanced scene detail (S75),
-and a measured Revision 5 validation and demonstration (S76). It preserves the existing asset,
-scenario, signal, safety and orchestration boundaries, keeps procedural fallbacks, and ends with a
-measured comparison rather than an unmeasured visual claim.
+**Phase 16 — Visual credibility and modular assembly (S72-S76, complete and validated by S76).** This
+revision closes the remaining visual and composition gaps without adding product scope: deterministic
+license-safe procedural surface textures and equipment grounding (S72), anchor-driven modular assembly
+and attachment so cells compose from declared ports/anchors with a versioned cell-file migration (S73),
+industrial lighting/atmosphere and quality-gated post-processing (S74), state-driven equipment motion
+with instanced scene detail (S75), and a measured Revision 5 validation and demonstration (S76). It
+preserves the existing asset, scenario, signal, safety and orchestration boundaries, keeps procedural
+fallbacks, and ends with a measured comparison rather than an unmeasured visual claim. The Revision 5
+evidence is recorded in [VALIDATION_REVISION_5.md](../operations/VALIDATION_REVISION_5.md), the release
+summary in [RELEASE_NOTES_REVISION_5.md](../releases/RELEASE_NOTES_REVISION_5.md), and the flagship
+flow in [FLAGSHIP_DEMO.md](../operations/FLAGSHIP_DEMO.md).
 
 ## Quality policy
 

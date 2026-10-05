@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import * as THREE from 'three'
 import { EquipmentAssetRuntime, ThreeGlbAssetLoader, createIndustrialAssetRegistry } from '../equipment/assets'
 import { createMaterialFlowVisual } from '../equipment/visuals/materialFlowVisuals'
 import { createDefaultScenePresetCatalog } from '../scenes'
@@ -136,6 +137,92 @@ describe('S59 ScenarioCellAnimator node binding', () => {
     expect(animator.settled).toBe(true)
     animator.setState({ ...state })
     expect(animator.snapshot()).toEqual(first)
+    animator.dispose()
+  })
+})
+
+describe('S75 state-driven equipment motion', () => {
+  it('closes the gripper fingers from the authoritative holding state and opens them again', () => {
+    const animator = new ScenarioCellAnimator([
+      { equipmentId: 'gripper-1', definitionId: 'two-finger-gripper', object: createMaterialFlowVisual('two-finger-gripper') },
+    ])
+    const idle = createCellVisualState('palletizing-normal-cycle')
+    animator.setState(idle)
+    animator.tick(2)
+    const open = animator.snapshot().gripperFingerGap
+    expect(open).toBeGreaterThan(0.05)
+
+    animator.setState({ ...idle, gripperHolding: true })
+    animator.tick(2)
+    const closed = animator.snapshot().gripperFingerGap
+    expect(closed).toBeLessThan(open)
+    expect(closed).toBeCloseTo(0.018, 5)
+
+    animator.setState({ ...idle, gripperHolding: false })
+    animator.tick(2)
+    expect(animator.snapshot().gripperFingerGap).toBeCloseTo(open, 5)
+    animator.dispose()
+  })
+
+  it('advances the belt only while the cell is running and stops when it stops', () => {
+    const animator = new ScenarioCellAnimator(equipmentFor('vision-sorting'))
+    const idle = createCellVisualState('sorting-normal-cycle')
+    animator.setState(idle)
+    animator.tick(1)
+    expect(animator.snapshot().beltRunning).toBe(false)
+    expect(animator.snapshot().beltOffset).toBe(0)
+
+    animator.setState({ ...idle, lifecycle: 'running' })
+    animator.tick(1)
+    const running = animator.snapshot()
+    expect(running.beltRunning).toBe(true)
+    expect(running.beltSpeed).toBeGreaterThan(0)
+    expect(running.beltOffset).toBeGreaterThan(0)
+
+    animator.setState({ ...idle, lifecycle: 'completed' })
+    animator.tick(1)
+    const stopped = animator.snapshot()
+    expect(stopped.beltRunning).toBe(false)
+    expect(stopped.beltOffset).toBeCloseTo(running.beltOffset, 6)
+    animator.dispose()
+  })
+
+  it('preserves the PBR base color while changing the signal emissive', () => {
+    const animator = new ScenarioCellAnimator(equipmentFor('vision-sorting'))
+    const idle = createCellVisualState('sorting-normal-cycle')
+    animator.setState(idle)
+    animator.tick(2)
+    const bin = animator['byClass'].get('storage-bin')![0]!
+    const opening = animator['node'](bin, 'opening') as THREE.Mesh
+    const material = opening.material as THREE.MeshStandardMaterial
+    const baseColor = material.color.getHex()
+
+    animator.setState(eventState('sorting-normal-cycle', ['scenario.ready', 'sorting.complete']))
+    animator.tick(2)
+    expect(material.color.getHex()).toBe(baseColor)
+    expect(material.emissive.getHex()).toBe(0x2fa864)
+    animator.dispose()
+  })
+
+  it('drives the optional robot-base beacon from robot state and bounds the dress-pack flex', () => {
+    const animator = new ScenarioCellAnimator(equipmentFor('robot-palletizing'))
+    const idle = createCellVisualState('palletizing-normal-cycle')
+    animator.setState(idle)
+    animator.tick(2)
+    expect(animator.snapshot().robotBeaconSignal).toBe('off')
+
+    animator.setState({ ...idle, lifecycle: 'running' })
+    animator.tick(2)
+    expect(animator.snapshot().robotBeaconSignal).toBe('running')
+
+    animator.setState({ ...idle, lifecycle: 'running', fault: true })
+    animator.tick(2)
+    expect(animator.snapshot().robotBeaconSignal).toBe('fault')
+
+    animator.setRobotPose([100, 100, 100])
+    expect(animator.snapshot().dressPackFlex).toBeCloseTo(0.35, 6)
+    animator.setRobotPose([0, 0, 0])
+    expect(animator.snapshot().dressPackFlex).toBe(0)
     animator.dispose()
   })
 })

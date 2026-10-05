@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import * as THREE from 'three'
-import { measureSceneResources } from '../assets/sceneMetrics'
+import { measureSceneResources, estimateSceneTextureMemory } from '../assets/sceneMetrics'
 import { buildCncMachineVisual, type CncMachineVisualState } from './cncMachineVisual'
+import { SURFACE_TEXTURE_BUDGET } from './proceduralSurfaces'
 
 const IDLE: CncMachineVisualState = {
   doorPosition: 0,
@@ -47,13 +48,15 @@ describe('buildCncMachineVisual', () => {
   it('stays inside the documented reference-cell geometry budget', () => {
     const visual = buildCncMachineVisual()
     const metrics = measureSceneResources(visual.group)
-    console.info(`[cnc-visual-budget] meshes=${metrics.meshes} triangles=${metrics.triangles} drawCalls=${metrics.drawCalls} textures=${metrics.textures}`)
-    // Documented S39 budget for one CNC machine visual: ≤ 60 draw calls,
-    // ≤ 6 000 triangles and ≤ 40 meshes. Textures are procedural (none).
+    const textureMemory = estimateSceneTextureMemory(visual.group)
+    console.info(`[cnc-visual-budget] meshes=${metrics.meshes} triangles=${metrics.triangles} drawCalls=${metrics.drawCalls} textures=${metrics.textures} textureBytes=${textureMemory.estimatedBytes}`)
+    // Documented S39 geometry budget for one CNC machine visual: ≤ 60 draw calls,
+    // ≤ 6 000 triangles and ≤ 40 meshes. S72 adds bounded procedural surfaces.
     expect(metrics.drawCalls).toBeLessThanOrEqual(60)
     expect(metrics.triangles).toBeLessThanOrEqual(6_000)
     expect(metrics.meshes).toBeLessThanOrEqual(40)
-    expect(metrics.textures).toBe(0)
+    expect(metrics.textures).toBeGreaterThan(0)
+    expect(metrics.textures).toBeLessThanOrEqual(SURFACE_TEXTURE_BUDGET.maxTextureCount)
     visual.dispose()
   })
 

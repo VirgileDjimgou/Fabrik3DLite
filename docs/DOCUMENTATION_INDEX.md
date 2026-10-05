@@ -1,7 +1,8 @@
 # Fabrik3D documentation index
 
-Status: the immutable 1.0 baseline plus completed post-1.0 Roadmap Revision 2 (S51–S57), completed
-Roadmap Revision 3 (S58–S64) and the completed and validated Roadmap Revision 4 (S65–S71). This index
+Status: the immutable 1.0 baseline plus the completed post-1.0 Roadmap Revision 2 (S51–S57), completed
+Roadmap Revision 3 (S58–S64), the completed and validated Roadmap Revision 4 (S65–S71) and the completed
+and validated Roadmap Revision 5 (S72–S76). This index
 is the map of the documentation set. Every link below resolves to a file in this repository; broken
 documentation links and release-era/claim consistency fail the `npm run docs:check` gate.
 
@@ -21,10 +22,13 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 | [Release notes 1.1](releases/RELEASE_NOTES_1.1.md) | Everyone |
 | [Release notes Revision 3](releases/RELEASE_NOTES_REVISION_3.md) | Everyone |
 | [Release notes Revision 4](releases/RELEASE_NOTES_REVISION_4.md) | Everyone |
+| [Release notes Revision 5](releases/RELEASE_NOTES_REVISION_5.md) | Everyone |
 | [Revision 4 release preparation](operations/RELEASE_PREPARATION_REVISION_4.md) | Everyone |
+| [Revision 5 release preparation](operations/RELEASE_PREPARATION_REVISION_5.md) | Everyone |
 | [Flagship demonstration runbook](operations/FLAGSHIP_DEMO.md) | Everyone |
 | [Revision 3 validation evidence](operations/VALIDATION_REVISION_3.md) | Everyone |
 | [Revision 4 validation evidence](operations/VALIDATION_REVISION_4.md) | Everyone |
+| [Revision 5 validation evidence](operations/VALIDATION_REVISION_5.md) | Everyone |
 | [Limitations and non-claims](operations/LIMITATIONS.md) | Everyone |
 | [Setup](development/SETUP.md) | Developer |
 | [Testing](TESTING.md) | Developer |
@@ -141,8 +145,11 @@ Notation: **implemented** = built and tested; **simulated** = modeled, explicitl
 - [Validation post-1.0](operations/VALIDATION_POST_1.0.md) — automated flagship workflow/fixture evidence plus explicitly deferred real-PLC validation
 - [Validation Revision 3](operations/VALIDATION_REVISION_3.md) — S58–S64 automated/visual/hardware/fixture/manual evidence with deferred real PLC
 - [Validation Revision 4](operations/VALIDATION_REVISION_4.md) — S65–S71 automated/visual/hardware-benchmark/fixture/manual evidence, execution captures and the measured Revision 3 → Revision 4 comparison
+- [Validation Revision 5](operations/VALIDATION_REVISION_5.md) — S72–S76 automated/visual/hardware-benchmark/fixture/manual evidence, `quality=high` execution captures and the measured Revision 4 → Revision 5 comparison
 - [Revision 4 release preparation](operations/RELEASE_PREPARATION_REVISION_4.md) — version/tag recommendation, migration status, known limitations, validation and media links
+- [Revision 5 release preparation](operations/RELEASE_PREPARATION_REVISION_5.md) — version/tag recommendation, cell-file migration status, known limitations, validation and media links
 - [Release notes Revision 4](releases/RELEASE_NOTES_REVISION_4.md) — finalized Revision 4 highlights, measured comparison and boundaries
+- [Release notes Revision 5](releases/RELEASE_NOTES_REVISION_5.md) — finalized Revision 5 highlights, measured comparison and boundaries
 - [Flagship demonstration runbook](operations/FLAGSHIP_DEMO.md) — deterministic end-to-end product demonstration
 - [TESTING.md](TESTING.md) — test layers and commands
 - [Dependency audit](development/DEPENDENCY_AUDIT.md)

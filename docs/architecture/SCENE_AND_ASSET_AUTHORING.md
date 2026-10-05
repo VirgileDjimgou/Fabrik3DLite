@@ -9,6 +9,25 @@
 5. Add a versioned scene preset with its cell, environment, camera, panel defaults and compatible scenario ids. `ScenePresetCatalog.register` validates it. No application-shell or existing scene-component edit is needed for a visual-only preset.
 6. Test port compatibility, package integrity, fallback, deterministic cell round-trip, scene selection/remount and the relevant visual baseline. Review draw-call, texture and triangle budgets using `measureSceneResources`.
 
+## Composing cells from declared anchors (S73)
+
+Prefer declared anchors/ports over literal transforms when equipment is
+physically mounted on other equipment:
+
+1. Declare the mating anchors on the `EquipmentDefinition` (for example
+   `anchor:in`/`anchor:out` on a conveyor or fence panel, `tool:flange` on a
+   robot) and point each port at its anchor with `EquipmentPort.anchorId`.
+2. On the attached `EquipmentInstance`, declare `attachTo` with the target
+   instance and either `anchorId` or `portId`. Keep a valid `transform` as the
+   compatibility fallback; it is used unchanged when resolution fails closed.
+3. Supported patterns: conveyor-to-conveyor chains (`anchor:out` → `anchor:in`),
+   fence-panel runs with an interlocked gate, tool/gripper on `tool:flange`, and
+   pallet station on a conveyor material port.
+4. Verify with `resolveCellAttachments` unit tests (compatible ports, chain
+   resolution, missing/incompatible diagnostics) and an editor/runtime parity
+   test. Attachment changes placement only; it never changes collision, signal,
+   telemetry or runtime behaviour.
+
 ## Rollback
 
 Keep the previous manifest version and preset data in source control. To rollback, unregister the new preset/asset registration or point its visual selection to the existing procedural fallback. Do not delete collision proxies, runtime adapters or old scene files while they may still be referenced.

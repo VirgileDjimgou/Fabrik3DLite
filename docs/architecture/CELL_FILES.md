@@ -4,15 +4,16 @@ Cell configurations are portable, versioned JSON documents that are deterministi
 
 ## Versioned cell file schema
 
-- **Current schema `1.0`** (`src/cell-files/schema.ts`): `{ schemaVersion, id, name, worldFrameId, equipment[] }`, where each equipment entry has `id`, `definitionId`, and a `transform` (`position`/`rotation` as `{x,y,z}` objects in meters/radians, world frame X right, Y up, Z forward).
+- **Current schema `1.1`** (`src/cell-files/schema.ts`): `{ schemaVersion, id, name, worldFrameId, equipment[] }`, where each equipment entry has `id`, `definitionId`, a `transform` (`position`/`rotation` as `{x,y,z}` objects in meters/radians, world frame X right, Y up, Z forward) and an optional `attachTo` declared attachment (S73).
+- **Schema `1.0`**: supported for migration. Identical to `1.1` without `attachTo`.
 - **Initial schema `0.9`** (legacy): supported for migration. It wrapped the id/name in a `cell` object and used `type` + array transforms.
-- Supported versions are `0.9` and `1.0`; the server and client both reject anything else with a human-readable diagnostic.
+- Supported versions are `0.9`, `1.0` and `1.1`; the server and client both reject anything else with a human-readable diagnostic.
 
 ## Import / export / validation / migration
 
-- `src/cell-files/importExport.ts` serializes deterministically (fixed key order, no timestamps) and parses with migration + validation.
-- `src/cell-files/migration.ts` converts `0.9 → 1.0` predictably (`type` → `definitionId`, arrays → objects, `cell` wrapper flattened).
-- `src/cell-files/validation.ts` reports human-readable diagnostics for missing ids/names, duplicate equipment ids, non-finite transforms, and unknown definition references (warnings).
+- `src/cell-files/importExport.ts` serializes deterministically (fixed key order, no timestamps) and parses with migration + validation. `attachTo` is serialized and round-trips unchanged.
+- `src/cell-files/migration.ts` converts `0.9 → 1.1` (`type` → `definitionId`, arrays → objects, `cell` wrapper flattened) and `1.0 → 1.1` (adds the optional `attachTo` field; transforms are unchanged) predictably, emitting a `migrated_from_0.9` / `migrated_from_1.0` diagnostic.
+- `src/cell-files/validation.ts` reports human-readable diagnostics for missing ids/names, duplicate equipment ids, non-finite transforms, unknown definition references (warnings), and malformed attachments (missing target, ambiguous anchor+port, non-finite rotation offset).
 - The cell editor exposes Load sample, Import, Export, Validate, and Save actions. `?view=cell-editor` provides a WebGL-free harness for deterministic e2e flows.
 
 ## Sample cells

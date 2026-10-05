@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import {
   MATERIAL_DEFINITIONS,
   MATERIAL_IDS,
+  MATERIAL_SURFACE_BINDINGS,
   MATERIAL_TEXTURES,
   REQUIRED_MATERIAL_VOCABULARY,
   collectMaterialIds,
@@ -12,6 +13,11 @@ import {
   materialDefinition,
   validateMaterialLibrary,
 } from './materialLibrary'
+import {
+  SURFACE_TEXTURE_BUDGET,
+  clearSurfaceTextureCache,
+  isSurfaceId,
+} from './proceduralSurfaces'
 import { measureSceneResources } from '../assets/sceneMetrics'
 
 describe('S68 shared PBR material library', () => {
@@ -37,21 +43,62 @@ describe('S68 shared PBR material library', () => {
     }
   })
 
-  it('is texture-free by design (no unmeasured atlas)', () => {
-    // The sprint deliberately added no external texture; the registry is empty and
-    // every material must therefore expose no texture map.
-    expect(MATERIAL_TEXTURES).toEqual([])
+  it('declares a bounded, well-provenanced procedural texture registry (S72)', () => {
+    expect(MATERIAL_TEXTURES.length).toBeGreaterThan(0)
+    expect(MATERIAL_TEXTURES.length).toBeLessThanOrEqual(SURFACE_TEXTURE_BUDGET.maxTextureCount)
+    let estimatedBytes = 0
+    for (const texture of MATERIAL_TEXTURES) {
+      expect(isSurfaceId(texture.id), texture.id).toBe(true)
+      expect(texture.resolution, texture.id).toMatch(/^\d+x\d+$/)
+      expect(texture.estimatedBytes, texture.id).toBeGreaterThan(0)
+      expect(texture.source.length, texture.id).toBeGreaterThan(0)
+      expect(texture.license.length, texture.id).toBeGreaterThan(0)
+      estimatedBytes += texture.estimatedBytes
+    }
+    expect(estimatedBytes).toBeLessThanOrEqual(SURFACE_TEXTURE_BUDGET.maxEstimatedBytes)
     for (const id of MATERIAL_IDS) {
-      const material = createMaterial(id)
-      for (const key of ['map', 'roughnessMap', 'metalnessMap', 'normalMap', 'aoMap', 'emissiveMap', 'alphaMap'] as const) {
-        expect(material[key], `${id}.${key}`).toBeNull()
+      const binding = MATERIAL_SURFACE_BINDINGS[id]
+      if (!binding) continue
+      for (const surfaceId of [binding.map, binding.roughnessMap, binding.normalMap]) {
+        if (surfaceId) expect(isSurfaceId(surfaceId), `${id}: ${surfaceId}`).toBe(true)
       }
-      expect(material.color.getHex(), id).toBe(MATERIAL_DEFINITIONS[id].color)
+    }
+  })
+
+  it('attaches only the declared procedural surfaces and keeps other materials flat', () => {
+    clearSurfaceTextureCache()
+    for (const id of MATERIAL_IDS) {
+      const binding = MATERIAL_SURFACE_BINDINGS[id]
+      const material = createMaterial(id)
+      if (binding?.map) expect(material.map, `${id}.map`).not.toBeNull()
+      else expect(material.map, `${id}.map`).toBeNull()
+      if (binding?.roughnessMap) expect(material.roughnessMap, `${id}.roughnessMap`).not.toBeNull()
+      else expect(material.roughnessMap, `${id}.roughnessMap`).toBeNull()
+      if (binding?.normalMap) expect(material.normalMap, `${id}.normalMap`).not.toBeNull()
+      else expect(material.normalMap, `${id}.normalMap`).toBeNull()
       expect(material.name).toBe(id)
       expect(material.userData.materialId).toBe(id)
       expect(material.userData.visualOnly).toBe(true)
       material.dispose()
     }
+    clearSurfaceTextureCache()
+  })
+
+  it('shares one cached texture instance across materials that declare the same surface', () => {
+    clearSurfaceTextureCache()
+    const first = createMaterial('painted-steel')
+    const second = createMaterial('machine-body')
+    expect(first.map).toBe(second.map)
+    first.dispose()
+    second.dispose()
+    clearSurfaceTextureCache()
+  })
+
+  it('supports an explicitly untextured material variant', () => {
+    const material = createMaterial('painted-floor', { textures: false })
+    expect(material.map).toBeNull()
+    expect(material.roughnessMap).toBeNull()
+    material.dispose()
   })
 
   it('treats authored colors as sRGB through three.js color management', () => {
@@ -101,5 +148,6 @@ describe('S68 shared PBR material library', () => {
     group.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial()))
     expect(collectMaterialIds(group)).toEqual(['painted-steel', 'rubber'])
     expect(measureSceneResources(group).meshes).toBe(3)
+    clearSurfaceTextureCache()
   })
 })

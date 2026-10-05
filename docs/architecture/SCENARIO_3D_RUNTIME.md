@@ -142,6 +142,7 @@ truth.
 | Palletizing vacuum loss | gripper indicator and light curtain red, box stays on the infeed until recovery |
 | Assembly / inspection | clamp handle rotates, part-presence sensor green, rework buffer signal |
 | Safety training | gate slides open/closed, interlock and scanner colour, E-stop button depressed/released, stack light red/amber/green, floor zone colour |
+| All cells (S75) | gripper fingers/vacuum cup follow the holding state; belt marker and rollers follow the declared run/speed and stop when stopped; optional robot-base beacon follows robot state; dress-pack flex follows the joint pose |
 
 The stack light, scanner, E-stop and floor-zone colours are all driven from the
 same state that drives the scenario outcome; no decorative animation contradicts
@@ -405,21 +406,89 @@ raises the visual quality of the same cells:
   are built from the shared `equipment/visuals/materialLibrary.ts` vocabulary
   (painted/bare steel, aluminium, rubber, industrial plastic, glass, safety
   yellow, painted floor, wood/cardboard, screen/emissive and supporting paints);
-  the library is texture-free by design and records provenance per material;
+  the library records provenance per material and, since S72, attaches bounded
+  deterministic procedural surface maps to the floor, markings, signage, painted
+  steel, brushed metal, wood grain and HMI-screen materials;
 - `ScenarioRuntimeHost` loads the coherent `factoryEnvironment` ground layer for
   every bound cell (industrial floor, expansion joints, safety perimeter,
   operator access lane, cable tray, cell-identifier plate), sized from the
   scene preset's `environment.floorSizeMeters` and adapting to the
   `industrial-hall` / `training-lab` level; the CNC flagship cell uses the same
   builder from `SingleConveyorFloor.vue`;
-- the environment and materials are render-only, are disposed with the cell, and
-  never become an animator target, a collision proxy or scenario truth.
+- S72 additionally grounds each equipment visual: shadow flags are enforced on
+  the GLB and procedural sources, a deterministic radial contact decal is
+  attached under each equipment root, and generated `label:*`/`screen` GLB nodes
+  receive procedural surfaces. Measured on the four material-flow cells
+  (procedural fallback, GPU-free): 5–8 textures / 0.81–1.50 MiB estimated RGBA8
+  per cell, inside the documented 4 MiB surface budget;
+- the environment, surfaces and materials are render-only, are disposed with the
+  cell, and never become an animator target, a collision proxy or scenario truth.
 
 The wall-clock GPU benchmark is re-recorded on the documented reference machine
 (Intel UHD Graphics, headed Chromium, 1920×1080, `gpuEvidence=true`): every
-measured profile stayed well above the 60 FPS reference target (minimum measured
+measured profile stayed above the 60 FPS reference target (minimum measured
 78.3 FPS at the Quality profile). Exact numbers and the S62 comparison are in
 [PERFORMANCE.md](../operations/PERFORMANCE.md).
+
+## Industrial environment and post-processing (S74)
+
+S74 does not change scenario events, composition, visual binding or success
+criteria; it changes how the same cells are lit and composited. Every scenario
+cell rendered through `ThreeScene`/`ScenarioRuntimeScene` now shares:
+
+- a deterministic industrial-hall environment (procedural softbox PMREM, gradient
+  background, subtle `FogExp2`) and a bounded decorative local-light rig, from
+  `equipment/visuals/industrialEnvironment.ts`;
+- an optional, quality-gated `EffectComposer` path (cheap depth AO + selective
+  bloom + FXAA) from `equipment/visuals/postProcessing.ts`, enabled only on
+  `medium`/`high` quality and a `hardware`-classified WebGL2 renderer; `low`
+  quality and every unsupported/software environment keep the direct
+  `renderer.render` path, which is what the CI visual baselines exercise.
+
+The configuration and budgets (environment intensity, fog density, local-light
+budget, one shadow-casting key light, bloom threshold/strength, `renderScale`)
+are documented in [3D assets](3D_ASSETS.md). The S74 benchmark re-measured the
+hero CNC cell and the robot-palletizing cell on the reference host: the geometry
+delta is +1 draw call / +2 triangles (the gradient background quad) and every
+measured profile stayed above the 60 FPS target (minimum 63.8 FPS). Exact
+numbers, the S72 before/after and the non-claims are in
+[PERFORMANCE.md](../operations/PERFORMANCE.md). New deterministic low/high
+visual baselines for the CNC reference cell and the palletizing scenario are in
+`e2e/scenario-quality-visual.spec.ts`.
+
+## State-driven motion and instanced detail (S75)
+
+S75 adds believable secondary motion that strictly derives from runtime state and
+raises scene detail without inflating draw calls. It changes no scenario event,
+composition, success criterion or signal.
+
+- **Gripper fingers.** `ScenarioCellAnimator` binds `gripper:finger-left` /
+  `gripper:finger-right` (two-finger gripper) or `gripper:vacuum-cup` (vacuum
+  gripper) to the authoritative `gripperHolding` state with deterministic
+  interpolation (`stateDrivenMotion.gripperFingerGap`). The fingers close on a
+  held part and open on release; they never move decoratively.
+- **Conveyor belt.** A `belt-marker` node travels along the belt surface and the
+  `roller-transfer` rollers rotate from an accumulated offset advanced by
+  `advanceBeltOffset(offset, speed, delta)`. The declared visual speed is applied
+  only while the authoritative lifecycle is `running`; a stopped or completed
+  cell produces no motion.
+- **Dress-pack cables/hoses.** The bounded `dressPackFlex` (clamped to ±0.35 rad)
+  is derived from the robot joint pose the host mirrors from the authoritative
+  `RobotController`; the existing CNC door/feed/clamp behaviour is unchanged.
+- **Indicator emissive.** `emissive()` now changes only the emissive channel and
+  preserves the PBR base color, so switching a signal never overwrites the
+  material identity. An optional `robot-base-beacon` node is driven by
+  `robotBeaconSignal` (off / running / fault).
+- **Instanced detail.** The factory environment places expansion joints, access
+  lane ticks and cable-tray rungs as one `InstancedMesh` per repeated family
+  (one draw call each) and adds human-scale dressing (silhouette mannequins,
+  cabinet, extinguisher, signage boards, overhead pipe) from shared geometry and
+  materials. The dressing is optional (`includeDressing`) and render-only.
+
+All of this is render-only: no state, safety, collision or signal logic moves
+into visuals, and a visual without a semantic node is skipped rather than
+inventing state. The pure helpers live in `scenarios/stateDrivenMotion.ts` and
+are unit-tested without a WebGL context.
 
 ## Boundaries
 
@@ -459,7 +528,11 @@ GPU-free evidence is recorded by:
 - `ScenarioCellAnimator.test.ts` (S59) — node-level binding of part travel,
   inspection, classification, diverter, box placement, clamps, gate, E-stop and
   stack light, plus host-level run/recover equivalence for every material-flow
-  scenario;
+  scenario; S75 adds gripper finger interpolation, belt run/stop, emissive
+  preservation, robot-base beacon and bounded dress-pack flex;
+- `stateDrivenMotion.test.ts` (S75) — pure deterministic helpers: gripper gap
+  interpolation, belt offset advance/wrap, stopped-conveyor no-motion, bounded
+  dress-pack flex and robot-base beacon derivation;
 - `materialFlowVisuals.test.ts` — deterministic per-class visuals, declared
   dimensions, S65 GLB preference (scenario class → generated package, training
   manipulator → generic professional robot) and procedural fallback registration;
@@ -469,17 +542,26 @@ GPU-free evidence is recorded by:
   animator node contract in primary and LOD, runs the shared `validateAssetPackage`
   pipeline, and proves preferred-GLB loading plus deterministic procedural
   fallback after a 404 and after a corrupt GLB;
-- `materialLibrary.test.ts` (S68) — vocabulary consistency, provenance/license for
-  every material, the texture-free policy (no map on any material), material-pack
-  reuse, unknown-id rejection and scene-tree material identification;
-- `factoryEnvironment.test.ts` (S68) — declared industrial-hall/training-lab
+- `materialLibrary.test.ts` (S68/S72) — vocabulary consistency, provenance/license
+  for every material, the bounded procedural texture registry, only-declared
+  surfaces attached (plus an explicit untextured variant), shared-texture reuse,
+  material-pack reuse, unknown-id rejection and scene-tree material
+  identification;
+- `proceduralSurfaces.test.ts` / `equipmentGrounding.test.ts` (S72) — seeded
+  byte-identical surfaces, declared dimensions/color space, no `Math.random`/
+  `Date.now`, canvas-to-DataTexture fallback, bounded shared cache, radial contact
+  decal, recursive shadow flags, transform-following decals and label/screen
+  surface mapping;
+- `factoryEnvironment.test.ts` (S68/S72) — declared industrial-hall/training-lab
   features, shared-vocabulary coverage, cell identifier, requested floor size,
   deterministic bounded geometry (54 meshes / 638 triangles / 54 draw calls /
-  0 textures) and deterministic disposal;
-- `s68VisualVocabulary.test.ts` / `s68ScenarioEnvironment.test.ts` (S68) — every
+  5 textures) and deterministic disposal; S75 adds instanced repeated families
+  (one draw call each) and human-scale dressing props with an opt-out;
+- `s68VisualVocabulary.test.ts` / `s68ScenarioEnvironment.test.ts` (S68/S72) — every
   procedural class, the CNC visual, the hero dressing, the environment and the
-  four material-flow flagship cells use only shared-vocabulary materials and load
-  the factory environment;
+  four material-flow flagship cells use only shared-vocabulary materials, load the
+  factory environment, and ground each equipment visual with shadow flags and a
+  contact decal;
 - `scenarioRobotMotion.test.ts` (S66) — waypoint ordering, immutability, profile
   selection, joint-limit compliance, multi-joint coverage and safety-condition
   priority;
@@ -504,14 +586,19 @@ GPU-free evidence is recorded by:
 
 `scenarioRuntimeMetrics.test.ts` writes a bounded GPU-free report to
 `test-results/perf/scenario-runtime-metrics.json`. Recorded on the CI host
-(2026-10-02, procedural visuals, no WebGL) after the S59 cell expansion:
+(2026-10-03, procedural visuals, no WebGL) after the S75 instancing and dressing:
 
 | Scenario | Equipment | Meshes | Triangles | Draw calls | Load ms |
 | --- | --- | --- | --- | --- | --- |
-| `sorting-normal-cycle` | 11 | 27 | 480 | 27 | 8.7 |
-| `palletizing-normal-cycle` | 15 | 40 | 532 | 40 | 4.4 |
-| `assembly-inspection-cycle` | 12 | 31 | 476 | 31 | 3.4 |
-| `safety-door-recovery` | 11 | 29 | 660 | 29 | 10.5 |
+| `sorting-normal-cycle` | 11 | 82 | 2 396 | 82 | 57.0 |
+| `palletizing-normal-cycle` | 15 | 108 | 2 824 | 108 | 8.1 |
+| `assembly-inspection-cycle` | 12 | 87 | 2 498 | 87 | 6.8 |
+| `safety-door-recovery` | 11 | 76 | 2 584 | 76 | 11.4 |
+
+The S75 environment keeps the repeated expansion joints, access-lane ticks and
+cable-tray rungs at one draw call per family through `InstancedMesh`, so the
+added human-scale dressing does not multiply draw calls. The per-cell draw-call
+budget asserted by `scenarioRuntimeMetrics.test.ts` remains `< 200`.
 
 Before S58 these presets rendered an SVG plan view: 0 meshes, 0 triangles and 0
 WebGL draw calls. Load time is wall-clock host time, not GPU frame time; the

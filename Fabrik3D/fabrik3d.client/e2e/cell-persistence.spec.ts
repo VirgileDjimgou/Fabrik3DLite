@@ -40,7 +40,7 @@ test('cell persistence: import a sample, edit, save, and validate', async ({ pag
     id: string
     equipment: Array<{ id: string; definitionId: string; transform: { position: { x: number; y: number; z: number }; rotation: { x: number; y: number; z: number } } }>
   }
-  expect(exported.schemaVersion).toBe('1.0')
+  expect(exported.schemaVersion).toBe('1.1')
   expect(exported.equipment).toHaveLength(4)
   const cnc = exported.equipment.find((e) => e.id === 'cnc-1')
   expect(cnc).toBeTruthy()

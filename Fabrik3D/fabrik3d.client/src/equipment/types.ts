@@ -46,6 +46,13 @@ export interface EquipmentPort {
   id: string
   kind: 'material' | 'signal' | 'energy' | 'data' | 'safety'
   direction: 'input' | 'output' | 'bidirectional'
+  /**
+   * S73 optional anchor id that declares where this port mates physically.
+   * When absent, a deterministic convention applies: material inputs default to
+   * `anchor:in`, material outputs to `anchor:out` and everything else to
+   * `anchor:placement`. Data-only ports never need a physical anchor.
+   */
+  anchorId?: string
 }
 
 /** A declared link between semantic equipment ports. It never references a mesh. */
@@ -100,10 +107,36 @@ export interface EquipmentDefinition {
   runtimeCapability?: 'static' | 'simulation-ready'
 }
 
+/**
+ * S73 declared attachment. Placement is derived from the target instance's
+ * declared anchor/port instead of the local `transform`, while `transform`
+ * remains the compatibility fallback when the attachment cannot be resolved.
+ * Attachment changes placement only; it never changes collision, signal,
+ * telemetry or runtime behaviour.
+ */
+export interface EquipmentAttachment {
+  /** Id of the equipment instance this instance mounts on. */
+  targetId: string
+  /** Target anchor id. Mutually exclusive with `portId`. */
+  anchorId?: string
+  /** Target port id; the resolver requires a compatible mating port. Mutually exclusive with `anchorId`. */
+  portId?: string
+  /** Explicit compatible port on this instance. Defaults to the first compatible port. */
+  sourcePortId?: string
+  /** Local anchor on this instance that mates with the target. Defaults to `anchor:placement`. */
+  sourceAnchorId?: string
+  /** Extra rotation (radians) about Y applied relative to the target. Defaults to 0. */
+  rotationOffsetRad?: number
+  /** Declared target frame. Only the world/cell frame is supported today. */
+  frameId?: string
+}
+
 export interface EquipmentInstance {
   id: string
   definitionId: string
   transform: Transform
+  /** S73 declared attachment; `transform` is the fallback when resolution fails. */
+  attachTo?: EquipmentAttachment
   runtimeState?: EquipmentRuntimeState
 }
 

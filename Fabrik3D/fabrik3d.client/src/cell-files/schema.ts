@@ -4,10 +4,11 @@
  * radians, expressed in the world frame (X right, Y up, Z forward).
  */
 
-export const CELL_SCHEMA_VERSION = '1.0' as const
+export const CELL_SCHEMA_VERSION = '1.1' as const
+export const PREVIOUS_CELL_SCHEMA_VERSION = '1.0' as const
 export const LEGACY_CELL_SCHEMA_VERSION = '0.9' as const
 
-export const SUPPORTED_SCHEMA_VERSIONS = [LEGACY_CELL_SCHEMA_VERSION, CELL_SCHEMA_VERSION] as const
+export const SUPPORTED_SCHEMA_VERSIONS = [LEGACY_CELL_SCHEMA_VERSION, PREVIOUS_CELL_SCHEMA_VERSION, CELL_SCHEMA_VERSION] as const
 export type CellSchemaVersion = (typeof SUPPORTED_SCHEMA_VERSIONS)[number]
 
 export interface CellFileTransform {
@@ -19,16 +20,33 @@ export interface CellFileEquipmentV1 {
   id: string
   definitionId: string
   transform: CellFileTransform
+  /** S73 declared attachment; the transform remains the compatibility fallback. */
+  attachTo?: import('../equipment').EquipmentAttachment
   parameterValues?: Record<string, string | number | boolean>
 }
 
-/** Current cell file format. */
+/** Current cell file format (schema 1.1). */
 export interface CellFileV1 {
   schemaVersion: typeof CELL_SCHEMA_VERSION
   id: string
   name: string
   worldFrameId: string
   equipment: CellFileEquipmentV1[]
+  connections?: import('../equipment').EquipmentConnection[]
+}
+
+/** Previous cell file format (schema 1.0), supported for migration. */
+export interface CellFileV1_0 {
+  schemaVersion: typeof PREVIOUS_CELL_SCHEMA_VERSION
+  id: string
+  name: string
+  worldFrameId: string
+  equipment: Array<{
+    id: string
+    definitionId: string
+    transform: CellFileTransform
+    parameterValues?: Record<string, string | number | boolean>
+  }>
   connections?: import('../equipment').EquipmentConnection[]
 }
 
@@ -48,6 +66,16 @@ export function isCellFileV1(value: unknown): value is CellFileV1 {
   if (!value || typeof value !== 'object') return false
   const candidate = value as Partial<CellFileV1>
   return candidate.schemaVersion === CELL_SCHEMA_VERSION
+    && typeof candidate.id === 'string'
+    && typeof candidate.name === 'string'
+    && typeof candidate.worldFrameId === 'string'
+    && Array.isArray(candidate.equipment)
+}
+
+export function isCellFileV1_0(value: unknown): value is CellFileV1_0 {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as Partial<CellFileV1_0>
+  return candidate.schemaVersion === PREVIOUS_CELL_SCHEMA_VERSION
     && typeof candidate.id === 'string'
     && typeof candidate.name === 'string'
     && typeof candidate.worldFrameId === 'string'

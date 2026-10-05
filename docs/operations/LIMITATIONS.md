@@ -1,10 +1,11 @@
 # Limitations and non-claims
 
-Status: updated for the **completed and validated Revision 4** (S65-S71). The documentation set keeps
-four release eras explicitly distinguished and never rewrites their history: the immutable **1.0
+Status: updated for the **completed and validated Revision 5** (S72-S76). The documentation set keeps
+five release eras explicitly distinguished and never rewrites their history: the immutable **1.0
 baseline** (S01-S50), completed **Roadmap Revision 2** (S51-S57), completed **Roadmap Revision 3**
-(S58-S64) and the **validated Revision 4** (S65-S71). This is the honest, consolidated list of what
-Fabrik3D is **not**. Claims elsewhere in the documentation are consistent with this list.
+(S58-S64), the **validated Revision 4** (S65-S71) and the **validated Revision 5** (S72-S76). This is
+the honest, consolidated list of what Fabrik3D is **not**. Claims elsewhere in the documentation are
+consistent with this list.
 
 ## Not a safety or certified system
 
@@ -80,7 +81,7 @@ Fabrik3D is **not**. Claims elsewhere in the documentation are consistent with t
 
 ## Roadmap revision boundary
 
-The four release eras are distinct and historical evidence is never rewritten:
+The five release eras are distinct and historical evidence is never rewritten:
 
 - **1.0 baseline (S01-S50, immutable).** The original 50-sprint roadmap and its validation evidence.
 - **Roadmap Revision 2 (S51-S57, complete, tagged `v1.1.0`).** Post-1.0 orchestration, operator HMI,
@@ -93,11 +94,19 @@ The four release eras are distinct and historical evidence is never rewritten:
   validation ([VALIDATION_REVISION_4.md](VALIDATION_REVISION_4.md)). Revision 4 is a visual and
   scenario-fidelity revision: it adds no protocol, product, database or safety capability, and the
   measured Revision 3 → Revision 4 comparison claims no blanket performance improvement.
+- **Roadmap Revision 5 (S72-S76, complete, validated by S76).** Deterministic license-safe procedural
+  surface maps and equipment grounding, anchor-driven modular assembly with the additive cell-file
+  schema 1.0 → 1.1 migration, an industrial lighting/atmosphere with quality-gated post-processing and
+  state-driven equipment motion with instanced scene detail
+  ([VALIDATION_REVISION_5.md](VALIDATION_REVISION_5.md)). Revision 5 is a visual-credibility and
+  assembly revision: it adds no protocol, product, database or safety capability, and the measured
+  Revision 4 → Revision 5 comparison is mixed (faster low-quality profiles, slower composer profiles)
+  and claims no blanket performance improvement.
 
-S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 remain completed Revision 2 work and S58-S71
-remain completed Revision 3/4 work. Real PLC/PLCSIM proof is deferred until the required licensed
-environment or physical controller is available. New features, scenes, protocols, billing, marketplace
-and certification work remain out of scope for all four eras.
+S50 remains the immutable Fabrik3D 1.0 baseline; S51-S57 remain completed Revision 2 work, S58-S64
+remain completed Revision 3 work and S65-S76 remain completed Revision 4/5 work. Real PLC/PLCSIM proof
+is deferred until the required licensed environment or physical controller is available. New features,
+scenes, protocols, billing, marketplace and certification work remain out of scope for all five eras.
 
 ## Related documents
 

@@ -202,6 +202,9 @@ function buildInto(group: THREE.Group, definitionId: string, size: Vector3Meters
     case 'straight-conveyor':
       addBox(group, { x: size.x, y: 0.12, z: size.z }, p.steelFrame, 'frame', { x: 0, y: size.y - 0.06, z: 0 })
       addBox(group, { x: size.x, y: 0.04, z: size.z * 0.82 }, p.rubber, 'belt', { x: 0, y: size.y, z: 0 })
+      // S75: a state-driven belt marker travels along the belt surface so the
+      // declared run/speed is visible without a texture scroll.
+      addBox(group, { x: 0.12, y: 0.006, z: size.z * 0.7 }, p.darkSteel, 'belt-marker', { x: 0, y: size.y + 0.025, z: 0 })
       for (const sign of [-1, 1]) {
         addBox(group, { x: 0.08, y: size.y, z: size.z }, p.darkSteel, `leg-${sign}`, { x: sign * (size.x / 2 - 0.1), y: size.y / 2, z: 0 })
         // Side guard rails and their fasteners improve edge readability.
@@ -263,9 +266,18 @@ function buildInto(group: THREE.Group, definitionId: string, size: Vector3Meters
       addBox(group, { x: size.x * 0.9, y: 0.006, z: size.z * 0.9 }, p.enclosure, 'carton-label', { x: 0, y: size.y + 0.003, z: 0 })
       return
     case 'two-finger-gripper':
+      addBox(group, { x: size.x, y: size.y, z: size.z }, p.darkSteel, 'tool-body', { x: 0, y: 0, z: 0 })
+      addBox(group, { x: size.x * 0.6, y: 0.03, z: size.z * 0.6 }, p.safetyYellow, 'interface', { x: 0, y: size.y * 0.6, z: 0 })
+      // S75: state-bearing fingers. The animator sets their separation from the
+      // authoritative gripper holding state; they never move decoratively.
+      addBox(group, { x: 0.02, y: size.y * 0.9, z: size.z * 0.5 }, p.steelFrame, 'gripper:finger-left', { x: -size.x * 0.3, y: -size.y * 0.5, z: 0 })
+      addBox(group, { x: 0.02, y: size.y * 0.9, z: size.z * 0.5 }, p.steelFrame, 'gripper:finger-right', { x: size.x * 0.3, y: -size.y * 0.5, z: 0 })
+      return
     case 'vacuum-gripper':
       addBox(group, { x: size.x, y: size.y, z: size.z }, p.darkSteel, 'tool-body', { x: 0, y: 0, z: 0 })
       addBox(group, { x: size.x * 0.6, y: 0.03, z: size.z * 0.6 }, p.safetyYellow, 'interface', { x: 0, y: size.y * 0.6, z: 0 })
+      // S75: the vacuum cup is the state-bearing interface for a vacuum gripper.
+      addCylinder(group, size.x * 0.18, 0.03, p.rubber, 'gripper:vacuum-cup', { x: 0, y: -size.y * 0.5, z: 0 })
       return
     case 'iso-flange-tcp':
       addCylinder(group, size.x * 0.5, size.y, p.darkSteel, 'flange', { x: 0, y: 0, z: 0 })
@@ -389,6 +401,8 @@ function buildInto(group: THREE.Group, definitionId: string, size: Vector3Meters
 function buildRobot(group: THREE.Group, p: EquipmentPalette): void {
   const j1 = pivot(group, 'joint:j1')
   addCylinder(j1, 0.22, 0.18, p.darkSteel, 'base', { x: 0, y: 0.09, z: 0 })
+  // S75: optional robot-base beacon driven by authoritative robot state signals.
+  addCylinder(j1, 0.05, 0.06, p.signalGreen, 'robot-base-beacon', { x: 0, y: 0.21, z: 0.18 })
 
   const j2 = pivot(j1, 'joint:j2', { x: 0, y: 0.44, z: 0 })
   addBox(j2, { x: 0.22, y: 0.5, z: 0.22 }, p.safetyYellow, 'link-1')

@@ -1,8 +1,8 @@
-# Flagship media set (Revision 3–4)
+# Flagship media set (Revision 3–5)
 
-A small, curated set of **real, deterministic** captures of the Fabrik3D Revision 3 and Revision 4
-surfaces. This supersedes the stale 2026-09-27 scenario captures for product presentation; the older
-`artifacts/demo/client/shots/` gallery remains as historical evidence and is not deleted.
+A small, curated set of **real, deterministic** captures of the Fabrik3D Revision 3, Revision 4 and
+Revision 5 surfaces. This supersedes the stale 2026-09-27 scenario captures for product presentation; the
+older `artifacts/demo/client/shots/` gallery remains as historical evidence and is not deleted.
 
 Every image was produced by the running application — never mocked, never fabricated. Captures that
 come from the S62 deterministic visual-regression protocol are labelled as such and can be
@@ -55,11 +55,44 @@ happens after real render frames. The CNC capture shows the deterministic local 
 authoritative HMI → server → simulator → historian workflow is proven separately by the automated
 flagship tests (see [`../../../docs/operations/VALIDATION_REVISION_4.md`](../../../docs/operations/VALIDATION_REVISION_4.md)).
 
+## Execution captures (Revision 5, S76)
+
+`execution-revision5/` holds the Revision 5 equivalent: 21 stills showing the same real declared process
+stages for the five flagship scenarios, captured at the `quality=high` preset so the S72 procedural
+surfaces/grounding, S73 assembled modules, S74 industrial lighting/post-processing and S75 state-driven
+motion are part of the frame. They are produced by the committed
+`Fabrik3D/fabrik3d.client/e2e-demo/demo-12-revision5-flagship.spec.ts`, which follows the same
+deterministic protocol and the same `data-execution-stage-reached="true"` fail-closed assertion as the
+Revision 4 spec. The Revision 4 stills under `execution/` are kept intact.
+
+| Scenario | Stages captured |
+| --- | --- |
+| Palletizing | `palletizing-robot-approach`, `palletizing-pick`, `palletizing-transfer`, `palletizing-place`, `palletizing-layer-update` |
+| Vision sorting | `vision-part-enters`, `vision-inspection-begins`, `vision-classified`, `vision-diverter-actuates`, `vision-part-routes` |
+| Assembly / inspection | `assembly-robot-load`, `assembly-fixture-clamp`, `assembly-inspection`, `assembly-decision-accept`, `assembly-unclamp` |
+| Safety training | `safety-unsafe-state`, `safety-detection`, `safety-motion-inhibited`, `safety-state-restored`, `safety-operator-acknowledged` |
+| CNC | `cnc-cell-running` (deterministic local execution, `quality=high`) |
+
+Reproduce:
+
+```powershell
+npm --prefix Fabrik3D/fabrik3d.client run build
+npm --prefix Fabrik3D/fabrik3d.client run preview -- --host 127.0.0.1 --port 4173 --strictPort
+npx playwright test --config=playwright.demo.config.ts demo-12-revision5-flagship.spec.ts --workers=1
+```
+
+The authoritative HMI → server → simulator → historian CNC workflow is proven separately by the
+automated flagship tests (see
+[`../../../docs/operations/VALIDATION_REVISION_5.md`](../../../docs/operations/VALIDATION_REVISION_5.md)).
+
 ## Provenance and boundary statements
 
 - The five 3D captures were produced on 2026-10-02 against the built simulator with software
   rendering (headless Chromium, no GPU path claimed). They show the scenario-specific cells
   assembled by the S58 scene runtime; they are not GPU benchmarks.
+- The Revision 5 `execution-revision5/` stills were produced on 2026-10-03 by the same simulator build
+  with software rendering (headless Chromium, no GPU path claimed) at the `quality=high` preset; they
+  are demo/validation media, not GPU benchmarks.
 - The HMI, fault-lab and time-travel images are the committed S62 deterministic visual-regression
   baselines (captured with the hub offline and an explicit in-test seed), copied here for
   presentation. They are byte-identical to the baselines that the automated visual gate compares.
